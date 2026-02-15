@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push checks..."
+
+# Run build to ensure everything compiles
+echo "📦 Building application"
+yarn run  build
+
+# Check if build was successful
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed! Push aborted."
+  exit 1
+fi
+
+echo "✅ Pre-push checks completed successfully!"
+echo "🎉 Ready to push!"

@@ -60,7 +60,7 @@ const initialValues: InspectionFormValues = {
 export function GenerateInspectionTemplate() {
   const handleSubmit = async (values: InspectionFormValues) => {
     // TODO: call your API endpoint here
- 
+
     void values;
   };
 
