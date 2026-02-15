@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "noEmitOnError": true, // Add this
+    // "exactOptionalPropertyTypes": true, // Add this for stricter checking
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Linting - match your old working config */
+    "strict": true,
+    "noImplicitAny": false, // Add this like your old config
+    "noUnusedLocals": false, // Change to false like old config
+    "noUnusedParameters": false, // Change to false like old config
+    "noFallthroughCasesInSwitch": true,
+
+    // Remove these newer strict options that might interfere:
+    // "erasableSyntaxOnly": true,
+    // "noUncheckedSideEffectImports": true,
+    // "noUncheckedIndexedAccess": true,
+
+    "types": ["react", "react-dom"]
+  },
+  "include": ["src", "vite.config.ts", "../../packages/ui/src/ProgressBar.tsx"],
+  "exclude": ["node_modules"]
+}
