@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import { RouteError } from "@/components/error/RoutError";
 import { AppLayout } from "@/components/layouts";
+import { InspectionRoutes } from "@/features/inspection/routes";
 
 const { Overview } = lazyImport(
   () => import("../features/overview/pages/Overview"),
@@ -25,5 +26,5 @@ export const DashboardRoutes: RouteObject = {
   path: "/",
   element: DashboardOutlet,
   errorElement: <RouteError />,
-  children: [...DashboardRouteList],
+  children: [...DashboardRouteList, ...InspectionRoutes],
 };

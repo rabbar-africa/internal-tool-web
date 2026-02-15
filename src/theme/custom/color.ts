@@ -3,52 +3,52 @@ import type { TokenDefinition } from "node_modules/@chakra-ui/react/dist/types/s
 export const colors: TokenDefinition["colors"] = {
   transparent: { value: "transparent" },
   current: { value: "currentColor" },
-  black: { value: "#2c2c2c" }, // Brand black RGB(44,44,44)
-  white: { value: "#FFFFFF" }, // Brand white
+  black: { value: "#001F3E" }, // Maastricht blue
+  white: { value: "#FFFFFF" },
 
-  // Primary - Brand Red (#b70808)
+  // Primary - Cool black (#013064)
   primary: {
-    50: { value: "#fde8e8" },
-    75: { value: "#f9b8b8" },
-    100: { value: "#f28888" },
-    200: { value: "#e84545" },
-    300: { value: "#b70808" },
-    400: { value: "#950606" },
-    500: { value: "#7a0505" },
-    DEFAULT: { value: "#b70808" },
+    50: { value: "#e6ecf3" },
+    75: { value: "#b3c5da" },
+    100: { value: "#809ec1" },
+    200: { value: "#4d77a8" },
+    300: { value: "#013064" },
+    400: { value: "#012751" },
+    500: { value: "#001F3E" },
+    DEFAULT: { value: "#013064" },
   },
 
-  // Neutral grays derived from brand black
+  // Neutral grays (Cultured #F4F4F4 as lightest)
   gray: {
-    50: { value: "#f5f5f5" },
+    50: { value: "#F4F4F4" },
     75: { value: "#e0e0e0" },
     100: { value: "#c2c2c2" },
     200: { value: "#9e9e9e" },
     300: { value: "#757575" },
     400: { value: "#424242" },
-    500: { value: "#2c2c2c" },
+    500: { value: "#1a1a2e" },
   },
 
-  // Secondary - Complementary neutral for backgrounds
+  // Secondary - Maximum green yellow (#DAE648)
   secondary: {
-    50: { value: "#fafafa" },
-    75: { value: "#f0f0f0" },
-    100: { value: "#e8e8e8" },
-    200: { value: "#d4d4d4" },
-    300: { value: "#a8a8a8" },
-    400: { value: "#6b6b6b" },
-    500: { value: "#4a4a4a" },
-    DEFAULT: { value: "#a8a8a8" },
+    50: { value: "#fbfde9" },
+    75: { value: "#f1f5b5" },
+    100: { value: "#e9f08a" },
+    200: { value: "#e1eb5f" },
+    300: { value: "#DAE648" },
+    400: { value: "#aeb83a" },
+    500: { value: "#838a2b" },
+    DEFAULT: { value: "#DAE648" },
   },
 
-  // Error - Using your brand red for errors (semantic consistency)
+  // Error - Red for errors
   error: {
     50: { value: "#fde8e8" },
     75: { value: "#f9b8b8" },
     100: { value: "#f28888" },
     200: { value: "#e84545" },
-    300: { value: "#b70808" }, // Brand red
-    400: { value: "#950606" },
+    300: { value: "#d32f2f" },
+    400: { value: "#b71c1c" },
     500: { value: "#7a0505" },
   },
 
@@ -77,17 +77,17 @@ export const colors: TokenDefinition["colors"] = {
     900: { value: "#4a3000" },
   },
 
-  // Info - Blue for informational elements
+  // Info - derived from primary blue palette
   info: {
-    50: { value: "#e8f4fd" },
-    100: { value: "#b8ddf9" },
-    200: { value: "#88cbf5" },
-    300: { value: "#4db0ef" },
-    400: { value: "#2b9fea" },
-    500: { value: "#1a8cd8" },
-    600: { value: "#1570b3" },
-    700: { value: "#10578c" },
-    800: { value: "#0c4268" },
-    900: { value: "#082f4a" },
+    50: { value: "#e6ecf3" },
+    100: { value: "#b3c5da" },
+    200: { value: "#809ec1" },
+    300: { value: "#4d77a8" },
+    400: { value: "#013064" },
+    500: { value: "#012751" },
+    600: { value: "#001F3E" },
+    700: { value: "#001830" },
+    800: { value: "#001224" },
+    900: { value: "#000c18" },
   },
 };

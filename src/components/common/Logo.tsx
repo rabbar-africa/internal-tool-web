@@ -2,7 +2,7 @@
 import { Link, type LinkProps, type ImageProps, Image } from "@chakra-ui/react";
 import { Link as ReactLink } from "react-router-dom";
 import blackLogo from "@/assets/images/logo/dark-logo.png";
-import whiteLogo from "@/assets/images/logo/light-logo.png";
+import whiteLogo from "@/assets/images/logo/white-logo.png";
 import type { ReactNode } from "react";
 
 type LogoProps = ImageProps & {

@@ -34,10 +34,10 @@ const overview = {
   base: defineRoute("/" as const),
 } as const;
 
-const merchant = {
-  base: defineRoute("/merchant" as const),
-  merchantDetails: defineRoute("/merchant/:id" as const),
-  createMerchant: defineRoute("/merchant/create" as const),
+const inspection = {
+  base: defineRoute("/inspection" as const),
+  inspectionDetails: defineRoute("/inspection/:id" as const),
+  createInspection: defineRoute("/inspection/create" as const),
 } as const;
 const user = {
   base: defineRoute("/user" as const),
@@ -108,7 +108,7 @@ const settings = {
 export const RouteConstants = {
   auth,
   overview,
-  merchant,
+  inspection,
   transactionLedger,
   wallet,
   systemConfiguration,
