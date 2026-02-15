@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { LuSend } from "react-icons/lu";
 import { UserDashboardContainer } from "@/components/hoc";
+import { toaster } from "@/components/ui";
 import {
   CustomerInfoSection,
   VehicleInfoSection,
@@ -18,6 +19,7 @@ import {
   AdditionalNotesSection,
 } from "../components/generate-inspection";
 import type { InspectionFormValues } from "../components/generate-inspection";
+import { downloadInspectionReport } from "../api/service";
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -58,10 +60,30 @@ const initialValues: InspectionFormValues = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function GenerateInspectionTemplate() {
-  const handleSubmit = async (values: InspectionFormValues) => {
-    // TODO: call your API endpoint here
+  const handleSubmit = async (
+    values: InspectionFormValues,
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void },
+  ) => {
+    try {
+      await downloadInspectionReport(values);
 
-    void values;
+      toaster.dismiss();
+      toaster.create({
+        title: "Report generated",
+        description: "The inspection PDF has been downloaded.",
+        type: "success",
+      });
+    } catch {
+      toaster.dismiss();
+      toaster.create({
+        title: "Generation failed",
+        description:
+          "Something went wrong while generating the report. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

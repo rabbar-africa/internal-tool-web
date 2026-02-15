@@ -16,3 +16,13 @@ export const getExtension = (fileToParse?: File | undefined | null) => {
     .toLowerCase()
     .slice(fileToParse.name.lastIndexOf("."));
 };
+export const createDownloadLink = (blob: Blob, fileName: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
