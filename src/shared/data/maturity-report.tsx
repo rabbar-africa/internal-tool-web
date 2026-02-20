@@ -6,7 +6,7 @@ export const progressBars = [
     color: "success.300",
   },
   {
-    text: "Vendor Management",
+    text: "Vendor Management 2",
     description: "Managed (Level 2)",
     value: 65,
     color: "secondary.300",
