@@ -1,6 +1,7 @@
 import { Head } from "@/components/seo/head";
 import { Box } from "@chakra-ui/react";
-import { GenerateInspectionTemplate } from "../template/GenerateInspectionTemplate";
+import { GenerateInspectionReportPage } from "../components/generate-inspection/GenerateInspectionReportPage";
+
 export function GenerateInspection() {
   return (
     <>
@@ -9,7 +10,7 @@ export function GenerateInspection() {
         description="Generate a new inspection"
       />
       <Box>
-        <GenerateInspectionTemplate />
+        <GenerateInspectionReportPage />
       </Box>
     </>
   );
