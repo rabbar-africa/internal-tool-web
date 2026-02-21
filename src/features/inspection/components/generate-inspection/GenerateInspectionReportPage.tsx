@@ -9,7 +9,6 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LuSend } from "react-icons/lu";
 import { UserDashboardContainer } from "@/components/hoc";
 import { toaster } from "@/components/ui";
 import {
@@ -20,6 +19,7 @@ import {
 } from "./";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { downloadInspectionReport } from "../../api/service";
+import { DownloadSimple } from "@/assets/custom";
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -157,7 +157,7 @@ export function GenerateInspectionReportPage() {
                     loadingText="Generating..."
                     _hover={{ bg: "primary.400" }}
                   >
-                    <LuSend /> Generate &amp; Send Report
+                    <DownloadSimple /> Generate &amp; Send Report
                   </Button>
                 </Flex>
               </Stack>

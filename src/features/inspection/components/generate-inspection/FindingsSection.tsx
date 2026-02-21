@@ -11,10 +11,10 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LuFileText, LuPlus, LuTrash2 } from "react-icons/lu";
 import { CustomInput, CustomSelect } from "@/components/input";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { STATUS_OPTIONS } from "./inspection-form.types";
+import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
 
 const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
   name,
@@ -48,7 +48,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
               align="center"
               justify="center"
             >
-              <LuFileText color="var(--chakra-colors-primary-300)" />
+              <FileTextIcon color="var(--chakra-colors-primary-300)" />
             </Flex>
             <Box>
               <Text fontWeight="600" color="gray.500" fontSize=".875rem">
@@ -66,7 +66,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
             color="primary.300"
             onClick={() => arrayHelpers.push(EMPTY_FINDING)}
           >
-            <LuPlus />
+            <PlusIcon />
             <Text display={{ base: "none", sm: "inline" }}>Add Finding</Text>
           </Button>
         </Flex>
@@ -121,7 +121,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       color="error.300"
                       onClick={() => arrayHelpers.remove(index)}
                     >
-                      <LuTrash2 />
+                      <TrashIcon />
                     </IconButton>
                   )}
                 </Flex>
@@ -194,7 +194,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
               alignSelf="center"
               onClick={() => arrayHelpers.push(EMPTY_FINDING)}
             >
-              <LuPlus /> Add Another Finding
+              <PlusIcon /> Add Another Finding
             </Button>
           )}
         </Stack>

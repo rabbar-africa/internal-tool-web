@@ -8,9 +8,9 @@ import {
   HStack,
   Text,
 } from "@chakra-ui/react";
-import { LuCar } from "react-icons/lu";
 import { CustomInput } from "@/components/input";
 import type { InspectionFormValues } from "./inspection-form.types";
+import { PoliceCarIcon } from "@/assets/custom";
 
 const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
   name,
@@ -41,7 +41,7 @@ export function VehicleInfoSection() {
             align="center"
             justify="center"
           >
-            <LuCar color="var(--chakra-colors-primary-300)" />
+            <PoliceCarIcon color="var(--chakra-colors-primary-300)" />
           </Flex>
           <Box>
             <Text fontWeight="600" color="gray.500" fontSize=".875rem">

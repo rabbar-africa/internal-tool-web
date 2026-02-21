@@ -19,7 +19,6 @@ export function GenerateInspectionTemplate() {
 //   Stack,
 //   Text,
 // } from "@chakra-ui/react";
-// import { LuSend } from "react-icons/lu";
 // import { UserDashboardContainer } from "@/components/hoc";
 // import { toaster } from "@/components/ui";
 // import {

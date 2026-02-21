@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       height="100%"
       maxH={mobile ? "unset" : "100vh"}
       overflowY="auto"
-      bg="#293885"
+      bg="primary.500"
       display="flex"
       flexDirection="column"
       scrollbarWidth="none"
@@ -63,14 +63,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         transition="padding 0.2s ease"
       >
         {collapsed ? (
-          <Box w="32px" h="32px" bg="#293885" rounded="md" />
+          <Box w="32px" h="32px" bg="primary.500" rounded="md" />
         ) : (
           <Logo w={"10rem"} />
         )}
       </Box>
 
       {/* Nav items */}
-      <Flex pt={"2rem"} bg={"#293885"} flexDirection="column" flex="1">
+      <Flex pt={"2rem"} bg={"primary.500"} flexDirection="column" flex="1">
         {sideBarItems.map((item) => {
           const isActive = matchPath(
             currentRoute.pathname,
