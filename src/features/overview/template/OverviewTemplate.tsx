@@ -1,11 +1,14 @@
 import { Head } from "@/components/seo/head";
-import { Box } from "@chakra-ui/react";
+import { DashboardPage } from "../components/dashboard/DashboardPage";
 
 export function OverviewTemplate() {
   return (
     <>
-      <Head title="Overview" description="Overview of your account" />
-      <Box>this is overview</Box>
+      <Head
+        title="Dashboard"
+        description="Financial overview for Rabbar Africa"
+      />
+      <DashboardPage />
     </>
   );
 }

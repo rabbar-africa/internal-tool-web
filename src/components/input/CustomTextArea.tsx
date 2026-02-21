@@ -1,7 +1,8 @@
 import type { CustomTextareaProps } from "@/shared/interface/input";
 import React from "react";
 import { Field, Textarea } from "@chakra-ui/react";
-export const CustomTextarea: React.FC<CustomTextareaProps> = ({
+
+export const CustomTextArea: React.FC<CustomTextareaProps> = ({
   label,
   placeholder,
   helperText,

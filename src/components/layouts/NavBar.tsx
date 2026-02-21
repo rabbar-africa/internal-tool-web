@@ -1,9 +1,8 @@
-// import { useGetUserQuery } from '@/feature/auth/queries/user';
-// import { RouteConstants } from '@/shared/constants/routes';
 import { removeToken } from "@/utils/persistToken";
 import storage from "@/utils/storage";
 import {
   Avatar,
+  Badge,
   Box,
   Flex,
   IconButton,
@@ -15,8 +14,9 @@ import {
 import AvatarImage from "@/assets/images/michael-peters.png";
 import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
-// import { Logo } from '../common/Logo';
 import { Hamburger } from "@/assets/custom";
+import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
+import { SearchInput } from "@/components/input/SearchInput";
 
 interface NavBarProps {
   onMenuToggle?: () => void;
@@ -54,25 +54,55 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               </IconButton>
             </Box>
 
-            {/* Logo – visible only on mobile (sidebar logo hidden) */}
-            {/* <Box display={{ base: 'block', md: 'none' }}>
-              <Logo w="7rem" />
-            </Box> */}
-
-            {/* Title – visible only on desktop */}
+            {/* Company label – visible only on desktop */}
             <Text
-              fontSize="20px"
-              lineHeight="28px"
+              fontSize="14px"
               fontWeight="600"
               color="gray.500"
               display={{ base: "none", md: "block" }}
             >
-              Dashboard
+              Rabbar Africa
             </Text>
           </Flex>
-          <Flex alignItems="center">
+
+          {/* Right: Search + Notifications + Profile */}
+          <Flex alignItems="center" gap="3">
+            {/* Global search – hidden on mobile */}
+            <Box display={{ base: "none", lg: "block" }} maxW="200px">
+              <SearchInput placeholder="Search..." />
+            </Box>
+
+            {/* Notification bell */}
+            <Box position="relative">
+              <IconButton
+                aria-label="Notifications"
+                variant="ghost"
+                size="md"
+                color="gray.400"
+              >
+                <BellSimpleRingingIcon width="20px" height="20px" />
+              </IconButton>
+              <Badge
+                position="absolute"
+                top="6px"
+                right="6px"
+                bg="red.500"
+                color="white"
+                fontSize="9px"
+                borderRadius="full"
+                minW="16px"
+                h="16px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                px="1"
+              >
+                3
+              </Badge>
+            </Box>
+
             <Menu.Root>
-              <Menu.Trigger asChild ml="20px">
+              <Menu.Trigger asChild>
                 <Flex alignItems="center" cursor="pointer">
                   <Avatar.Root
                     shape="full"
