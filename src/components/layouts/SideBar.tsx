@@ -18,6 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobile, onNavigate }) => {
 
   const handleLogout = () => {
     removeToken();
+    storage.clearValue("auth_user");
     storage.clearValue("current_org");
     window.location.replace(RouteConstants.auth.login.path);
   };

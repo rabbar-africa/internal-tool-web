@@ -22,7 +22,7 @@ const LandingPagesRouteOutlet = (
   </Layout>
 );
 export const AuthRoutes: RouteObject = {
-  path: "",
+  path: "auth",
   element: LandingPagesRouteOutlet,
   errorElement: <RouteError />,
   children: AuthRouteList,

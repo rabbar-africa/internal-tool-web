@@ -6,6 +6,7 @@ const storagePrefix = "hanypay_super_admin__";
 export type keyType =
   | "refresh_token"
   | "access_token"
+  | "auth_user"
   | "redirect_path"
   | "current_org"
   | "user_organizations";
@@ -20,6 +21,8 @@ function getExpiresTime(payload: DurationType) {
       return new Date().getTime() + 1000 * 60 * payload.value;
     case "HOUR":
       return new Date().getTime() + 1000 * 60 * 60 * payload.value;
+    case "DAY":
+      return new Date().getTime() + 1000 * 60 * 60 * 24 * payload.value;
   }
 }
 
