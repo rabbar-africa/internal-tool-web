@@ -6,7 +6,6 @@ const storagePrefix = "hanypay_super_admin__";
 export type keyType =
   | "refresh_token"
   | "access_token"
-  | "auth_user"
   | "redirect_path"
   | "current_org"
   | "user_organizations";

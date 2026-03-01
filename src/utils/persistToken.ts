@@ -13,14 +13,14 @@ export function getToken() {
 }
 export function setAccessToken(
   token: string,
-  duration: DurationType = { unit: "DAY", value: 1 },
+  duration: DurationType = { unit: "DAY", value: 30 },
 ) {
   storage.setValue(access_token, token, duration);
 }
 
 export function setRefreshToken(
   token: string,
-  duration: DurationType = { unit: "DAY", value: 14 },
+  duration: DurationType = { unit: "DAY", value: 30 },
 ) {
   storage.setValue(refresh_token, token, duration);
 }

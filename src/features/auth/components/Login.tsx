@@ -3,15 +3,9 @@ import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff, Lock, Mail } from "@/assets/custom";
 import { Box, Button, Text, chakra } from "@chakra-ui/react";
 import { useState } from "react";
-import { axios } from "@/lib/axios";
-import { QUERY_PATH } from "@/shared/constants/query-paths";
-import { toaster } from "@/components/ui";
-import { getErrorMessage } from "@/utils/handle-error";
-import { setAccessToken, setRefreshToken } from "@/utils/persistToken";
-import storage from "@/utils/storage";
-import { useNavigate } from "react-router-dom";
-import { RouteConstants } from "@/shared/constants/routes";
+import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useLoginMutation } from "../api";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -22,73 +16,24 @@ const loginSchema = Yup.object({
 });
 
 export function Login() {
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
-  );
+  const loginMutation = useLoginMutation();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    try {
-      await loginSchema.validate({ email, password }, { abortEarly: false });
-      setErrors({});
-    } catch (validationError) {
-      if (validationError instanceof Yup.ValidationError) {
-        const nextErrors: { email?: string; password?: string } = {};
-        validationError.inner.forEach((item) => {
-          if (item.path && !nextErrors[item.path as "email" | "password"]) {
-            nextErrors[item.path as "email" | "password"] = item.message;
-          }
-        });
-        setErrors(nextErrors);
-      }
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await axios.post(QUERY_PATH.auth.login, {
-        email: email.trim(),
-        password,
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema: loginSchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+    onSubmit: (values) => {
+      loginMutation.mutate({
+        email: values.email,
+        password: values.password,
       });
-      const payload = response?.data?.data;
-      if (!payload?.accessToken || !payload?.refreshToken || !payload?.user) {
-        throw new Error("Invalid login response");
-      }
-
-      setAccessToken(payload.accessToken, {
-        unit: "SECOND",
-        value: payload.expiresIn,
-      });
-      setRefreshToken(payload.refreshToken, {
-        unit: "DAY",
-        value: 14,
-      });
-      storage.setValue("auth_user", payload.user, {
-        unit: "DAY",
-        value: 14,
-      });
-
-      toaster.create({
-        type: "success",
-        description: "Login successful.",
-      });
-      navigate(RouteConstants.overview.base.path, { replace: true });
-    } catch (error) {
-      toaster.create({
-        type: "error",
-        description: getErrorMessage(error),
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
   return (
     <>
@@ -122,22 +67,19 @@ export function Login() {
           <chakra.form
             position={"relative"}
             mt={"2.5rem"}
-            onSubmit={handleSubmit}
+            onSubmit={formik.handleSubmit}
           >
             <CustomInput
               label="Email"
               placeholder="Enter your email"
               required={true}
-              disabled={isSubmitting}
-              error={errors.email}
+              disabled={loginMutation.isPending}
+              error={formik.touched.email ? formik.errors.email : undefined}
               inputProps={{
-                value: email,
-                onChange: (event) => {
-                  setEmail(event.target.value);
-                  if (errors.email) {
-                    setErrors((prev) => ({ ...prev, email: undefined }));
-                  }
-                },
+                name: "email",
+                value: formik.values.email,
+                onChange: formik.handleChange,
+                onBlur: formik.handleBlur,
               }}
               leftElement={<Mail w={".875rem"} color={"gray.300"} />}
             />
@@ -148,16 +90,15 @@ export function Login() {
                 placeholder="Enter your password"
                 type={showPassword ? "text" : "password"}
                 required={true}
-                disabled={isSubmitting}
-                error={errors.password}
+                disabled={loginMutation.isPending}
+                error={
+                  formik.touched.password ? formik.errors.password : undefined
+                }
                 inputProps={{
-                  value: password,
-                  onChange: (event) => {
-                    setPassword(event.target.value);
-                    if (errors.password) {
-                      setErrors((prev) => ({ ...prev, password: undefined }));
-                    }
-                  },
+                  name: "password",
+                  value: formik.values.password,
+                  onChange: formik.handleChange,
+                  onBlur: formik.handleBlur,
                 }}
                 leftElement={<Lock w={".75rem"} color={"gray.700"} />}
                 rightElement={
@@ -184,9 +125,9 @@ export function Login() {
               mt={"2.5rem"}
               width="full"
               type="submit"
-              loading={isSubmitting}
+              loading={loginMutation.isPending}
               loadingText="Signing in..."
-              disabled={isSubmitting}
+              disabled={loginMutation.isPending}
             >
               Sign In
             </Button>

@@ -2,17 +2,27 @@ import { lazyImport } from "@/utils/lazyImports";
 import { Outlet, type RouteObject } from "react-router-dom";
 import Layout from "../components/Layout";
 import { RouteError } from "@/components/error";
+import { PublicOnlyRoute } from "../components/PublicOnlyRoute";
+
 const { Login } = lazyImport(() => import("../components/Login"), "Login");
 const { Signup } = lazyImport(() => import("../components/Signup"), "Signup");
 
 export const AuthRouteList: RouteObject[] = [
   {
     path: "login",
-    element: <Login />,
+    element: (
+      <PublicOnlyRoute>
+        <Login />
+      </PublicOnlyRoute>
+    ),
   },
   {
     path: "signup",
-    element: <Signup />,
+    element: (
+      <PublicOnlyRoute>
+        <Signup />
+      </PublicOnlyRoute>
+    ),
   },
 ];
 
