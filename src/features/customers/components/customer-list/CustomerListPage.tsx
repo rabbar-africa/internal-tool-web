@@ -1,9 +1,9 @@
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { type ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CustomTable } from "@/components/table";
+import { CustomTable, type TableAction } from "@/components/table";
 import { UserDashboardContainer } from "@/components/hoc";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,6 +12,7 @@ import { RouteConstants } from "@/shared/constants/routes";
 import { useGetAllCustomersQuery } from "../../api/query";
 import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
+import { EditCustomerModal } from "./EditCustomerModal";
 
 interface ApiCustomer {
   id: string;
@@ -132,6 +133,26 @@ export function CustomerListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
+  const [editCustomer, setEditCustomer] = useState<ApiCustomer | null>(null);
+
+  const tableActions = useMemo<TableAction<ApiCustomer>[]>(
+    () => [
+      {
+        label: "View",
+        value: "view",
+        onClick: (customer) =>
+          navigate(
+            RouteConstants.customers.detail.generate({ id: customer.id }),
+          ),
+      },
+      {
+        label: "Edit",
+        value: "edit",
+        onClick: (customer) => setEditCustomer(customer),
+      },
+    ],
+    [navigate],
+  );
 
   const { data, isLoading } = useGetAllCustomersQuery({
     page: filters.page,
@@ -154,93 +175,98 @@ export function CustomerListPage() {
   }));
 
   return (
-    <UserDashboardContainer py="1.5rem">
-      <Stack gap="6">
-        <PageHeader
-          title="Customers"
-          subtitle="Manage your customer database"
-          action={
-            <Flex gap="2">
-              <DownloadButton
-                data={csvData}
-                filename="customers"
-                headers={CSV_HEADERS}
-              />
-              <Button
-                onClick={() => navigate(RouteConstants.customers.create.path)}
-              >
-                Add Customer
-              </Button>
-            </Flex>
-          }
-        />
+    <>
+      <UserDashboardContainer py="1.5rem">
+        <Stack gap="6">
+          <PageHeader
+            title="Customers"
+            subtitle="Manage your customer database"
+            action={
+              <Flex gap="2">
+                <DownloadButton
+                  data={csvData}
+                  filename="customers"
+                  headers={CSV_HEADERS}
+                />
+                <Button
+                  onClick={() => navigate(RouteConstants.customers.create.path)}
+                >
+                  Add Customer
+                </Button>
+              </Flex>
+            }
+          />
 
-        <Box
-          pt="2rem"
-          pb="2rem"
-          bg="white"
-          px="1rem"
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex
-            justifyContent="flex-start"
-            alignItems="center"
-            mb="1.5rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
+          <Box
+            pt="2rem"
+            pb="2rem"
+            bg="white"
+            px="1rem"
+            rounded=".625rem"
+            shadow="sm"
+            borderWidth="1px"
+            borderColor="gray.75"
           >
-            <CustomSelect
-              placeholder="All Status"
-              options={STATUS_OPTIONS}
-              value={filters.status ? [filters.status] : undefined}
-              onChange={(opt: { value: string[] }) => {
-                setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
-              }}
-              rootProps={{ size: "sm" }}
-              controlProps={{ w: "140px" }}
-            />
+            <Flex
+              justifyContent="flex-start"
+              alignItems="center"
+              mb="1.5rem"
+              gap="3"
+              direction={{ base: "column", md: "row" }}
+            >
+              <CustomSelect
+                placeholder="All Status"
+                options={STATUS_OPTIONS}
+                value={filters.status ? [filters.status] : undefined}
+                onChange={(opt: { value: string[] }) => {
+                  setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
+                }}
+                rootProps={{ size: "sm" }}
+                controlProps={{ w: "140px" }}
+              />
 
-            <SearchInput
-              placeholder="Search by name or phone"
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={(val) => setFilters({ search: val, page: 1 })}
-              debounceMs={500}
-              loading={isLoading}
-            />
-          </Flex>
+              <SearchInput
+                placeholder="Search by name or phone"
+                value={searchInput}
+                onChange={setSearchInput}
+                onSearch={(val) => setFilters({ search: val, page: 1 })}
+                debounceMs={500}
+                loading={isLoading}
+              />
+            </Flex>
 
-          <Box overflowX="auto" maxW="calc(100vw - 380px)">
-            <CustomTable
-              data={customers}
-              columns={columns}
-              loading={isLoading}
-              onRowClick={(row) =>
-                navigate(
-                  RouteConstants.customers.detail.generate({
-                    id: row.original.id,
-                  }),
-                )
-              }
-              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
-              pagination={{
-                pageIndex: filters.page - 1,
-                pageSize: filters.limit,
-              }}
-              setPagination={({ pageIndex }) =>
-                setFilters({ page: pageIndex + 1 })
-              }
-              pageCount={meta?.totalPages ?? 1}
-              totalItems={meta?.total}
-              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
-              hasPrevPage={filters.page > 1}
-            />
+            <Box overflowX="auto" maxW="calc(100vw - 380px)">
+              <CustomTable
+                data={customers}
+                columns={columns}
+                loading={isLoading}
+                enableActions
+                actions={tableActions}
+                tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+                pagination={{
+                  pageIndex: filters.page - 1,
+                  pageSize: filters.limit,
+                }}
+                setPagination={({ pageIndex }) =>
+                  setFilters({ page: pageIndex + 1 })
+                }
+                pageCount={meta?.totalPages ?? 1}
+                totalItems={meta?.total}
+                hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+                hasPrevPage={filters.page > 1}
+              />
+            </Box>
           </Box>
-        </Box>
-      </Stack>
-    </UserDashboardContainer>
+        </Stack>
+      </UserDashboardContainer>
+
+      {editCustomer && (
+        <EditCustomerModal
+          open={Boolean(editCustomer)}
+          onClose={() => setEditCustomer(null)}
+          customer={editCustomer}
+        />
+      )}
+    </>
   );
 }

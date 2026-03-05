@@ -9,6 +9,7 @@ import {
   getCustomerById,
   createCustomer,
   type CustomerFilter,
+  updateCustomer,
 } from "./service";
 import type { CreateCustomerPayload } from "@/shared/interface/customer";
 import { customQueryKey } from "@/shared/constants/query-keys";
@@ -40,5 +41,18 @@ export const useCreateCustomerMutation = () => {
         queryKey: [customQueryKey.customers.getAll],
       }),
     meta: { successMessage: "Customer created successfully" },
+  });
+};
+
+export const useUpdateCustomerMutation = (id: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Partial<CreateCustomerPayload>) =>
+      updateCustomer(id, payload),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [customQueryKey.customers.getAll],
+      }),
+    meta: { successMessage: "Customer updated successfully" },
   });
 };

@@ -27,3 +27,11 @@ export const createCustomer = async (payload: CreateCustomerPayload) => {
   const response = await axios.post("/clients", payload);
   return response.data;
 };
+
+export const updateCustomer = async (
+  id: string,
+  payload: Partial<CreateCustomerPayload>,
+) => {
+  const response = await axios.put(`/clients/${id}`, payload);
+  return response.data;
+};
