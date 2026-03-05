@@ -12,6 +12,7 @@ import { MOCK_INVOICES, MOCK_PAYMENTS } from "@/shared/data/mock";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { Payment } from "@/shared/interface/payment";
 import moment from "moment";
+import SectionLoader from "@/components/common/SectionLoader";
 
 const invoiceColumns: ColumnDef<Invoice>[] = [
   {
@@ -127,7 +128,10 @@ const paymentColumns: ColumnDef<Payment>[] = [
 export function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: customer, isLoading } = useGetCustomerByIdQuery(id ?? "");
+  const { data: customerQueryData, isLoading } = useGetCustomerByIdQuery(
+    id ?? "",
+  );
+  const customer = customerQueryData?.data;
 
   const customerInvoices = MOCK_INVOICES.filter((inv) => inv.customerId === id);
   const customerPayments = MOCK_PAYMENTS.filter((p) => p.customerId === id);
@@ -136,7 +140,7 @@ export function CustomerDetailPage() {
   if (isLoading) {
     return (
       <UserDashboardContainer py="1.5rem">
-        <Text>Loading customer...</Text>
+        <SectionLoader />
       </UserDashboardContainer>
     );
   }
@@ -161,11 +165,11 @@ export function CustomerDetailPage() {
         >
           <Box>
             <Text textStyle="h3-bold" color="gray.500">
-              {customer.name}
+              {customer?.displayName}
             </Text>
-            <Text textStyle="small-regular" color="gray.300">
+            {/* <Text textStyle="small-regular" color="gray.300">
               {customer.code}
-            </Text>
+            </Text> */}
           </Box>
           <Button
             variant="outline"
@@ -194,7 +198,7 @@ export function CustomerDetailPage() {
                 Email
               </Text>
               <Text fontSize="14px" color="gray.500">
-                {customer.email}
+                {customer?.email}
               </Text>
             </Box>
             <Box>
@@ -202,7 +206,7 @@ export function CustomerDetailPage() {
                 Phone
               </Text>
               <Text fontSize="14px" color="gray.500">
-                {customer.phone}
+                {customer?.phone}
               </Text>
             </Box>
             <Box>
@@ -211,7 +215,7 @@ export function CustomerDetailPage() {
               </Text>
               <Box
                 display="inline-flex"
-                bg={customer.type === "company" ? "gray.100" : "blue.50"}
+                bg={customer?.type === "company" ? "gray.100" : "blue.50"}
                 px="10px"
                 py="4px"
                 rounded="md"
@@ -219,10 +223,10 @@ export function CustomerDetailPage() {
                 <Text
                   fontSize="12px"
                   fontWeight="500"
-                  color={customer.type === "company" ? "gray.600" : "blue.600"}
+                  color={customer?.type === "company" ? "gray.600" : "blue.600"}
                   textTransform="capitalize"
                 >
-                  {customer.type}
+                  {customer?.type}
                 </Text>
               </Box>
             </Box>
@@ -233,10 +237,10 @@ export function CustomerDetailPage() {
                 </Text>
                 <Text fontSize="14px" color="gray.500">
                   {[
-                    customer.address,
-                    customer.city,
-                    customer.state,
-                    customer.country,
+                    customer?.address,
+                    customer?.city,
+                    customer?.state,
+                    customer?.country,
                   ]
                     .filter(Boolean)
                     .join(", ")}
@@ -262,7 +266,7 @@ export function CustomerDetailPage() {
                   }
                   textTransform="capitalize"
                 >
-                  {customer.status}
+                  {customer?.status}
                 </Text>
               </Box>
             </Box>
@@ -271,7 +275,9 @@ export function CustomerDetailPage() {
                 Customer Since
               </Text>
               <Text fontSize="14px" color="gray.500">
-                {moment(customer.createdAt).format("DD MMM YYYY")}
+                {customer?.createdAt
+                  ? moment(customer.createdAt).format("DD MMM YYYY")
+                  : "—"}
               </Text>
             </Box>
           </Grid>
@@ -291,7 +297,7 @@ export function CustomerDetailPage() {
           />
           <StatCard
             label="Outstanding Balance"
-            value={formatCurrency(customer.outstandingBalance)}
+            value={formatCurrency(customer?.outstandingBalance ?? 0)}
             iconBg="orange.50"
             icon={
               <Text fontSize="18px" fontWeight="700" color="orange.500">
@@ -301,7 +307,7 @@ export function CustomerDetailPage() {
           />
           <StatCard
             label="Total Invoices"
-            value={String(customer.totalInvoices)}
+            value={String(customer?.totalInvoices ?? 0)}
             iconBg="blue.50"
             icon={
               <Text fontSize="18px" fontWeight="700" color="blue.500">
