@@ -8,13 +8,12 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { Field, Form, Formik } from "formik";
+import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { UserDashboardContainer } from "@/components/hoc";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
-import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useCreateExpenseMutation } from "../../api/query";
 import { MOCK_INVOICES } from "@/shared/data/mock";
@@ -139,7 +138,7 @@ export function CreateExpensePage() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ values, errors, touched, setFieldValue }) => {
+          {({ errors, touched, setFieldValue }) => {
             // const asRegister = (name: string) => ({
             //   name,
             //   onChange: handleChange as React.ChangeEventHandler<HTMLInputElement>,

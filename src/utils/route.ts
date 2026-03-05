@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/routes.ts
 // This file defines a robust, type-safe route constants factory for React Router in a React TypeScript application.
 // Routes are sectioned by modules (e.g., dashboard, users, settings) to organize the dashboard structure.
