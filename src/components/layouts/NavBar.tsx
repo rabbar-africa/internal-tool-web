@@ -1,5 +1,4 @@
 import { removeToken } from "@/utils/persistToken";
-import storage from "@/utils/storage";
 import {
   Avatar,
   Badge,
@@ -25,8 +24,6 @@ interface NavBarProps {
 export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
   const handleLogout = () => {
     removeToken();
-    storage.clearValue("auth_user");
-    storage.clearValue("current_org");
     window.location.replace(RouteConstants.auth.login.path);
   };
 

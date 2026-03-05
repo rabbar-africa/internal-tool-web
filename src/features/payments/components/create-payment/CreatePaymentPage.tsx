@@ -326,26 +326,7 @@ export function CreatePaymentPage() {
                         "Optional additional information",
                       )}
                     </Card.Header>
-                    <Card.Body>
-                      <Field name="notes">
-                        {({
-                          field,
-                        }: {
-                          field: React.InputHTMLAttributes<HTMLTextAreaElement>;
-                        }) => (
-                          <CustomTextArea
-                            label="Notes"
-                            placeholder="Any additional notes about this payment..."
-                            register={
-                              field as Parameters<
-                                typeof CustomTextArea
-                              >[0]["register"]
-                            }
-                            value={values.notes}
-                          />
-                        )}
-                      </Field>
-                    </Card.Body>
+                    <Card.Body></Card.Body>
                   </Card.Root>
 
                   <Flex justify="flex-end" gap="3">

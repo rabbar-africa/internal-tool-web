@@ -12,15 +12,8 @@ import { CustomInput, CustomSelect } from "@/components/input";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { TITLE_OPTIONS } from "./inspection-form.types";
 
-const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
-  name,
-  onChange: handleChange as any,
-  onBlur: handleBlur as any,
-  ref: () => {},
-});
-
 export function CustomerInfoSection() {
-  const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
+  const { values, errors, touched, setFieldValue } =
     useFormikContext<InspectionFormValues>();
 
   return (
@@ -74,7 +67,6 @@ export function CustomerInfoSection() {
               label="Full Name"
               placeholder="e.g. Funmilayo Ajangbadi"
               required
-              register={asRegister("customerName", handleChange, handleBlur)}
               value={values.customerName}
               error={
                 touched.customerName && errors.customerName

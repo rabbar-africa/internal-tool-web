@@ -13,7 +13,6 @@ export const CustomTextArea: React.FC<CustomTextareaProps> = ({
   error,
   rows = 4,
   resize = "vertical",
-  register,
   labelProps,
   textAreaProps,
   value,
@@ -54,7 +53,6 @@ export const CustomTextArea: React.FC<CustomTextareaProps> = ({
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        {...register}
         {...props}
         {...textAreaProps}
       />

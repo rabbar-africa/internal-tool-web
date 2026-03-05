@@ -16,13 +16,6 @@ import type { InspectionFormValues } from "./inspection-form.types";
 import { STATUS_OPTIONS } from "./inspection-form.types";
 import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
 
-const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
-  name,
-  onChange: handleChange as any,
-  onBlur: handleBlur as any,
-  ref: () => {},
-});
-
 interface FindingsSectionProps {
   arrayHelpers: FieldArrayRenderProps;
 }
@@ -30,7 +23,7 @@ interface FindingsSectionProps {
 const EMPTY_FINDING = { component: "", observation: "", status: "" };
 
 export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
-  const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
+  const { values, errors, touched, setFieldValue } =
     useFormikContext<InspectionFormValues>();
 
   const findings = values.findings;
@@ -132,11 +125,6 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       label="Component"
                       placeholder="e.g. Spark Plugs"
                       required
-                      register={asRegister(
-                        `findings.${index}.component`,
-                        handleChange,
-                        handleBlur,
-                      )}
                       value={findings[index].component}
                       error={
                         findingTouched?.component && findingErrors?.component
@@ -173,11 +161,6 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                   <CustomInput
                     label="Observation Details"
                     placeholder="e.g. Faulty and require replacement"
-                    register={asRegister(
-                      `findings.${index}.observation`,
-                      handleChange,
-                      handleBlur,
-                    )}
                     value={findings[index].observation}
                   />
                 </Box>

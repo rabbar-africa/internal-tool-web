@@ -9,7 +9,6 @@ export const CustomSwitch: React.FC<CustomSwitchProps> = ({
   disabled = false,
   reversed = false,
   error,
-  register,
   children,
   rootProps,
   controlProps,
@@ -17,7 +16,7 @@ export const CustomSwitch: React.FC<CustomSwitchProps> = ({
 }) => {
   return (
     <Field.Root required={required} invalid={!!error} disabled={disabled}>
-      <Switch.Root disabled={disabled} {...register} {...props} {...rootProps}>
+      <Switch.Root disabled={disabled} {...props} {...rootProps}>
         <Switch.HiddenInput />
         {reversed && (
           <Switch.Label>

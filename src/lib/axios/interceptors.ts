@@ -33,7 +33,6 @@ export async function refreshTokenInterceptor(error: AxiosError) {
   ) {
     storage.clearValue("access_token");
     storage.clearValue("refresh_token");
-    storage.clearValue("auth_user");
     window.location.assign(window.location.origin + "/auth/login");
   }
   if (
@@ -44,7 +43,6 @@ export async function refreshTokenInterceptor(error: AxiosError) {
   ) {
     storage.clearValue("access_token");
     storage.clearValue("refresh_token");
-    storage.clearValue("auth_user");
     window.location.assign(window.location.origin + "/auth/login");
   }
 

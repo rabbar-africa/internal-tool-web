@@ -11,7 +11,7 @@ export function CustomInput({
   type = "text",
   leftElement,
   rightElement,
-  register,
+  // register,
   labelProps,
   inputProps,
   value,
@@ -68,7 +68,7 @@ export function CustomInput({
           value={value}
           onChange={onChange}
           onBlur={onBlur}
-          {...register}
+          // {...register}
           {...props}
           {...inputProps}
         />

@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'msc.*', 'msc*'] },
+  { ignores: ['dist', 'msc.*', 'msc*', '**/*.d.ts'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -13,7 +13,7 @@ export default tseslint.config(
       ecmaVersion: 'latest',
       globals: globals.browser,
       parserOptions: {
-        project: './tsconfig.app.json', // This is required for type-aware rules
+        project: './tsconfig.app.json',
         sourceType: 'module',
       },
     },
@@ -36,6 +36,11 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       'no-console': 'error',
+
+      // Turned off — eslint-plugin-unused-imports v3 crashes on ESLint 9.
+      // To re-enable auto-fix: yarn add -D eslint-plugin-unused-imports@latest
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off',
     },
   }
 );

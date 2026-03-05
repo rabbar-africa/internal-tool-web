@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import React, { useEffect, useRef } from "react";
 import { Field, Input, Box } from "@chakra-ui/react";
 import type { FieldLabelProps, InputProps } from "@chakra-ui/react";
@@ -28,7 +28,7 @@ export const CustomNumberInput: React.FC<
   onValueChange,
   value: valueProp,
   onChange: _onChange,
-  register: _register,
+  // register: _register,
   variant: _variant,
   size: _size,
   name,

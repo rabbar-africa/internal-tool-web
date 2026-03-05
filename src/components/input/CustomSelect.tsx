@@ -21,7 +21,6 @@ export function CustomSelect({
   emptyText = "Select an option",
   noOptionsText = "No options",
   loading = false,
-  register,
   controlProps,
   itemProps,
   contentProps,
@@ -45,12 +44,6 @@ export function CustomSelect({
         onChange(selectedValue || null);
       }
       return;
-    }
-
-    if (register?.onChange && "onChange" in register) {
-      register.onChange({
-        target: { name: register.name, value: selectedValue },
-      });
     }
   };
 
@@ -76,7 +69,6 @@ export function CustomSelect({
         multiple={multiple}
         onValueChange={handleChange}
         value={value || (multiple ? [] : undefined)}
-        {...register}
         {...props}
         {...rootProps}
         collection={collection}

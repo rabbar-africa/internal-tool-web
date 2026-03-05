@@ -7,7 +7,7 @@ export function CustomCheckbox({
   required = false,
   disabled = false,
   error,
-  register,
+  // register,
   children,
   width,
   rootProps,
@@ -28,7 +28,7 @@ export function CustomCheckbox({
         {...rootProps}
         {...props}
       >
-        <Checkbox.HiddenInput value={value} {...register} />
+        <Checkbox.HiddenInput value={value} />
         <Checkbox.Control
           rounded={{ base: ".15rem", md: ".3rem" }}
           {...controlProps}

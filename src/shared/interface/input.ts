@@ -20,10 +20,6 @@ import type {
   TextareaProps,
 } from "@chakra-ui/react";
 import type { ReactNode } from "react";
-import {
-  type UseFormRegisterReturn,
-  type UseFormSetValue,
-} from "react-hook-form";
 
 export interface BaseFieldProps {
   label?: string | ReactNode;
@@ -34,7 +30,7 @@ export interface BaseFieldProps {
   variant?: "outline" | "subtle" | "flushed";
   size?: "sm" | "md" | "lg";
   error?: string | undefined;
-  register?: Partial<UseFormRegisterReturn>;
+  // register?: Partial<UseFormRegisterReturn>;
   value?: any;
   onChange?: any;
   onBlur?: any;
@@ -84,7 +80,7 @@ export interface CustomCheckboxProps {
   required?: boolean;
   disabled?: boolean;
   error?: string;
-  register?: UseFormRegisterReturn;
+  // register?: UseFormRegisterReturn;
   children?: React.ReactNode;
   width?: string;
   rootProps?: CheckboxRootProps;
@@ -101,7 +97,7 @@ export interface CustomSwitchProps {
   required?: boolean;
   disabled?: boolean;
   error?: string;
-  register?: UseFormRegisterReturn;
+  // register?: UseFormRegisterReturn;
   children?: React.ReactNode;
   width?: string;
   rootProps?: SwitchRootProps;
@@ -138,7 +134,7 @@ export interface CustomRadioGroupProps extends BaseFieldProps {
   required?: boolean;
   disabled?: boolean;
   error?: string;
-  register?: UseFormRegisterReturn;
+  // register?: UseFormRegisterReturn;
   direction?: "row" | "column";
   items: RadioItem[];
   labelProps?: FieldLabelProps;
@@ -161,8 +157,8 @@ export interface CustomTagInputProps {
   placeholder?: string;
   labelProps?: FieldLabelProps;
   inputProps?: InputProps;
-  register?: UseFormRegisterReturn;
-  setValue?: UseFormSetValue<any>;
+  // register?: UseFormRegisterReturn;
+  // setValue?: UseFormSetValue<any>;
   name?: string;
 }
 
