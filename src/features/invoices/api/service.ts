@@ -50,7 +50,7 @@ export const createInvoice = async (
   const profit = calculateProfit(totalAmount, 0);
   const marginPercent = calculateMarginPercent(profit, totalAmount);
 
-  return {
+  const finalPayload = {
     id: `inv-${Date.now()}`,
     invoiceNumber: `INV-2026-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
     customerId: payload.customer_id,
@@ -76,4 +76,9 @@ export const createInvoice = async (
     notes: payload.notes,
     createdAt: new Date().toISOString().split("T")[0],
   };
+
+  // console.log("final payload is ", finalPayload);
+  return new Promise<Invoice>((resolve) => {
+    resolve(finalPayload as any);
+  });
 };

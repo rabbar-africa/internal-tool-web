@@ -9,4 +9,5 @@ export * from "./CustomSelect";
 export * from "./CustomSwitch";
 export * from "./CustomTagInput";
 export * from "./CustomTextArea";
+export * from "./SearchCombobox";
 export * from "./SearchInput";

@@ -17,7 +17,8 @@ export function CreateInvoicePage() {
     getLineAmount,
     isPending,
     handleCancel,
-    itemOptions,
+    items,
+    addNewItem,
   } = useCreateInvoice();
 
   return (
@@ -82,9 +83,10 @@ export function CreateInvoicePage() {
               formik={formik}
               removeLineItem={removeLineItem}
               addLineItem={addLineItem}
-              itemOptions={itemOptions}
+              items={items}
               handleItemSelect={handleItemSelect}
               getLineAmount={getLineAmount}
+              onAddNewItem={addNewItem}
             />
 
             <Separator borderColor="gray.75" />

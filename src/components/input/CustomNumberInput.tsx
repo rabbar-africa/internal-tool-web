@@ -1,107 +1,155 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React from "react";
-import { Field, Input } from "@chakra-ui/react";
+import React, { useEffect, useRef } from "react";
+import { Field, Input, Box } from "@chakra-ui/react";
+import type { FieldLabelProps, InputProps } from "@chakra-ui/react";
 import type { CustomNumberInputProps } from "@/shared/interface/input";
 
-export const CustomNumberInput: React.FC<CustomNumberInputProps> = ({
+export const CustomNumberInput: React.FC<
+  CustomNumberInputProps & {
+    inputProps?: InputProps;
+    labelProps?: FieldLabelProps;
+  }
+> = ({
   label,
   placeholder,
   helperText,
   required = false,
   disabled = false,
-  variant = "outline",
-  size = "lg",
   error,
   min,
   max,
-  step = 1,
-  precision = 0,
-  format = "number",
-  currency = "USD",
-  thousandSeparator = ",",
-  decimalSeparator = ".",
+  step: _step,
+  precision = 2,
+  format: _format,
+  currency: _currency,
+  thousandSeparator: _thousandSeparator,
+  decimalSeparator: _decimalSeparator,
   allowNegative = true,
-  register,
   onValueChange,
-  ...props
+  value: valueProp,
+  onChange: _onChange,
+  register: _register,
+  variant: _variant,
+  size: _size,
+  name,
+  onBlur,
+  inputProps,
+  labelProps,
 }) => {
-  const [value, setValue] = React.useState<string>("");
-  const [, setNumericValue] = React.useState<number | undefined>();
+  const [displayValue, setDisplayValue] = React.useState<string>("");
+  const isFocused = useRef(false);
 
-  const formatNumber = (num: number): string => {
-    if (isNaN(num)) return "";
-
-    const options: Intl.NumberFormatOptions = {
-      minimumFractionDigits: precision,
+  const formatNum = (n: number) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
       maximumFractionDigits: precision,
-    };
+      useGrouping: true,
+    }).format(n);
 
-    switch (format) {
-      case "currency":
-        options.style = "currency";
-        options.currency = currency;
-        break;
-      case "percentage":
-        options.style = "percent";
-        break;
-      default:
-        options.useGrouping = true;
-    }
-
-    return new Intl.NumberFormat("en-US", options).format(num);
-  };
-
-  const parseNumber = (str: string): number | undefined => {
-    if (!str) return undefined;
-
-    // Remove formatting characters but keep decimal point and minus sign
+  const parseRaw = (str: string): number | undefined => {
     const cleaned = str.replace(/[^\d.-]/g, "");
-    const parsed = parseFloat(cleaned);
-
-    return isNaN(parsed) ? undefined : parsed;
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? undefined : n;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const parsed = parseNumber(inputValue);
-
-    if (parsed !== undefined) {
-      if (min !== undefined && parsed < min) return;
-      if (max !== undefined && parsed > max) return;
-      if (!allowNegative && parsed < 0) return;
-
-      const formatted = formatNumber(parsed);
-      setValue(formatted);
-      setNumericValue(parsed);
-      onValueChange?.(formatted, parsed);
-    } else if (inputValue === "" || inputValue === "-") {
-      setValue(inputValue);
-      setNumericValue(undefined);
-      onValueChange?.(inputValue, undefined);
+  // Sync from external value changes (e.g. handleItemSelect sets rate)
+  useEffect(() => {
+    if (isFocused.current) return;
+    if (valueProp !== undefined && valueProp !== "" && valueProp !== null) {
+      const n = parseRaw(String(valueProp));
+      setDisplayValue(n !== undefined ? formatNum(n) : "");
+    } else {
+      setDisplayValue("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valueProp]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawInput = e.target.value;
+    const stripped = allowNegative
+      ? rawInput.replace(/[^\d.-]/g, "")
+      : rawInput.replace(/[^\d.]/g, "");
+
+    if (stripped === "" || stripped === ".") {
+      setDisplayValue(stripped);
+      onValueChange?.("", undefined);
+      return;
+    }
+
+    const hasTrailingDot = stripped.endsWith(".");
+    const n = parseFloat(stripped);
+
+    if (isNaN(n)) {
+      setDisplayValue(stripped);
+      return;
+    }
+
+    if (min !== undefined && n < min) return;
+    if (max !== undefined && n > max) return;
+    if (!allowNegative && n < 0) return;
+
+    const formatted = formatNum(n) + (hasTrailingDot ? "." : "");
+    setDisplayValue(formatted);
+    onValueChange?.(String(n), n);
+  };
+
+  const handleFocus = () => {
+    isFocused.current = true;
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocused.current = false;
+    const n = parseRaw(e.target.value);
+    if (n !== undefined) setDisplayValue(formatNum(n));
+    onBlur?.(e);
   };
 
   return (
-    <Field.Root required={required} invalid={!!error} disabled={disabled}>
+    <Field.Root
+      gap={0}
+      required={required}
+      invalid={!!error}
+      disabled={disabled}
+    >
       {label && (
-        <Field.Label>
+        <Field.Label
+          mb=".625rem"
+          textStyle="tiny-semibold"
+          color="gray.300"
+          {...labelProps}
+        >
           {label}
-          {required && <Field.RequiredIndicator />}
+          {required && <Field.RequiredIndicator color="error.300" mb={0} />}
         </Field.Label>
       )}
-      <Input
-        type="text"
-        placeholder={placeholder}
-        variant={variant}
-        size={size}
-        value={value}
-        onChange={handleInputChange}
-        disabled={disabled}
-        {...props}
-      />
-      {error && <Field.ErrorText>{error}</Field.ErrorText>}
+      <Box position="relative" w="100%">
+        <Input
+          type="text"
+          inputMode="decimal"
+          placeholder={placeholder}
+          px="16px"
+          borderColor="gray.100"
+          h="2.5rem"
+          color="gray.500"
+          _placeholder={{ textStyle: "tiny-regular", color: "gray.100" }}
+          name={name}
+          value={displayValue}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          disabled={disabled}
+          {...inputProps}
+        />
+      </Box>
+      {error && (
+        <Field.ErrorText mt=".25rem" fontSize=".625rem">
+          {error}
+        </Field.ErrorText>
+      )}
       {helperText && !error && (
-        <Field.HelperText>{helperText}</Field.HelperText>
+        <Field.HelperText mt=".25rem" fontSize=".625rem">
+          {helperText}
+        </Field.HelperText>
       )}
     </Field.Root>
   );

@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -7,25 +8,30 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import type { FormikProps } from "formik";
-import { CustomSelect } from "@/components/input/CustomSelect";
+import type { FormikErrors, FormikProps, FormikTouched } from "formik";
+import { SearchCombobox } from "@/components/input/SearchCombobox";
+import type { SearchComboboxOption } from "@/components/input/SearchCombobox";
 import { CustomInput } from "@/components/input/CustomInput";
+import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { formatCurrency } from "@/utils/calculations";
 import type {
   CreateInvoiceFormValues,
   LineItemFormRow,
 } from "./hooks/useCreateInvoice";
+import type { Item } from "@/shared/interface/item";
+import { AddNewItemModal } from "./AddNewItemModal";
 
 interface LineItemsTableProps {
   formik: FormikProps<CreateInvoiceFormValues>;
   removeLineItem: (index: number) => void;
   addLineItem: () => void;
-  itemOptions: { label: string; value: string }[];
+  items: Item[];
   handleItemSelect: (idx: number, itemId: string) => void;
   getLineAmount: (li: LineItemFormRow) => number;
+  onAddNewItem: (item: Item) => void;
 }
 
-const COL_WIDTHS = "36px 1fr 80px 120px 80px 100px 36px";
+const COL_WIDTHS = "36px 1fr 90px 130px 80px 100px 36px";
 
 function TableHeader() {
   return (
@@ -39,55 +45,20 @@ function TableHeader() {
       borderColor="gray.75"
       display={{ base: "none", lg: "grid" }}
     >
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-      >
-        #
-      </Text>
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-      >
-        Item Details
-      </Text>
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-      >
-        Qty
-      </Text>
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-      >
-        Rate (₦)
-      </Text>
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-      >
-        Disc
-      </Text>
-      <Text
-        fontSize="11px"
-        fontWeight="600"
-        color="gray.300"
-        textTransform="uppercase"
-        textAlign="right"
-      >
-        Amount
-      </Text>
+      {["#", "Item Details", "Qty", "Rate (₦)", "Disc", "Amount"].map(
+        (col, i) => (
+          <Text
+            key={col}
+            fontSize="11px"
+            fontWeight="600"
+            color="gray.300"
+            textTransform="uppercase"
+            textAlign={i === 5 ? "right" : "left"}
+          >
+            {col}
+          </Text>
+        ),
+      )}
       <Box />
     </Grid>
   );
@@ -96,23 +67,39 @@ function TableHeader() {
 interface LineItemRowProps {
   idx: number;
   formik: FormikProps<CreateInvoiceFormValues>;
-  itemOptions: { label: string; value: string }[];
+  searchOptions: SearchComboboxOption[];
   handleItemSelect: (idx: number, itemId: string) => void;
   lineAmount: number;
   canRemove: boolean;
   onRemove: () => void;
+  onOpenAddItem: () => void;
 }
 
 function LineItemRow({
   idx,
   formik,
-  itemOptions,
+  searchOptions,
   handleItemSelect,
   lineAmount,
   canRemove,
   onRemove,
+  onOpenAddItem,
 }: LineItemRowProps) {
   const lineItem = formik.values.line_items[idx];
+  const lineErrors = (
+    formik.errors.line_items as FormikErrors<LineItemFormRow>[] | undefined
+  )?.[idx];
+  const lineTouched = (
+    formik.touched.line_items as FormikTouched<LineItemFormRow>[] | undefined
+  )?.[idx];
+
+  const fieldError = (field: keyof LineItemFormRow) => {
+    if (lineTouched?.[field] || formik.submitCount > 0) {
+      return lineErrors?.[field] as string | undefined;
+    }
+    return undefined;
+  };
+
   return (
     <>
       {/* Desktop layout */}
@@ -135,16 +122,14 @@ function LineItemRow({
         </Flex>
 
         <Stack gap="1.5">
-          <CustomSelect
-            options={itemOptions}
+          <SearchCombobox
+            options={searchOptions}
+            value={lineItem.item_id || undefined}
+            onChange={(val) => handleItemSelect(idx, val)}
             placeholder="Select or type an item..."
-            value={lineItem.item_id ? [lineItem.item_id] : undefined}
-            onChange={(opt: { value: string[] }) => {
-              const val = Array.isArray(opt?.value)
-                ? opt.value[0]
-                : (opt?.value ?? "");
-              formik.setFieldValue(`line_items.${idx}.item_id`, val);
-              if (val) handleItemSelect(idx, val);
+            footerAction={{
+              label: "Add New Item",
+              onClick: onOpenAddItem,
             }}
           />
           <CustomInput
@@ -154,23 +139,32 @@ function LineItemRow({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             inputProps={{ fontSize: "12px" }}
+            error={fieldError("description")}
           />
         </Stack>
 
-        <CustomInput
+        <CustomNumberInput
           placeholder="1"
-          name={`line_items.${idx}.quantity`}
+          precision={2}
           value={lineItem.quantity}
-          onChange={formik.handleChange}
+          onValueChange={(raw) =>
+            formik.setFieldValue(`line_items.${idx}.quantity`, raw)
+          }
           onBlur={formik.handleBlur}
+          name={`line_items.${idx}.quantity`}
+          error={fieldError("quantity")}
         />
 
-        <CustomInput
+        <CustomNumberInput
           placeholder="0.00"
-          name={`line_items.${idx}.rate`}
+          precision={2}
           value={lineItem.rate}
-          onChange={formik.handleChange}
+          onValueChange={(raw) =>
+            formik.setFieldValue(`line_items.${idx}.rate`, raw)
+          }
           onBlur={formik.handleBlur}
+          name={`line_items.${idx}.rate`}
+          error={fieldError("rate")}
         />
 
         <CustomInput
@@ -227,17 +221,15 @@ function LineItemRow({
           )}
         </Flex>
         <Stack gap="3">
-          <CustomSelect
+          <SearchCombobox
             label="Item"
-            options={itemOptions}
+            options={searchOptions}
+            value={lineItem.item_id || undefined}
+            onChange={(val) => handleItemSelect(idx, val)}
             placeholder="Select or type an item..."
-            value={lineItem.item_id ? [lineItem.item_id] : undefined}
-            onChange={(opt: { value: string[] }) => {
-              const val = Array.isArray(opt?.value)
-                ? opt.value[0]
-                : (opt?.value ?? "");
-              formik.setFieldValue(`line_items.${idx}.item_id`, val);
-              if (val) handleItemSelect(idx, val);
+            footerAction={{
+              label: "Add New Item",
+              onClick: onOpenAddItem,
             }}
           />
           <CustomInput
@@ -247,23 +239,32 @@ function LineItemRow({
             value={lineItem.description}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
+            error={fieldError("description")}
           />
           <Grid templateColumns="1fr 1fr 1fr" gap="3">
-            <CustomInput
+            <CustomNumberInput
               label="Qty"
               placeholder="1"
-              name={`line_items.${idx}.quantity`}
+              precision={2}
               value={lineItem.quantity}
-              onChange={formik.handleChange}
+              onValueChange={(raw) =>
+                formik.setFieldValue(`line_items.${idx}.quantity`, raw)
+              }
               onBlur={formik.handleBlur}
+              name={`line_items.${idx}.quantity`}
+              error={fieldError("quantity")}
             />
-            <CustomInput
+            <CustomNumberInput
               label="Rate (₦)"
               placeholder="0.00"
-              name={`line_items.${idx}.rate`}
+              precision={2}
               value={lineItem.rate}
-              onChange={formik.handleChange}
+              onValueChange={(raw) =>
+                formik.setFieldValue(`line_items.${idx}.rate`, raw)
+              }
               onBlur={formik.handleBlur}
+              name={`line_items.${idx}.rate`}
+              error={fieldError("rate")}
             />
             <CustomInput
               label="Disc"
@@ -292,10 +293,23 @@ export function LineItemsTable({
   formik,
   removeLineItem,
   addLineItem,
-  itemOptions,
+  items,
   handleItemSelect,
   getLineAmount,
+  onAddNewItem,
 }: LineItemsTableProps) {
+  const [addItemOpen, setAddItemOpen] = useState(false);
+
+  const searchOptions: SearchComboboxOption[] = useMemo(
+    () =>
+      items.map((item) => ({
+        label: item.name,
+        value: item.id,
+        subLabel: `Rate: ₦${item.unitPrice.toLocaleString("en-US")}`,
+      })),
+    [items],
+  );
+
   return (
     <Box>
       <TableHeader />
@@ -305,11 +319,12 @@ export function LineItemsTable({
           key={idx}
           idx={idx}
           formik={formik}
-          itemOptions={itemOptions}
+          searchOptions={searchOptions}
           handleItemSelect={handleItemSelect}
           lineAmount={getLineAmount(lineItem)}
           canRemove={formik.values.line_items.length > 1}
           onRemove={() => removeLineItem(idx)}
+          onOpenAddItem={() => setAddItemOpen(true)}
         />
       ))}
 
@@ -325,6 +340,15 @@ export function LineItemsTable({
           + Add a new line
         </Button>
       </Box>
+
+      <AddNewItemModal
+        open={addItemOpen}
+        onClose={() => setAddItemOpen(false)}
+        onSave={(item) => {
+          onAddNewItem(item);
+          setAddItemOpen(false);
+        }}
+      />
     </Box>
   );
 }

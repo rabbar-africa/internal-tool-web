@@ -1,10 +1,11 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useCreateInvoiceMutation } from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
 import { MOCK_ITEMS, MOCK_CUSTOMERS } from "@/shared/data/mock";
+import type { Item } from "@/shared/interface/item";
 
 export interface LineItemFormRow {
   item_id: string;
@@ -19,6 +20,7 @@ export interface LineItemFormRow {
 }
 
 export interface CreateInvoiceFormValues {
+  invoice_number: string;
   customer_id: string;
   reference_number: string;
   date: string;
@@ -37,6 +39,12 @@ export interface CreateInvoiceFormValues {
 
 const today = new Date().toISOString().split("T")[0];
 
+// Generated once per session
+export const DEFAULT_INVOICE_PREFIX = "RINV-";
+export const DEFAULT_INVOICE_NEXT = String(
+  Math.floor(Math.random() * 900000 + 100000),
+);
+
 export const EMPTY_LINE_ITEM: LineItemFormRow = {
   item_id: "",
   name: "",
@@ -50,6 +58,7 @@ export const EMPTY_LINE_ITEM: LineItemFormRow = {
 };
 
 const defaultValues: CreateInvoiceFormValues = {
+  invoice_number: `${DEFAULT_INVOICE_PREFIX}${DEFAULT_INVOICE_NEXT}`,
   customer_id: "",
   reference_number: "",
   date: today,
@@ -67,6 +76,7 @@ const defaultValues: CreateInvoiceFormValues = {
 };
 
 const validationSchema = Yup.object({
+  invoice_number: Yup.string().required("Invoice number is required"),
   customer_id: Yup.string().required("Customer is required"),
   date: Yup.string().required("Invoice date is required"),
   due_date: Yup.string().required("Due date is required"),
@@ -94,6 +104,13 @@ export function useCreateInvoice() {
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateInvoiceMutation();
 
+  // Items list — starts from mock data, extended when user adds new items
+  const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
+
+  const addNewItem = useCallback((item: Item) => {
+    setItems((prev) => [...prev, item]);
+  }, []);
+
   const formik = useFormik<CreateInvoiceFormValues>({
     initialValues: defaultValues,
     validationSchema,
@@ -103,6 +120,7 @@ export function useCreateInvoice() {
           ?.label ?? "Due on Receipt";
 
       const payload = {
+        invoice_number: values.invoice_number,
         reference_number: values.reference_number,
         payment_terms: parseInt(values.payment_terms) || 0,
         payment_terms_label: termsLabel,
@@ -155,18 +173,13 @@ export function useCreateInvoice() {
     [],
   );
 
-  const itemOptions = useMemo(
-    () => MOCK_ITEMS.map((item) => ({ label: item.name, value: item.id })),
-    [],
-  );
-
   const selectedCustomer = useMemo(
     () => MOCK_CUSTOMERS.find((c) => c.id === formik.values.customer_id),
     [formik.values.customer_id],
   );
 
   const handleItemSelect = (idx: number, itemId: string) => {
-    const item = MOCK_ITEMS.find((i) => i.id === itemId);
+    const item = items.find((i) => i.id === itemId);
     if (item) {
       formik.setFieldValue(`line_items.${idx}.item_id`, itemId);
       formik.setFieldValue(`line_items.${idx}.name`, item.name);
@@ -192,8 +205,8 @@ export function useCreateInvoice() {
   };
 
   const totals = useMemo(() => {
-    const items = formik.values.line_items ?? [];
-    const subtotal = items.reduce((sum, li) => {
+    const lineItems = formik.values.line_items ?? [];
+    const subtotal = lineItems.reduce((sum, li) => {
       const qty = parseFloat(li.quantity) || 0;
       const rate = parseFloat(li.rate) || 0;
       const discountStr = (li.discount ?? "").replace("%", "");
@@ -226,12 +239,13 @@ export function useCreateInvoice() {
     addLineItem,
     removeLineItem,
     customerOptions,
-    itemOptions,
     selectedCustomer,
     handleItemSelect,
     totals,
     getLineAmount,
     isPending,
     handleCancel,
+    items,
+    addNewItem,
   };
 }
