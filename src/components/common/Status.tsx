@@ -10,16 +10,21 @@ export default function Status({
   return (
     <Center
       bg={getColorFun()?.bg}
-      rounded={".625rem"}
       px={".625rem"}
-      py={".375rem"}
       w={"fit-content"}
+      display="inline-flex"
+      py="4px"
+      rounded="md"
+      alignItems="center"
       {...props}
     >
       <Text
         textStyle={"tiny-regular"}
         whiteSpace={"nowrap"}
         color={getColorFun()?.text}
+        fontSize="12px"
+        fontWeight="500"
+        textTransform="capitalize"
       >
         {name}
       </Text>

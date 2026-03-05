@@ -20,13 +20,17 @@ export interface Customer {
 }
 
 export interface CreateCustomerPayload {
-  name: string;
   email: string;
   phone: string;
-  type: CustomerType;
+  type: string;
   address?: string;
   city?: string;
   state?: string;
   country: string;
+  displayName: string;
+  firstName: string;
+  lastName: string;
+  stage: string;
+
   notes?: string;
 }

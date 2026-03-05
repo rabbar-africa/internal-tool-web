@@ -11,6 +11,7 @@ import { DownloadButton } from "@/components/common/DownloadButton";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useGetAllCustomersQuery } from "../../api/query";
 import { useUrlState } from "@/hooks/useUrlState";
+import Status from "@/components/common/Status";
 
 interface ApiCustomer {
   id: string;
@@ -29,11 +30,6 @@ interface ApiCustomer {
   city: string | null;
   address: string | null;
 }
-
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
-  ACTIVE: { bg: "green.50", color: "green.600" },
-  INACTIVE: { bg: "gray.100", color: "gray.400" },
-};
 
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   CUSTOMER: { bg: "blue.50", color: "blue.600" },
@@ -93,7 +89,7 @@ const columns: ColumnDef<ApiCustomer>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {stage.toLowerCase()}
+            {stage?.toLowerCase()}
           </Text>
         </Box>
       );
@@ -104,29 +100,8 @@ const columns: ColumnDef<ApiCustomer>[] = [
     header: "Status",
     cell: ({ getValue }) => {
       const status = getValue() as string;
-      const styles = STATUS_BADGE[status] ?? {
-        bg: "gray.100",
-        color: "gray.400",
-      };
-      return (
-        <Box
-          display="inline-flex"
-          bg={styles.bg}
-          px="10px"
-          py="4px"
-          rounded="md"
-          alignItems="center"
-        >
-          <Text
-            fontSize="12px"
-            fontWeight="500"
-            color={styles.color}
-            textTransform="capitalize"
-          >
-            {status.toLowerCase()}
-          </Text>
-        </Box>
-      );
+
+      return <Status name={status} />;
     },
   },
 ];

@@ -13,6 +13,7 @@ import type { Invoice } from "@/shared/interface/invoice";
 import type { Payment } from "@/shared/interface/payment";
 import moment from "moment";
 import SectionLoader from "@/components/common/SectionLoader";
+import Status from "@/components/common/Status";
 
 const invoiceColumns: ColumnDef<Invoice>[] = [
   {
@@ -251,24 +252,7 @@ export function CustomerDetailPage() {
               <Text fontSize="11px" color="gray.300" mb="1">
                 Status
               </Text>
-              <Box
-                display="inline-flex"
-                bg={customer.status === "active" ? "green.50" : "gray.100"}
-                px="10px"
-                py="4px"
-                rounded="md"
-              >
-                <Text
-                  fontSize="12px"
-                  fontWeight="500"
-                  color={
-                    customer.status === "active" ? "green.600" : "gray.400"
-                  }
-                  textTransform="capitalize"
-                >
-                  {customer?.status}
-                </Text>
-              </Box>
+              <Status name={customer?.status} />
             </Box>
             <Box>
               <Text fontSize="11px" color="gray.300" mb="1">

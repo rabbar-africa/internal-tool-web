@@ -1,12 +1,6 @@
-import type {
-  Customer,
-  CreateCustomerPayload,
-} from "@/shared/interface/customer";
-import { MOCK_CUSTOMERS } from "@/shared/data/mock";
+import type { CreateCustomerPayload } from "@/shared/interface/customer";
 import { axios } from "@/lib/axios";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
-
-const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
 export interface CustomerFilter {
   page?: number;
@@ -29,18 +23,7 @@ export const getCustomerById = async (id: string) => {
   return response.data;
 };
 
-export const createCustomer = async (
-  payload: CreateCustomerPayload,
-): Promise<Customer> => {
-  await delay(500);
-  return {
-    id: `cust-${Date.now()}`,
-    code: `C-${String(MOCK_CUSTOMERS.length + 1).padStart(3, "0")}`,
-    ...payload,
-    status: "active",
-    totalInvoices: 0,
-    totalRevenue: 0,
-    outstandingBalance: 0,
-    createdAt: new Date().toISOString().split("T")[0],
-  };
+export const createCustomer = async (payload: CreateCustomerPayload) => {
+  const response = await axios.post("/clients", payload);
+  return response.data;
 };
