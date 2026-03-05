@@ -1,5 +1,7 @@
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { CustomSelect } from "@/components/input/CustomSelect";
 import { type ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
 import { UserDashboardContainer } from "@/components/hoc";
@@ -7,48 +9,43 @@ import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DownloadButton } from "@/components/common/DownloadButton";
 import { RouteConstants } from "@/shared/constants/routes";
-import { formatCurrency } from "@/utils/calculations";
-import { useGetCustomersQuery } from "../../api/query";
-import type {
-  Customer,
-  CustomerStatus,
-  CustomerType,
-} from "@/shared/interface/customer";
+import { useGetAllCustomersQuery } from "../../api/query";
+import { useUrlState } from "@/hooks/useUrlState";
 
-const TYPE_STYLES: Record<CustomerType, { bg: string; color: string }> = {
-  individual: { bg: "blue.50", color: "blue.600" },
-  company: { bg: "gray.100", color: "gray.600" },
+interface ApiCustomer {
+  id: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  displayName: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  stage: string;
+  status: string;
+  source: string;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  address: string | null;
+}
+
+const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
+  ACTIVE: { bg: "green.50", color: "green.600" },
+  INACTIVE: { bg: "gray.100", color: "gray.400" },
 };
 
-const STATUS_STYLES: Record<CustomerStatus, { bg: string; color: string }> = {
-  active: { bg: "green.50", color: "green.600" },
-  inactive: { bg: "gray.100", color: "gray.400" },
+const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
+  CUSTOMER: { bg: "blue.50", color: "blue.600" },
+  LEAD: { bg: "orange.50", color: "orange.600" },
 };
 
-const columns: ColumnDef<Customer>[] = [
+const columns: ColumnDef<ApiCustomer>[] = [
   {
-    accessorKey: "code",
-    header: "Code",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "name",
+    accessorKey: "displayName",
     header: "Name",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
         {getValue() as string}
       </Text>
     ),
@@ -58,16 +55,29 @@ const columns: ColumnDef<Customer>[] = [
     header: "Phone",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {getValue() as string}
+        {(getValue() as string | null) ?? "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "type",
-    header: "Type",
+    accessorKey: "email",
+    header: "Email",
+    cell: ({ getValue }) => (
+      <Text textStyle="small-regular" color="gray.500">
+        {(getValue() as string | null) ?? "—"}
+      </Text>
+    ),
+  },
+
+  {
+    accessorKey: "stage",
+    header: "Stage",
     cell: ({ getValue }) => {
-      const type = getValue() as CustomerType;
-      const styles = TYPE_STYLES[type];
+      const stage = getValue() as string;
+      const styles = STAGE_BADGE[stage] ?? {
+        bg: "gray.100",
+        color: "gray.500",
+      };
       return (
         <Box
           display="inline-flex"
@@ -83,36 +93,21 @@ const columns: ColumnDef<Customer>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {type}
+            {stage.toLowerCase()}
           </Text>
         </Box>
       );
     },
   },
   {
-    accessorKey: "totalInvoices",
-    header: "Invoices",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {getValue() as number}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "outstandingBalance",
-    header: "Outstanding",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {formatCurrency(getValue() as number)}
-      </Text>
-    ),
-  },
-  {
     accessorKey: "status",
     header: "Status",
     cell: ({ getValue }) => {
-      const status = getValue() as CustomerStatus;
-      const styles = STATUS_STYLES[status];
+      const status = getValue() as string;
+      const styles = STATUS_BADGE[status] ?? {
+        bg: "gray.100",
+        color: "gray.400",
+      };
       return (
         <Box
           display="inline-flex"
@@ -128,7 +123,7 @@ const columns: ColumnDef<Customer>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {status}
+            {status.toLowerCase()}
           </Text>
         </Box>
       );
@@ -137,30 +132,49 @@ const columns: ColumnDef<Customer>[] = [
 ];
 
 const CSV_HEADERS = {
-  code: "Code",
-  name: "Name",
-  email: "Email",
+  displayName: "Name",
   phone: "Phone",
-  type: "Type",
-  totalInvoices: "Total Invoices",
-  totalRevenue: "Total Revenue (₦)",
-  outstandingBalance: "Outstanding (₦)",
+  email: "Email",
+  company: "Company",
+  stage: "Stage",
   status: "Status",
 } as const;
 
+const STATUS_OPTIONS = [
+  { label: "Active", value: "ACTIVE" },
+  { label: "Inactive", value: "INACTIVE" },
+];
+
+const FILTER_SCHEMA = {
+  page: { defaultValue: 1 },
+  limit: { defaultValue: 20 },
+  search: { defaultValue: "" },
+  status: { defaultValue: "" },
+  stage: { defaultValue: "" },
+};
+
 export function CustomerListPage() {
   const navigate = useNavigate();
-  const { data: customers = [], isLoading } = useGetCustomersQuery();
+  const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
+  const [searchInput, setSearchInput] = useState(filters.search);
+
+  const { data, isLoading } = useGetAllCustomersQuery({
+    page: filters.page,
+    limit: filters.limit,
+    ...(filters.search ? { search: filters.search } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.stage ? { stage: filters.stage } : {}),
+  });
+
+  const customers: ApiCustomer[] = data?.data ?? [];
+  const meta = data?.meta;
 
   const csvData = customers.map((c) => ({
-    code: c.code,
-    name: c.name,
-    email: c.email,
-    phone: c.phone,
-    type: c.type,
-    totalInvoices: c.totalInvoices,
-    totalRevenue: c.totalRevenue,
-    outstandingBalance: c.outstandingBalance,
+    displayName: c.displayName,
+    phone: c.phone ?? "",
+    email: c.email ?? "",
+    company: c.company ?? "",
+    stage: c.stage,
     status: c.status,
   }));
 
@@ -197,34 +211,57 @@ export function CustomerListPage() {
           borderColor="gray.75"
         >
           <Flex
-            justifyContent="space-between"
+            justifyContent="flex-start"
             alignItems="center"
             mb="1.5rem"
             gap="3"
             direction={{ base: "column", md: "row" }}
           >
-            <Box>
-              <Text textStyle="large-bold" color="gray.500">
-                All Customers
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                Click a row to view customer details
-              </Text>
-            </Box>
-            <SearchInput placeholder="Search by name or email" />
+            <CustomSelect
+              placeholder="All Status"
+              options={STATUS_OPTIONS}
+              value={filters.status ? [filters.status] : undefined}
+              onChange={(opt: { value: string[] }) => {
+                setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
+              }}
+              rootProps={{ size: "sm" }}
+              controlProps={{ w: "140px" }}
+            />
+
+            <SearchInput
+              placeholder="Search by name or phone"
+              value={searchInput}
+              onChange={setSearchInput}
+              onSearch={(val) => setFilters({ search: val, page: 1 })}
+              debounceMs={500}
+              loading={isLoading}
+            />
           </Flex>
 
-          <Box overflowX="auto" maxW="calc(100vw - 310px)">
+          <Box overflowX="auto" maxW="calc(100vw - 380px)">
             <CustomTable
               data={customers}
               columns={columns}
               loading={isLoading}
               onRowClick={(row) =>
                 navigate(
-                  RouteConstants.customers.detail.generate({ id: row.id }),
+                  RouteConstants.customers.detail.generate({
+                    id: row.original.id,
+                  }),
                 )
               }
               tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+              pagination={{
+                pageIndex: filters.page - 1,
+                pageSize: filters.limit,
+              }}
+              setPagination={({ pageIndex }) =>
+                setFilters({ page: pageIndex + 1 })
+              }
+              pageCount={meta?.totalPages ?? 1}
+              totalItems={meta?.total}
+              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+              hasPrevPage={filters.page > 1}
             />
           </Box>
         </Box>

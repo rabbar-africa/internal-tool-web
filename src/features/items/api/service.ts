@@ -1,20 +1,22 @@
 import type { Item, CreateItemPayload } from "@/shared/interface/item";
-import { MOCK_ITEMS } from "@/shared/data/mock";
+import type { IBaseFilter } from "@/shared/interface/filter";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
+import { axios } from "@/lib/axios";
 
-const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
-
-export const getItems = async (): Promise<Item[]> => {
-  await delay(300);
-  return MOCK_ITEMS;
+export const getItems = async (filter?: IBaseFilter) => {
+  const baseUrl = "/items";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
+  const response = await axios.get(apiUrl);
+  return response.data;
 };
 
 export const createItem = async (payload: CreateItemPayload): Promise<Item> => {
-  await delay(500);
-  return {
-    id: `item-${Date.now()}`,
-    code: `ITM-${String(MOCK_ITEMS.length + 1).padStart(3, "0")}`,
-    ...payload,
-    status: "active",
-    createdAt: new Date().toISOString().split("T")[0],
-  };
+  const response = await axios.post("/items", payload);
+  return response.data;
+};
+
+export const getItemById = async (id: string) => {
+  const baseUrl = `/items/${id}`;
+  const response = await axios.get(baseUrl);
+  return response.data;
 };

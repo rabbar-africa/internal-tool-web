@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Flex, Grid, IconButton, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
+import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
 import type { CreateInvoiceFormValues } from "./hooks/useCreateInvoice";
@@ -14,19 +15,23 @@ import {
   InvoiceNumberConfigModal,
   type InvoiceNumberConfig,
 } from "./InvoiceNumberConfigModal";
+import { AddNewCustomerModal } from "./AddNewCustomerModal";
 
 interface InvoiceFormHeaderProps {
   formik: FormikProps<CreateInvoiceFormValues>;
   customerOptions: { label: string; value: string }[];
   selectedCustomer: Customer | undefined;
+  onAddNewCustomer: (customer: Customer) => void;
 }
 
 export function InvoiceFormHeader({
   formik,
   customerOptions,
   selectedCustomer,
+  onAddNewCustomer,
 }: InvoiceFormHeaderProps) {
   const [showConfig, setShowConfig] = useState(false);
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
   const [invoiceConfig, setInvoiceConfig] = useState<InvoiceNumberConfig>({
     mode: "auto",
     prefix: DEFAULT_INVOICE_PREFIX,
@@ -52,27 +57,22 @@ export function InvoiceFormHeader({
       >
         {/* Left: Customer */}
         <Stack gap="4">
-          <CustomSelect
+          <SearchCombobox
             label="Customer Name"
             required
             options={customerOptions}
-            placeholder="Select a customer..."
-            value={
-              formik.values.customer_id
-                ? [formik.values.customer_id]
-                : undefined
-            }
-            onChange={(opt: { value: string[] }) => {
-              const val = Array.isArray(opt?.value)
-                ? opt.value[0]
-                : (opt?.value ?? "");
-              formik.setFieldValue("customer_id", val);
-            }}
+            placeholder="Select or type a customer..."
+            value={formik.values.customer_id || undefined}
+            onChange={(val) => formik.setFieldValue("customer_id", val)}
             error={
               formik.touched.customer_id && formik.errors.customer_id
                 ? String(formik.errors.customer_id)
                 : undefined
             }
+            footerAction={{
+              label: "Add Customer",
+              onClick: () => setAddCustomerOpen(true),
+            }}
           />
 
           {selectedCustomer ? (
@@ -252,6 +252,16 @@ export function InvoiceFormHeader({
         onClose={() => setShowConfig(false)}
         config={invoiceConfig}
         onSave={handleSaveConfig}
+      />
+
+      <AddNewCustomerModal
+        open={addCustomerOpen}
+        onClose={() => setAddCustomerOpen(false)}
+        onSave={(customer) => {
+          onAddNewCustomer(customer);
+          formik.setFieldValue("customer_id", customer.id);
+          setAddCustomerOpen(false);
+        }}
       />
     </>
   );

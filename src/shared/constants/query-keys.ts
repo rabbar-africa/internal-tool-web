@@ -34,5 +34,17 @@ export const customQueryKey = {
     getAll: "get-all-admin-users",
     getById: "get-admin-user-by-id",
   },
+  customers: {
+    getAll: "get-all-customers",
+    getById: "get-customer-by-id",
+  },
+  items: {
+    getAll: "get-all-items",
+    getById: "get-item-by-id",
+  },
+  invoices: {
+    getAll: "get-all-invoices",
+    getById: "get-invoice-by-id",
+  },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
 };

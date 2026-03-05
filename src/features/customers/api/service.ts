@@ -3,19 +3,30 @@ import type {
   CreateCustomerPayload,
 } from "@/shared/interface/customer";
 import { MOCK_CUSTOMERS } from "@/shared/data/mock";
+import { axios } from "@/lib/axios";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 
 const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
-export const getCustomers = async (): Promise<Customer[]> => {
-  await delay(300);
-  return MOCK_CUSTOMERS;
+export interface CustomerFilter {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  stage?: string;
+}
+
+export const getCustomers = async (filter?: CustomerFilter) => {
+  const baseUrl = "/clients";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
+  const response = await axios.get(apiUrl);
+  return response.data;
 };
 
-export const getCustomerById = async (id: string): Promise<Customer> => {
-  await delay(200);
-  const customer = MOCK_CUSTOMERS.find((c) => c.id === id);
-  if (!customer) throw new Error("Customer not found");
-  return customer;
+export const getCustomerById = async (id: string) => {
+  const baseUrl = `/clients/${id}`;
+  const response = await axios.get(baseUrl);
+  return response.data;
 };
 
 export const createCustomer = async (

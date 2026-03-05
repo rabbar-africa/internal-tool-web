@@ -19,6 +19,7 @@ export function CreateInvoicePage() {
     handleCancel,
     items,
     addNewItem,
+    addNewCustomer,
   } = useCreateInvoice();
 
   return (
@@ -74,6 +75,7 @@ export function CreateInvoicePage() {
               formik={formik}
               customerOptions={customerOptions}
               selectedCustomer={selectedCustomer}
+              onAddNewCustomer={addNewCustomer}
             />
 
             <Separator borderColor="gray.75" />

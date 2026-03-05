@@ -1,18 +1,32 @@
-import { useQuery, useMutation, useQueryClient } from "@/lib/react-query";
-import { getCustomers, getCustomerById, createCustomer } from "./service";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryConfigType,
+} from "@/lib/react-query";
+import {
+  getCustomers,
+  getCustomerById,
+  createCustomer,
+  type CustomerFilter,
+} from "./service";
 import type { CreateCustomerPayload } from "@/shared/interface/customer";
+import { customQueryKey } from "@/shared/constants/query-keys";
 
-const KEYS = {
-  all: ["customers"] as const,
-  detail: (id: string) => ["customers", id] as const,
+export const useGetAllCustomersQuery = (
+  filter?: CustomerFilter,
+  config?: QueryConfigType<typeof getCustomers>,
+) => {
+  return useQuery({
+    queryKey: [customQueryKey.customers.getAll, filter],
+    queryFn: () => getCustomers(filter),
+    ...config,
+  });
 };
-
-export const useGetCustomersQuery = () =>
-  useQuery({ queryKey: KEYS.all, queryFn: getCustomers });
 
 export const useGetCustomerByIdQuery = (id: string) =>
   useQuery({
-    queryKey: KEYS.detail(id),
+    queryKey: [customQueryKey.customers.getById, id],
     queryFn: () => getCustomerById(id),
     enabled: Boolean(id),
   });
@@ -21,7 +35,10 @@ export const useCreateCustomerMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateCustomerPayload) => createCustomer(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.all }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [customQueryKey.customers.getAll],
+      }),
     meta: { successMessage: "Customer created successfully" },
   });
 };

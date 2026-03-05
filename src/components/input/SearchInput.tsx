@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Field, Input, Box, Spinner, InputGroup } from "@chakra-ui/react";
 import type { FieldRootProps, InputProps } from "@chakra-ui/react";
 import { MagnifyingGlassIcon } from "@/assets/custom";
@@ -75,70 +75,51 @@ export function SearchInput({
   ...inputProps
 }: SearchInputProps) {
   const [internalValue, setInternalValue] = useState(value);
-  const [debounceTimer, setDebounceTimer] = useState<any>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Use controlled value if provided, otherwise use internal state
   const currentValue = value !== undefined ? value : internalValue;
   const setValue = value !== undefined ? onChange : setInternalValue;
 
-  // Debounced search handler
+  // Stable debounced search handler — uses ref so no re-renders on timer change
   const handleDebouncedSearch = useCallback(
     (searchValue: string) => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
-
-      const timer = setTimeout(() => {
+      debounceTimerRef.current = setTimeout(() => {
         onSearch?.(searchValue);
       }, debounceMs);
-
-      setDebounceTimer(timer);
     },
-    [debounceTimer, debounceMs, onSearch],
+    [debounceMs, onSearch],
   );
 
-  // Handle input change
+  // Clear pending timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setValue?.(newValue);
-
     if (searchOnType && onSearch) {
       handleDebouncedSearch(newValue);
     }
   };
 
-  // Handle key press (Enter to search)
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && onSearch && !searchOnType) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       onSearch(currentValue);
     }
     inputProps.onKeyDown?.(e);
   };
-
-  // Handle clear
-  //   const handleClear = () => {
-  //     setValue?.('')
-  //     onClear?.()
-  //     if (searchOnType && onSearch) {
-  //       onSearch('')
-  //     }
-  //   }
-
-  //   // Handle manual search (for non-searchOnType mode)
-  //   const handleManualSearch = () => {
-  //     if (onSearch) {
-  //       onSearch(currentValue)
-  //     }
-  //   }
-
-  // Clean up debounce timer on unmount
-  React.useEffect(() => {
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-    };
-  }, [debounceTimer]);
 
   const searchIconElement = searchIcon || (
     <MagnifyingGlassIcon color={"gray.200"} ml={"1.125rem"} w={"1.19rem"} />

@@ -6,6 +6,7 @@ import { useCreateInvoiceMutation } from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
 import { MOCK_ITEMS, MOCK_CUSTOMERS } from "@/shared/data/mock";
 import type { Item } from "@/shared/interface/item";
+import type { Customer } from "@/shared/interface/customer";
 
 export interface LineItemFormRow {
   item_id: string;
@@ -106,9 +107,14 @@ export function useCreateInvoice() {
 
   // Items list — starts from mock data, extended when user adds new items
   const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
+  const [customers, setCustomers] = useState<Customer[]>(MOCK_CUSTOMERS);
 
   const addNewItem = useCallback((item: Item) => {
     setItems((prev) => [...prev, item]);
+  }, []);
+
+  const addNewCustomer = useCallback((customer: Customer) => {
+    setCustomers((prev) => [...prev, customer]);
   }, []);
 
   const formik = useFormik<CreateInvoiceFormValues>({
@@ -169,13 +175,13 @@ export function useCreateInvoice() {
   });
 
   const customerOptions = useMemo(
-    () => MOCK_CUSTOMERS.map((c) => ({ label: c.name, value: c.id })),
-    [],
+    () => customers.map((c) => ({ label: c.name, value: c.id })),
+    [customers],
   );
 
   const selectedCustomer = useMemo(
-    () => MOCK_CUSTOMERS.find((c) => c.id === formik.values.customer_id),
-    [formik.values.customer_id],
+    () => customers.find((c) => c.id === formik.values.customer_id),
+    [customers, formik.values.customer_id],
   );
 
   const handleItemSelect = (idx: number, itemId: string) => {
@@ -247,5 +253,6 @@ export function useCreateInvoice() {
     handleCancel,
     items,
     addNewItem,
+    addNewCustomer,
   };
 }

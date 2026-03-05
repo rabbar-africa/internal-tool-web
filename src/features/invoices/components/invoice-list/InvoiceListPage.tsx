@@ -189,7 +189,7 @@ export function InvoiceListPage() {
             <SearchInput placeholder="Search by invoice # or customer" />
           </Flex>
 
-          <Box overflowX="auto" maxW="calc(100vw - 310px)">
+          <Box overflowX="auto" maxW="calc(100vw - 380px)">
             <CustomTable
               data={invoices}
               columns={columns}
@@ -201,7 +201,7 @@ export function InvoiceListPage() {
                   }),
                 )
               }
-              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+              // tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
             />
           </Box>
         </Box>
