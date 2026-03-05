@@ -14,6 +14,10 @@ export function CustomInput({
   register,
   labelProps,
   inputProps,
+  value,
+  onChange,
+  onBlur,
+  name,
   ...props
 }: CustomInputProps) {
   return (
@@ -60,6 +64,10 @@ export function CustomInput({
             ...inputProps?._placeholder,
             color: "gray.100",
           }}
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
           {...register}
           {...props}
           {...inputProps}

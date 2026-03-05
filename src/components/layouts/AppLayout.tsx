@@ -1,8 +1,9 @@
-import { Box, Drawer, Flex, Loader, Portal, Stack } from "@chakra-ui/react";
+import { Box, Drawer, Flex, Portal, Stack } from "@chakra-ui/react";
 import { Suspense, useState, type ReactNode } from "react";
 import { UserDashboardContainer } from "../hoc";
 import { Sidebar } from "./SideBar";
 import { NavBar } from "./NavBar";
+import SectionLoader from "../common/SectionLoader";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
@@ -23,7 +24,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <NavBar onMenuToggle={() => setMobileNavOpen(true)} />
           <Box flex="1" overflow="auto">
             <UserDashboardContainer pt={"1.75rem"}>
-              <Suspense fallback={<Loader />}>{children}</Suspense>
+              <Suspense fallback={<SectionLoader />}>{children}</Suspense>
             </UserDashboardContainer>
           </Box>
         </Stack>

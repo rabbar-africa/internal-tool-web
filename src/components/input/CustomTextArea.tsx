@@ -16,6 +16,10 @@ export const CustomTextArea: React.FC<CustomTextareaProps> = ({
   register,
   labelProps,
   textAreaProps,
+  value,
+  onChange,
+  onBlur,
+  name,
   ...props
 }) => {
   return (
@@ -46,6 +50,10 @@ export const CustomTextArea: React.FC<CustomTextareaProps> = ({
         color={"gray.300"}
         resize={resize}
         p="16px"
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
         {...register}
         {...props}
         {...textAreaProps}

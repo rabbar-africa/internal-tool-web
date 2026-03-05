@@ -1,10 +1,6 @@
 import type { Invoice, CreateInvoicePayload } from "@/shared/interface/invoice";
 import { MOCK_INVOICES } from "@/shared/data/mock";
-import {
-  calculateProfit,
-  calculateMarginPercent,
-  calculateLineTotal,
-} from "@/utils/calculations";
+import { calculateProfit, calculateMarginPercent } from "@/utils/calculations";
 
 const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
@@ -24,35 +20,48 @@ export const createInvoice = async (
   payload: CreateInvoicePayload,
 ): Promise<Invoice> => {
   await delay(500);
-  const lineItems = payload.lineItems.map((li, idx) => ({
-    ...li,
-    id: `li-new-${idx}`,
-    lineTotal: calculateLineTotal(li.quantity, li.unitPrice, li.taxRate),
-  }));
+
+  const lineItems = payload.line_items.map((li, idx) => {
+    const rate =
+      typeof li.rate === "string" ? parseFloat(li.rate) || 0 : li.rate;
+    const qty = parseFloat(li.quantity) || 0;
+    const discountPct = parseFloat((li.discount ?? "0").replace("%", "")) || 0;
+    const lineAmount = rate * qty * (1 - discountPct / 100);
+    return {
+      id: `li-new-${idx}`,
+      itemId: li.item_id ?? "",
+      description: li.description,
+      quantity: qty,
+      unitPrice: rate,
+      taxRate: 0,
+      lineTotal: lineAmount,
+    };
+  });
+
   const subtotal = lineItems.reduce(
     (s, li) => s + li.quantity * li.unitPrice,
     0,
   );
-  const taxTotal = lineItems.reduce(
-    (s, li) => s + li.quantity * li.unitPrice * (li.taxRate / 100),
-    0,
-  );
-  const totalAmount = subtotal + taxTotal;
+  const taxTotal = 0;
+  const entityDiscount = parseFloat(payload.discount) || 0;
+  const adjustment = parseFloat(payload.adjustment) || 0;
+  const totalAmount = subtotal - entityDiscount + adjustment + taxTotal;
+
   const profit = calculateProfit(totalAmount, 0);
   const marginPercent = calculateMarginPercent(profit, totalAmount);
 
   return {
     id: `inv-${Date.now()}`,
-    invoiceNumber: `INV-2025-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
-    customerId: payload.customerId,
+    invoiceNumber: `INV-2026-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
+    customerId: payload.customer_id,
     customer: {
-      id: payload.customerId,
+      id: payload.customer_id,
       name: "New Customer",
       email: "",
       phone: "",
     },
-    issueDate: payload.issueDate,
-    dueDate: payload.dueDate,
+    issueDate: payload.date,
+    dueDate: payload.due_date,
     lineItems,
     subtotal,
     taxTotal,

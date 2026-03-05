@@ -37,6 +37,7 @@ export interface BaseFieldProps {
   register?: Partial<UseFormRegisterReturn>;
   value?: any;
   onChange?: any;
+  onBlur?: any;
   name?: string;
 }
 
