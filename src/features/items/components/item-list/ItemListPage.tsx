@@ -1,7 +1,9 @@
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { CustomSelect } from "@/components/input/CustomSelect";
 import { type ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CustomTable } from "@/components/table";
+import { CustomTable, type TableAction } from "@/components/table";
 import { UserDashboardContainer } from "@/components/hoc";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -9,28 +11,31 @@ import { DownloadButton } from "@/components/common/DownloadButton";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import { useGetItemsQuery } from "../../api/query";
-import type { Item, ItemStatus, ItemType } from "@/shared/interface/item";
+import { useUrlState } from "@/hooks/useUrlState";
+import { EditItemModal } from "./EditItemModal";
 
-const TYPE_STYLES: Record<ItemType, { bg: string; color: string }> = {
-  product: { bg: "blue.50", color: "blue.600" },
-  service: { bg: "purple.50", color: "purple.600" },
+interface ApiItem {
+  id: string;
+  name: string;
+  description: string | null;
+  rate: string;
+  purchaseRate: string;
+  productType: string;
+  unit: string | null;
+  status: string;
+}
+
+const PRODUCT_TYPE_STYLES: Record<string, { bg: string; color: string }> = {
+  GOODS: { bg: "blue.50", color: "blue.600" },
+  SERVICE: { bg: "purple.50", color: "purple.600" },
 };
 
-const STATUS_STYLES: Record<ItemStatus, { bg: string; color: string }> = {
-  active: { bg: "green.50", color: "green.600" },
-  inactive: { bg: "gray.100", color: "gray.400" },
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  ACTIVE: { bg: "green.50", color: "green.600" },
+  INACTIVE: { bg: "gray.100", color: "gray.400" },
 };
 
-const columns: ColumnDef<Item>[] = [
-  {
-    accessorKey: "code",
-    header: "Code",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
-      </Text>
-    ),
-  },
+const columns: ColumnDef<ApiItem>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -41,11 +46,14 @@ const columns: ColumnDef<Item>[] = [
     ),
   },
   {
-    accessorKey: "type",
+    accessorKey: "productType",
     header: "Type",
     cell: ({ getValue }) => {
-      const type = getValue() as ItemType;
-      const styles = TYPE_STYLES[type];
+      const type = getValue() as string;
+      const styles = PRODUCT_TYPE_STYLES[type] ?? {
+        bg: "gray.100",
+        color: "gray.500",
+      };
       return (
         <Box
           display="inline-flex"
@@ -61,7 +69,7 @@ const columns: ColumnDef<Item>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {type}
+            {type?.toLowerCase()}
           </Text>
         </Box>
       );
@@ -72,25 +80,16 @@ const columns: ColumnDef<Item>[] = [
     header: "Unit",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {getValue() as string}
+        {(getValue() as string | null) ?? "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "unitPrice",
-    header: "Unit Price",
+    accessorKey: "rate",
+    header: "Rate",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {formatCurrency(getValue() as number)}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "taxRate",
-    header: "Tax Rate",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {getValue() as number}%
+        {formatCurrency(Number(getValue() as string))}
       </Text>
     ),
   },
@@ -98,8 +97,11 @@ const columns: ColumnDef<Item>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ getValue }) => {
-      const status = getValue() as ItemStatus;
-      const styles = STATUS_STYLES[status];
+      const status = getValue() as string;
+      const styles = STATUS_STYLES[status] ?? {
+        bg: "gray.100",
+        color: "gray.500",
+      };
       return (
         <Box
           display="inline-flex"
@@ -115,7 +117,7 @@ const columns: ColumnDef<Item>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {status}
+            {status?.toLowerCase()}
           </Text>
         </Box>
       );
@@ -124,89 +126,155 @@ const columns: ColumnDef<Item>[] = [
 ];
 
 const CSV_HEADERS = {
-  code: "Code",
   name: "Name",
-  type: "Type",
+  productType: "Type",
   unit: "Unit",
-  unitPrice: "Unit Price (₦)",
-  taxRate: "Tax Rate (%)",
+  rate: "Rate (₦)",
+  purchaseRate: "Purchase Rate (₦)",
   status: "Status",
 } as const;
 
+const STATUS_OPTIONS = [
+  { label: "Active", value: "ACTIVE" },
+  { label: "Inactive", value: "INACTIVE" },
+];
+
+const FILTER_SCHEMA = {
+  page: { defaultValue: 1 },
+  limit: { defaultValue: 20 },
+  search: { defaultValue: "" },
+  status: { defaultValue: "" },
+};
+
 export function ItemListPage() {
   const navigate = useNavigate();
-  const { data: items = [], isLoading } = useGetItemsQuery();
+  const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const [editItem, setEditItem] = useState<ApiItem | null>(null);
+
+  const tableActions = useMemo<TableAction<ApiItem>[]>(
+    () => [
+      {
+        label: "Edit",
+        value: "edit",
+        onClick: (item) => setEditItem(item),
+      },
+    ],
+    [],
+  );
+
+  const { data, isLoading } = useGetItemsQuery({
+    page: filters.page,
+    limit: filters.limit,
+    ...(filters.search ? { search: filters.search } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+  });
+
+  const items: ApiItem[] = data?.data ?? [];
+  const meta = data?.meta;
 
   const csvData = items.map((item) => ({
-    code: item.code,
     name: item.name,
-    type: item.type,
-    unit: item.unit,
-    unitPrice: item.unitPrice,
-    taxRate: item.taxRate,
+    productType: item.productType,
+    unit: item.unit ?? "",
+    rate: item.rate,
+    purchaseRate: item.purchaseRate,
     status: item.status,
   }));
 
   return (
-    <UserDashboardContainer py="1.5rem">
-      <Stack gap="6">
-        <PageHeader
-          title="Items & Services"
-          subtitle="Manage products and services used in invoices"
-          action={
-            <Flex gap="2">
-              <DownloadButton
-                data={csvData}
-                filename="items-services"
-                headers={CSV_HEADERS}
-              />
-              <Button
-                onClick={() => navigate(RouteConstants.items.create.path)}
-              >
-                Add Item
-              </Button>
-            </Flex>
-          }
-        />
+    <>
+      <UserDashboardContainer py="1.5rem">
+        <Stack gap="6">
+          <PageHeader
+            title="Items & Services"
+            subtitle="Manage products and services used in invoices"
+            action={
+              <Flex gap="2">
+                <DownloadButton
+                  data={csvData}
+                  filename="items-services"
+                  headers={CSV_HEADERS}
+                />
+                <Button
+                  onClick={() => navigate(RouteConstants.items.create.path)}
+                >
+                  Add Item
+                </Button>
+              </Flex>
+            }
+          />
 
-        <Box
-          pt="2rem"
-          pb="2rem"
-          bg="white"
-          px="1rem"
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex
-            justifyContent="space-between"
-            alignItems="center"
-            mb="1.5rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
+          <Box
+            pt="2rem"
+            pb="2rem"
+            bg="white"
+            px="1rem"
+            rounded=".625rem"
+            shadow="sm"
+            borderWidth="1px"
+            borderColor="gray.75"
           >
-            <Box>
-              <Text textStyle="large-bold" color="gray.500">
-                All Items & Services
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                Products and services available for invoicing
-              </Text>
-            </Box>
-            <SearchInput placeholder="Search by name or code" />
-          </Flex>
+            <Flex
+              justifyContent="flex-start"
+              alignItems="center"
+              mb="1.5rem"
+              gap="3"
+              direction={{ base: "column", md: "row" }}
+            >
+              <CustomSelect
+                placeholder="All Status"
+                options={STATUS_OPTIONS}
+                value={filters.status ? [filters.status] : undefined}
+                onChange={(opt: { value: string[] }) => {
+                  setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
+                }}
+                rootProps={{ size: "sm" }}
+                controlProps={{ w: "140px" }}
+              />
 
-          <Box overflowX="auto" maxW="calc(100vw - 310px)">
-            <CustomTable
-              data={items}
-              columns={columns}
-              loading={isLoading}
-              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
-            />
+              <SearchInput
+                placeholder="Search by name"
+                value={searchInput}
+                onChange={setSearchInput}
+                onSearch={(val) => setFilters({ search: val, page: 1 })}
+                debounceMs={500}
+                loading={isLoading}
+              />
+            </Flex>
+
+            <Box overflowX="auto" maxW="calc(100vw - 380px)">
+              <CustomTable
+                data={items}
+                columns={columns}
+                loading={isLoading}
+                enableActions
+                actions={tableActions}
+                tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+                pagination={{
+                  pageIndex: filters.page - 1,
+                  pageSize: filters.limit,
+                }}
+                setPagination={({ pageIndex }) =>
+                  setFilters({ page: pageIndex + 1 })
+                }
+                pageCount={meta?.totalPages ?? 1}
+                totalItems={meta?.total}
+                hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+                hasPrevPage={filters.page > 1}
+              />
+            </Box>
           </Box>
-        </Box>
-      </Stack>
-    </UserDashboardContainer>
+        </Stack>
+      </UserDashboardContainer>
+
+      {editItem && (
+        <EditItemModal
+          open={Boolean(editItem)}
+          onClose={() => setEditItem(null)}
+          item={editItem}
+        />
+      )}
+    </>
   );
 }

@@ -1,16 +1,16 @@
+import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type QueryConfigType,
-} from "@/lib/react-query";
-import { getItems, createItem, getItemById } from "./service";
+  getItems,
+  createItem,
+  getItemById,
+  updateItem,
+  type ItemFilter,
+} from "./service";
 import type { CreateItemPayload } from "@/shared/interface/item";
 import { customQueryKey } from "@/shared/constants/query-keys";
-import type { IBaseFilter } from "@/shared/interface/filter";
 
 export const useGetItemsQuery = (
-  filter?: IBaseFilter,
+  filter?: ItemFilter,
   config?: QueryConfigType<typeof getItems>,
 ) => {
   return useQuery({
@@ -28,13 +28,21 @@ export const useGetItemByIdQuery = (id: string) =>
   });
 
 export const useCreateItemMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateItemPayload) => createItem(payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: [customQueryKey.items.getAll],
-      }),
-    meta: { successMessage: "Item created successfully" },
+    meta: {
+      successMessage: "Item created successfully",
+      invalidatesQuery: [customQueryKey.items.getAll],
+    },
+  });
+};
+
+export const useUpdateItemMutation = (id: string) => {
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) => updateItem(id, payload),
+    meta: {
+      successMessage: "Item updated successfully",
+      invalidatesQuery: [customQueryKey.items.getAll],
+    },
   });
 };
