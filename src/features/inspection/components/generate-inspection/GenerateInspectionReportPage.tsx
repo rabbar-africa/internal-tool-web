@@ -10,7 +10,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { UserDashboardContainer } from "@/components/hoc";
-import { toaster } from "@/components/ui";
 import {
   CustomerInfoSection,
   VehicleInfoSection,
@@ -18,7 +17,7 @@ import {
   AdditionalNotesSection,
 } from "./";
 import type { InspectionFormValues } from "./inspection-form.types";
-import { downloadInspectionReport } from "../../api/service";
+import { useGenerateInspectionReportMutation } from "../../api/query";
 import { DownloadSimple } from "@/assets/custom";
 
 // ─── Validation ──────────────────────────────────────────────────────────────
@@ -30,12 +29,10 @@ const findingSchema = Yup.object().shape({
 });
 
 const validationSchema = Yup.object().shape({
-  customerTitle: Yup.string().required("Title is required"),
   customerName: Yup.string().required("Customer name is required"),
   vehicleNumber: Yup.string().required("Vehicle number is required"),
   vehicleName: Yup.string().required("Vehicle name is required"),
   vehicleColor: Yup.string().required("Vehicle color is required"),
-  jobCode: Yup.string().required("Job code is required"),
   inspectionDate: Yup.string().required("Inspection date is required"),
   findings: Yup.array()
     .of(findingSchema)
@@ -46,12 +43,10 @@ const validationSchema = Yup.object().shape({
 // ─── Initial values ──────────────────────────────────────────────────────────
 
 const initialValues: InspectionFormValues = {
-  customerTitle: "",
   customerName: "",
   vehicleNumber: "",
   vehicleName: "",
   vehicleColor: "",
-  jobCode: "",
   findings: [{ component: "", observation: "", status: "" }],
   additionalNotes: "",
   inspectionDate: new Date().toISOString().split("T")[0],
@@ -60,30 +55,10 @@ const initialValues: InspectionFormValues = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function GenerateInspectionReportPage() {
-  const handleSubmit = async (
-    values: InspectionFormValues,
-    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void },
-  ) => {
-    try {
-      await downloadInspectionReport(values);
+  const { mutateAsync, isPending } = useGenerateInspectionReportMutation();
 
-      toaster.dismiss();
-      toaster.create({
-        title: "Report generated",
-        description: "The inspection PDF has been downloaded.",
-        type: "success",
-      });
-    } catch {
-      toaster.dismiss();
-      toaster.create({
-        title: "Generation failed",
-        description:
-          "Something went wrong while generating the report. Please try again.",
-        type: "error",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSubmit = async (values: InspectionFormValues) => {
+    await mutateAsync(values);
   };
 
   return (
@@ -117,7 +92,7 @@ export function GenerateInspectionReportPage() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ isSubmitting }) => (
+          {() => (
             <Form>
               <Stack gap="6">
                 <CustomerInfoSection />
@@ -153,7 +128,7 @@ export function GenerateInspectionReportPage() {
                     bg="primary.300"
                     color="white"
                     size="lg"
-                    loading={isSubmitting}
+                    loading={isPending}
                     loadingText="Generating..."
                     _hover={{ bg: "primary.400" }}
                   >

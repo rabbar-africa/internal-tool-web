@@ -14,4 +14,5 @@ export const downloadInspectionReport = async (data: InspectionFormValues) => {
 
   // res.data IS the blob when responseType is 'blob'
   createDownloadLink(res.data as Blob, fileName);
+  return res.data;
 };

@@ -38,6 +38,11 @@ export const customQueryKey = {
     getAll: "get-all-customers",
     getById: "get-customer-by-id",
   },
+  vehicles: {
+    getAll: "get-all-vehicles",
+    getByClient: "get-vehicles-by-client",
+    getById: "get-vehicle-by-id",
+  },
   items: {
     getAll: "get-all-items",
     getById: "get-item-by-id",

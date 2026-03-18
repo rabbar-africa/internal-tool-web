@@ -12,22 +12,9 @@ import { CustomInput } from "@/components/input";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { PoliceCarIcon } from "@/assets/custom";
 
-const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
-  name,
-  onChange: handleChange as any,
-  onBlur: handleBlur as any,
-  ref: () => {},
-});
-
 export function VehicleInfoSection() {
   const { values, errors, touched, handleChange, handleBlur } =
     useFormikContext<InspectionFormValues>();
-
-  const fieldProps = (name: keyof InspectionFormValues) => ({
-    register: asRegister(name, handleChange, handleBlur),
-    value: values[name] as string,
-    error: touched[name] && errors[name] ? (errors[name] as string) : undefined,
-  });
 
   return (
     <Card.Root borderColor="gray.75" shadow="none" borderWidth="1px">
@@ -63,7 +50,15 @@ export function VehicleInfoSection() {
               label="Vehicle Number"
               placeholder="e.g. 3D8 4KAJ"
               required
-              {...fieldProps("vehicleNumber")}
+              name="vehicleNumber"
+              value={values.vehicleNumber}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={
+                touched.vehicleNumber && errors.vehicleNumber
+                  ? errors.vehicleNumber
+                  : undefined
+              }
             />
           </GridItem>
           <GridItem>
@@ -71,7 +66,15 @@ export function VehicleInfoSection() {
               label="Vehicle Name"
               placeholder="e.g. Toyota Camry"
               required
-              {...fieldProps("vehicleName")}
+              name="vehicleName"
+              value={values.vehicleName}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={
+                touched.vehicleName && errors.vehicleName
+                  ? errors.vehicleName
+                  : undefined
+              }
             />
           </GridItem>
           <GridItem>
@@ -79,26 +82,34 @@ export function VehicleInfoSection() {
               label="Color"
               placeholder="e.g. Deep Red"
               required
-              {...fieldProps("vehicleColor")}
+              name="vehicleColor"
+              value={values.vehicleColor}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={
+                touched.vehicleColor && errors.vehicleColor
+                  ? errors.vehicleColor
+                  : undefined
+              }
             />
           </GridItem>
         </Grid>
 
-        <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4" mt="4">
-          <GridItem>
-            <CustomInput
-              label="Job Code"
-              placeholder="e.g. RAB/TOYCAM/3D84KAJ"
-              required
-              {...fieldProps("jobCode")}
-            />
-          </GridItem>
+        <Grid templateColumns={{ base: "1fr" }} gap="4" mt="4">
           <GridItem>
             <CustomInput
               label="Inspection Date"
               type="date"
               required
-              {...fieldProps("inspectionDate")}
+              name="inspectionDate"
+              value={values.inspectionDate}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={
+                touched.inspectionDate && errors.inspectionDate
+                  ? errors.inspectionDate
+                  : undefined
+              }
             />
           </GridItem>
         </Grid>

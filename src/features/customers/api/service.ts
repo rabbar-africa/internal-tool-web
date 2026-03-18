@@ -39,3 +39,53 @@ export const updateCustomer = async (
   const response = await axios.put(`/clients/${id}`, payload);
   return response.data;
 };
+
+// ── Vehicles ──────────────────────────────────────────────────────────────────
+
+export interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  registrationNumber: string;
+  vin?: string | null;
+  color?: string | null;
+  clientId: string;
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateVehiclePayload {
+  make: string;
+  model: string;
+  year: number;
+  registrationNumber: string;
+  vin?: string;
+  color?: string;
+  clientId: string;
+}
+
+export const getVehiclesByClient = async (clientId: string) => {
+  const response = await axios.get(`/vehicles/by-client/${clientId}`);
+  return response.data;
+};
+
+export const createVehicle = async (
+  payload: CreateVehiclePayload,
+): Promise<Vehicle> => {
+  const response = await axios.post("/vehicles", payload);
+  return response.data;
+};
+
+export const updateVehicle = async (
+  id: string,
+  payload: Partial<Omit<CreateVehiclePayload, "clientId">>,
+): Promise<Vehicle> => {
+  const response = await axios.put(`/vehicles/${id}`, payload);
+  return response.data;
+};
+
+export const deleteVehicle = async (id: string): Promise<void> => {
+  await axios.delete(`/vehicles/${id}`);
+};

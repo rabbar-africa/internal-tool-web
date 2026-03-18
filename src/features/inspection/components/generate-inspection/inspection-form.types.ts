@@ -5,12 +5,10 @@ export interface Finding {
 }
 
 export interface InspectionFormValues {
-  customerTitle: string;
   customerName: string;
   vehicleNumber: string;
   vehicleName: string;
   vehicleColor: string;
-  jobCode: string;
   findings: Finding[];
   additionalNotes: string;
   inspectionDate: string;

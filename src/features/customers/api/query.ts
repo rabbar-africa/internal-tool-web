@@ -1,15 +1,15 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type QueryConfigType,
-} from "@/lib/react-query";
+import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
 import {
   getCustomers,
   getCustomerById,
   createCustomer,
   type CustomerFilter,
   updateCustomer,
+  getVehiclesByClient,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle,
+  type CreateVehiclePayload,
 } from "./service";
 import type { CreateCustomerPayload } from "@/shared/interface/customer";
 import { customQueryKey } from "@/shared/constants/query-keys";
@@ -33,26 +33,66 @@ export const useGetCustomerByIdQuery = (id: string) =>
   });
 
 export const useCreateCustomerMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateCustomerPayload) => createCustomer(payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: [customQueryKey.customers.getAll],
-      }),
-    meta: { successMessage: "Customer created successfully" },
+
+    meta: {
+      successMessage: "Customer created successfully",
+      invalidateQuery: [customQueryKey.customers.getAll],
+    },
   });
 };
 
 export const useUpdateCustomerMutation = (id: string) => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: Partial<CreateCustomerPayload>) =>
       updateCustomer(id, payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: [customQueryKey.customers.getAll],
-      }),
-    meta: { successMessage: "Customer updated successfully" },
+
+    meta: {
+      successMessage: "Customer updated successfully",
+      invalidateQuery: [customQueryKey.customers.getAll],
+    },
+  });
+};
+
+// ── Vehicle hooks ─────────────────────────────────────────────────────────────
+
+export const useGetVehiclesByClientQuery = (clientId: string) =>
+  useQuery({
+    queryKey: [customQueryKey.vehicles.getByClient, clientId],
+    queryFn: () => getVehiclesByClient(clientId),
+    enabled: Boolean(clientId),
+  });
+
+export const useCreateVehicleMutation = (clientId: string) => {
+  return useMutation({
+    mutationFn: (payload: CreateVehiclePayload) => createVehicle(payload),
+
+    meta: {
+      successMessage: "Vehicle added successfully",
+      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+    },
+  });
+};
+
+export const useUpdateVehicleMutation = (id: string, clientId: string) => {
+  return useMutation({
+    mutationFn: (payload: Partial<Omit<CreateVehiclePayload, "clientId">>) =>
+      updateVehicle(id, payload),
+
+    meta: {
+      successMessage: "Vehicle updated successfully",
+      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+    },
+  });
+};
+
+export const useDeleteVehicleMutation = (clientId: string) => {
+  return useMutation({
+    mutationFn: (id: string) => deleteVehicle(id),
+    meta: {
+      successMessage: "Vehicle removed",
+      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+    },
   });
 };
