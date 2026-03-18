@@ -13,31 +13,14 @@ import { useGetAllCustomersQuery } from "../../api/query";
 import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
 import { EditCustomerModal } from "./EditCustomerModal";
-
-interface ApiCustomer {
-  id: string;
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  displayName: string;
-  email: string | null;
-  phone: string | null;
-  company: string | null;
-  stage: string;
-  status: string;
-  source: string;
-  country: string | null;
-  state: string | null;
-  city: string | null;
-  address: string | null;
-}
+import type { ICustomer } from "@/shared/interface/customer";
 
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   CUSTOMER: { bg: "blue.50", color: "blue.600" },
   LEAD: { bg: "orange.50", color: "orange.600" },
 };
 
-const columns: ColumnDef<ApiCustomer>[] = [
+const columns: ColumnDef<ICustomer>[] = [
   {
     accessorKey: "displayName",
     header: "Name",
@@ -133,9 +116,9 @@ export function CustomerListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
-  const [editCustomer, setEditCustomer] = useState<ApiCustomer | null>(null);
+  const [editCustomer, setEditCustomer] = useState<ICustomer | null>(null);
 
-  const tableActions = useMemo<TableAction<ApiCustomer>[]>(
+  const tableActions = useMemo<TableAction<ICustomer>[]>(
     () => [
       {
         label: "View",
@@ -162,7 +145,7 @@ export function CustomerListPage() {
     ...(filters.stage ? { stage: filters.stage } : {}),
   });
 
-  const customers: ApiCustomer[] = data?.data ?? [];
+  const customers = data?.data ?? [];
   const meta = data?.meta;
 
   const csvData = customers.map((c) => ({
@@ -237,7 +220,7 @@ export function CustomerListPage() {
 
             <Box overflowX="auto" maxW="calc(100vw - 380px)">
               <CustomTable
-                data={customers}
+                data={customers || []}
                 columns={columns}
                 loading={isLoading}
                 enableActions

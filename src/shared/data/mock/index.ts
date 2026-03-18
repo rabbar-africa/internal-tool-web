@@ -3,7 +3,6 @@ import {
   calculateMarginPercent,
   calculateLineTotal,
 } from "@/utils/calculations";
-import type { Customer } from "@/shared/interface/customer";
 import type { Item } from "@/shared/interface/item";
 import type { Expense } from "@/shared/interface/expense";
 import type { Invoice } from "@/shared/interface/invoice";
@@ -11,7 +10,7 @@ import type { Payment } from "@/shared/interface/payment";
 
 // ─── Customers ───────────────────────────────────────────────────────────────
 
-export const MOCK_CUSTOMERS: Customer[] = [
+export const MOCK_CUSTOMERS: any = [
   {
     id: "cust-001",
     code: "C-001",

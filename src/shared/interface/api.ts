@@ -8,6 +8,7 @@ export interface IMeta {
   limit: number;
   page: number;
   count: number;
+  total: number;
   exceedCount: boolean;
   exceedTotalPages: boolean;
   hasNextPage: boolean;
