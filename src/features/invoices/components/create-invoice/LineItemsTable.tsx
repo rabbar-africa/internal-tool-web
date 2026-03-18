@@ -20,6 +20,7 @@ import type {
 } from "./hooks/useCreateInvoice";
 import type { Item } from "@/shared/interface/item";
 import { AddNewItemModal } from "./AddNewItemModal";
+import { addComma } from "@/utils/format-number";
 
 interface LineItemsTableProps {
   formik: FormikProps<CreateInvoiceFormValues>;
@@ -305,7 +306,7 @@ export function LineItemsTable({
       items.map((item) => ({
         label: item.name,
         value: item.id,
-        subLabel: `Rate: ₦${item.unitPrice.toLocaleString("en-US")}`,
+        subLabel: `Rate: ₦${addComma(item.unitPrice)}`,
       })),
     [items],
   );

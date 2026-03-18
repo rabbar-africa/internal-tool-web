@@ -1,12 +1,13 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCreateInvoiceMutation } from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
-import { MOCK_ITEMS, MOCK_CUSTOMERS } from "@/shared/data/mock";
 import type { Item } from "@/shared/interface/item";
-import type { Customer } from "@/shared/interface/customer";
+import type { ICustomer } from "@/shared/interface/customer";
+import { useGetItemListSimpleQuery } from "@/features/items/api";
+import { useGetAllCustomersQuery } from "@/features/customers/api";
 
 export interface LineItemFormRow {
   item_id: string;
@@ -84,7 +85,7 @@ const validationSchema = Yup.object({
   line_items: Yup.array()
     .of(
       Yup.object({
-        description: Yup.string().required("Required"),
+        description: Yup.string().optional(),
         quantity: Yup.string().required("Required"),
         rate: Yup.string().required("Required"),
       }),
@@ -104,23 +105,80 @@ export const PAYMENT_TERMS_OPTIONS = [
 export function useCreateInvoice() {
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateInvoiceMutation();
+  const itemsQuery = useGetItemListSimpleQuery({ page: 1, limit: 1000 });
+  const itemsData = useMemo(
+    () => itemsQuery?.data?.data || [],
+    [itemsQuery?.data?.data],
+  );
 
-  // Items list — starts from mock data, extended when user adds new items
-  const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
-  const [customers, setCustomers] = useState<Customer[]>(MOCK_CUSTOMERS);
+  // Customer search with debounce
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCustomerSearch = useCallback((query: string) => {
+    setCustomerSearch(query);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(query);
+    }, 400);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
+  const customersQuery = useGetAllCustomersQuery({
+    page: 1,
+    limit: 30,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+  });
+
+  const customerArray: ICustomer[] = useMemo(
+    () => customersQuery?.data?.data || [],
+    [customersQuery?.data?.data],
+  );
+
+  const [items, setItems] = useState<Item[]>(
+    itemsData?.map((item) => ({
+      ...item,
+      unitPrice: Number(item?.rate),
+    })),
+  );
 
   const addNewItem = useCallback((item: Item) => {
     setItems((prev) => [...prev, item]);
   }, []);
 
-  const addNewCustomer = useCallback((customer: Customer) => {
-    setCustomers((prev) => [...prev, customer]);
+  // Cache customers by id so the selected customer persists when search changes
+  const [customerCache, setCustomerCache] = useState<Record<string, ICustomer>>(
+    {},
+  );
+
+  useEffect(() => {
+    if (customerArray.length > 0) {
+      setCustomerCache((prev) => {
+        const next = { ...prev };
+        customerArray.forEach((c) => {
+          next[c.id] = c;
+        });
+        return next;
+      });
+    }
+  }, [customerArray]);
+
+  const addNewCustomer = useCallback((customer: ICustomer) => {
+    setCustomerCache((prev) => ({ ...prev, [customer.id]: customer }));
   }, []);
 
   const formik = useFormik<CreateInvoiceFormValues>({
     initialValues: defaultValues,
     validationSchema,
     onSubmit: async (values) => {
+      // console.log("values is ", values);
+
       const termsLabel =
         PAYMENT_TERMS_OPTIONS.find((o) => o.value === values.payment_terms)
           ?.label ?? "Due on Receipt";
@@ -168,20 +226,27 @@ export function useCreateInvoice() {
         tax_override_preference: "no_override",
         tds_override_preference: "no_override",
       };
-
+      // console.log("payload is ", payload);
+      //
       await mutateAsync(payload);
+      return;
       navigate(RouteConstants.invoices.base.path);
     },
   });
 
   const customerOptions = useMemo(
-    () => customers.map((c) => ({ label: c.name, value: c.id })),
-    [customers],
+    () =>
+      customerArray.map((c) => ({
+        label: c.displayName,
+        value: c.id,
+        subLabel: c.email ?? undefined,
+      })),
+    [customerArray],
   );
 
   const selectedCustomer = useMemo(
-    () => customers.find((c) => c.id === formik.values.customer_id),
-    [customers, formik.values.customer_id],
+    () => customerCache[formik.values.customer_id] ?? null,
+    [customerCache, formik.values.customer_id],
   );
 
   const handleItemSelect = (idx: number, itemId: string) => {
@@ -240,6 +305,17 @@ export function useCreateInvoice() {
 
   const handleCancel = () => navigate(RouteConstants.invoices.base.path);
 
+  useEffect(() => {
+    if (itemsData?.length > 0) {
+      setItems(
+        itemsData?.map((item: Item) => ({
+          ...item,
+          unitPrice: Number(item?.rate),
+        })),
+      );
+    }
+  }, [itemsData]);
+
   return {
     formik,
     addLineItem,
@@ -254,5 +330,9 @@ export function useCreateInvoice() {
     items,
     addNewItem,
     addNewCustomer,
+    customerSearch,
+    handleCustomerSearch,
+    isSearchingCustomers: customersQuery.isFetching,
+    itemsData: itemsQuery?.data?.data || [],
   };
 }

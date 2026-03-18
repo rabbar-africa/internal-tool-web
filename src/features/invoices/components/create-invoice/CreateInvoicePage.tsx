@@ -18,8 +18,11 @@ export function CreateInvoicePage() {
     isPending,
     handleCancel,
     items,
+
     addNewItem,
     addNewCustomer,
+    handleCustomerSearch,
+    isSearchingCustomers,
   } = useCreateInvoice();
 
   return (
@@ -76,6 +79,8 @@ export function CreateInvoicePage() {
               customerOptions={customerOptions}
               selectedCustomer={selectedCustomer}
               onAddNewCustomer={addNewCustomer}
+              onCustomerSearch={handleCustomerSearch}
+              isSearchingCustomers={isSearchingCustomers}
             />
 
             <Separator borderColor="gray.75" />

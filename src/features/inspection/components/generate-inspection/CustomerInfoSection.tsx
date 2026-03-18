@@ -13,7 +13,7 @@ import type { InspectionFormValues } from "./inspection-form.types";
 import { TITLE_OPTIONS } from "./inspection-form.types";
 
 export function CustomerInfoSection() {
-  const { values, errors, touched, setFieldValue } =
+  const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     useFormikContext<InspectionFormValues>();
 
   return (
@@ -67,7 +67,10 @@ export function CustomerInfoSection() {
               label="Full Name"
               placeholder="e.g. Funmilayo Ajangbadi"
               required
+              name="customerName"
               value={values.customerName}
+              onChange={handleChange}
+              onBlur={handleBlur}
               error={
                 touched.customerName && errors.customerName
                   ? errors.customerName

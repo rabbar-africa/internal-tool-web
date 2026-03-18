@@ -19,7 +19,7 @@ export const authService = {
   },
 
   refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {
-    const response = await axios.post<{ data: RefreshTokenResponse }>(
+    const response = await axios.post<{ data: LoginResponse }>(
       QUERY_PATH.auth.refreshToken,
       { refreshToken },
     );

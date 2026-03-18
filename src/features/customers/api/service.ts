@@ -1,6 +1,10 @@
-import type { CreateCustomerPayload } from "@/shared/interface/customer";
+import type {
+  CreateCustomerPayload,
+  ICustomer,
+} from "@/shared/interface/customer";
 import { axios } from "@/lib/axios";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
+import { type ApiResponse } from "@/shared/interface/api";
 
 export interface CustomerFilter {
   page?: number;
@@ -13,7 +17,7 @@ export interface CustomerFilter {
 export const getCustomers = async (filter?: CustomerFilter) => {
   const baseUrl = "/clients";
   const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
-  const response = await axios.get(apiUrl);
+  const response = await axios.get<ApiResponse<Array<ICustomer>>>(apiUrl);
   return response.data;
 };
 

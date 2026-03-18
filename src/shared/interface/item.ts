@@ -5,6 +5,7 @@ export interface Item {
   id: string;
   code: string;
   name: string;
+  rate?: string;
   description?: string;
   type: ItemType;
   unit: string;

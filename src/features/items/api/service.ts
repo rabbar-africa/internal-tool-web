@@ -16,6 +16,13 @@ export const getItems = async (filter?: ItemFilter) => {
   return response.data;
 };
 
+export const getItemListSimple = async (filter?: ItemFilter) => {
+  const baseUrl = "/items/simple";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
+  const response = await axios.get(apiUrl);
+  return response.data;
+};
+
 export const createItem = async (payload: CreateItemPayload): Promise<Item> => {
   const response = await axios.post("/items", payload);
   return response.data;

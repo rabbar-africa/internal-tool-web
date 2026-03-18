@@ -5,6 +5,7 @@ import {
   getItemById,
   updateItem,
   type ItemFilter,
+  getItemListSimple,
 } from "./service";
 import type { CreateItemPayload } from "@/shared/interface/item";
 import { customQueryKey } from "@/shared/constants/query-keys";
@@ -44,5 +45,16 @@ export const useUpdateItemMutation = (id: string) => {
       successMessage: "Item updated successfully",
       invalidatesQuery: [customQueryKey.items.getAll],
     },
+  });
+};
+
+export const useGetItemListSimpleQuery = (
+  filter?: ItemFilter,
+  config?: QueryConfigType<typeof getItemListSimple>,
+) => {
+  return useQuery({
+    queryKey: [customQueryKey.items.getSimple, filter],
+    queryFn: () => getItemListSimple(filter),
+    ...config,
   });
 };

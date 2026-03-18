@@ -16,12 +16,14 @@ import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
 import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 import { SearchInput } from "@/components/input/SearchInput";
+import { useGetCurrentUserQuery } from "@/features/auth/api";
 
 interface NavBarProps {
   onMenuToggle?: () => void;
 }
 
 export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
+  const { data: currentUser } = useGetCurrentUserQuery();
   const handleLogout = () => {
     removeToken();
     window.location.replace(RouteConstants.auth.login.path);
@@ -118,7 +120,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
                     display={{ base: "none", sm: "flex" }}
                   >
                     <Text fontWeight={600} fontSize="14px" color="gray.500">
-                      Obia Ugo
+                      {currentUser?.firstName} {currentUser?.lastName}
                     </Text>
                     <Text
                       fontWeight={400}

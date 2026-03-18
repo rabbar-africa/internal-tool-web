@@ -2,6 +2,7 @@ import { Box, Flex, Grid, Separator, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomInput } from "@/components/input/CustomInput";
+import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { formatCurrency } from "@/utils/calculations";
 import type { CreateInvoiceFormValues } from "./hooks/useCreateInvoice";
 
@@ -83,16 +84,14 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
               Discount (₦)
             </Text>
             <Box w="120px">
-              <CustomInput
+              <CustomNumberInput
                 placeholder="0"
                 name="discount"
                 value={formik.values.discount}
-                onChange={formik.handleChange}
+                onValueChange={(str) => formik.setFieldValue("discount", str)}
                 onBlur={formik.handleBlur}
-                inputProps={{
-                  textAlign: "right",
-                  fontSize: "13px",
-                }}
+                min={0}
+                inputProps={{ textAlign: "right", fontSize: "13px" }}
               />
             </Box>
           </Flex>
@@ -120,16 +119,13 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
               />
             </Box>
             <Box w="120px">
-              <CustomInput
+              <CustomNumberInput
                 placeholder="0"
                 name="adjustment"
                 value={formik.values.adjustment}
-                onChange={formik.handleChange}
+                onValueChange={(str) => formik.setFieldValue("adjustment", str)}
                 onBlur={formik.handleBlur}
-                inputProps={{
-                  textAlign: "right",
-                  fontSize: "13px",
-                }}
+                inputProps={{ textAlign: "right", fontSize: "13px" }}
               />
             </Box>
           </Flex>

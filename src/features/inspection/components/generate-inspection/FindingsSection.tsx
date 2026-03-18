@@ -23,7 +23,7 @@ interface FindingsSectionProps {
 const EMPTY_FINDING = { component: "", observation: "", status: "" };
 
 export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
-  const { values, errors, touched, setFieldValue } =
+  const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     useFormikContext<InspectionFormValues>();
 
   const findings = values.findings;
@@ -125,7 +125,10 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       label="Component"
                       placeholder="e.g. Spark Plugs"
                       required
+                      name={`findings.${index}.component`}
                       value={findings[index].component}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       error={
                         findingTouched?.component && findingErrors?.component
                           ? findingErrors.component
@@ -161,7 +164,10 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                   <CustomInput
                     label="Observation Details"
                     placeholder="e.g. Faulty and require replacement"
+                    name={`findings.${index}.observation`}
                     value={findings[index].observation}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                 </Box>
               </Box>

@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Field, Flex, Input, Portal, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Field,
+  Flex,
+  Input,
+  Portal,
+  Spinner,
+  Text,
+} from "@chakra-ui/react";
 import type { FieldLabelProps } from "@chakra-ui/react";
 
 export interface SearchComboboxOption {
@@ -23,6 +31,14 @@ export interface SearchComboboxProps {
   emptyText?: string;
   labelProps?: FieldLabelProps;
   disabled?: boolean;
+  /** Called when the search query changes. Use with serverSearch=true for backend search. */
+  onSearchChange?: (query: string) => void;
+  /** Debounce delay in ms for onSearchChange. Defaults to 0. */
+  searchDebounceMs?: number;
+  /** When true, skips local filtering and uses options as-is (for server-side search). */
+  serverSearch?: boolean;
+  /** Shows a loading spinner inside the dropdown when true. */
+  isLoading?: boolean;
 }
 
 export function SearchCombobox({
@@ -37,6 +53,10 @@ export function SearchCombobox({
   emptyText = "No results found. Try a different keyword.",
   labelProps,
   disabled,
+  onSearchChange,
+  searchDebounceMs = 0,
+  serverSearch = false,
+  isLoading = false,
 }: SearchComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -45,16 +65,19 @@ export function SearchCombobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedOption = options.find((o) => o.value === value);
 
-  const filtered = query.trim()
-    ? options.filter(
-        (o) =>
-          o.label.toLowerCase().includes(query.toLowerCase()) ||
-          (o.subLabel?.toLowerCase().includes(query.toLowerCase()) ?? false),
-      )
-    : options;
+  const filtered = serverSearch
+    ? options
+    : query.trim()
+      ? options.filter(
+          (o) =>
+            o.label.toLowerCase().includes(query.toLowerCase()) ||
+            (o.subLabel?.toLowerCase().includes(query.toLowerCase()) ?? false),
+        )
+      : options;
 
   const updatePosition = () => {
     const rect = inputRef.current?.getBoundingClientRect();
@@ -66,6 +89,12 @@ export function SearchCombobox({
       });
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -82,10 +111,21 @@ export function SearchCombobox({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    const newQuery = e.target.value;
+    setQuery(newQuery);
     if (!isOpen) {
       updatePosition();
       setIsOpen(true);
+    }
+    if (onSearchChange) {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (searchDebounceMs > 0) {
+        debounceTimerRef.current = setTimeout(() => {
+          onSearchChange(newQuery);
+        }, searchDebounceMs);
+      } else {
+        onSearchChange(newQuery);
+      }
     }
   };
 
@@ -98,6 +138,7 @@ export function SearchCombobox({
     onChange(option.value, option);
     setIsOpen(false);
     setQuery("");
+    if (onSearchChange) onSearchChange("");
   };
 
   const inputDisplayValue = isOpen ? query : (selectedOption?.label ?? "");
@@ -154,7 +195,14 @@ export function SearchCombobox({
             maxH="260px"
             overflowY="auto"
           >
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <Flex px="3" py="4" align="center" gap="2">
+                <Spinner size="sm" color="primary.400" />
+                <Text fontSize="13px" color="gray.300">
+                  Searching...
+                </Text>
+              </Flex>
+            ) : filtered.length === 0 ? (
               <Box px="3" py="3">
                 <Text fontSize="13px" color="gray.300">
                   {emptyText}
@@ -190,7 +238,7 @@ export function SearchCombobox({
               ))
             )}
 
-            {footerAction && (
+            {!isLoading && footerAction && (
               <Flex
                 borderTopWidth="1px"
                 borderColor="gray.75"

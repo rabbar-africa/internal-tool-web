@@ -3,12 +3,12 @@ import * as Yup from "yup";
 import { Button, Dialog, Flex, Grid, Portal, Stack } from "@chakra-ui/react";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
-import type { Customer } from "@/shared/interface/customer";
+import type { ICustomer } from "@/shared/interface/customer";
 
 interface AddNewCustomerModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (customer: Customer) => void;
+  onSave: (customer: ICustomer) => void;
 }
 
 const validationSchema = Yup.object({
@@ -40,22 +40,38 @@ export function AddNewCustomerModal({
     },
     validationSchema,
     onSubmit: (values, { resetForm }) => {
-      const customer: Customer = {
+      const customer: ICustomer = {
         id: `cust-custom-${Date.now()}`,
-        code: `C-${Date.now()}`,
-        name: values.name,
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        company: "",
+        displayName: values.name,
         email: values.email,
         phone: values.phone,
+        stage: "CUSTOMER",
+        jobTitle: null,
         type: values.type,
+        consultedBy: null,
+        source: null,
+        affiliate: null,
+        lastConsultationDate: null,
+        referralSource: null,
+        utmSource: null,
+        utmCampaign: null,
+        utmMedium: null,
+        utmContent: null,
+        organizationId: "",
+        address: values.address || null,
+        city: values.city || null,
+        state: values.state || null,
+        country: values.country || null,
+        dob: null,
+        postalCode: null,
         status: "active",
-        address: values.address || undefined,
-        city: values.city || undefined,
-        state: values.state || undefined,
-        country: values.country,
-        totalInvoices: 0,
-        totalRevenue: 0,
-        outstandingBalance: 0,
-        createdAt: new Date().toISOString().split("T")[0],
+        emailMarketingConsent: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       onSave(customer);
       resetForm();

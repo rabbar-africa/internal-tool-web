@@ -1,7 +1,7 @@
-export interface ApiResponse<T = any> extends IMeta {
+export interface ApiResponse<T = any> {
   status: boolean;
-  result?: T;
-  data?: { result: T };
+  data: T;
+  meta: IMeta;
 }
 
 export interface IMeta {

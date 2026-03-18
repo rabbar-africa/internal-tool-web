@@ -10,7 +10,7 @@ import {
   DEFAULT_INVOICE_PREFIX,
   DEFAULT_INVOICE_NEXT,
 } from "./hooks/useCreateInvoice";
-import type { Customer } from "@/shared/interface/customer";
+import type { ICustomer } from "@/shared/interface/customer";
 import {
   InvoiceNumberConfigModal,
   type InvoiceNumberConfig,
@@ -19,9 +19,11 @@ import { AddNewCustomerModal } from "./AddNewCustomerModal";
 
 interface InvoiceFormHeaderProps {
   formik: FormikProps<CreateInvoiceFormValues>;
-  customerOptions: { label: string; value: string }[];
-  selectedCustomer: Customer | undefined;
-  onAddNewCustomer: (customer: Customer) => void;
+  customerOptions: { label: string; value: string; subLabel?: string }[];
+  selectedCustomer: ICustomer | null;
+  onAddNewCustomer: (customer: ICustomer) => void;
+  onCustomerSearch: (query: string) => void;
+  isSearchingCustomers: boolean;
 }
 
 export function InvoiceFormHeader({
@@ -29,6 +31,8 @@ export function InvoiceFormHeader({
   customerOptions,
   selectedCustomer,
   onAddNewCustomer,
+  onCustomerSearch,
+  isSearchingCustomers,
 }: InvoiceFormHeaderProps) {
   const [showConfig, setShowConfig] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
@@ -61,9 +65,13 @@ export function InvoiceFormHeader({
             label="Customer Name"
             required
             options={customerOptions}
-            placeholder="Select or type a customer..."
+            placeholder="Search customer..."
             value={formik.values.customer_id || undefined}
             onChange={(val) => formik.setFieldValue("customer_id", val)}
+            onSearchChange={onCustomerSearch}
+            searchDebounceMs={400}
+            serverSearch
+            isLoading={isSearchingCustomers}
             error={
               formik.touched.customer_id && formik.errors.customer_id
                 ? String(formik.errors.customer_id)
@@ -94,7 +102,7 @@ export function InvoiceFormHeader({
                 Billing Address
               </Text>
               <Text fontSize="13px" fontWeight="500" color="gray.500">
-                {selectedCustomer.name}
+                {selectedCustomer.displayName}
               </Text>
               {selectedCustomer.address && (
                 <Text fontSize="13px" color="gray.400">
@@ -106,9 +114,11 @@ export function InvoiceFormHeader({
                   .filter(Boolean)
                   .join(", ")}
               </Text>
-              <Text fontSize="13px" color="gray.400">
-                {selectedCustomer.country}
-              </Text>
+              {selectedCustomer.country && (
+                <Text fontSize="13px" color="gray.400">
+                  {selectedCustomer.country}
+                </Text>
+              )}
               {selectedCustomer.email && (
                 <Text fontSize="13px" color="gray.400" mt="1">
                   {selectedCustomer.email}

@@ -41,6 +41,7 @@ export const customQueryKey = {
   items: {
     getAll: "get-all-items",
     getById: "get-item-by-id",
+    getSimple: "get-item-list-simple",
   },
   invoices: {
     getAll: "get-all-invoices",
