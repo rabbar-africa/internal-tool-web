@@ -1,8 +1,8 @@
 import { axios } from "@/lib/axios";
 import { createDownloadLink } from "@/utils/file-helper";
-import type { InspectionFormValues } from "../components/generate-inspection";
+import type { InspectionPayload } from "../components/generate-inspection/inspection-form.types";
 
-export const downloadInspectionReport = async (data: InspectionFormValues) => {
+export const downloadInspectionReport = async (data: InspectionPayload) => {
   const res = await axios.post("/inspections/generate", data, {
     responseType: "blob",
   });

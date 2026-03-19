@@ -55,6 +55,8 @@ export function CustomerInfoSection() {
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers.find((c) => c.id === customerId);
     setSelectedClientId(customerId);
+    void setFieldValue("clientId", customerId);
+    void setFieldValue("vehicleId", "");
     void setFieldValue("vehicleNumber", "");
     void setFieldValue("vehicleName", "");
     void setFieldValue("vehicleColor", "");
@@ -66,6 +68,7 @@ export function CustomerInfoSection() {
   const handleVehicleSelect = (vehicleId: string) => {
     const vehicle = vehicles.find((v) => v.id === vehicleId);
     if (vehicle) {
+      void setFieldValue("vehicleId", vehicleId);
       void setFieldValue("vehicleNumber", vehicle.registrationNumber);
       void setFieldValue("vehicleName", `${vehicle.make} ${vehicle.model}`);
       void setFieldValue("vehicleColor", vehicle.color ?? "");
@@ -74,13 +77,16 @@ export function CustomerInfoSection() {
 
   const handleNewCustomerSaved = (customer: ICustomer) => {
     setSelectedClientId(customer.id);
+    void setFieldValue("clientId", customer.id);
     void setFieldValue("customerName", customer.displayName);
+    void setFieldValue("vehicleId", "");
     void setFieldValue("vehicleNumber", "");
     void setFieldValue("vehicleName", "");
     void setFieldValue("vehicleColor", "");
   };
 
   const handleNewVehicleSaved = (vehicle: Vehicle) => {
+    void setFieldValue("vehicleId", vehicle.id);
     void setFieldValue("vehicleNumber", vehicle.registrationNumber);
     void setFieldValue("vehicleName", `${vehicle.make} ${vehicle.model}`);
     void setFieldValue("vehicleColor", vehicle.color ?? "");

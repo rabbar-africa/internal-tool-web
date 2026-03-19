@@ -16,7 +16,10 @@ import {
   FindingsSection,
   AdditionalNotesSection,
 } from "./";
-import type { InspectionFormValues } from "./inspection-form.types";
+import type {
+  InspectionFormValues,
+  InspectionPayload,
+} from "./inspection-form.types";
 import { useGenerateInspectionReportMutation } from "../../api/query";
 import { DownloadSimple } from "@/assets/custom";
 
@@ -29,10 +32,8 @@ const findingSchema = Yup.object().shape({
 });
 
 const validationSchema = Yup.object().shape({
-  customerName: Yup.string().required("Customer name is required"),
-  vehicleNumber: Yup.string().required("Vehicle number is required"),
-  vehicleName: Yup.string().required("Vehicle name is required"),
-  vehicleColor: Yup.string().required("Vehicle color is required"),
+  clientId: Yup.string().required("Please select a customer"),
+  vehicleId: Yup.string().required("Please select a vehicle"),
   inspectionDate: Yup.string().required("Inspection date is required"),
   findings: Yup.array()
     .of(findingSchema)
@@ -43,6 +44,8 @@ const validationSchema = Yup.object().shape({
 // ─── Initial values ──────────────────────────────────────────────────────────
 
 const initialValues: InspectionFormValues = {
+  clientId: "",
+  vehicleId: "",
   customerName: "",
   vehicleNumber: "",
   vehicleName: "",
@@ -58,7 +61,14 @@ export function GenerateInspectionReportPage() {
   const { mutateAsync, isPending } = useGenerateInspectionReportMutation();
 
   const handleSubmit = async (values: InspectionFormValues) => {
-    await mutateAsync(values);
+    const payload: InspectionPayload = {
+      clientId: values.clientId,
+      vehicleId: values.vehicleId,
+      findings: values.findings,
+      additionalNotes: values.additionalNotes,
+      inspectionDate: values.inspectionDate,
+    };
+    await mutateAsync(payload);
   };
 
   return (

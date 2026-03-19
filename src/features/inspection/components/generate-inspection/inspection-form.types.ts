@@ -5,10 +5,22 @@ export interface Finding {
 }
 
 export interface InspectionFormValues {
+  // IDs sent to backend
+  clientId: string;
+  vehicleId: string;
+  // Display-only (auto-filled from selection, not sent to backend)
   customerName: string;
   vehicleNumber: string;
   vehicleName: string;
   vehicleColor: string;
+  findings: Finding[];
+  additionalNotes: string;
+  inspectionDate: string;
+}
+
+export interface InspectionPayload {
+  clientId: string;
+  vehicleId: string;
   findings: Finding[];
   additionalNotes: string;
   inspectionDate: string;
@@ -28,5 +40,5 @@ export const STATUS_OPTIONS = [
   { label: "Worn Out - Needs Attention", value: "worn_out" },
   { label: "Not Genuine - Replace with OEM", value: "not_genuine" },
   { label: "Damaged", value: "damaged" },
-  { label: "OK - No Issues", value: "ok" },
+  { label: "OK - No Issues", value: "good" },
 ];
