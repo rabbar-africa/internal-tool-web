@@ -1,6 +1,7 @@
 import Axios from "axios";
 import {
   authRequestInterceptor,
+  blobErrorInterceptor,
   refreshTokenInterceptor,
   rejectErrorInterceptor,
 } from "./interceptors";
@@ -16,6 +17,8 @@ export const axios = Axios.create({
 
 axios.interceptors.request.use(authRequestInterceptor, rejectErrorInterceptor);
 
-axios.interceptors.response.use((response) => {
-  return response;
-}, refreshTokenInterceptor);
+axios.interceptors.response.use((response) => response, blobErrorInterceptor);
+axios.interceptors.response.use(
+  (response) => response,
+  refreshTokenInterceptor,
+);

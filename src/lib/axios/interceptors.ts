@@ -65,6 +65,23 @@ export function rejectErrorInterceptor(error: AxiosError) {
   return Promise.reject(error);
 }
 
+// When responseType is 'blob', Axios gives back error.response.data as a Blob.
+// This interceptor parses it back to JSON so getErrorMessage can read .message.
+export async function blobErrorInterceptor(error: AxiosError) {
+  if (
+    error.response?.data instanceof Blob &&
+    error.response.data.type === "application/json"
+  ) {
+    try {
+      const text = await error.response.data.text();
+      error.response.data = JSON.parse(text);
+    } catch {
+      // leave as-is if parsing fails
+    }
+  }
+  return Promise.reject(error);
+}
+
 export function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   const token = getToken().accessToken;
   if (token && config.headers) {

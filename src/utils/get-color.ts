@@ -69,6 +69,7 @@ export const getStatusColor = (status: string) => {
     case "pending":
     case "medium":
     case "in review":
+    case "in_progress":
     case "pending approval":
     case "pendingApproval":
     case "reviewdue":

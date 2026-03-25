@@ -52,5 +52,9 @@ export const customQueryKey = {
     getAll: "get-all-invoices",
     getById: "get-invoice-by-id",
   },
+  inspections: {
+    getAll: "get-all-inspections",
+    getById: "get-inspection-by-id",
+  },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
 };

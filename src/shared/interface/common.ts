@@ -82,3 +82,12 @@ export interface IBusiness {
   created_by: string;
   is_email_verified: boolean;
 }
+
+export interface IVehicle {
+  id: string;
+  registrationNumber: string;
+  make: string;
+  model: string;
+  year?: string;
+  color?: string;
+}

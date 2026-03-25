@@ -1,9 +1,25 @@
-import { useMutation } from "@/lib/react-query";
-import { downloadInspectionReport, summarizeInspectionNotes } from "./service";
+import { useMutation, useQuery, type QueryConfigType } from "@/lib/react-query";
+import {
+  downloadInspectionReport,
+  summarizeInspectionNotes,
+  getInspections,
+} from "./service";
 import type {
   InspectionPayload,
   SummarizeNotesPayload,
 } from "../components/generate-inspection/inspection-form.types";
+import type { InspectionFilter } from "@/shared/interface/inspection";
+import { customQueryKey } from "@/shared/constants/query-keys";
+
+export const useGetAllInspectionsQuery = (
+  filters: InspectionFilter = {},
+  config?: QueryConfigType<typeof getInspections>,
+) =>
+  useQuery({
+    queryKey: [customQueryKey.inspections.getAll, filters],
+    queryFn: () => getInspections(filters),
+    ...config,
+  });
 
 export const useGenerateInspectionReportMutation = () =>
   useMutation({

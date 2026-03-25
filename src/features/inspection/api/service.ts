@@ -4,6 +4,16 @@ import type {
   InspectionPayload,
   SummarizeNotesPayload,
 } from "../components/generate-inspection/inspection-form.types";
+import type { InspectionFilter } from "@/shared/interface/inspection";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
+
+export const getInspections = async (filters: InspectionFilter = {}) => {
+  const baseUrl = "/inspections";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filters);
+
+  const res = await axios.get(apiUrl);
+  return res.data;
+};
 
 export const summarizeInspectionNotes = async (data: SummarizeNotesPayload) => {
   const res = await axios.post("/inspections/ai/summarize-notes", data);

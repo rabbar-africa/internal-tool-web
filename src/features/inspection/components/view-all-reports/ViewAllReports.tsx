@@ -4,150 +4,97 @@ import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUrlState } from "@/hooks/useUrlState";
+import Status from "@/components/common/Status";
+import { CustomSelect } from "@/components/input/CustomSelect";
+import { useGetAllInspectionsQuery } from "../../api/query";
+import type { IInspection } from "@/shared/interface/inspection";
+import moment from "moment";
 
-type ReportStatus = "Completed" | "Pending" | "Failed";
-
-type InspectionReport = {
-  reportId: string;
-  customerName: string;
-  vehicleNumber: string;
-  inspector: string;
-  date: string;
-  status: ReportStatus;
-};
-
-const inspectionReportData: InspectionReport[] = [
-  {
-    reportId: "IR-1001",
-    customerName: "John Doe",
-    vehicleNumber: "LND-404GH",
-    inspector: "Samuel A.",
-    date: "2024-04-10",
-    status: "Completed",
-  },
-  {
-    reportId: "IR-1002",
-    customerName: "Jane Peters",
-    vehicleNumber: "KJA-220AB",
-    inspector: "Ifeoma O.",
-    date: "2024-04-11",
-    status: "Pending",
-  },
-  {
-    reportId: "IR-1003",
-    customerName: "Michael Umeh",
-    vehicleNumber: "ABC-918ZX",
-    inspector: "David M.",
-    date: "2024-04-11",
-    status: "Failed",
-  },
-  {
-    reportId: "IR-1004",
-    customerName: "Ngozi Obi",
-    vehicleNumber: "ENU-100KL",
-    inspector: "Samuel A.",
-    date: "2024-04-12",
-    status: "Completed",
-  },
-  {
-    reportId: "IR-1005",
-    customerName: "Emeka Nwosu",
-    vehicleNumber: "PHC-017MM",
-    inspector: "Ifeoma O.",
-    date: "2024-04-12",
-    status: "Completed",
-  },
+const STATUS_OPTIONS = [
+  { label: "All", value: "" },
+  { label: "Completed", value: "completed" },
+  { label: "Pending", value: "pending" },
+  { label: "Failed", value: "failed" },
 ];
 
-const columns: ColumnDef<InspectionReport>[] = [
+const FILTER_SCHEMA = {
+  page: { defaultValue: 1 },
+  limit: { defaultValue: 20 },
+  search: { defaultValue: "" },
+  status: { defaultValue: "" },
+};
+
+const columns: ColumnDef<IInspection>[] = [
   {
-    accessorKey: "reportId",
-    header: "Report ID",
+    accessorKey: "jobCode",
+    header: "Job Code",
     cell: ({ getValue }) => (
-      <Text textStyle={"small-regular"} color={"gray.500"}>
-        {getValue() as string}
+      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+        {(getValue() as string) ?? "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "customerName",
+    id: "customer",
     header: "Customer",
-    cell: ({ getValue }) => (
-      <Text textStyle={"small-regular"} color={"gray.500"}>
-        {getValue() as string}
+    cell: ({ row }) => (
+      <Text textStyle="small-regular" color="gray.500">
+        {row.original.customerName ?? "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "vehicleNumber",
-    header: "Vehicle Number",
-    cell: ({ getValue }) => (
-      <Text textStyle={"small-regular"} color={"gray.500"}>
-        {getValue() as string}
-      </Text>
-    ),
+    id: "vehicle",
+    header: "Vehicle",
+    cell: ({ row }) => {
+      const v = row.original.vehicle;
+      if (!v)
+        return (
+          <Text textStyle="small-regular" color="gray.300">
+            —
+          </Text>
+        );
+      return (
+        <Text textStyle="small-regular" color="gray.500">
+          {[v.year, v.make, v.model].filter(Boolean).join(" ")}
+        </Text>
+      );
+    },
   },
+
   {
-    accessorKey: "inspector",
-    header: "Inspector",
-    cell: ({ getValue }) => (
-      <Text textStyle={"small-regular"} color={"gray.500"}>
-        {getValue() as string}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "date",
+    accessorKey: "inspectionDate",
     header: "Date",
     cell: ({ getValue }) => (
-      <Text textStyle={"small-regular"} color={"gray.500"}>
-        {getValue() as string}
+      <Text textStyle="small-regular" color="gray.500">
+        {moment(getValue() as string).format("MMM DD, YYYY")}
       </Text>
     ),
   },
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ getValue }) => {
-      const status = getValue() as ReportStatus;
-      const bg =
-        status === "Completed"
-          ? "success.50"
-          : status === "Pending"
-            ? "warning.50"
-            : "error.50";
-
-      const color =
-        status === "Completed"
-          ? "success.300"
-          : status === "Pending"
-            ? "warning.600"
-            : "error.400";
-
-      return (
-        <Box
-          display="inline-flex"
-          width="100px"
-          height="32px"
-          px="10px"
-          py="4px"
-          borderRadius="6px"
-          bg={bg}
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Text textStyle={"small-regular"} color={color}>
-            {status}
-          </Text>
-        </Box>
-      );
-    },
+    cell: ({ getValue }) => <Status name={getValue() as string} />,
   },
 ];
 
 export function ViewAllReports() {
   const navigate = useNavigate();
+  const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
+  const [searchInput, setSearchInput] = useState(filters.search);
+
+  const { data, isLoading } = useGetAllInspectionsQuery({
+    page: filters.page,
+    limit: filters.limit,
+    ...(filters.search ? { search: filters.search } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+  });
+
+  const inspections: IInspection[] = data?.data ?? [];
+  const meta = data?.meta;
 
   return (
     <UserDashboardContainer py="1.5rem">
@@ -159,10 +106,10 @@ export function ViewAllReports() {
           gap="3"
         >
           <Box>
-            <Text textStyle={"h3-bold"} color={"gray.500"}>
+            <Text textStyle="h3-bold" color="gray.500">
               All Inspection Reports
             </Text>
-            <Text textStyle={"small-regular"} color={"gray.300"} mt="1">
+            <Text textStyle="small-regular" color="gray.300" mt="1">
               View and track all generated inspection reports.
             </Text>
           </Box>
@@ -180,32 +127,58 @@ export function ViewAllReports() {
         <Box
           pt="2rem"
           pb="2rem"
-          bg={"white"}
-          px={"1rem"}
-          rounded={".625rem"}
-          shadow={"md"}
+          bg="white"
+          px="1rem"
+          rounded=".625rem"
+          shadow="sm"
+          borderWidth="1px"
+          borderColor="gray.75"
         >
           <Flex
-            justifyContent={"space-between"}
-            alignItems={"center"}
-            mb={"1.5rem"}
+            justifyContent="flex-start"
+            alignItems="center"
+            mb="1.5rem"
             gap="3"
             direction={{ base: "column", md: "row" }}
           >
-            <Box>
-              <Text textStyle={"large-bold"}>Inspection Reports</Text>
-              <Text textStyle={"small-regular"} color={"gray.500"}>
-                Search and review generated reports.
-              </Text>
-            </Box>
-            <SearchInput placeholder="Search by customer or report ID" />
+            <CustomSelect
+              placeholder="All Status"
+              options={STATUS_OPTIONS}
+              value={filters.status ? [filters.status] : undefined}
+              onChange={(opt: { value: string[] }) => {
+                setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
+              }}
+              rootProps={{ size: "sm" }}
+              controlProps={{ w: "140px" }}
+            />
+
+            <SearchInput
+              placeholder="Search by customer or job code"
+              value={searchInput}
+              onChange={setSearchInput}
+              onSearch={(val) => setFilters({ search: val, page: 1 })}
+              debounceMs={500}
+              loading={isLoading}
+            />
           </Flex>
 
-          <Box overflowX={"auto"} maxW="calc(100vw - 310px)">
+          <Box overflowX="auto" maxW="calc(100vw - 380px)">
             <CustomTable
-              data={inspectionReportData}
+              data={inspections}
               columns={columns}
-              tableScrollAreaProps={{ maxW: { base: "xl", lg: "6xl" } }}
+              loading={isLoading}
+              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+              pagination={{
+                pageIndex: filters.page - 1,
+                pageSize: filters.limit,
+              }}
+              setPagination={({ pageIndex }) =>
+                setFilters({ page: pageIndex + 1 })
+              }
+              pageCount={meta?.totalPages ?? 1}
+              totalItems={meta?.total}
+              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+              hasPrevPage={filters.page > 1}
             />
           </Box>
         </Box>
