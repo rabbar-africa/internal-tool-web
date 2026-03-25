@@ -12,6 +12,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { CustomInput, CustomSelect } from "@/components/input";
+import { toaster } from "@/components/ui";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { STATUS_OPTIONS } from "./inspection-form.types";
 import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
@@ -21,6 +22,22 @@ interface FindingsSectionProps {
 }
 
 const EMPTY_FINDING = { component: "", observation: "", status: "" };
+
+const guardedPush = (
+  findings: InspectionFormValues["findings"],
+  push: (val: typeof EMPTY_FINDING) => void,
+) => {
+  const last = findings[findings.length - 1];
+  if (!last?.component || !last?.status) {
+    toaster.create({
+      description:
+        "Please complete the component and status for the current finding before adding another.",
+      type: "error",
+    });
+    return;
+  }
+  push(EMPTY_FINDING);
+};
 
 export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
@@ -57,7 +74,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
             variant="outline"
             borderColor="primary.300"
             color="primary.300"
-            onClick={() => arrayHelpers.push(EMPTY_FINDING)}
+            onClick={() => guardedPush(findings, arrayHelpers.push)}
           >
             <PlusIcon />
             <Text display={{ base: "none", sm: "inline" }}>Add Finding</Text>
@@ -175,13 +192,13 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
           })}
 
           {/* Quick add at bottom when many findings */}
-          {findings.length >= 3 && (
+          {findings.length >= 1 && (
             <Button
               variant="ghost"
               size="sm"
               color="primary.300"
               alignSelf="center"
-              onClick={() => arrayHelpers.push(EMPTY_FINDING)}
+              onClick={() => guardedPush(findings, arrayHelpers.push)}
             >
               <PlusIcon /> Add Another Finding
             </Button>
