@@ -15,6 +15,29 @@ export const getInspections = async (filters: InspectionFilter = {}) => {
   return res.data;
 };
 
+export const getInspectionById = async (id: string) => {
+  const res = await axios.get(`/inspections/${id}`);
+  return res.data;
+};
+
+export const deleteInspection = async (id: string) => {
+  const res = await axios.delete(`/inspections/${id}`);
+  return res.data;
+};
+
+export const downloadInspectionReportById = async (id: string) => {
+  const res = await axios.get(`/inspections/${id}/pdf`, {
+    responseType: "blob",
+  });
+
+  const disposition = res.headers["content-disposition"] as string | undefined;
+  const filenameMatch = disposition?.match(/filename="?([^"]+)"?/);
+  const fileName = filenameMatch?.[1] ?? "inspection-report.pdf";
+
+  createDownloadLink(res.data as Blob, fileName);
+  return res.data;
+};
+
 export const summarizeInspectionNotes = async (data: SummarizeNotesPayload) => {
   const res = await axios.post("/inspections/ai/summarize-notes", data);
   return res.data;

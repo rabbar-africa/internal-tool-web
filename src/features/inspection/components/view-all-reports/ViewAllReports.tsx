@@ -1,17 +1,25 @@
 import { SearchInput } from "@/components/input/SearchInput";
-import { CustomTable } from "@/components/table";
+import { CustomTable, type TableAction } from "@/components/table";
 import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
 import { CustomSelect } from "@/components/input/CustomSelect";
-import { useGetAllInspectionsQuery } from "../../api/query";
+import {
+  useGetAllInspectionsQuery,
+  useDeleteInspectionMutation,
+  useDownloadInspectionByIdMutation,
+} from "../../api/query";
 import type { IInspection } from "@/shared/interface/inspection";
 import moment from "moment";
+import { TableActionItem } from "@/components/common/TableActionItem";
+import { EyeIcon } from "@/assets/custom/EyeIcon";
+import { TrashIcon } from "@/assets/custom/TrashIcon";
+import { DownloadSimple } from "@/assets/custom/DownloadSimple";
 
 const STATUS_OPTIONS = [
   { label: "All", value: "" },
@@ -85,6 +93,37 @@ export function ViewAllReports() {
   const navigate = useNavigate();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
+
+  const { mutateAsync: deleteInspection } = useDeleteInspectionMutation();
+  const { mutateAsync: downloadReport } = useDownloadInspectionByIdMutation();
+
+  const tableActions = useMemo<TableAction<IInspection>[]>(
+    () => [
+      {
+        label: <TableActionItem label={"View Details"} Icon={EyeIcon} />,
+        onClick: (row) =>
+          navigate(
+            RouteConstants.inspection.inspectionDetails.generate({
+              id: row.id,
+            }),
+          ),
+      },
+      {
+        label: (
+          <TableActionItem label={"Download Report"} Icon={DownloadSimple} />
+        ),
+        value: "download",
+        onClick: (row) => downloadReport(row.id),
+      },
+      {
+        label: <TableActionItem label={"Delete"} Icon={TrashIcon} />,
+        value: "delete",
+        variant: "destructive",
+        onClick: (row) => deleteInspection(row.id),
+      },
+    ],
+    [navigate, deleteInspection, downloadReport],
+  );
 
   const { data, isLoading } = useGetAllInspectionsQuery({
     page: filters.page,
@@ -167,6 +206,8 @@ export function ViewAllReports() {
               data={inspections}
               columns={columns}
               loading={isLoading}
+              enableActions
+              actions={tableActions}
               tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
               pagination={{
                 pageIndex: filters.page - 1,

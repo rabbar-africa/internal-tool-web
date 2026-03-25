@@ -6,7 +6,7 @@ import { ThreeDotsIcon } from "@/assets/custom";
 
 export interface TableAction<T = any> {
   label: string | ReactNode;
-  value: any;
+  value?: any;
   onClick: (row: T, event?: MouseEvent) => void;
   disabled?: (row: T) => boolean;
   variant?: "default" | "destructive";
