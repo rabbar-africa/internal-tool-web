@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import moment from "moment";
 import { UserDashboardContainer } from "@/components/hoc";
@@ -28,83 +29,11 @@ import {
   FileTextIcon,
   NoteIcon,
 } from "@/assets/custom";
+import { SectionCard } from "./SectionCard";
+import { InfoField } from "./InfoField";
+import ConsentDialog from "@/components/common/ConsentDialog";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function InfoField({
-  label,
-  value,
-}: {
-  label: string;
-  value?: React.ReactNode;
-}) {
-  return (
-    <Box>
-      <Text
-        fontSize="10.5px"
-        color="gray.300"
-        mb="1"
-        fontWeight="600"
-        letterSpacing="0.06em"
-        textTransform="uppercase"
-      >
-        {label}
-      </Text>
-      <Text fontSize="13.5px" color="gray.500" fontWeight="500">
-        {value || "—"}
-      </Text>
-    </Box>
-  );
-}
-
-function SectionCard({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Box
-      bg="white"
-      rounded="xl"
-      borderWidth="1px"
-      borderColor="gray.75"
-      shadow="xs"
-      overflow="hidden"
-    >
-      <Flex
-        px={{ base: "5", md: "6" }}
-        py="4"
-        align="center"
-        gap="3"
-        borderBottomWidth="1px"
-        borderColor="gray.75"
-        bg="gray.50/40"
-      >
-        <Flex
-          w="7"
-          h="7"
-          bg="primary.50"
-          rounded="lg"
-          align="center"
-          justify="center"
-          flexShrink={0}
-        >
-          {icon}
-        </Flex>
-        <Text fontSize="13px" fontWeight="600" color="gray.500">
-          {title}
-        </Text>
-      </Flex>
-      <Box px={{ base: "5", md: "6" }} py="5">
-        {children}
-      </Box>
-    </Box>
-  );
-}
 
 const FINDING_STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   good: { bg: "success.50", color: "success.300" },
@@ -150,6 +79,8 @@ function FindingStatusBadge({ status }: { status: string }) {
 export function InspectionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: queryData, isLoading } = useGetInspectionByIdQuery(id ?? "");
   const { mutateAsync: deleteInspection, isPending: isDeleting } =
@@ -270,8 +201,7 @@ export function InspectionDetailPage() {
                 borderColor="error.200"
                 color="error.300"
                 _hover={{ bg: "error.50" }}
-                loading={isDeleting}
-                onClick={handleDelete}
+                onClick={() => setDeleteDialogOpen(true)}
               >
                 <TrashIcon />
                 Delete
@@ -430,11 +360,7 @@ export function InspectionDetailPage() {
         {inspection.generalNotes && (
           <SectionCard
             icon={
-              <NoteIcon
-                color="var(--chakra-colors-primary-300)"
-                width={14}
-                height={14}
-              />
+              <NoteIcon color="var(--chakra-colors-primary-300)" w={"1rem"} />
             }
             title="Additional Notes"
           >
@@ -442,6 +368,8 @@ export function InspectionDetailPage() {
               fontSize="13.5px"
               color="gray.500"
               lineHeight="1.7"
+              overflowX="auto"
+              wordBreak="break-word"
               css={{
                 "& h3": { fontWeight: "600", marginBottom: "0.5rem" },
                 "& ul, & ol": {
@@ -450,12 +378,33 @@ export function InspectionDetailPage() {
                 },
                 "& li": { marginBottom: "0.25rem" },
                 "& strong": { fontWeight: "600" },
+                "& table": {
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "13px",
+                },
+                "& table td, & table th": {
+                  padding: "0.4rem 0.6rem",
+                  border: "1px solid var(--chakra-colors-gray-75)",
+                },
+                "& img": { maxWidth: "100%", height: "auto" },
               }}
               dangerouslySetInnerHTML={{ __html: inspection.generalNotes }}
             />
           </SectionCard>
         )}
       </Stack>
+
+      <ConsentDialog
+        open={deleteDialogOpen}
+        onOpenChange={({ open }) => setDeleteDialogOpen(open)}
+        heading="Delete this inspection?"
+        note="This action cannot be undone. The inspection report will be permanently removed."
+        confirmText="Yes, Delete"
+        handleSubmit={handleDelete}
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </UserDashboardContainer>
   );
 }
