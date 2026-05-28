@@ -13,6 +13,9 @@ import { UserDashboardContainer } from "@/components/hoc";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { toaster } from "@/components/ui";
+import { SectionTitle } from "./SectionTitle";
+import { Profile } from "./profile/Profile";
+import { LogoTab } from "./logo/LogoTab";
 
 const mockSave = () => {
   toaster.create({
@@ -24,87 +27,66 @@ const mockSave = () => {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SectionTitle({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <Box mb="4">
-      <Text fontWeight="600" fontSize="15px" color="gray.500">
-        {title}
-      </Text>
-      {subtitle && (
-        <Text fontSize="12px" color="gray.300" mt="0.5">
-          {subtitle}
-        </Text>
-      )}
-    </Box>
-  );
-}
+// function CompanyProfileTab() {
+//   // const fakeRegister = (name: string) => ({
+//   //   name,
+//   //   onChange: () => {},
+//   //   onBlur: () => {},
+//   //   ref: () => {},
+//   // });
 
-function CompanyProfileTab() {
-  // const fakeRegister = (name: string) => ({
-  //   name,
-  //   onChange: () => {},
-  //   onBlur: () => {},
-  //   ref: () => {},
-  // });
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Company Information"
-        subtitle="Basic details about your business"
-      />
-      <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-        <CustomInput
-          label="Company Name"
-          // register={fakeRegister("companyName")}
-          // defaultValue="Rabbar Africa"
-        />
-        <CustomInput
-          label="Business Email"
-          type="email"
-          // register={fakeRegister("email")}
-          // defaultValue="hello@rabbar.africa"
-        />
-        <CustomInput
-          label="Phone Number"
-          // register={fakeRegister("phone")}
-          // defaultValue="+234 801 234 5678"
-        />
-        <CustomInput
-          label="Website"
-          // register={fakeRegister("website")}
-          // defaultValue="https://rabbar.africa"
-        />
-        <Box gridColumn={{ sm: "1 / -1" }}>
-          <CustomInput
-            label="Address"
-            // register={fakeRegister("address")}
-            // defaultValue="12 Bode Thomas Street, Surulere, Lagos"
-          />
-        </Box>
-        <CustomInput
-          label="City"
-          // register={fakeRegister("city")}
-          // defaultValue="Lagos"
-        />
-        <CustomInput
-          label="State"
-          // register={fakeRegister("state")}
-          // defaultValue="Lagos State"
-        />
-      </Grid>
-      <Flex justify="flex-end">
-        <Button onClick={mockSave}>Save Changes</Button>
-      </Flex>
-    </Stack>
-  );
-}
+//   return (
+//     <Stack gap="6" pt="4">
+//       <SectionTitle
+//         title="Company Information"
+//         subtitle="Basic details about your business"
+//       />
+//       <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
+//         <CustomInput
+//           label="Company Name"
+//           // register={fakeRegister("companyName")}
+//           // defaultValue="Rabbar Africa"
+//         />
+//         <CustomInput
+//           label="Business Email"
+//           type="email"
+//           // register={fakeRegister("email")}
+//           // defaultValue="hello@rabbar.africa"
+//         />
+//         <CustomInput
+//           label="Phone Number"
+//           // register={fakeRegister("phone")}
+//           // defaultValue="+234 801 234 5678"
+//         />
+//         <CustomInput
+//           label="Website"
+//           // register={fakeRegister("website")}
+//           // defaultValue="https://rabbar.africa"
+//         />
+//         <Box gridColumn={{ sm: "1 / -1" }}>
+//           <CustomInput
+//             label="Address"
+//             // register={fakeRegister("address")}
+//             // defaultValue="12 Bode Thomas Street, Surulere, Lagos"
+//           />
+//         </Box>
+//         <CustomInput
+//           label="City"
+//           // register={fakeRegister("city")}
+//           // defaultValue="Lagos"
+//         />
+//         <CustomInput
+//           label="State"
+//           // register={fakeRegister("state")}
+//           // defaultValue="Lagos State"
+//         />
+//       </Grid>
+//       <Flex justify="flex-end">
+//         <Button onClick={mockSave}>Save Changes</Button>
+//       </Flex>
+//     </Stack>
+//   );
+// }
 
 function TaxSettingsTab() {
   // const fakeRegister = (name: string) => ({
@@ -556,9 +538,17 @@ export function SettingsPage() {
           borderColor="gray.75"
         >
           <Tabs.Root defaultValue="company">
-            <Tabs.List px="4" pt="4" overflowX="auto" flexWrap="nowrap">
+            <Tabs.List
+              px="4"
+              pt="4"
+              overflowX="auto"
+              flexWrap={{ base: "wrap", md: "nowrap" }}
+            >
               <Tabs.Trigger value="company" whiteSpace="nowrap">
                 Company Profile
+              </Tabs.Trigger>
+              <Tabs.Trigger value="logo" whiteSpace="nowrap">
+                Logo & UI
               </Tabs.Trigger>
               <Tabs.Trigger value="tax" whiteSpace="nowrap">
                 Tax Settings
@@ -582,7 +572,10 @@ export function SettingsPage() {
 
             <Box px="6" pb="6">
               <Tabs.Content value="company">
-                <CompanyProfileTab />
+                <Profile />
+              </Tabs.Content>
+              <Tabs.Content value="logo">
+                <LogoTab />
               </Tabs.Content>
               <Tabs.Content value="tax">
                 <TaxSettingsTab />

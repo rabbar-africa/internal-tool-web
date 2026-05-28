@@ -57,4 +57,7 @@ export const customQueryKey = {
     getById: "get-inspection-by-id",
   },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
+  organizations: {
+    details: "get-organization-details",
+  },
 };

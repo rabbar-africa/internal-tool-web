@@ -38,7 +38,7 @@ export const useCreateCustomerMutation = () => {
 
     meta: {
       successMessage: "Customer created successfully",
-      invalidateQuery: [customQueryKey.customers.getAll],
+      invalidatesQueryKeys: [[customQueryKey.customers.getAll]],
     },
   });
 };
@@ -50,7 +50,7 @@ export const useUpdateCustomerMutation = (id: string) => {
 
     meta: {
       successMessage: "Customer updated successfully",
-      invalidateQuery: [customQueryKey.customers.getAll],
+      invalidatesQueryKeys: [[customQueryKey.customers.getAll]],
     },
   });
 };
@@ -70,7 +70,7 @@ export const useCreateVehicleMutation = (clientId: string) => {
 
     meta: {
       successMessage: "Vehicle added successfully",
-      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
     },
   });
 };
@@ -82,7 +82,7 @@ export const useUpdateVehicleMutation = (id: string, clientId: string) => {
 
     meta: {
       successMessage: "Vehicle updated successfully",
-      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
     },
   });
 };
@@ -92,7 +92,7 @@ export const useDeleteVehicleMutation = (clientId: string) => {
     mutationFn: (id: string) => deleteVehicle(id),
     meta: {
       successMessage: "Vehicle removed",
-      invalidateQuery: [customQueryKey.vehicles.getByClient, clientId],
+      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
     },
   });
 };

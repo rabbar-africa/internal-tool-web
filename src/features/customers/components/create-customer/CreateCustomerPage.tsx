@@ -16,7 +16,11 @@ import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useCreateCustomerMutation } from "../../api/query";
-import type { CustomerType } from "@/shared/interface/customer";
+import type {
+  CreateCustomerPayload,
+  CustomerType,
+} from "@/shared/interface/customer";
+import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 
 const validationSchema = Yup.object({
   firstName: Yup.string().required("First name is required"),
@@ -64,19 +68,21 @@ export function CreateCustomerPage() {
   const { mutateAsync, isPending } = useCreateCustomerMutation();
 
   const handleSubmit = async (values: typeof initialValues) => {
-    await mutateAsync({
-      displayName: values.displayName,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      email: values.email,
-      phone: values.phone,
-      type: values.type,
-      stage: values.stage,
-      address: values.address || undefined,
-      city: values.city || undefined,
-      state: values.state || undefined,
-      country: values.country,
-    });
+    await mutateAsync(
+      removeFalsyAndEmptyArrayFields({
+        displayName: values.displayName,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        type: values.type,
+        stage: values.stage,
+        address: values.address || undefined,
+        city: values.city || undefined,
+        state: values.state || undefined,
+        country: values.country,
+      }) as CreateCustomerPayload,
+    );
     navigate(RouteConstants.customers.base.path);
   };
 

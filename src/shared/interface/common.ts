@@ -46,11 +46,31 @@ export type TRopaStatus =
 export interface IOrganization {
   id: string;
   name: string;
+  slug: string;
   email: string;
-  logo: string;
-  industry: string;
+  companyEmail: string;
+  phone: string;
+  phone2: string | null;
+  fax: string | null;
   website: string;
-  userId: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string | null;
+  country: string;
+  postalCode: string | null;
+  logoUrl: string;
+  taxId: string | null;
+  rcNumber: string;
+  industry: string;
+  description: string | null;
+  registrationNumber: string | null;
+  timezone: string;
+  currency: string;
+  invoicePrefix: string;
+  autoGenerateInvoiceNumber: boolean;
+  invoiceSequence: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
