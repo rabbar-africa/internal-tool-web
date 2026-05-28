@@ -33,7 +33,7 @@ export const useCreateItemMutation = () => {
     mutationFn: (payload: CreateItemPayload) => createItem(payload),
     meta: {
       successMessage: "Item created successfully",
-      invalidatesQuery: [customQueryKey.items.getAll],
+      invalidatesQueryKeys: [[customQueryKey.items.getAll]],
     },
   });
 };
@@ -43,7 +43,7 @@ export const useUpdateItemMutation = (id: string) => {
     mutationFn: (payload: Record<string, unknown>) => updateItem(id, payload),
     meta: {
       successMessage: "Item updated successfully",
-      invalidatesQuery: [customQueryKey.items.getAll],
+      invalidatesQueryKeys: [[customQueryKey.items.getAll]],
     },
   });
 };

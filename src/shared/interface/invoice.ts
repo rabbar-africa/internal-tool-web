@@ -81,7 +81,7 @@ export interface CreateInvoicePayload {
 }
 
 export interface IGetInvoiceFilter extends IBaseFilter {
-  status: string;
+  status?: string;
   customerId?: string;
   dateFrom?: string;
   dateTo?: string;
