@@ -6,37 +6,40 @@ import { useCreateInvoiceMutation } from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { Item } from "@/shared/interface/item";
 import type { ICustomer } from "@/shared/interface/customer";
+import type { CreateInvoicePayload } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
 
 export interface LineItemFormRow {
-  item_id: string;
+  itemId: string;
   name: string;
   description: string;
   quantity: string;
   rate: string;
   discount: string;
-  tax_id: string;
-  account_id: string;
   unit: string;
 }
 
 export interface CreateInvoiceFormValues {
-  invoice_number: string;
-  customer_id: string;
-  reference_number: string;
+  invoiceNumber: string;
+  customerId: string;
+  customer: {
+    name: string;
+    email: string;
+  };
+  referenceNumber: string;
   date: string;
-  due_date: string;
-  payment_terms: string;
-  payment_terms_label: string;
+  dueDate: string;
+  paymentTerms: string;
+  paymentTermsLabel: string;
   notes: string;
   terms: string;
   discount: string;
-  discount_type: "entity_level" | "item_level";
+  discountType: "entityLevel" | "itemLevel";
   adjustment: string;
-  adjustment_description: string;
-  is_discount_before_tax: boolean;
-  line_items: LineItemFormRow[];
+  adjustmentDescription: string;
+  isDiscountBeforeTax: boolean;
+  lineItems: LineItemFormRow[];
 }
 
 const today = new Date().toISOString().split("T")[0];
@@ -48,43 +51,43 @@ export const DEFAULT_INVOICE_NEXT = String(
 );
 
 export const EMPTY_LINE_ITEM: LineItemFormRow = {
-  item_id: "",
+  itemId: "",
   name: "",
   description: "",
   quantity: "1",
   rate: "0",
   discount: "0%",
-  tax_id: "",
-  account_id: "",
   unit: "",
 };
 
 const defaultValues: CreateInvoiceFormValues = {
-  invoice_number: `${DEFAULT_INVOICE_PREFIX}${DEFAULT_INVOICE_NEXT}`,
-  customer_id: "",
-  reference_number: "",
+  invoiceNumber: `${DEFAULT_INVOICE_PREFIX}${DEFAULT_INVOICE_NEXT}`,
+  customerId: "",
+  customer: { name: "", email: "" },
+  referenceNumber: "",
   date: today,
-  due_date: today,
-  payment_terms: "0",
-  payment_terms_label: "Due on Receipt",
+  dueDate: today,
+  paymentTerms: "0",
+  paymentTermsLabel: "Due on Receipt",
   notes: "Thanks for doing business with us.",
   terms: "",
   discount: "0",
-  discount_type: "entity_level",
+  discountType: "entityLevel",
   adjustment: "",
-  adjustment_description: "Adjustment",
-  is_discount_before_tax: true,
-  line_items: [{ ...EMPTY_LINE_ITEM }],
+  adjustmentDescription: "Adjustment",
+  isDiscountBeforeTax: true,
+  lineItems: [{ ...EMPTY_LINE_ITEM }],
 };
 
 const validationSchema = Yup.object({
-  invoice_number: Yup.string().required("Invoice number is required"),
-  customer_id: Yup.string().required("Customer is required"),
+  invoiceNumber: Yup.string().required("Invoice number is required"),
+  customerId: Yup.string().required("Customer is required"),
   date: Yup.string().required("Invoice date is required"),
-  due_date: Yup.string().required("Due date is required"),
-  line_items: Yup.array()
+  dueDate: Yup.string().required("Due date is required"),
+  lineItems: Yup.array()
     .of(
       Yup.object({
+        name: Yup.string().required("Item name is required"),
         description: Yup.string().optional(),
         quantity: Yup.string().required("Required"),
         rate: Yup.string().required("Required"),
@@ -177,59 +180,41 @@ export function useCreateInvoice() {
     initialValues: defaultValues,
     validationSchema,
     onSubmit: async (values) => {
-      // console.log("values is ", values);
-
       const termsLabel =
-        PAYMENT_TERMS_OPTIONS.find((o) => o.value === values.payment_terms)
+        PAYMENT_TERMS_OPTIONS.find((o) => o.value === values.paymentTerms)
           ?.label ?? "Due on Receipt";
 
-      const payload = {
-        invoice_number: values.invoice_number,
-        reference_number: values.reference_number,
-        payment_terms: parseInt(values.payment_terms) || 0,
-        payment_terms_label: termsLabel,
-        payment_options: { payment_gateways: [] as string[] },
-        customer_id: values.customer_id,
-        contact_persons: [] as string[],
+      const payload: CreateInvoicePayload = {
+        invoiceNumber: values.invoiceNumber,
+        referenceNumber: values.referenceNumber,
+        customerId: values.customerId,
+        customer: values.customer,
         date: values.date,
-        due_date: values.due_date,
+        dueDate: values.dueDate,
+        paymentTerms: parseInt(values.paymentTerms) || 0,
+        paymentTermsLabel: termsLabel,
         notes: values.notes,
         terms: values.terms,
-        is_inclusive_tax: false,
-        line_items: values.line_items.map((li, idx) => ({
-          item_order: idx + 1,
-          ...(li.item_id ? { item_id: li.item_id } : {}),
-          rate: li.rate,
-          ...(li.name ? { name: li.name } : {}),
+        lineItems: values.lineItems.map((li, idx) => ({
+          itemOrder: idx + 1,
+          ...(li.itemId ? { itemId: li.itemId } : {}),
+          name: li.name,
           description: li.description,
+          rate: li.rate,
           quantity: li.quantity,
           discount: li.discount,
-          tax_id: li.tax_id,
-          tags: [] as string[],
-          ...(li.account_id ? { account_id: li.account_id } : {}),
-          item_custom_fields: [] as unknown[],
           ...(li.unit ? { unit: li.unit } : {}),
         })),
-        allow_partial_payments: false,
-        custom_fields: [] as unknown[],
-        is_discount_before_tax: values.is_discount_before_tax,
+        isDiscountBeforeTax: values.isDiscountBeforeTax,
         discount: values.discount,
-        discount_type: values.discount_type,
+        discountType: values.discountType,
         adjustment: values.adjustment,
-        adjustment_description: values.adjustment_description,
-        zcrm_potential_id: "",
-        zcrm_potential_name: "",
-        pricebook_id: "",
-        project_id: "",
-        documents: [] as unknown[],
-        mail_attachments: [] as unknown[],
-        tax_override_preference: "no_override",
-        tds_override_preference: "no_override",
+        adjustmentDescription: values.adjustmentDescription,
       };
+
       // console.log("payload is ", payload);
-      //
+
       await mutateAsync(payload);
-      return;
       navigate(RouteConstants.invoices.base.path);
     },
   });
@@ -245,38 +230,38 @@ export function useCreateInvoice() {
   );
 
   const selectedCustomer = useMemo(
-    () => customerCache[formik.values.customer_id] ?? null,
-    [customerCache, formik.values.customer_id],
+    () => customerCache[formik.values.customerId] ?? null,
+    [customerCache, formik.values.customerId],
   );
 
   const handleItemSelect = (idx: number, itemId: string) => {
     const item = items.find((i) => i.id === itemId);
     if (item) {
-      formik.setFieldValue(`line_items.${idx}.item_id`, itemId);
-      formik.setFieldValue(`line_items.${idx}.name`, item.name);
+      formik.setFieldValue(`lineItems.${idx}.itemId`, itemId);
+      formik.setFieldValue(`lineItems.${idx}.name`, item.name);
       formik.setFieldValue(
-        `line_items.${idx}.description`,
+        `lineItems.${idx}.description`,
         item.description ?? "",
       );
-      formik.setFieldValue(`line_items.${idx}.rate`, String(item.unitPrice));
-      formik.setFieldValue(`line_items.${idx}.unit`, item.unit ?? "");
+      formik.setFieldValue(`lineItems.${idx}.rate`, String(item.unitPrice));
+      formik.setFieldValue(`lineItems.${idx}.unit`, item.unit ?? "");
     }
   };
 
   const addLineItem = () => {
-    formik.setFieldValue("line_items", [
-      ...formik.values.line_items,
+    formik.setFieldValue("lineItems", [
+      ...formik.values.lineItems,
       { ...EMPTY_LINE_ITEM },
     ]);
   };
 
   const removeLineItem = (idx: number) => {
-    const newLineItems = formik.values.line_items.filter((_, i) => i !== idx);
-    formik.setFieldValue("line_items", newLineItems);
+    const newLineItems = formik.values.lineItems.filter((_, i) => i !== idx);
+    formik.setFieldValue("lineItems", newLineItems);
   };
 
   const totals = useMemo(() => {
-    const lineItems = formik.values.line_items ?? [];
+    const lineItems = formik.values.lineItems ?? [];
     const subtotal = lineItems.reduce((sum, li) => {
       const qty = parseFloat(li.quantity) || 0;
       const rate = parseFloat(li.rate) || 0;
@@ -291,7 +276,7 @@ export function useCreateInvoice() {
 
     return { subtotal, entityDiscount, adjustmentVal, total };
   }, [
-    formik.values.line_items,
+    formik.values.lineItems,
     formik.values.discount,
     formik.values.adjustment,
   ]);

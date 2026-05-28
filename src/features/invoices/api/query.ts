@@ -1,29 +1,51 @@
-import { useQuery, useMutation, useQueryClient } from "@/lib/react-query";
-import { getInvoices, getInvoiceById, createInvoice } from "./service";
-import type { CreateInvoicePayload } from "@/shared/interface/invoice";
+import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
+import {
+  getInvoiceById,
+  createInvoice,
+  getAllInvoices,
+  deleteInvoice,
+} from "./service";
+import type {
+  CreateInvoicePayload,
+  IGetInvoiceFilter,
+} from "@/shared/interface/invoice";
+import { customQueryKey } from "@/shared/constants/query-keys";
 
-const KEYS = {
-  all: ["invoices"] as const,
-  detail: (id: string) => ["invoices", id] as const,
+export const useGetAllInvoicesQuery = (
+  filter?: IGetInvoiceFilter,
+  config?: QueryConfigType<typeof getAllInvoices>,
+) => {
+  return useQuery({
+    queryKey: [customQueryKey.invoices.getAll, filter],
+    queryFn: () => getAllInvoices(filter),
+    ...config,
+  });
 };
-
-export const useGetInvoicesQuery = () =>
-  useQuery({ queryKey: KEYS.all, queryFn: getInvoices });
 
 export const useGetInvoiceByIdQuery = (id: string) =>
   useQuery({
-    queryKey: KEYS.detail(id),
+    queryKey: [customQueryKey.invoices.getById, id],
     queryFn: () => getInvoiceById(id),
     enabled: Boolean(id),
   });
 
 export const useCreateInvoiceMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateInvoicePayload) => createInvoice(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.all });
+
+    meta: {
+      successMessage: "Customer created successfully",
+      invalidatesQueryKeys: [[customQueryKey.invoices.getAll]],
     },
-    meta: { successMessage: "Invoice created successfully" },
+  });
+};
+
+export const useDeleteInvoiceMutation = () => {
+  return useMutation({
+    mutationFn: (id: string) => deleteInvoice(id),
+    meta: {
+      successMessage: "Invoice deleted",
+      invalidatesQueryKeys: [[customQueryKey.invoices.getAll]],
+    },
   });
 };

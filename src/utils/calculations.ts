@@ -26,9 +26,9 @@ export function getProfitStatus(marginPercent: number): ProfitStatus {
   return "loss";
 }
 
-export function formatCurrency(amount: number, currency = "NGN"): string {
+export function formatCurrency(amount = 0, currency = "NGN"): string {
   if (currency === "NGN") {
-    return `₦${amount.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₦${amount?.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
   return new Intl.NumberFormat("en-US", {
     style: "currency",

@@ -1,19 +1,49 @@
-import type { Invoice, CreateInvoicePayload } from "@/shared/interface/invoice";
-import { MOCK_INVOICES } from "@/shared/data/mock";
+import type {
+  Invoice,
+  CreateInvoicePayload,
+  IGetInvoiceFilter,
+} from "@/shared/interface/invoice";
+// import { MOCK_INVOICES } from "@/shared/data/mock";
 import { calculateProfit, calculateMarginPercent } from "@/utils/calculations";
+import { axios } from "@/lib/axios";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
+import type { ApiResponse } from "@/shared/interface/api";
 
 const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
-export const getInvoices = async (): Promise<Invoice[]> => {
-  await delay(300);
-  return MOCK_INVOICES;
+export const getAllInvoices = async (filter?: IGetInvoiceFilter) => {
+  const baseUrl = "/invoices";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
+  const response = await axios.get<ApiResponse<Array<Invoice>>>(apiUrl);
+  return response.data;
 };
 
 export const getInvoiceById = async (id: string): Promise<Invoice> => {
-  await delay(200);
-  const invoice = MOCK_INVOICES.find((i) => i.id === id);
-  if (!invoice) throw new Error("Invoice not found");
-  return invoice;
+  const baseUrl = `/invoices/${id}`;
+  const response = await axios.get(baseUrl);
+  return response.data;
+};
+
+export const deleteInvoice = async (id: string): Promise<void> => {
+  await axios.delete(`/invoices/${id}`);
+};
+
+export const downloadInvoicePdf = async (
+  id: string,
+  invoiceNumber?: string,
+): Promise<void> => {
+  const response = await axios.get(`/invoices/${id}/pdf`, {
+    responseType: "blob",
+  });
+  const blob = new Blob([response.data], { type: "application/pdf" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${invoiceNumber ?? `invoice-${id}`}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
 
 export const createInvoice = async (
@@ -21,15 +51,16 @@ export const createInvoice = async (
 ): Promise<Invoice> => {
   await delay(500);
 
-  const lineItems = payload.line_items.map((li, idx) => {
+  const lineItems = payload.lineItems.map((li, idx) => {
     const rate =
       typeof li.rate === "string" ? parseFloat(li.rate) || 0 : li.rate;
     const qty = parseFloat(li.quantity) || 0;
     const discountPct = parseFloat((li.discount ?? "0").replace("%", "")) || 0;
     const lineAmount = rate * qty * (1 - discountPct / 100);
     return {
+      ...li,
       id: `li-new-${idx}`,
-      itemId: li.item_id ?? "",
+      itemId: li.itemId ?? "",
       description: li.description,
       quantity: qty,
       unitPrice: rate,
@@ -50,18 +81,21 @@ export const createInvoice = async (
   const profit = calculateProfit(totalAmount, 0);
   const marginPercent = calculateMarginPercent(profit, totalAmount);
 
+  // console.log("payload is ", payload);
+
   const finalPayload = {
+    ...payload,
     id: `inv-${Date.now()}`,
-    invoiceNumber: `INV-2026-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
-    customerId: payload.customer_id,
-    customer: {
-      id: payload.customer_id,
-      name: "New Customer",
-      email: "",
-      phone: "",
-    },
+    // invoiceNumber: `INV-2026-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
+    customerId: payload.customerId,
+    // customer: {
+    //   id: payload.customerId,
+    //   name: "New Customer",
+    //   email: "",
+    //   phone: "",
+    // },
     issueDate: payload.date,
-    dueDate: payload.due_date,
+    dueDate: payload.dueDate,
     lineItems,
     subtotal,
     taxTotal,
@@ -76,9 +110,8 @@ export const createInvoice = async (
     notes: payload.notes,
     createdAt: new Date().toISOString().split("T")[0],
   };
-
   // console.log("final payload is ", finalPayload);
-  return new Promise<Invoice>((resolve) => {
-    resolve(finalPayload as any);
-  });
+  const { data } = await axios.post("/invoices", finalPayload);
+
+  return data;
 };

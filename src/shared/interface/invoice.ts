@@ -1,3 +1,5 @@
+import type { IBaseFilter } from "./filter";
+
 export type InvoiceStatus =
   | "draft"
   | "sent"
@@ -43,52 +45,44 @@ export interface Invoice {
   createdAt: string;
 }
 
-export interface ZohoLineItem {
-  item_order: number;
-  item_id?: string;
-  rate: string | number;
-  name?: string;
+export interface CreateLineItemPayload {
+  itemOrder: number;
+  itemId?: string;
+  name: string;
   description: string;
+  rate: string;
   quantity: string;
   discount: string;
-  tax_id: string;
-  project_id?: string;
-  tags: string[];
-  account_id?: string;
-  item_custom_fields: unknown[];
   unit?: string;
 }
 
+export type DiscountType = "entityLevel" | "itemLevel";
+
 export interface CreateInvoicePayload {
-  reference_number: string;
-  payment_terms: number;
-  payment_terms_label: string;
-  payment_options: { payment_gateways: string[] };
-  customer_id: string;
-  contact_persons: string[];
+  invoiceNumber: string;
+  referenceNumber: string;
+  customerId: string;
+  customer: {
+    name: string;
+    email: string;
+  };
   date: string;
-  due_date: string;
+  dueDate: string;
+  paymentTerms: number;
+  paymentTermsLabel: string;
   notes: string;
   terms: string;
-  is_inclusive_tax: boolean;
-  line_items: ZohoLineItem[];
-  allow_partial_payments: boolean;
-  custom_fields: unknown[];
-  is_discount_before_tax: boolean;
+  lineItems: CreateLineItemPayload[];
+  isDiscountBeforeTax: boolean;
   discount: string;
-  discount_type: string;
+  discountType: DiscountType;
   adjustment: string;
-  adjustment_description: string;
-  zcrm_potential_id: string;
-  zcrm_potential_name: string;
-  pricebook_id: string;
-  template_id?: string;
-  project_id?: string;
-  documents: unknown[];
-  mail_attachments: unknown[];
-  billing_address_id?: string;
-  shipping_address_id?: string;
-  tax_override_preference: string;
-  tds_override_preference: string;
-  discount_account_id?: string;
+  adjustmentDescription: string;
+}
+
+export interface IGetInvoiceFilter extends IBaseFilter {
+  status: string;
+  customerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }

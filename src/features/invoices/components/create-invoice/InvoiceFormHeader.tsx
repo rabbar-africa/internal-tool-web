@@ -46,7 +46,7 @@ export function InvoiceFormHeader({
     setInvoiceConfig(config);
     if (config.mode === "auto") {
       formik.setFieldValue(
-        "invoice_number",
+        "invoiceNumber",
         `${config.prefix}${config.nextNumber}`,
       );
     }
@@ -66,15 +66,21 @@ export function InvoiceFormHeader({
             required
             options={customerOptions}
             placeholder="Search customer..."
-            value={formik.values.customer_id || undefined}
-            onChange={(val) => formik.setFieldValue("customer_id", val)}
+            value={formik.values.customerId || undefined}
+            onChange={(val, option) => {
+              formik.setFieldValue("customerId", val);
+              formik.setFieldValue("customer", {
+                name: option.label,
+                email: option.subLabel ?? "",
+              });
+            }}
             onSearchChange={onCustomerSearch}
             searchDebounceMs={400}
             serverSearch
             isLoading={isSearchingCustomers}
             error={
-              formik.touched.customer_id && formik.errors.customer_id
-                ? String(formik.errors.customer_id)
+              formik.touched.customerId && formik.errors.customerId
+                ? String(formik.errors.customerId)
                 : undefined
             }
             footerAction={{
@@ -150,7 +156,7 @@ export function InvoiceFormHeader({
         {/* Right: Invoice metadata */}
         <Stack gap="4">
           {/* Invoice # + Order Number */}
-          <Grid templateColumns="1fr 1fr" gap="4">
+          <Grid templateColumns="1fr" gap="4">
             <Box>
               <Text
                 fontSize=".625rem"
@@ -169,16 +175,16 @@ export function InvoiceFormHeader({
                 <Box flex={1}>
                   <CustomInput
                     placeholder="e.g. RINV-123456"
-                    name="invoice_number"
-                    value={formik.values.invoice_number}
+                    name="invoiceNumber"
+                    value={formik.values.invoiceNumber}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={invoiceConfig.mode === "auto"}
                     error={
-                      (formik.touched.invoice_number ||
+                      (formik.touched.invoiceNumber ||
                         formik.submitCount > 0) &&
-                      formik.errors.invoice_number
-                        ? String(formik.errors.invoice_number)
+                      formik.errors.invoiceNumber
+                        ? String(formik.errors.invoiceNumber)
                         : undefined
                     }
                   />
@@ -190,21 +196,21 @@ export function InvoiceFormHeader({
                   color="gray.300"
                   _hover={{ color: "primary.400", bg: "primary.50" }}
                   onClick={() => setShowConfig(true)}
-                  mt={formik.errors.invoice_number ? "-4" : "0"}
+                  mt={formik.errors.invoiceNumber ? "-4" : "0"}
                 >
                   ⚙
                 </IconButton>
               </Flex>
             </Box>
-
+            {/* 
             <CustomInput
               label="Order Number"
               placeholder="e.g. PO-12345"
-              name="reference_number"
-              value={formik.values.reference_number}
+              name="referenceNumber"
+              value={formik.values.referenceNumber}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-            />
+            /> */}
           </Grid>
 
           {/* Invoice Date + Terms + Due Date */}
@@ -227,13 +233,13 @@ export function InvoiceFormHeader({
               label="Due Date"
               type="date"
               required
-              name="due_date"
-              value={formik.values.due_date}
+              name="dueDate"
+              value={formik.values.dueDate}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={
-                formik.touched.due_date && formik.errors.due_date
-                  ? String(formik.errors.due_date)
+                formik.touched.dueDate && formik.errors.dueDate
+                  ? String(formik.errors.dueDate)
                   : undefined
               }
             />
@@ -243,15 +249,13 @@ export function InvoiceFormHeader({
             label="Payment Terms"
             options={PAYMENT_TERMS_OPTIONS}
             value={
-              formik.values.payment_terms
-                ? [formik.values.payment_terms]
-                : ["0"]
+              formik.values.paymentTerms ? [formik.values.paymentTerms] : ["0"]
             }
             onChange={(opt: { value: string[] }) => {
               const val = Array.isArray(opt?.value)
                 ? opt.value[0]
                 : (opt?.value ?? "0");
-              formik.setFieldValue("payment_terms", val);
+              formik.setFieldValue("paymentTerms", val);
             }}
           />
         </Stack>
@@ -269,7 +273,11 @@ export function InvoiceFormHeader({
         onClose={() => setAddCustomerOpen(false)}
         onSave={(customer) => {
           onAddNewCustomer(customer);
-          formik.setFieldValue("customer_id", customer.id);
+          formik.setFieldValue("customerId", customer.id);
+          formik.setFieldValue("customer", {
+            name: customer.displayName,
+            email: customer.email ?? "",
+          });
           setAddCustomerOpen(false);
         }}
       />

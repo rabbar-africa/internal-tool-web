@@ -111,8 +111,8 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
               </Text>
               <CustomInput
                 placeholder="Label"
-                name="adjustment_description"
-                value={formik.values.adjustment_description}
+                name="adjustmentDescription"
+                value={formik.values.adjustmentDescription}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 inputProps={{ fontSize: "11px", h: "24px", mt: "1" }}

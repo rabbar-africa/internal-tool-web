@@ -39,6 +39,10 @@ export interface SearchComboboxProps {
   serverSearch?: boolean;
   /** Shows a loading spinner inside the dropdown when true. */
   isLoading?: boolean;
+  /** Controlled input text. When provided, the combobox displays this when no option is selected. */
+  inputValue?: string;
+  /** Fires only on user typing (not on selection-driven clears). */
+  onInputChange?: (text: string) => void;
 }
 
 export function SearchCombobox({
@@ -57,9 +61,16 @@ export function SearchCombobox({
   searchDebounceMs = 0,
   serverSearch = false,
   isLoading = false,
+  inputValue,
+  onInputChange,
 }: SearchComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [internalQuery, setInternalQuery] = useState("");
+  const isInputControlled = inputValue !== undefined;
+  const query = isInputControlled ? inputValue : internalQuery;
+  const setQuery = (val: string) => {
+    if (!isInputControlled) setInternalQuery(val);
+  };
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,7 +114,6 @@ export function SearchCombobox({
       const insideDropdown = dropdownRef.current?.contains(target);
       if (!insideInput && !insideDropdown) {
         setIsOpen(false);
-        setQuery("");
       }
     };
     document.addEventListener("mousedown", handler);
@@ -113,6 +123,7 @@ export function SearchCombobox({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
+    onInputChange?.(newQuery);
     if (!isOpen) {
       updatePosition();
       setIsOpen(true);
@@ -141,7 +152,7 @@ export function SearchCombobox({
     if (onSearchChange) onSearchChange("");
   };
 
-  const inputDisplayValue = isOpen ? query : (selectedOption?.label ?? "");
+  const inputDisplayValue = isOpen ? query : (selectedOption?.label ?? query);
 
   return (
     <Field.Root
