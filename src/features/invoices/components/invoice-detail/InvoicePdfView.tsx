@@ -1,10 +1,10 @@
-import { Box, Flex, Grid, Separator, Stack, Text } from "@chakra-ui/react";
+import { Box, Flex, Grid, Image, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
-
 const formatDate = (v: string) => moment(v).format("DD MMM YYYY");
 
 interface InvoicePdfViewProps {
@@ -13,14 +13,22 @@ interface InvoicePdfViewProps {
 
 export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const { formatMoney } = useFormatMoney();
+  const { userOrganization } = useCurrentUser();
+
   const client = invoice.client;
   const subtotal = toNum(invoice.subTotal);
   const discountAmount = toNum(invoice.discount);
   const taxAmount = toNum(invoice.taxAmount);
-  const adjustment = toNum(invoice.adjustment);
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
-  const amountPaid = total - balance;
+
+  const orgLocation = [userOrganization?.city, userOrganization?.country]
+    .filter(Boolean)
+    .join(" , ");
+
+  const formatPlain = (n: number) => formatMoney(n, { showSymbol: false });
+  const formatWithCode = (n: number) =>
+    formatMoney(n, { showCurrencyCode: true, showSymbol: false });
 
   return (
     <Box
@@ -29,127 +37,120 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
       borderColor="gray.75"
       rounded="md"
       shadow="sm"
-      p={{ base: "6", md: "10" }}
+      px={{ base: "6", md: "12" }}
+      py={{ base: "6", md: "12" }}
       maxW="900px"
       mx="auto"
       w="100%"
     >
-      {/* Header — brand + INVOICE label */}
-      <Flex justify="space-between" align="flex-start" mb="8" gap="6">
-        <Stack gap="1">
-          <Text fontSize="20px" fontWeight="700" color="gray.500">
-            Rabbar Africa
-          </Text>
-          <Text fontSize="12px" color="gray.300">
-            Lagos, Nigeria
-          </Text>
+      {/* Top: brand (left) + Invoice + Balance Due (right) */}
+      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="6" mb="10">
+        <Stack gap="3">
+          {userOrganization?.logoUrl ? (
+            <Image
+              src={userOrganization.logoUrl}
+              alt={userOrganization.name}
+              maxH="80px"
+              maxW="120px"
+              objectFit="contain"
+              alignSelf="flex-start"
+            />
+          ) : (
+            <Box
+              w="80px"
+              h="80px"
+              bg="primary.500"
+              rounded="md"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Text fontSize="13px" color="white" fontWeight="600">
+                {userOrganization?.name?.[0] ?? "R"}
+              </Text>
+            </Box>
+          )}
+          <Stack gap="0.5">
+            <Text fontSize="14px" fontWeight="700" color="gray.500">
+              {userOrganization?.name ?? "—"}
+            </Text>
+            {orgLocation && (
+              <Text fontSize="12px" color="gray.400">
+                {orgLocation}
+              </Text>
+            )}
+            {userOrganization?.companyEmail || userOrganization?.email ? (
+              <Text fontSize="12px" color="gray.400">
+                {userOrganization?.companyEmail || userOrganization?.email}
+              </Text>
+            ) : null}
+          </Stack>
         </Stack>
-        <Stack gap="1" align="flex-end" textAlign="right">
+
+        <Stack gap="2" align="flex-end" textAlign="right">
           <Text
-            fontSize="24px"
-            fontWeight="700"
-            color="primary.400"
-            letterSpacing="0.05em"
+            fontSize={{ base: "32px", md: "40px" }}
+            fontWeight="600"
+            color="gray.500"
+            lineHeight="1"
           >
-            INVOICE
+            Invoice
           </Text>
           <Text fontSize="13px" color="gray.500" fontWeight="600">
-            #{invoice.invoiceNumber}
+            # {invoice.invoiceNumber}
           </Text>
-          {invoice.referenceNumber && (
-            <Text fontSize="11px" color="gray.300">
-              Ref: {invoice.referenceNumber}
+          <Box mt="4">
+            <Text fontSize="12px" color="gray.300" fontWeight="500">
+              Balance Due
             </Text>
-          )}
+            <Text fontSize="20px" fontWeight="700" color="gray.500" mt="0.5">
+              {formatWithCode(balance)}
+            </Text>
+          </Box>
         </Stack>
-      </Flex>
+      </Grid>
 
-      {/* Bill To + Invoice meta */}
-      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="6" mb="8">
-        <Stack gap="1">
-          <Text
-            fontSize="10px"
-            fontWeight="700"
-            color="gray.300"
-            textTransform="uppercase"
-            letterSpacing="0.08em"
-            mb="1"
-          >
+      {/* Bill To (left) + Invoice meta (right) */}
+      <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="6" mb="6">
+        <Stack gap="1" justify="flex-end">
+          <Text fontSize="12px" color="gray.400">
             Bill To
           </Text>
-          <Text fontSize="14px" fontWeight="600" color="gray.500">
+          <Text fontSize="14px" fontWeight="700" color="gray.500">
             {client?.displayName ?? invoice.customerName ?? "—"}
           </Text>
-          {client?.email && (
-            <Text fontSize="12px" color="gray.400">
-              {client.email}
-            </Text>
-          )}
-          {client?.phone && (
-            <Text fontSize="12px" color="gray.400">
-              {client.phone}
-            </Text>
-          )}
           {invoice.billingAddress && (
             <Text fontSize="12px" color="gray.400" whiteSpace="pre-line">
               {invoice.billingAddress}
             </Text>
           )}
-          {!invoice.billingAddress &&
-            (client?.address || client?.city || client?.state) && (
-              <Text fontSize="12px" color="gray.400">
-                {[client.address, client.city, client.state, client.country]
-                  .filter(Boolean)
-                  .join(", ")}
-              </Text>
-            )}
         </Stack>
 
-        <Stack
-          gap="1.5"
-          bg="gray.25"
-          p="4"
-          rounded="md"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
+        <Stack gap="2" justify="flex-end">
           <MetaRow label="Invoice Date" value={formatDate(invoice.date)} />
-          <MetaRow label="Due Date" value={formatDate(invoice.dueDate)} />
           <MetaRow
-            label="Payment Terms"
+            label="Terms"
             value={invoice.paymentTermsLabel || `Net ${invoice.paymentTerms}`}
           />
-          {invoice.currencyCode && (
-            <MetaRow label="Currency" value={invoice.currencyCode} />
-          )}
+          <MetaRow label="Due Date" value={formatDate(invoice.dueDate)} />
         </Stack>
       </Grid>
 
       {/* Line items */}
-      <Box
-        borderWidth="1px"
-        borderColor="gray.75"
-        rounded="md"
-        overflow="hidden"
-        mb="6"
-      >
+      <Box mb="6">
         <Grid
-          templateColumns="40px 1fr 70px 110px 120px"
+          templateColumns="50px 1fr 90px 130px 130px"
           gap="3"
           px="4"
           py="3"
-          bg="gray.25"
-          borderBottomWidth="1px"
-          borderColor="gray.75"
+          bg="gray.500"
         >
           {["#", "Item & Description", "Qty", "Rate", "Amount"].map((h, i) => (
             <Text
               key={h}
-              fontSize="10px"
-              fontWeight="700"
-              color="gray.300"
-              textTransform="uppercase"
-              letterSpacing="0.05em"
+              fontSize="12px"
+              fontWeight="500"
+              color="white"
               textAlign={i >= 2 ? "right" : "left"}
             >
               {h}
@@ -160,141 +161,114 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
         {invoice.lineItems?.map((li, idx) => (
           <Grid
             key={li.id}
-            templateColumns="40px 1fr 70px 110px 120px"
+            templateColumns="50px 1fr 90px 130px 130px"
             gap="3"
             px="4"
-            py="3"
-            borderBottomWidth={idx === invoice.lineItems.length - 1 ? 0 : "1px"}
-            borderColor="gray.50"
+            py="4"
+            borderBottomWidth="1px"
+            borderColor="gray.75"
+            alignItems="start"
           >
-            <Text fontSize="12px" color="gray.300">
+            <Text fontSize="13px" color="primary.400" fontWeight="500">
               {idx + 1}
             </Text>
             <Stack gap="0.5">
-              <Text fontSize="13px" fontWeight="500" color="gray.500">
+              <Text fontSize="13px" fontWeight="600" color="gray.500">
                 {li.name}
               </Text>
               {li.description && (
-                <Text fontSize="11px" color="gray.300">
+                <Text fontSize="12px" color="gray.300">
                   {li.description}
                 </Text>
               )}
             </Stack>
-            <Text fontSize="12px" color="gray.500" textAlign="right">
-              {toNum(li.quantity)}
-            </Text>
-            <Text fontSize="12px" color="gray.500" textAlign="right">
-              {formatMoney(toNum(li.rate))}
+            <Text
+              fontSize="13px"
+              color="primary.400"
+              textAlign="right"
+              fontWeight="500"
+            >
+              {Number(li.quantity).toFixed(2)}
             </Text>
             <Text
               fontSize="13px"
-              fontWeight="500"
-              color="gray.500"
+              color="primary.400"
               textAlign="right"
+              fontWeight="500"
             >
-              {formatMoney(toNum(li.total))}
+              {formatPlain(toNum(li.rate))}
+            </Text>
+            <Text fontSize="13px" color="gray.500" textAlign="right">
+              {formatPlain(toNum(li.total))}
             </Text>
           </Grid>
         ))}
       </Box>
 
-      {/* Totals box */}
-      <Flex justify="flex-end" mb="6">
-        <Box
-          w={{ base: "100%", md: "320px" }}
-          borderWidth="1px"
-          borderColor="gray.75"
-          rounded="md"
-          overflow="hidden"
-        >
-          <Stack gap="0" px="4" py="3">
-            <TotalRow label="Subtotal" value={formatMoney(subtotal)} />
-            {discountAmount > 0 && (
-              <TotalRow
-                label="Discount"
-                value={`− ${formatMoney(discountAmount)}`}
-                valueColor="red.500"
-              />
-            )}
-            <TotalRow label="Tax" value={formatMoney(taxAmount)} />
-            {adjustment !== 0 && (
-              <TotalRow
-                label={invoice.adjustmentDescription || "Adjustment"}
-                value={`${adjustment > 0 ? "+" : "−"} ${formatMoney(Math.abs(adjustment))}`}
-                valueColor={adjustment > 0 ? "green.600" : "red.500"}
-              />
-            )}
-            <Separator my="2" />
-            <Flex justify="space-between" align="center" py="1">
-              <Text fontSize="14px" fontWeight="700" color="gray.500">
-                Total
-              </Text>
-              <Text fontSize="16px" fontWeight="700" color="primary.400">
-                {formatMoney(total)}
-              </Text>
-            </Flex>
-            {amountPaid > 0 && (
-              <TotalRow
-                label="Amount Paid"
-                value={`− ${formatMoney(amountPaid)}`}
-                valueColor="green.600"
-              />
-            )}
-            <Separator my="2" />
-            <Flex justify="space-between" align="center" py="1">
-              <Text fontSize="14px" fontWeight="700" color="gray.500">
+      {/* Totals — right-aligned, no outer box */}
+      <Flex justify="flex-end" mb="10">
+        <Stack gap="0" w={{ base: "100%", md: "360px" }}>
+          <TotalRow label="Sub Total" value={formatPlain(subtotal)} />
+          {discountAmount > 0 && (
+            <TotalRow
+              label="Discount"
+              value={`(-) ${formatPlain(discountAmount)}`}
+            />
+          )}
+          {taxAmount > 0 && (
+            <TotalRow label="VAT" value={formatPlain(taxAmount)} />
+          )}
+          <TotalRow
+            label="Total"
+            value={formatWithCode(total)}
+            labelBold
+            valueBold
+          />
+          <Box bg="gray.50" px="3" py="3" rounded="sm" mt="1">
+            <Flex justify="space-between" align="center">
+              <Text fontSize="13px" fontWeight="700" color="gray.500">
                 Balance Due
               </Text>
-              <Text
-                fontSize="16px"
-                fontWeight="700"
-                color={balance > 0 ? "red.500" : "green.600"}
-              >
-                {formatMoney(balance)}
+              <Text fontSize="14px" fontWeight="700" color="gray.500">
+                {formatWithCode(balance)}
               </Text>
             </Flex>
-          </Stack>
-        </Box>
+          </Box>
+        </Stack>
       </Flex>
 
-      {/* Notes + Terms */}
-      {(invoice.notes || invoice.terms) && (
-        <Stack gap="4" pt="2">
-          {invoice.notes && (
-            <Box>
-              <Text
-                fontSize="10px"
-                fontWeight="700"
-                color="gray.300"
-                textTransform="uppercase"
-                letterSpacing="0.08em"
-                mb="1"
-              >
-                Notes
-              </Text>
-              <Text fontSize="12px" color="gray.400" whiteSpace="pre-line">
-                {invoice.notes}
-              </Text>
-            </Box>
-          )}
-          {invoice.terms && (
-            <Box>
-              <Text
-                fontSize="10px"
-                fontWeight="700"
-                color="gray.300"
-                textTransform="uppercase"
-                letterSpacing="0.08em"
-                mb="1"
-              >
-                Terms & Conditions
-              </Text>
-              <Text fontSize="12px" color="gray.400" whiteSpace="pre-line">
-                {invoice.terms}
-              </Text>
-            </Box>
-          )}
-        </Stack>
+      {/* Notes */}
+      {invoice.notes && (
+        <Box mb="6">
+          <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
+            Notes
+          </Text>
+          <Text
+            fontSize="12px"
+            color="gray.400"
+            whiteSpace="pre-line"
+            lineHeight="1.6"
+          >
+            {invoice.notes}
+          </Text>
+        </Box>
+      )}
+
+      {/* Terms */}
+      {invoice.terms && (
+        <Box>
+          <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
+            Terms &amp; Conditions
+          </Text>
+          <Text
+            fontSize="12px"
+            color="gray.400"
+            whiteSpace="pre-line"
+            lineHeight="1.6"
+          >
+            {invoice.terms}
+          </Text>
+        </Box>
       )}
     </Box>
   );
@@ -302,11 +276,17 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <Flex justify="space-between" gap="3">
-      <Text fontSize="11px" color="gray.300" fontWeight="500">
-        {label}
+    <Flex justify="flex-end" gap="6" align="center">
+      <Text fontSize="13px" color="gray.400">
+        {label} :
       </Text>
-      <Text fontSize="12px" color="gray.500" fontWeight="500" textAlign="right">
+      <Text
+        fontSize="13px"
+        color="primary.400"
+        fontWeight="500"
+        minW="120px"
+        textAlign="right"
+      >
         {value}
       </Text>
     </Flex>
@@ -316,18 +296,28 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 function TotalRow({
   label,
   value,
-  valueColor = "gray.500",
+  labelBold,
+  valueBold,
 }: {
   label: string;
   value: string;
-  valueColor?: string;
+  labelBold?: boolean;
+  valueBold?: boolean;
 }) {
   return (
-    <Flex justify="space-between" align="center" py="1">
-      <Text fontSize="13px" color="gray.400">
+    <Flex justify="space-between" align="center" px="3" py="2">
+      <Text
+        fontSize="13px"
+        color="gray.500"
+        fontWeight={labelBold ? "700" : "400"}
+      >
         {label}
       </Text>
-      <Text fontSize="13px" color={valueColor} fontWeight="500">
+      <Text
+        fontSize="13px"
+        color="gray.500"
+        fontWeight={valueBold ? "700" : "500"}
+      >
         {value}
       </Text>
     </Flex>

@@ -5,6 +5,8 @@ export type FormatMoneyOptions = {
   currencyCode?: string;
   /** When false, returns just the formatted number. Defaults to true. */
   showSymbol?: boolean;
+  /** Prepend the currency code instead of the symbol (e.g. "NGN96,000.00"). Overrides showSymbol. */
+  showCurrencyCode?: boolean;
   /** Override decimal places (default 2). */
   fractionDigits?: number;
 };
@@ -17,20 +19,26 @@ export function formatMoney(
   options: FormatMoneyOptions = {},
 ): string {
   const currency = options.currencyCode || DEFAULT_CURRENCY;
+  const showCurrencyCode = options.showCurrencyCode ?? false;
   const showSymbol = options.showSymbol ?? true;
   const fractionDigits = options.fractionDigits ?? 2;
 
   const numValue =
     typeof amount === "string" ? parseFloat(amount) : (amount ?? 0);
-  if (!Number.isFinite(numValue))
-    return showSymbol ? symbolFor(currency) + "0.00" : "0.00";
+  const safeValue = Number.isFinite(numValue) ? numValue : 0;
 
   const formattedNumber = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
-  }).format(numValue);
+  }).format(safeValue);
 
-  return `${showSymbol ? symbolFor(currency) : ""}${formattedNumber}`;
+  const prefix = showCurrencyCode
+    ? currency
+    : showSymbol
+      ? symbolFor(currency)
+      : "";
+
+  return `${prefix}${formattedNumber}`;
 }
 
 function symbolFor(currency: string): string {

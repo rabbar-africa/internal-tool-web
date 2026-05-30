@@ -11,7 +11,6 @@ export function InvoiceDetailPage() {
     isLoading,
     isError,
 
-    goBack,
     handleEdit,
     handleRecordPayment,
     handleDownloadPdf,
@@ -51,7 +50,6 @@ export function InvoiceDetailPage() {
         <Stack gap="6">
           <InvoiceDetailHeader
             invoice={invoice}
-            onBack={goBack}
             onEdit={handleEdit}
             onRecordPayment={handleRecordPayment}
             onDownloadPdf={handleDownloadPdf}
