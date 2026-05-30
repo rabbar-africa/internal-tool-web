@@ -13,7 +13,7 @@ import { SearchCombobox } from "@/components/input/SearchCombobox";
 import type { SearchComboboxOption } from "@/components/input/SearchCombobox";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
-import { formatCurrency } from "@/utils/calculations";
+import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type {
   CreateInvoiceFormValues,
   LineItemFormRow,
@@ -84,6 +84,7 @@ function LineItemRow({
   onRemove,
   onOpenAddItem,
 }: LineItemRowProps) {
+  const { formatMoney } = useFormatMoney();
   const lineItem = formik.values.lineItems[idx];
   const lineErrors = (
     formik.errors.lineItems as FormikErrors<LineItemFormRow>[] | undefined
@@ -184,7 +185,7 @@ function LineItemRow({
 
         <Flex align="center" justify="flex-end" h="40px">
           <Text fontSize="13px" fontWeight="500" color="gray.500">
-            {formatCurrency(lineAmount)}
+            {formatMoney(lineAmount)}
           </Text>
         </Flex>
 
@@ -295,7 +296,7 @@ function LineItemRow({
             <Text fontSize="13px" color="gray.400">
               Amount:{" "}
               <Text as="span" fontWeight="600" color="gray.500">
-                {formatCurrency(lineAmount)}
+                {formatMoney(lineAmount)}
               </Text>
             </Text>
           </Flex>

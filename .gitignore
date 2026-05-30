@@ -27,3 +27,4 @@ dist-ssr
 msc.*
 msc*
 CLAUDE.*
+**/for-claude/

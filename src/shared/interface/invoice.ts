@@ -1,3 +1,4 @@
+import type { ICustomer } from "./customer";
 import type { IBaseFilter } from "./filter";
 
 export type InvoiceStatus =
@@ -18,6 +19,70 @@ export interface LineItem {
   lineTotal: number;
 }
 
+export interface IInvoiceResponse {
+  id: string;
+  organizationId: string;
+  invoiceNumber: string;
+  referenceNumber: string;
+  customerId: string;
+  customerName: string;
+  status: string;
+  date: string;
+  dueDate: string;
+  paymentTerms: number;
+  paymentTermsLabel: string;
+  currencyCode: string;
+  exchangeRate: string;
+  isInclusiveTax: boolean;
+  isDiscountBeforeTax: boolean;
+  discountType: string;
+  discount: string;
+  discountPercent: string;
+  subTotal: string;
+  taxAmount: string;
+  shippingCharge: string;
+  adjustment: string;
+  roundOff: string;
+  total: string;
+  balance: string;
+  adjustmentDescription: string;
+  notes: string;
+  terms: string;
+  subject: string | null;
+  allowPartialPayments: boolean;
+  billingAddress: string | null;
+  shippingAddress: string | null;
+  salesPerson: string | null;
+  pricebookId: string | null;
+  projectId: string | null;
+  expectedPaymentDate: string | null;
+  lastPaymentDate: string | null;
+  source: string | null;
+  externalId: string | null;
+  linkedExpenseIds: Array<any>;
+  createdAt: string;
+  updatedAt: string;
+  lineItems: Array<{
+    id: string;
+    invoiceId: string;
+    organizationId: string;
+    itemOrder: number;
+    itemId: string | null;
+    name: string;
+    description: string;
+    unit: number | null;
+    quantity: string;
+    rate: string;
+    discount: string;
+    discountAmount: string;
+    taxId: string;
+    taxName: string | null;
+    taxPercent: string;
+    taxAmount: string;
+    total: string;
+  }>;
+  client: ICustomer;
+}
 export interface Invoice {
   id: string;
   invoiceNumber: string;

@@ -5,6 +5,8 @@ import type {
   LoginResponse,
   RefreshTokenResponse,
 } from "./types";
+import { type ApiResponse } from "@/shared/interface/api";
+import { type IUser } from "@/shared/interface/user";
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
@@ -27,7 +29,9 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await axios.get(QUERY_PATH.auth.getCurrentUser);
+    const response = await axios.get<ApiResponse<IUser>>(
+      QUERY_PATH.auth.getCurrentUser,
+    );
     return response.data.data;
   },
 };

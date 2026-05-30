@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { DownloadButton } from "@/components/common/DownloadButton";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useInvoiceList } from "./useInvoiceList";
-import { INVOICE_COLUMNS, INVOICE_CSV_HEADERS } from "./columns";
+import { INVOICE_CSV_HEADERS, useInvoiceListColumns } from "./columns";
 import { InvoiceFilters } from "./InvoiceFilters";
 import { DeleteInvoiceConfirm } from "./DeleteInvoiceConfirm";
 
@@ -37,6 +37,8 @@ export function InvoiceListPage() {
     cancelDelete,
     isDeleting,
   } = useInvoiceList();
+
+  const columns = useInvoiceListColumns();
 
   const selectionCount = selectedInvoices.length;
   const downloadFilename =
@@ -113,7 +115,7 @@ export function InvoiceListPage() {
             <Box overflowX="auto" maxW="calc(100vw - 380px)">
               <CustomTable
                 data={invoices}
-                columns={INVOICE_COLUMNS}
+                columns={columns}
                 loading={isLoading}
                 enableRowSelection
                 rowSelection={rowSelection}
@@ -140,7 +142,14 @@ export function InvoiceListPage() {
       </UserDashboardContainer>
 
       <DeleteInvoiceConfirm
-        invoice={pendingDelete}
+        target={
+          pendingDelete
+            ? {
+                id: pendingDelete.id,
+                invoiceNumber: pendingDelete.invoiceNumber,
+              }
+            : null
+        }
         isDeleting={isDeleting}
         onCancel={cancelDelete}
         onConfirm={confirmDelete}

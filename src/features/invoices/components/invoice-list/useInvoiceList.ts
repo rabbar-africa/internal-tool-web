@@ -85,9 +85,7 @@ export function useInvoiceList() {
     [navigate],
   );
 
-  const confirmDelete = async () => {
-    if (!pendingDelete) return;
-    const id = pendingDelete.id;
+  const confirmDelete = async (id: string) => {
     await deleteInvoice(id);
     setPendingDelete(null);
     setRowSelection((prev) => {

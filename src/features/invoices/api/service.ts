@@ -2,6 +2,7 @@ import type {
   Invoice,
   CreateInvoicePayload,
   IGetInvoiceFilter,
+  IInvoiceResponse,
 } from "@/shared/interface/invoice";
 // import { MOCK_INVOICES } from "@/shared/data/mock";
 import { calculateProfit, calculateMarginPercent } from "@/utils/calculations";
@@ -18,9 +19,9 @@ export const getAllInvoices = async (filter?: IGetInvoiceFilter) => {
   return response.data;
 };
 
-export const getInvoiceById = async (id: string): Promise<Invoice> => {
+export const getInvoiceById = async (id: string) => {
   const baseUrl = `/invoices/${id}`;
-  const response = await axios.get(baseUrl);
+  const response = await axios.get<ApiResponse<IInvoiceResponse>>(baseUrl);
   return response.data;
 };
 

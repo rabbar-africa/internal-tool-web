@@ -3,7 +3,7 @@ import type { FormikProps } from "formik";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
-import { formatCurrency } from "@/utils/calculations";
+import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { CreateInvoiceFormValues } from "./hooks/useCreateInvoice";
 
 interface Totals {
@@ -19,6 +19,7 @@ interface InvoiceFooterProps {
 }
 
 export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
+  const { formatMoney } = useFormatMoney();
   const { subtotal, entityDiscount, adjustmentVal, total } = totals;
 
   return (
@@ -75,7 +76,7 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
               Subtotal
             </Text>
             <Text fontSize="13px" color="gray.500" fontWeight="500">
-              {formatCurrency(subtotal)}
+              {formatMoney(subtotal)}
             </Text>
           </Flex>
 
@@ -99,7 +100,7 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
           {entityDiscount > 0 && (
             <Flex justify="flex-end">
               <Text fontSize="12px" color="red.400">
-                − {formatCurrency(entityDiscount)}
+                − {formatMoney(entityDiscount)}
               </Text>
             </Flex>
           )}
@@ -137,7 +138,7 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
                 color={adjustmentVal > 0 ? "green.400" : "red.400"}
               >
                 {adjustmentVal > 0 ? "+" : "−"}{" "}
-                {formatCurrency(Math.abs(adjustmentVal))}
+                {formatMoney(Math.abs(adjustmentVal))}
               </Text>
             </Flex>
           )}
@@ -157,7 +158,7 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
               Total
             </Text>
             <Text fontSize="16px" fontWeight="700" color="primary.400">
-              {formatCurrency(total)}
+              {formatMoney(total)}
             </Text>
           </Flex>
         </Stack>
