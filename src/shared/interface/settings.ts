@@ -177,3 +177,68 @@ export type UpsertOrgTransactionSeriesPayload = {
   autoGenerate: boolean;
   isActive: boolean;
 };
+
+// ─── General configuration ─────────────────────────────────────────────────
+
+export interface UpdateOrgConfigPayload {
+  fiscalYearStartMonth: number;
+  dateFormat: string;
+  timeFormat: string;
+  decimalPlaces: number;
+  numberFormat: string;
+  isInclusiveTaxDefault: boolean;
+  isDiscountBeforeTaxDefault: boolean;
+  defaultPaymentTerms: number;
+  allowNegativeStock: boolean;
+  requireSignatureOnInspection: boolean;
+  allowedPaymentMethods: string[];
+  brandPrimaryColor: string;
+  brandSecondaryColor: string;
+  brandFont: string | null;
+  invoiceFooter: string | null;
+  invoiceNotesDefault: string | null;
+  invoiceTermsDefault: string | null;
+}
+
+export const FISCAL_YEAR_MONTHS: { value: number; label: string }[] = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+
+export const DATE_FORMAT_OPTIONS: { value: string; label: string }[] = [
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY (31/12/2026)" },
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY (12/31/2026)" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD (2026-12-31)" },
+  { value: "DD-MM-YYYY", label: "DD-MM-YYYY (31-12-2026)" },
+  { value: "DD MMM YYYY", label: "DD MMM YYYY (31 Dec 2026)" },
+];
+
+export const TIME_FORMAT_OPTIONS: { value: string; label: string }[] = [
+  { value: "HH:mm", label: "24-hour (14:30)" },
+  { value: "hh:mm A", label: "12-hour (02:30 PM)" },
+];
+
+export const NUMBER_FORMAT_OPTIONS: { value: string; label: string }[] = [
+  { value: "1,234,567.89", label: "1,234,567.89" },
+  { value: "1.234.567,89", label: "1.234.567,89" },
+  { value: "1 234 567.89", label: "1 234 567.89" },
+];
+
+export const PAYMENT_METHOD_OPTIONS = [
+  "CASH",
+  "BANK_TRANSFER",
+  "CARD",
+  "CHEQUE",
+  "MOBILE_MONEY",
+  "POS",
+] as const;

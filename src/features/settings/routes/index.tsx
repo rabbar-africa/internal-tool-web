@@ -3,6 +3,10 @@ import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
 const { Settings } = lazyImport(() => import("../pages/Settings"), "Settings");
+const { GeneralConfigPage } = lazyImport(
+  () => import("../pages/GeneralConfigPage"),
+  "GeneralConfigPage",
+);
 const { CompanyProfile } = lazyImport(
   () => import("../pages/CompanyProfile"),
   "CompanyProfile",
@@ -35,6 +39,10 @@ export const SettingsRoutes: RouteObject[] = [
   {
     path: settings.base.path,
     element: <Settings />,
+  },
+  {
+    path: settings.generalConfig.path,
+    element: <GeneralConfigPage />,
   },
   {
     path: settings.profile.path,

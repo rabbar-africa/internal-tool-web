@@ -1,5 +1,4 @@
 import { Center, Spinner, Stack, Text } from "@chakra-ui/react";
-import { UserDashboardContainer } from "@/components/hoc";
 import { DeleteInvoiceConfirm } from "../invoice-list/DeleteInvoiceConfirm";
 import { useInvoiceDetail } from "./useInvoiceDetail";
 import { InvoiceDetailHeader } from "./InvoiceDetailHeader";
@@ -25,41 +24,35 @@ export function InvoiceDetailPage() {
 
   if (isLoading) {
     return (
-      <UserDashboardContainer py="1.5rem">
-        <Center py="20">
-          <Spinner color="primary.400" />
-        </Center>
-      </UserDashboardContainer>
+      <Center py="20">
+        <Spinner color="primary.400" />
+      </Center>
     );
   }
 
   if (isError || !invoice) {
     return (
-      <UserDashboardContainer py="1.5rem">
-        <Center py="20">
-          <Text color="red.500">Invoice not found.</Text>
-        </Center>
-      </UserDashboardContainer>
+      <Center py="20">
+        <Text color="red.500">Invoice not found.</Text>
+      </Center>
     );
   }
   // console.log("invoice is ", invoice);
 
   return (
     <>
-      <UserDashboardContainer py="1.5rem">
-        <Stack gap="6">
-          <InvoiceDetailHeader
-            invoice={invoice}
-            onEdit={handleEdit}
-            onRecordPayment={handleRecordPayment}
-            onDownloadPdf={handleDownloadPdf}
-            onDelete={requestDelete}
-            isDownloading={isDownloading}
-          />
+      <Stack gap="6">
+        <InvoiceDetailHeader
+          invoice={invoice}
+          onEdit={handleEdit}
+          onRecordPayment={handleRecordPayment}
+          onDownloadPdf={handleDownloadPdf}
+          onDelete={requestDelete}
+          isDownloading={isDownloading}
+        />
 
-          <InvoicePdfView invoice={invoice} />
-        </Stack>
-      </UserDashboardContainer>
+        <InvoicePdfView invoice={invoice} />
+      </Stack>
 
       <DeleteInvoiceConfirm
         target={

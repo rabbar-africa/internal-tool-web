@@ -46,13 +46,18 @@ export const CustomTextArea: React.FC<CustomTextareaProps> = ({
         rounded={".625rem"}
         size={size}
         rows={rows}
-        color={"gray.300"}
+        color={"gray.500"}
         resize={resize}
         p="16px"
         name={name}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
+        _placeholder={{
+          textStyle: "tiny-regular",
+          // ...inputProps?._placeholder,
+          color: "gray.100",
+        }}
         {...props}
         {...textAreaProps}
       />

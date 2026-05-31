@@ -20,6 +20,7 @@ import {
   updateOrganizationAddress,
   updateOrganizationBankAccount,
   updateOrganizationCurrency,
+  updateOrganizationConfig,
   updateOrganizationDetails,
   updateOrganizationTax,
   updateOrganizationTransactionSeries,
@@ -33,6 +34,7 @@ import type {
   CreateOrgCurrencyPayload,
   CreateOrgTaxPayload,
   TxnSeriesModule,
+  UpdateOrgConfigPayload,
   UpsertOrgTransactionSeriesPayload,
 } from "@/shared/interface/settings";
 
@@ -66,6 +68,19 @@ export const useUploadOrganizationLogo = () => {
     mutationFn: uploadOrganizationLogo,
     meta: {
       successMessage: "Logo updated successfully",
+      invalidatesQueryKeys: [[orgKeys.details]],
+    },
+  });
+};
+
+// ─── General configuration ─────────────────────────────────────────────────
+
+export const useUpdateOrganizationConfig = () => {
+  return useMutation({
+    mutationFn: (payload: Partial<UpdateOrgConfigPayload>) =>
+      updateOrganizationConfig(payload),
+    meta: {
+      successMessage: "Configuration updated successfully",
       invalidatesQueryKeys: [[orgKeys.details]],
     },
   });

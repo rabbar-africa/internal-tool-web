@@ -126,6 +126,7 @@ const systemLogs = {
 
 const settings = {
   base: defineRoute("/settings" as const),
+  generalConfig: defineRoute("/settings/general" as const),
   profile: defineRoute("/settings/profile" as const),
   logo: defineRoute("/settings/logo" as const),
   addresses: defineRoute("/settings/addresses" as const),

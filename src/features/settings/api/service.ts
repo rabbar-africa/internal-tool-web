@@ -1,6 +1,9 @@
 import { axios } from "@/lib/axios";
 import { type ApiResponse } from "@/shared/interface/api";
-import type { IOrganization } from "@/shared/interface/common";
+import type {
+  IOrganization,
+  IOrganizationConfig,
+} from "@/shared/interface/common";
 import { type GetOrganizationDetailsResponse } from "@/shared/interface/response";
 import type {
   CreateOrgAddressPayload,
@@ -13,6 +16,7 @@ import type {
   IOrgTax,
   IOrgTransactionSeries,
   TxnSeriesModule,
+  UpdateOrgConfigPayload,
   UpsertOrgTransactionSeriesPayload,
 } from "@/shared/interface/settings";
 
@@ -43,6 +47,18 @@ export const uploadOrganizationLogo = async (file: File) => {
     `/organizations/me/logo`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return response.data;
+};
+
+// ─── General configuration ─────────────────────────────────────────────────
+
+export const updateOrganizationConfig = async (
+  payload: Partial<UpdateOrgConfigPayload>,
+) => {
+  const response = await axios.put<ApiResponse<IOrganizationConfig>>(
+    `/organizations/me/config`,
+    payload,
   );
   return response.data;
 };

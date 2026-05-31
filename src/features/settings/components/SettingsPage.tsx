@@ -7,6 +7,7 @@ import { Money } from "@/assets/custom/Money";
 import { BooksIcon } from "@/assets/custom/BooksIcon";
 import { ScalesIcon } from "@/assets/custom/ScalesIcon";
 import { ListBullets } from "@/assets/custom/ListBullets";
+import { GearIcon } from "@/assets/custom/GearIcon";
 import { SettingsCard, type SettingsCardItem } from "./SettingsCard";
 
 const { settings } = RouteConstants;
@@ -20,6 +21,13 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     title: "Organization settings",
     items: [
+      {
+        title: "General Configuration",
+        description:
+          "Formatting, finance defaults, branding, and inspection preferences.",
+        icon: GearIcon,
+        href: settings.generalConfig.path,
+      },
       {
         title: "Company Profile",
         description: "Business name, contact details, and registration info.",
