@@ -12,6 +12,7 @@ import {
 import { PlusIcon } from "@/assets/custom/PlusIcon";
 import { ScalesIcon } from "@/assets/custom/ScalesIcon";
 import { ActionButton } from "@/components/common/ActionButton";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { TaxModal } from "./TaxModal";
 import {
@@ -26,10 +27,17 @@ export function Taxes() {
   const taxes = data?.data ?? [];
   const { mutate: updateTax, isPending: isUpdating } =
     useUpdateOrganizationTax();
-  const { mutate: deleteTax } = useDeleteOrganizationTax();
+  const { mutate: deleteTax, isPending: isDeleting } =
+    useDeleteOrganizationTax();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IOrgTax | null>(null);
+  const [deleting, setDeleting] = useState<IOrgTax | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleting) return;
+    deleteTax(deleting.id, { onSuccess: () => setDeleting(null) });
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -149,7 +157,7 @@ export function Taxes() {
                   size="xs"
                   variant="ghost"
                   color="error.300"
-                  onClick={() => deleteTax(tax.id)}
+                  onClick={() => setDeleting(tax)}
                 >
                   Remove
                 </Button>
@@ -163,6 +171,21 @@ export function Taxes() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         tax={editing}
+      />
+
+      <ConsentDialog
+        open={!!deleting}
+        onOpenChange={({ open }) => {
+          if (!open) setDeleting(null);
+        }}
+        handleSubmit={confirmDelete}
+        isLoading={isDeleting}
+        heading="Delete this tax?"
+        note={
+          deleting
+            ? `"${deleting.name} (${deleting.rate}%)" will be permanently removed. This action cannot be undone.`
+            : undefined
+        }
       />
     </SettingsSubPage>
   );

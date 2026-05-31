@@ -1,4 +1,5 @@
 import { useGetCurrentUserQuery } from "@/features/auth/api";
+import { useGetOrganizationDetails } from "@/features/settings/api";
 import { getToken } from "@/utils/persistToken";
 
 export function useCurrentUser() {
@@ -8,8 +9,16 @@ export function useCurrentUser() {
     { enabled: isAuthenticated },
   );
 
+  const {
+    data: orgData,
+    isLoading: orgDataLoading,
+    isError: orgIsError,
+    error: orgError,
+    isSuccess: orgSuccess,
+  } = useGetOrganizationDetails({ enabled: isAuthenticated });
+
   const userData = data;
-  const userOrganization = userData?.organization;
+  const userOrganization = orgData?.data;
   const userPermissions = userData?.permissions ?? [];
   const userRole = userData?.userRoles?.[0]?.role?.name;
 
@@ -21,10 +30,10 @@ export function useCurrentUser() {
 
   return {
     isAuthenticated,
-    isLoading,
-    isError,
-    error,
-    isSuccess,
+    isLoading: isLoading || orgDataLoading,
+    isError: isError || orgIsError,
+    error: error || orgError,
+    isSuccess: isSuccess || orgSuccess,
     userData,
     userOrganization,
     userPermissions,

@@ -1,5 +1,11 @@
 import type { ButtonProps } from "@chakra-ui/react";
 import type { ComponentType } from "react";
+import type {
+  IOrgAddress,
+  IOrgBankAccount,
+  IOrgCurrency,
+  IOrgTax,
+} from "./settings";
 
 export interface TabContentProps {
   value: string;
@@ -43,6 +49,28 @@ export type TRopaStatus =
   | "UnderReview"
   | "Archived";
 
+export interface IOrganizationConfig {
+  organizationId: string;
+  fiscalYearStartMonth: number;
+  dateFormat: string;
+  timeFormat: string;
+  decimalPlaces: number;
+  numberFormat: string;
+  isInclusiveTaxDefault: boolean;
+  isDiscountBeforeTaxDefault: boolean;
+  defaultPaymentTerms: number;
+  allowNegativeStock: boolean;
+  requireSignatureOnInspection: boolean;
+  allowedPaymentMethods: Array<string>;
+  brandPrimaryColor: string;
+  brandSecondaryColor: string;
+  brandFont: string | null;
+  invoiceFooter: string | null;
+  invoiceNotesDefault: string | null;
+  invoiceTermsDefault: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface IOrganization {
   id: string;
   name: string;
@@ -73,6 +101,12 @@ export interface IOrganization {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+
+  config: IOrganizationConfig;
+  primaryAddress: IOrgAddress;
+  primaryBankAccount: IOrgBankAccount;
+  defaultCurrency: IOrgCurrency;
+  defaultTax: IOrgTax;
 }
 export interface IGeneralMetaOptions {
   id: string;

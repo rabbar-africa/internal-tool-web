@@ -12,6 +12,7 @@ import {
 import { PlusIcon } from "@/assets/custom/PlusIcon";
 import { MapPinLineIcon } from "@/assets/custom/MapPinLineIcon";
 import { ActionButton } from "@/components/common/ActionButton";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { formatAddress } from "@/utils/string-formatter";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { AddressModal } from "./AddressModal";
@@ -27,10 +28,17 @@ export function Addresses() {
   const addresses = data?.data ?? [];
   const { mutate: setPrimary, isPending: isSettingPrimary } =
     useSetPrimaryOrganizationAddress();
-  const { mutate: deleteAddress } = useDeleteOrganizationAddress();
+  const { mutate: deleteAddress, isPending: isDeleting } =
+    useDeleteOrganizationAddress();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IOrgAddress | null>(null);
+  const [deleting, setDeleting] = useState<IOrgAddress | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleting) return;
+    deleteAddress(deleting.id, { onSuccess: () => setDeleting(null) });
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -159,7 +167,7 @@ export function Addresses() {
                   size="xs"
                   variant="ghost"
                   color="error.300"
-                  onClick={() => deleteAddress(address.id)}
+                  onClick={() => setDeleting(address)}
                   ml="auto"
                 >
                   Remove
@@ -174,6 +182,21 @@ export function Addresses() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         address={editing}
+      />
+
+      <ConsentDialog
+        open={!!deleting}
+        onOpenChange={({ open }) => {
+          if (!open) setDeleting(null);
+        }}
+        handleSubmit={confirmDelete}
+        isLoading={isDeleting}
+        heading="Delete this address?"
+        note={
+          deleting
+            ? `"${deleting.label || formatAddress(deleting)}" will be permanently removed. This action cannot be undone.`
+            : undefined
+        }
       />
     </SettingsSubPage>
   );

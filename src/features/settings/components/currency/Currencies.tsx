@@ -12,6 +12,7 @@ import {
 import { PlusIcon } from "@/assets/custom/PlusIcon";
 import { Money } from "@/assets/custom/Money";
 import { ActionButton } from "@/components/common/ActionButton";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { CurrencyModal } from "./CurrencyModal";
 import {
@@ -26,10 +27,17 @@ export function Currencies() {
   const currencies = data?.data ?? [];
   const { mutate: setDefault, isPending: isSettingDefault } =
     useSetDefaultOrganizationCurrency();
-  const { mutate: deleteCurrency } = useDeleteOrganizationCurrency();
+  const { mutate: deleteCurrency, isPending: isDeleting } =
+    useDeleteOrganizationCurrency();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IOrgCurrency | null>(null);
+  const [deleting, setDeleting] = useState<IOrgCurrency | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleting) return;
+    deleteCurrency(deleting.id, { onSuccess: () => setDeleting(null) });
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -157,7 +165,7 @@ export function Currencies() {
                     size="xs"
                     variant="ghost"
                     color="error.300"
-                    onClick={() => deleteCurrency(currency.id)}
+                    onClick={() => setDeleting(currency)}
                   >
                     Remove
                   </Button>
@@ -172,6 +180,21 @@ export function Currencies() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         currency={editing}
+      />
+
+      <ConsentDialog
+        open={!!deleting}
+        onOpenChange={({ open }) => {
+          if (!open) setDeleting(null);
+        }}
+        handleSubmit={confirmDelete}
+        isLoading={isDeleting}
+        heading="Delete this currency?"
+        note={
+          deleting
+            ? `"${deleting.code}" will be permanently removed. This action cannot be undone.`
+            : undefined
+        }
       />
     </SettingsSubPage>
   );

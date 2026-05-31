@@ -12,6 +12,7 @@ import {
 import { PlusIcon } from "@/assets/custom/PlusIcon";
 import { BooksIcon } from "@/assets/custom/BooksIcon";
 import { ActionButton } from "@/components/common/ActionButton";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { BankAccountModal } from "./BankAccountModal";
 import {
@@ -26,10 +27,17 @@ export function AccountDetails() {
   const accounts = data?.data ?? [];
   const { mutate: setPrimary, isPending: isSettingPrimary } =
     useSetPrimaryOrganizationBankAccount();
-  const { mutate: deleteAccount } = useDeleteOrganizationBankAccount();
+  const { mutate: deleteAccount, isPending: isDeleting } =
+    useDeleteOrganizationBankAccount();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IOrgBankAccount | null>(null);
+  const [deleting, setDeleting] = useState<IOrgBankAccount | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleting) return;
+    deleteAccount(deleting.id, { onSuccess: () => setDeleting(null) });
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -153,7 +161,7 @@ export function AccountDetails() {
                   size="xs"
                   variant="ghost"
                   color="error.300"
-                  onClick={() => deleteAccount(account.id)}
+                  onClick={() => setDeleting(account)}
                   ml="auto"
                 >
                   Remove
@@ -168,6 +176,21 @@ export function AccountDetails() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         account={editing}
+      />
+
+      <ConsentDialog
+        open={!!deleting}
+        onOpenChange={({ open }) => {
+          if (!open) setDeleting(null);
+        }}
+        handleSubmit={confirmDelete}
+        isLoading={isDeleting}
+        heading="Delete this bank account?"
+        note={
+          deleting
+            ? `"${deleting.bankName} — ${deleting.accountNumber}" will be permanently removed. This action cannot be undone.`
+            : undefined
+        }
       />
     </SettingsSubPage>
   );
