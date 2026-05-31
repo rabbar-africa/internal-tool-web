@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import { downloadInvoicePdf } from "../../api/service";
 import {
   useDeleteInvoiceMutation,
   useGetInvoiceByIdQuery,
 } from "../../api/query";
+import { useInvoicePdf } from "../../hooks/useInvoicePdf";
 
 export function useInvoiceDetail() {
   const { id = "" } = useParams<{ id: string }>();
@@ -16,8 +16,14 @@ export function useInvoiceDetail() {
     useDeleteInvoiceMutation();
   const invoice = invoiceData?.data;
 
+  const {
+    download: downloadPdf,
+    open: openPdf,
+    print: printPdf,
+    isGenerating: isDownloading,
+  } = useInvoicePdf(invoice);
+
   const [pendingDelete, setPendingDelete] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const goBack = () => navigate(RouteConstants.invoices.base.path);
 
@@ -33,12 +39,7 @@ export function useInvoiceDetail() {
 
   const handleDownloadPdf = async () => {
     if (!invoice) return;
-    try {
-      setIsDownloading(true);
-      await downloadInvoicePdf(invoice.id, invoice.invoiceNumber);
-    } finally {
-      setIsDownloading(false);
-    }
+    await downloadPdf();
   };
 
   const requestDelete = () => setPendingDelete(true);
@@ -59,6 +60,8 @@ export function useInvoiceDetail() {
     handleEdit,
     handleRecordPayment,
     handleDownloadPdf,
+    openPdf,
+    printPdf,
     isDownloading,
 
     pendingDelete,
