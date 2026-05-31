@@ -3,6 +3,7 @@ import moment from "moment";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
+import { formatAddress } from "@/utils/string-formatter";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v: string) => moment(v).format("DD MMM YYYY");
@@ -26,6 +27,13 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const orgLocation = [userOrganization?.city, userOrganization?.country]
     .filter(Boolean)
     .join(" , ");
+
+  const orgConfig = userOrganization?.config;
+  const bankAccount = userOrganization?.primaryBankAccount;
+  const orgAddress = formatAddress(userOrganization?.primaryAddress);
+
+  const notes = invoice.notes || orgConfig?.invoiceNotesDefault;
+  const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
 
   const formatPlain = (n: number) => formatMoney(n, { showSymbol: false });
   const formatWithCode = (n: number) =>
@@ -75,16 +83,38 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             <Text fontSize="14px" fontWeight="700" color="gray.500">
               {userOrganization?.name ?? "—"}
             </Text>
-            {orgLocation && (
+            {userOrganization?.rcNumber && (
               <Text fontSize="12px" color="gray.400">
-                {orgLocation}
+                RC: {userOrganization.rcNumber}
               </Text>
+            )}
+
+            {orgAddress ? (
+              <Text fontSize="12px" color="gray.400">
+                {orgAddress}
+              </Text>
+            ) : (
+              orgLocation && (
+                <Text fontSize="12px" color="gray.400">
+                  {orgLocation}
+                </Text>
+              )
             )}
             {userOrganization?.companyEmail || userOrganization?.email ? (
               <Text fontSize="12px" color="gray.400">
                 {userOrganization?.companyEmail || userOrganization?.email}
               </Text>
             ) : null}
+            {userOrganization?.phone && (
+              <Text fontSize="12px" color="gray.400">
+                {userOrganization.phone}
+              </Text>
+            )}
+            {userOrganization?.website && (
+              <Text fontSize="12px" color="gray.400">
+                {userOrganization.website}
+              </Text>
+            )}
           </Stack>
         </Stack>
 
@@ -244,25 +274,44 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
         </Stack>
       </Flex>
 
-      {/* Notes */}
-      {invoice.notes && (
+      {/* Notes + primary bank account */}
+      {(notes || bankAccount) && (
         <Box mb="6">
           <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
             Notes
           </Text>
-          <Text
-            fontSize="12px"
-            color="gray.400"
-            whiteSpace="pre-line"
-            lineHeight="1.6"
-          >
-            {invoice.notes}
-          </Text>
+          {notes && (
+            <Text
+              fontSize="12px"
+              color="gray.400"
+              whiteSpace="pre-line"
+              lineHeight="1.6"
+            >
+              {notes}
+            </Text>
+          )}
+          {bankAccount && (
+            <Stack gap="0" mt={notes ? "4" : "0"}>
+              <Text fontSize="12px" fontWeight="700" color="gray.500">
+                {bankAccount.accountNumber}
+              </Text>
+              {bankAccount.bankName && (
+                <Text fontSize="12px" color="gray.400">
+                  {bankAccount.bankName}
+                </Text>
+              )}
+              {bankAccount.accountName && (
+                <Text fontSize="12px" color="gray.400">
+                  {bankAccount.accountName}
+                </Text>
+              )}
+            </Stack>
+          )}
         </Box>
       )}
 
       {/* Terms */}
-      {invoice.terms && (
+      {terms && (
         <Box>
           <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
             Terms &amp; Conditions
@@ -273,7 +322,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             whiteSpace="pre-line"
             lineHeight="1.6"
           >
-            {invoice.terms}
+            {terms}
           </Text>
         </Box>
       )}
