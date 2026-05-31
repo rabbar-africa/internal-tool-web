@@ -16,14 +16,14 @@ import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
 import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 import { SearchInput } from "@/components/input/SearchInput";
-import { useGetCurrentUserQuery } from "@/features/auth/api";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface NavBarProps {
   onMenuToggle?: () => void;
 }
 
 export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
-  const { data: currentUser } = useGetCurrentUserQuery();
+  const { userData: currentUser, userOrganization } = useCurrentUser();
   const handleLogout = () => {
     removeToken();
     window.location.replace(RouteConstants.auth.login.path);
@@ -61,7 +61,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               color="gray.500"
               display={{ base: "none", md: "block" }}
             >
-              Rabbar Africa
+              {userOrganization?.name}
             </Text>
           </Flex>
 

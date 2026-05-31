@@ -1,5 +1,6 @@
 import { Head } from "@/components/seo/head";
 import { SettingsPage } from "../components/SettingsPage";
+import { UserDashboardContainer } from "@/components/hoc";
 
 export function Settings() {
   return (
@@ -8,7 +9,10 @@ export function Settings() {
         title="Settings"
         description="Configure your business preferences"
       />
-      <SettingsPage />
+
+      <UserDashboardContainer py="1.5rem">
+        <SettingsPage />
+      </UserDashboardContainer>
     </>
   );
 }

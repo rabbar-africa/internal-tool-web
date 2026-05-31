@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Grid, Stack } from "@chakra-ui/react";
+import { Button, Flex, Grid, Stack } from "@chakra-ui/react";
 import { SectionTitle } from "../SectionTitle";
 import { CustomInput } from "@/components/input";
 import {
@@ -20,10 +20,10 @@ export function Profile() {
       companyEmail: organizationDetails?.companyEmail || "",
       phone: organizationDetails?.phone || "",
       website: organizationDetails?.website || "",
-      addressLine1: organizationDetails?.addressLine1 || "",
-      addressLine2: organizationDetails?.addressLine2 || "",
-      city: organizationDetails?.city || "",
-      state: organizationDetails?.state || "",
+      // addressLine1: organizationDetails?.addressLine1 || "",
+      // addressLine2: organizationDetails?.addressLine2 || "",
+      // city: organizationDetails?.city || "",
+      // state: organizationDetails?.state || "",
       rcNumber: organizationDetails?.rcNumber || "",
     },
     onSubmit: (values) => {
@@ -71,7 +71,7 @@ export function Profile() {
               onChange={formik.handleChange}
               name="rcNumber"
             />
-            <Box gridColumn={{ sm: "1 / -1" }}>
+            {/* <Box gridColumn={{ sm: "1 / -1" }}>
               <CustomInput
                 label="Address Line 1"
                 value={formik.values.addressLine1}
@@ -98,7 +98,7 @@ export function Profile() {
               value={formik.values.state}
               onChange={formik.handleChange}
               name="state"
-            />
+            /> */}
           </Grid>
           <Flex justify="flex-end">
             <Button type="submit" loading={isPending}>

@@ -59,5 +59,10 @@ export const customQueryKey = {
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
   organizations: {
     details: "get-organization-details",
+    addresses: "get-organization-addresses",
+    bankAccounts: "get-organization-bank-accounts",
+    currencies: "get-organization-currencies",
+    taxes: "get-organization-taxes",
+    transactionSeries: "get-organization-transaction-series",
   },
 };

@@ -126,6 +126,13 @@ const systemLogs = {
 
 const settings = {
   base: defineRoute("/settings" as const),
+  profile: defineRoute("/settings/profile" as const),
+  logo: defineRoute("/settings/logo" as const),
+  addresses: defineRoute("/settings/addresses" as const),
+  currency: defineRoute("/settings/currency" as const),
+  accountDetails: defineRoute("/settings/account-details" as const),
+  taxes: defineRoute("/settings/taxes" as const),
+  transactionSeries: defineRoute("/settings/transaction-series" as const),
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),
   teamManagement: defineRoute("/settings/team-management" as const),

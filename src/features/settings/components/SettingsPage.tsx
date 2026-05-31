@@ -1,604 +1,116 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Grid,
-  Separator,
-  Stack,
-  Switch,
-  Tabs,
-  Text,
-} from "@chakra-ui/react";
-import { UserDashboardContainer } from "@/components/hoc";
-import { CustomInput } from "@/components/input/CustomInput";
-import { CustomSelect } from "@/components/input/CustomSelect";
-import { toaster } from "@/components/ui";
-import { SectionTitle } from "./SectionTitle";
-import { Profile } from "./profile/Profile";
-import { LogoTab } from "./logo/LogoTab";
+import { Box, Grid, Stack, Text } from "@chakra-ui/react";
+import { RouteConstants } from "@/shared/constants/routes";
+import { BuildingIcon } from "@/assets/custom/BuildingIcon";
+import { SparkleIcon } from "@/assets/custom/SparkleIcon";
+import { MapPinLineIcon } from "@/assets/custom/MapPinLineIcon";
+import { Money } from "@/assets/custom/Money";
+import { BooksIcon } from "@/assets/custom/BooksIcon";
+import { ScalesIcon } from "@/assets/custom/ScalesIcon";
+import { ListBullets } from "@/assets/custom/ListBullets";
+import { SettingsCard, type SettingsCardItem } from "./SettingsCard";
 
-const mockSave = () => {
-  toaster.create({
-    title: "Settings saved",
-    type: "success",
-    duration: 3000,
-  });
-};
+const { settings } = RouteConstants;
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-// function CompanyProfileTab() {
-//   // const fakeRegister = (name: string) => ({
-//   //   name,
-//   //   onChange: () => {},
-//   //   onBlur: () => {},
-//   //   ref: () => {},
-//   // });
-
-//   return (
-//     <Stack gap="6" pt="4">
-//       <SectionTitle
-//         title="Company Information"
-//         subtitle="Basic details about your business"
-//       />
-//       <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-//         <CustomInput
-//           label="Company Name"
-//           // register={fakeRegister("companyName")}
-//           // defaultValue="Rabbar Africa"
-//         />
-//         <CustomInput
-//           label="Business Email"
-//           type="email"
-//           // register={fakeRegister("email")}
-//           // defaultValue="hello@rabbar.africa"
-//         />
-//         <CustomInput
-//           label="Phone Number"
-//           // register={fakeRegister("phone")}
-//           // defaultValue="+234 801 234 5678"
-//         />
-//         <CustomInput
-//           label="Website"
-//           // register={fakeRegister("website")}
-//           // defaultValue="https://rabbar.africa"
-//         />
-//         <Box gridColumn={{ sm: "1 / -1" }}>
-//           <CustomInput
-//             label="Address"
-//             // register={fakeRegister("address")}
-//             // defaultValue="12 Bode Thomas Street, Surulere, Lagos"
-//           />
-//         </Box>
-//         <CustomInput
-//           label="City"
-//           // register={fakeRegister("city")}
-//           // defaultValue="Lagos"
-//         />
-//         <CustomInput
-//           label="State"
-//           // register={fakeRegister("state")}
-//           // defaultValue="Lagos State"
-//         />
-//       </Grid>
-//       <Flex justify="flex-end">
-//         <Button onClick={mockSave}>Save Changes</Button>
-//       </Flex>
-//     </Stack>
-//   );
-// }
-
-function TaxSettingsTab() {
-  // const fakeRegister = (name: string) => ({
-  //   name,
-  //   onChange: () => {},
-  //   onBlur: () => {},
-  //   ref: () => {},
-  // });
-
-  const vatOptions = [
-    { label: "0% (Exempt)", value: "0" },
-    { label: "7.5% (Standard VAT)", value: "7.5" },
-    { label: "5% (Reduced)", value: "5" },
-  ];
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Tax Configuration"
-        subtitle="Configure VAT and withholding tax settings"
-      />
-      <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-        <CustomInput
-          label="Tax Identification Number (TIN)"
-          // register={fakeRegister("tin")}
-          // defaultValue="1234567-0001"
-        />
-        <CustomSelect
-          label="Default VAT Rate"
-          options={vatOptions}
-          // value={{ label: "7.5% (Standard VAT)", value: "7.5" }}
-          onChange={() => {}}
-        />
-        <CustomInput
-          label="Withholding Tax Rate (%)"
-          // type="number"
-          // register={fakeRegister("wht")}
-          // defaultValue="5"
-        />
-      </Grid>
-      <Separator />
-      <Stack gap="3">
-        <Text fontWeight="600" fontSize="13px" color="gray.500">
-          Tax Display on Invoices
-        </Text>
-        <Flex align="center" gap="3">
-          <Switch.Root defaultChecked>
-            <Switch.HiddenInput />
-            <Switch.Control />
-          </Switch.Root>
-          <Text fontSize="13px" color="gray.500">
-            Show VAT breakdown on invoices
-          </Text>
-        </Flex>
-        <Flex align="center" gap="3">
-          <Switch.Root defaultChecked>
-            <Switch.HiddenInput />
-            <Switch.Control />
-          </Switch.Root>
-          <Text fontSize="13px" color="gray.500">
-            Include TIN on invoice header
-          </Text>
-        </Flex>
-      </Stack>
-      <Flex justify="flex-end">
-        <Button onClick={mockSave}>Save Changes</Button>
-      </Flex>
-    </Stack>
-  );
+interface SettingsGroup {
+  title: string;
+  items: SettingsCardItem[];
 }
 
-function InvoiceFormatTab() {
-  // const fakeRegister = (name: string) => ({
-  //   name,
-  //   onChange: () => {},
-  //   onBlur: () => {},
-  //   ref: () => {},
-  // });
-
-  const prefixOptions = [
-    { label: "INV", value: "INV" },
-    { label: "RBR", value: "RBR" },
-    { label: "RABBAR", value: "RABBAR" },
-  ];
-  const paddingOptions = [
-    { label: "3 digits (001)", value: "3" },
-    { label: "4 digits (0001)", value: "4" },
-    { label: "5 digits (00001)", value: "5" },
-  ];
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Invoice Number Format"
-        subtitle="Customize how invoice numbers are generated"
-      />
-      <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr 1fr" }} gap="4">
-        <CustomSelect
-          label="Prefix"
-          options={prefixOptions}
-          // value={{ label: "INV", value: "INV" }}
-          onChange={() => {}}
-        />
-        <CustomInput
-          label="Year (auto)"
-          // register={fakeRegister("year")}
-          // defaultValue="2025"
-        />
-        <CustomSelect
-          label="Sequence Padding"
-          options={paddingOptions}
-          // value={{ label: "3 digits (001)", value: "3" }}
-          onChange={() => {}}
-        />
-      </Grid>
-      <Box
-        bg="gray.50"
-        p="4"
-        rounded="md"
-        borderWidth="1px"
-        borderColor="gray.100"
-      >
-        <Text fontSize="12px" color="gray.300" mb="1">
-          Preview
-        </Text>
-        <Text fontWeight="600" color="gray.500" fontSize="18px">
-          INV-2025-001
-        </Text>
-      </Box>
-      <CustomInput
-        label="Next Sequence Number"
-        // type="number"
-        // register={fakeRegister("nextSeq")}
-        // defaultValue="8"
-      />
-      <Flex justify="flex-end">
-        <Button onClick={mockSave}>Save Format</Button>
-      </Flex>
-    </Stack>
-  );
-}
-
-function PaymentMethodsTab() {
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Accepted Payment Methods"
-        subtitle="Configure which payment methods appear on invoices"
-      />
-      <Stack gap="3">
-        {[
-          { label: "Cash", detail: "Physical cash payments", enabled: true },
-          {
-            label: "Bank Transfer",
-            detail: "Direct bank-to-bank transfers",
-            enabled: true,
-          },
-          {
-            label: "POS / Card",
-            detail: "Point-of-sale card payments",
-            enabled: true,
-          },
-          { label: "Cheque", detail: "Cheque payments", enabled: false },
-          {
-            label: "Mobile Money",
-            detail: "Mobile wallet payments",
-            enabled: false,
-          },
-        ].map((method) => (
-          <Flex
-            key={method.label}
-            align="center"
-            justify="space-between"
-            p="4"
-            borderWidth="1px"
-            borderColor="gray.75"
-            rounded="md"
-            bg="white"
-          >
-            <Box>
-              <Text fontSize="14px" fontWeight="500" color="gray.500">
-                {method.label}
-              </Text>
-              <Text fontSize="12px" color="gray.300">
-                {method.detail}
-              </Text>
-            </Box>
-            <Switch.Root defaultChecked={method.enabled}>
-              <Switch.HiddenInput />
-              <Switch.Control />
-            </Switch.Root>
-          </Flex>
-        ))}
-      </Stack>
-      <Separator />
-      <Box>
-        <Text fontWeight="600" fontSize="13px" color="gray.500" mb="3">
-          Bank Account Details
-        </Text>
-        <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-          <CustomInput
-            label="Bank Name"
-            // register={{ name: "bank", onChange: () => {}, onBlur: () => {}, ref: () => {} }}
-            // defaultValue="First Bank of Nigeria"
-          />
-          <CustomInput
-            label="Account Number"
-            // register={{ name: "acctNum", onChange: () => {}, onBlur: () => {}, ref: () => {} }}
-            // defaultValue="0123456789"
-          />
-          <CustomInput
-            label="Account Name"
-            // register={{ name: "acctName", onChange: () => {}, onBlur: () => {}, ref: () => {} }}
-            // defaultValue="Rabbar Africa Ltd"
-          />
-          <CustomInput
-            label="Sort Code"
-            // register={{ name: "sortCode", onChange: () => {}, onBlur: () => {}, ref: () => {} }}
-            // defaultValue="011"
-          />
-        </Grid>
-      </Box>
-      <Flex justify="flex-end">
-        <Button onClick={mockSave}>Save Changes</Button>
-      </Flex>
-    </Stack>
-  );
-}
-
-function ExpenseCategoriesTab() {
-  const categories = [
-    { name: "Parts & Materials", slug: "parts", color: "blue" },
-    { name: "Labour", slug: "labour", color: "purple" },
-    { name: "Overhead", slug: "overhead", color: "gray" },
-    { name: "Utilities", slug: "utilities", color: "cyan" },
-    { name: "Marketing", slug: "marketing", color: "pink" },
-    { name: "Transport", slug: "transport", color: "orange" },
-    { name: "Other", slug: "other", color: "gray" },
-  ];
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Expense Categories"
-        subtitle="Manage the categories used for expense classification"
-      />
-      <Stack gap="2">
-        {categories.map((cat) => (
-          <Flex
-            key={cat.slug}
-            align="center"
-            justify="space-between"
-            p="3"
-            borderWidth="1px"
-            borderColor="gray.75"
-            rounded="md"
-            bg="white"
-          >
-            <Flex align="center" gap="3">
-              <Box w="3" h="3" rounded="full" bg={`${cat.color}.400`} />
-              <Text fontSize="14px" color="gray.500">
-                {cat.name}
-              </Text>
-            </Flex>
-            <Flex gap="2">
-              <Button size="xs" variant="ghost" color="blue.500">
-                Edit
-              </Button>
-              <Button size="xs" variant="ghost" color="red.400">
-                Remove
-              </Button>
-            </Flex>
-          </Flex>
-        ))}
-      </Stack>
-      <Flex>
-        <Button variant="outline" size="sm" onClick={mockSave}>
-          + Add Category
-        </Button>
-      </Flex>
-    </Stack>
-  );
-}
-
-function RolesPermissionsTab() {
-  const roles = [
-    {
-      name: "Administrator",
-      description: "Full access to all modules and settings",
-      users: 2,
-      color: "red",
-    },
-    {
-      name: "Manager",
-      description:
-        "Access to invoices, expenses, reports; cannot change settings",
-      users: 3,
-      color: "orange",
-    },
-    {
-      name: "Accountant",
-      description: "Access to invoices, payments, expenses; read-only reports",
-      users: 2,
-      color: "blue",
-    },
-    {
-      name: "Viewer",
-      description: "Read-only access across all modules",
-      users: 1,
-      color: "gray",
-    },
-  ];
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Roles & Permissions"
-        subtitle="Manage what each role can access and do"
-      />
-      <Stack gap="3">
-        {roles.map((role) => (
-          <Flex
-            key={role.name}
-            align="center"
-            justify="space-between"
-            p="4"
-            borderWidth="1px"
-            borderColor="gray.75"
-            rounded="md"
-            bg="white"
-          >
-            <Flex align="center" gap="3">
-              <Box
-                px="8px"
-                py="3px"
-                bg={`${role.color}.50`}
-                rounded="md"
-                minW="80px"
-                textAlign="center"
-              >
-                <Text
-                  fontSize="12px"
-                  fontWeight="600"
-                  color={`${role.color}.600`}
-                >
-                  {role.name}
-                </Text>
-              </Box>
-              <Box>
-                <Text fontSize="13px" color="gray.500">
-                  {role.description}
-                </Text>
-                <Text fontSize="11px" color="gray.300">
-                  {role.users} user{role.users !== 1 ? "s" : ""}
-                </Text>
-              </Box>
-            </Flex>
-            <Button size="xs" variant="outline" onClick={mockSave}>
-              Edit
-            </Button>
-          </Flex>
-        ))}
-      </Stack>
-      <Flex>
-        <Button variant="outline" size="sm" onClick={mockSave}>
-          + Create Role
-        </Button>
-      </Flex>
-    </Stack>
-  );
-}
-
-function CurrencyTab() {
-  const currencyOptions = [
-    { label: "Nigerian Naira (₦ NGN)", value: "NGN" },
-    { label: "US Dollar ($ USD)", value: "USD" },
-    { label: "British Pound (£ GBP)", value: "GBP" },
-    { label: "Euro (€ EUR)", value: "EUR" },
-  ];
-
-  const formatOptions = [
-    { label: "₦1,234,567.89", value: "comma" },
-    { label: "₦1 234 567.89", value: "space" },
-    { label: "₦1.234.567,89", value: "period" },
-  ];
-
-  return (
-    <Stack gap="6" pt="4">
-      <SectionTitle
-        title="Currency Settings"
-        subtitle="Configure the default currency for your business"
-      />
-      <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-        <CustomSelect
-          label="Default Currency"
-          options={currencyOptions}
-          // value={{ label: "Nigerian Naira (₦ NGN)", value: "NGN" }}
-          onChange={() => {}}
-        />
-        <CustomSelect
-          label="Number Format"
-          options={formatOptions}
-          // value={{ label: "₦1,234,567.89", value: "comma" }}
-          onChange={() => {}}
-        />
-      </Grid>
-      <Separator />
-      <Stack gap="3">
-        <Text fontWeight="600" fontSize="13px" color="gray.500">
-          Multi-currency
-        </Text>
-        <Flex align="center" gap="3">
-          <Switch.Root>
-            <Switch.HiddenInput />
-            <Switch.Control />
-          </Switch.Root>
-          <Text fontSize="13px" color="gray.500">
-            Enable multi-currency invoicing
-          </Text>
-        </Flex>
-      </Stack>
-      <Flex justify="flex-end">
-        <Button onClick={mockSave}>Save Changes</Button>
-      </Flex>
-    </Stack>
-  );
-}
-
-// ─── Main SettingsPage ────────────────────────────────────────────────────────
+const SETTINGS_GROUPS: SettingsGroup[] = [
+  {
+    title: "Organization settings",
+    items: [
+      {
+        title: "Company Profile",
+        description: "Business name, contact details, and registration info.",
+        icon: BuildingIcon,
+        href: settings.profile.path,
+      },
+      {
+        title: "Logo & Branding",
+        description: "Upload the logo shown on invoices and documents.",
+        icon: SparkleIcon,
+        href: settings.logo.path,
+      },
+      {
+        title: "Addresses",
+        description:
+          "Manage billing, shipping, and office addresses; set a primary.",
+        icon: MapPinLineIcon,
+        href: settings.addresses.path,
+      },
+    ],
+  },
+  {
+    title: "Finance settings",
+    items: [
+      {
+        title: "Currencies",
+        description:
+          "Configure supported currencies, exchange rates, and the default.",
+        icon: Money,
+        href: settings.currency.path,
+      },
+      {
+        title: "Account Details",
+        description: "Bank accounts shown on invoices and used for payments.",
+        icon: BooksIcon,
+        href: settings.accountDetails.path,
+      },
+      {
+        title: "Taxes",
+        description: "Set up VAT, withholding, and other tax rates.",
+        icon: ScalesIcon,
+        href: settings.taxes.path,
+      },
+    ],
+  },
+  {
+    title: "Transaction settings",
+    items: [
+      {
+        title: "Transaction Series",
+        description:
+          "Numbering for invoices, receipts, payments, and other modules.",
+        icon: ListBullets,
+        href: settings.transactionSeries.path,
+      },
+    ],
+  },
+];
 
 export function SettingsPage() {
   return (
-    <UserDashboardContainer py="1.5rem">
-      <Stack gap="6">
-        <Box>
-          <Text textStyle="h3-bold" color="gray.500">
-            Settings
-          </Text>
-          <Text textStyle="small-regular" color="gray.300" mt="1">
-            Configure your business preferences
-          </Text>
-        </Box>
+    <Stack gap="8">
+      <Box>
+        <Text textStyle="h3-bold" color="gray.500">
+          Settings
+        </Text>
+        <Text textStyle="small-regular" color="gray.300" mt="1">
+          Configure your organization's preferences
+        </Text>
+      </Box>
 
-        <Box
-          bg="white"
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Tabs.Root defaultValue="company">
-            <Tabs.List
-              px="4"
-              pt="4"
-              overflowX="auto"
-              flexWrap={{ base: "wrap", md: "nowrap" }}
-            >
-              <Tabs.Trigger value="company" whiteSpace="nowrap">
-                Company Profile
-              </Tabs.Trigger>
-              <Tabs.Trigger value="logo" whiteSpace="nowrap">
-                Logo & UI
-              </Tabs.Trigger>
-              <Tabs.Trigger value="tax" whiteSpace="nowrap">
-                Tax Settings
-              </Tabs.Trigger>
-              <Tabs.Trigger value="invoice-format" whiteSpace="nowrap">
-                Invoice Format
-              </Tabs.Trigger>
-              <Tabs.Trigger value="payment-methods" whiteSpace="nowrap">
-                Payment Methods
-              </Tabs.Trigger>
-              <Tabs.Trigger value="expense-categories" whiteSpace="nowrap">
-                Expense Categories
-              </Tabs.Trigger>
-              <Tabs.Trigger value="roles" whiteSpace="nowrap">
-                Roles & Permissions
-              </Tabs.Trigger>
-              <Tabs.Trigger value="currency" whiteSpace="nowrap">
-                Currency
-              </Tabs.Trigger>
-            </Tabs.List>
-
-            <Box px="6" pb="6">
-              <Tabs.Content value="company">
-                <Profile />
-              </Tabs.Content>
-              <Tabs.Content value="logo">
-                <LogoTab />
-              </Tabs.Content>
-              <Tabs.Content value="tax">
-                <TaxSettingsTab />
-              </Tabs.Content>
-              <Tabs.Content value="invoice-format">
-                <InvoiceFormatTab />
-              </Tabs.Content>
-              <Tabs.Content value="payment-methods">
-                <PaymentMethodsTab />
-              </Tabs.Content>
-              <Tabs.Content value="expense-categories">
-                <ExpenseCategoriesTab />
-              </Tabs.Content>
-              <Tabs.Content value="roles">
-                <RolesPermissionsTab />
-              </Tabs.Content>
-              <Tabs.Content value="currency">
-                <CurrencyTab />
-              </Tabs.Content>
-            </Box>
-          </Tabs.Root>
+      {SETTINGS_GROUPS.map((group) => (
+        <Box key={group.title}>
+          <Text fontSize="13px" fontWeight="700" color="gray.400" mb="3">
+            {group.title}
+          </Text>
+          <Grid
+            templateColumns={{
+              base: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            }}
+            columnGap="6"
+            rowGap="2"
+          >
+            {group.items.map((item) => (
+              <SettingsCard key={item.title} {...item} />
+            ))}
+          </Grid>
         </Box>
-      </Stack>
-    </UserDashboardContainer>
+      ))}
+    </Stack>
   );
 }
