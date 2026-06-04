@@ -9,6 +9,8 @@ import type { ICustomer } from "@/shared/interface/customer";
 import type { CreateInvoicePayload } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
+import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
+import { formatTransactionSeries } from "@/utils/string-formatter";
 
 export interface LineItemFormRow {
   itemId: string;
@@ -176,6 +178,22 @@ export function useCreateInvoice() {
     setCustomerCache((prev) => ({ ...prev, [customer.id]: customer }));
   }, []);
 
+  // Derive the next invoice number from the active INVOICE transaction series.
+  const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
+  const seriesInvoiceNumber = useMemo(() => {
+    const invoiceSeries = (txnSeriesData?.data ?? []).find(
+      (s) => s.module === "INVOICE" && s.isActive,
+    );
+    if (!invoiceSeries) return "";
+    return formatTransactionSeries({
+      prefix: invoiceSeries.prefix,
+      suffix: invoiceSeries.suffix,
+      separator: invoiceSeries.separator,
+      padding: invoiceSeries.padding,
+      number: invoiceSeries.nextNumber,
+    });
+  }, [txnSeriesData?.data]);
+
   const formik = useFormik<CreateInvoiceFormValues>({
     initialValues: defaultValues,
     validationSchema,
@@ -287,6 +305,16 @@ export function useCreateInvoice() {
     const discountPct = parseFloat((li.discount ?? "").replace("%", "")) || 0;
     return qty * rate * (1 - discountPct / 100);
   };
+
+  // Apply the series-derived invoice number once it resolves, as long as the
+  // user hasn't already edited the field away from the default.
+  const appliedSeriesRef = useRef(false);
+  useEffect(() => {
+    if (appliedSeriesRef.current || !seriesInvoiceNumber) return;
+    appliedSeriesRef.current = true;
+    formik.setFieldValue("invoiceNumber", seriesInvoiceNumber);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesInvoiceNumber]);
 
   const handleCancel = () => navigate(RouteConstants.invoices.base.path);
 

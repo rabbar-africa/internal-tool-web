@@ -21,9 +21,9 @@ const formatDate = (v: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
 
 const styles = StyleSheet.create({
   page: {
-    paddingHorizontal: 40,
-    paddingVertical: 44,
-    fontSize: 10,
+    paddingHorizontal: 36,
+    paddingVertical: 36,
+    fontSize: 9,
     fontFamily: "Poppins",
     fontWeight: 400,
     color: c.gray400,
@@ -33,46 +33,46 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 32,
+    marginBottom: 22,
   },
   brandCol: { width: "50%" },
   logo: {
-    maxHeight: 64,
-    maxWidth: 110,
-    marginBottom: 10,
+    maxHeight: 52,
+    maxWidth: 90,
+    marginBottom: 8,
     objectFit: "contain",
     objectPositionX: 0,
     alignSelf: "flex-start",
   },
   logoFallback: {
-    width: 64,
-    height: 64,
+    width: 52,
+    height: 52,
     borderRadius: 4,
     backgroundColor: c.primary500,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  logoFallbackText: { color: c.white, fontSize: 13, fontWeight: 600 },
-  orgName: { fontSize: 12, fontWeight: 700, color: c.gray500 },
-  orgLine: { fontSize: 9, color: c.gray400, marginTop: 1.5 },
+  logoFallbackText: { color: c.white, fontSize: 12, fontWeight: 600 },
+  orgName: { fontSize: 11, fontWeight: 700, color: c.gray500 },
+  orgLine: { fontSize: 8, color: c.gray400, marginTop: 1.5 },
 
   metaCol: { width: "50%", alignItems: "flex-end" },
   invoiceTitle: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 600,
     color: c.gray500,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  invoiceNumber: { fontSize: 11, fontWeight: 600, color: c.gray500 },
+  invoiceNumber: { fontSize: 10, fontWeight: 600, color: c.gray500 },
   balanceLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 500,
     color: c.gray300,
-    marginTop: 14,
+    marginTop: 10,
   },
   balanceValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 700,
     color: c.gray500,
     marginTop: 2,
@@ -83,22 +83,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: 22,
+    marginBottom: 16,
   },
   billCol: { width: "50%" },
-  label: { fontSize: 10, color: c.gray400 },
-  billName: { fontSize: 12, fontWeight: 700, color: c.gray500, marginTop: 3 },
+  label: { fontSize: 9, color: c.gray400 },
+  billName: { fontSize: 11, fontWeight: 700, color: c.gray500, marginTop: 3 },
 
   metaInfoCol: { width: "50%" },
   metaLine: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  metaLabel: { fontSize: 10, color: c.gray400, marginRight: 18 },
+  metaLabel: { fontSize: 9, color: c.gray400, marginRight: 18 },
   metaValue: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 500,
     color: c.primary400,
     minWidth: 90,
@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: c.gray500,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
-  th: { fontSize: 9, fontWeight: 500, color: c.white },
+  th: { fontSize: 8, fontWeight: 500, color: c.white },
   row: {
     flexDirection: "row",
     paddingHorizontal: 10,
-    paddingVertical: 9,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: c.gray75,
   },
@@ -125,48 +125,48 @@ const styles = StyleSheet.create({
   colQty: { width: "12%", textAlign: "right" },
   colRate: { width: "18%", textAlign: "right" },
   colAmount: { width: "18%", textAlign: "right" },
-  itemName: { fontSize: 10, fontWeight: 600, color: c.gray500 },
-  itemDesc: { fontSize: 9, color: c.gray300, marginTop: 1.5 },
-  cellAccent: { fontSize: 10, fontWeight: 500, color: c.primary400 },
-  cellMuted: { fontSize: 10, color: c.gray500 },
+  itemName: { fontSize: 9, fontWeight: 600, color: c.gray500 },
+  itemDesc: { fontSize: 8, color: c.gray300, marginTop: 1.5 },
+  cellAccent: { fontSize: 9, fontWeight: 500, color: c.primary400 },
+  cellMuted: { fontSize: 9, color: c.gray500 },
 
   // Totals
   totalsWrap: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 18,
+    marginTop: 12,
   },
-  totals: { width: 240 },
+  totals: { width: 230 },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
   },
-  totalLabel: { fontSize: 10, color: c.gray500 },
-  totalValue: { fontSize: 10, fontWeight: 500, color: c.gray500 },
+  totalLabel: { fontSize: 9, color: c.gray500 },
+  totalValue: { fontSize: 9, fontWeight: 500, color: c.gray500 },
   bold: { fontWeight: 700 },
   balanceBox: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: c.gray50,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 2,
     marginTop: 4,
   },
 
   // Footer blocks
-  section: { marginTop: 26 },
+  section: { marginTop: 16 },
   sectionTitle: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 600,
     color: c.primary400,
-    marginBottom: 5,
+    marginBottom: 4,
   },
-  sectionText: { fontSize: 9, color: c.gray400, lineHeight: 1.5 },
-  bankLine: { fontSize: 9, color: c.gray400, marginTop: 1.5 },
-  bankAccountNumber: { fontSize: 9, fontWeight: 700, color: c.gray500 },
+  sectionText: { fontSize: 8, color: c.gray400, lineHeight: 1.5 },
+  bankLine: { fontSize: 8, color: c.gray400, marginTop: 1.5 },
+  bankAccountNumber: { fontSize: 8, fontWeight: 700, color: c.gray500 },
 });
 
 interface InvoicePdfDocumentProps {
@@ -341,24 +341,27 @@ export function InvoicePdfDocument({
           </View>
         </View>
 
-        {/* Notes + bank account */}
-        {notes || bankAccount ? (
+        {/* Account details */}
+        {bankAccount ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account Details</Text>
+            <Text style={styles.bankAccountNumber}>
+              {bankAccount.accountNumber}
+            </Text>
+            {bankAccount.bankName ? (
+              <Text style={styles.bankLine}>{bankAccount.bankName}</Text>
+            ) : null}
+            {bankAccount.accountName ? (
+              <Text style={styles.bankLine}>{bankAccount.accountName}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* Notes */}
+        {notes ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notes</Text>
-            {notes ? <Text style={styles.sectionText}>{notes}</Text> : null}
-            {bankAccount ? (
-              <View style={{ marginTop: notes ? 8 : 0 }}>
-                <Text style={styles.bankAccountNumber}>
-                  {bankAccount.accountNumber}
-                </Text>
-                {bankAccount.bankName ? (
-                  <Text style={styles.bankLine}>{bankAccount.bankName}</Text>
-                ) : null}
-                {bankAccount.accountName ? (
-                  <Text style={styles.bankLine}>{bankAccount.accountName}</Text>
-                ) : null}
-              </View>
-            ) : null}
+            <Text style={styles.sectionText}>{notes}</Text>
           </View>
         ) : null}
 
