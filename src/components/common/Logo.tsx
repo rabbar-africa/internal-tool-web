@@ -3,6 +3,7 @@ import { Link, type LinkProps, type ImageProps, Image } from "@chakra-ui/react";
 import { Link as ReactLink } from "react-router-dom";
 import blackLogo from "@/assets/images/logo/dark-logo.png";
 import whiteLogo from "@/assets/images/logo/white-logo.png";
+// import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { ReactNode } from "react";
 
 type LogoProps = ImageProps & {
@@ -14,11 +15,14 @@ type LogoProps = ImageProps & {
 
 export const Logo = (props: LogoProps) => {
   const { linkProps, to } = props;
+  // const { userOrganization } = useCurrentUser();
+
+  const fallbackLogo = props.color === "white" ? whiteLogo : blackLogo;
 
   function PlainLogo() {
     return (
       <Image
-        src={props.color === "white" ? whiteLogo : blackLogo}
+        src={fallbackLogo}
         aria-label={`logo`}
         alt="logo"
         w={"8rem"}

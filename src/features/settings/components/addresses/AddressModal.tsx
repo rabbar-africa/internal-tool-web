@@ -89,6 +89,7 @@ export function AddressModal({ open, onClose, address }: AddressModalProps) {
       }}
       placement="center"
       motionPreset="slide-in-bottom"
+      closeOnInteractOutside={false}
     >
       <Portal>
         <Dialog.Backdrop />

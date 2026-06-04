@@ -89,6 +89,7 @@ export function CurrencyModal({ open, onClose, currency }: CurrencyModalProps) {
         if (!o) onClose();
       }}
       placement="center"
+      closeOnInteractOutside={false}
       motionPreset="slide-in-bottom"
     >
       <Portal>

@@ -80,6 +80,7 @@ export function BankAccountModal({
       }}
       placement="center"
       motionPreset="slide-in-bottom"
+      closeOnInteractOutside={false}
     >
       <Portal>
         <Dialog.Backdrop />
