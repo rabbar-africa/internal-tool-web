@@ -5,11 +5,11 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
 
 /**
  * Client-side invoice PDF generation via @react-pdf/renderer.
- *
  * Renders the invoice document in the browser (no server round-trip) and
  * exposes helpers to get the raw blob / File, an object URL, trigger a
  * download, open in a new tab, or print.
  */
+
 export function useInvoicePdf(invoice?: IInvoiceResponse) {
   const { userOrganization } = useCurrentUser();
   const [isGenerating, setIsGenerating] = useState(false);

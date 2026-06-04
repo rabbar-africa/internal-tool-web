@@ -12,6 +12,9 @@ import type { IOrganization } from "@/shared/interface/common";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
 import { pdfColors as c } from "./colors";
+import { registerPdfFonts } from "./registerFonts";
+
+registerPdfFonts();
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
@@ -21,7 +24,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 44,
     fontSize: 10,
-    fontFamily: "Helvetica",
+    fontFamily: "Poppins",
+    fontWeight: 400,
     color: c.gray400,
   },
 
@@ -31,12 +35,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 32,
   },
-  brandCol: { width: "55%" },
+  brandCol: { width: "50%" },
   logo: {
     maxHeight: 64,
     maxWidth: 110,
     marginBottom: 10,
     objectFit: "contain",
+    objectPositionX: 0,
+    alignSelf: "flex-start",
   },
   logoFallback: {
     width: 64,
@@ -47,60 +53,54 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 10,
   },
-  logoFallbackText: {
-    color: c.white,
-    fontSize: 13,
-    fontFamily: "Helvetica-Bold",
-  },
-  orgName: { fontSize: 12, fontFamily: "Helvetica-Bold", color: c.gray500 },
+  logoFallbackText: { color: c.white, fontSize: 13, fontWeight: 600 },
+  orgName: { fontSize: 12, fontWeight: 700, color: c.gray500 },
   orgLine: { fontSize: 9, color: c.gray400, marginTop: 1.5 },
 
-  metaCol: { width: "40%", alignItems: "flex-end" },
+  metaCol: { width: "50%", alignItems: "flex-end" },
   invoiceTitle: {
     fontSize: 30,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 600,
     color: c.gray500,
     marginBottom: 4,
   },
-  invoiceNumber: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    color: c.gray500,
+  invoiceNumber: { fontSize: 11, fontWeight: 600, color: c.gray500 },
+  balanceLabel: {
+    fontSize: 10,
+    fontWeight: 500,
+    color: c.gray300,
+    marginTop: 14,
   },
-  balanceLabel: { fontSize: 10, color: c.gray300, marginTop: 14 },
   balanceValue: {
     fontSize: 16,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 700,
     color: c.gray500,
     marginTop: 2,
   },
 
-  // Bill-to / meta
+  // Bill-to / meta — bottom-aligned, mirroring the on-screen `justify="flex-end"`
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-end",
     marginBottom: 22,
   },
-  billCol: { width: "55%" },
+  billCol: { width: "50%" },
   label: { fontSize: 10, color: c.gray400 },
-  billName: {
-    fontSize: 12,
-    fontFamily: "Helvetica-Bold",
-    color: c.gray500,
-    marginTop: 3,
-  },
+  billName: { fontSize: 12, fontWeight: 700, color: c.gray500, marginTop: 3 },
 
-  metaInfoCol: { width: "45%" },
+  metaInfoCol: { width: "50%" },
   metaLine: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    alignItems: "center",
     marginBottom: 6,
   },
   metaLabel: { fontSize: 10, color: c.gray400, marginRight: 18 },
   metaValue: {
     fontSize: 10,
+    fontWeight: 500,
     color: c.primary400,
-    fontFamily: "Helvetica-Bold",
     minWidth: 90,
     textAlign: "right",
   },
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
-  th: { fontSize: 9, color: c.white },
+  th: { fontSize: 9, fontWeight: 500, color: c.white },
   row: {
     flexDirection: "row",
     paddingHorizontal: 10,
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
   colQty: { width: "12%", textAlign: "right" },
   colRate: { width: "18%", textAlign: "right" },
   colAmount: { width: "18%", textAlign: "right" },
-  itemName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: c.gray500 },
+  itemName: { fontSize: 10, fontWeight: 600, color: c.gray500 },
   itemDesc: { fontSize: 9, color: c.gray300, marginTop: 1.5 },
-  cellAccent: { fontSize: 10, color: c.primary400 },
+  cellAccent: { fontSize: 10, fontWeight: 500, color: c.primary400 },
   cellMuted: { fontSize: 10, color: c.gray500 },
 
   // Totals
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   totalLabel: { fontSize: 10, color: c.gray500 },
-  totalValue: { fontSize: 10, color: c.gray500 },
-  bold: { fontFamily: "Helvetica-Bold" },
+  totalValue: { fontSize: 10, fontWeight: 500, color: c.gray500 },
+  bold: { fontWeight: 700 },
   balanceBox: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -160,17 +160,13 @@ const styles = StyleSheet.create({
   section: { marginTop: 26 },
   sectionTitle: {
     fontSize: 10,
-    fontFamily: "Helvetica-Bold",
+    fontWeight: 600,
     color: c.primary400,
     marginBottom: 5,
   },
   sectionText: { fontSize: 9, color: c.gray400, lineHeight: 1.5 },
   bankLine: { fontSize: 9, color: c.gray400, marginTop: 1.5 },
-  bankAccountNumber: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: c.gray500,
-  },
+  bankAccountNumber: { fontSize: 9, fontWeight: 700, color: c.gray500 },
 });
 
 interface InvoicePdfDocumentProps {
