@@ -6,5 +6,7 @@ export interface IBaseFilter {
   limit?: number;
   sortBy?: string;
   role?: string;
+  dateFrom?: string;
+  dateTo?: string;
   size?: number;
 }

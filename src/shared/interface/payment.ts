@@ -1,3 +1,5 @@
+import type { IBaseFilter } from "./filter";
+
 export type PaymentMethod =
   | "cash"
   | "bank_transfer"
@@ -24,12 +26,32 @@ export interface Payment {
 }
 
 export interface CreatePaymentPayload {
-  invoiceId: string;
+  paymentNumber: string;
+  referenceNumber: string;
+  customerId: string;
+  customerName: string;
+  customer: {
+    id: string;
+    name: string;
+  };
+  date: string;
+  mode: PaymentModeDto;
+  status: PaymentReceivedStatusDto;
+  currencyCode: string;
+  exchangeRate: number;
   amount: number;
-  paymentMethod: PaymentMethod;
-  paymentDate: string;
-  reference?: string;
-  notes?: string;
+  bankCharges: number;
+  depositToAccountId: string;
+  depositToName: string;
+  notes: string;
+  allocations: Array<{
+    invoiceId: string;
+    amountApplied: number;
+  }>;
+  id: string;
+  createdAt: string;
+  amountApplied: number;
+  unusedAmount: number;
 }
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -39,3 +61,27 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cheque: "Cheque",
   pos: "POS",
 };
+
+export enum PaymentModeDto {
+  CASH = "CASH",
+  BANK_TRANSFER = "BANK_TRANSFER",
+  CARD = "CARD",
+  MOBILE_MONEY = "MOBILE_MONEY",
+  CHEQUE = "CHEQUE",
+  ONLINE = "ONLINE",
+  OTHER = "OTHER",
+}
+
+export enum PaymentReceivedStatusDto {
+  DRAFT = "DRAFT",
+  CONFIRMED = "CONFIRMED",
+  REFUNDED = "REFUNDED",
+  PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED",
+}
+
+export interface IGetPaymentsReceivedFilter extends IBaseFilter {
+  invoiceId?: string;
+  customerId?: string;
+  mode?: string;
+  status?: string;
+}

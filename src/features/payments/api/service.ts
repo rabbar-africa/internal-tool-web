@@ -1,31 +1,36 @@
-import type { Payment, CreatePaymentPayload } from "@/shared/interface/payment";
-import { MOCK_PAYMENTS } from "@/shared/data/mock";
+import type {
+  CreatePaymentPayload,
+  IGetPaymentsReceivedFilter,
+} from "@/shared/interface/payment";
+import { axios } from "@/lib/axios";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 
-const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
-
-export const getPayments = async (): Promise<Payment[]> => {
-  await delay(300);
-  return MOCK_PAYMENTS;
+export const getPayments = async (filter?: IGetPaymentsReceivedFilter) => {
+  const baseUrl = "/api/payments-received";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filter || {});
+  const response = await axios.get(apiUrl);
+  return response.data;
 };
 
-export const createPayment = async (
-  payload: CreatePaymentPayload,
-): Promise<Payment> => {
-  await delay(500);
-  const invoice = MOCK_PAYMENTS.find((p) => p.invoiceId === payload.invoiceId);
-  return {
-    id: `pay-${Date.now()}`,
-    paymentNumber: `PAY-2025-${String(MOCK_PAYMENTS.length + 1).padStart(3, "0")}`,
-    invoiceId: payload.invoiceId,
-    customerId: invoice?.customerId ?? "",
-    customer: invoice?.customer ?? { name: "Unknown" },
-    invoiceNumber: invoice?.invoiceNumber ?? "",
-    amount: payload.amount,
-    paymentMethod: payload.paymentMethod,
-    paymentDate: payload.paymentDate,
-    reference: payload.reference,
-    notes: payload.notes,
-    status: "completed",
-    createdAt: new Date().toISOString().split("T")[0],
-  };
+export const getPaymentById = async (id: string) => {
+  const response = await axios.get(`/api/payments-received/${id}`);
+  return response.data;
+};
+
+export const deletePayment = async (id: string) => {
+  const response = await axios.delete(`/api/payments-received/${id}`);
+  return response.data;
+};
+
+export const updatePayment = async (data: {
+  id: string;
+  payload: CreatePaymentPayload;
+}) => {
+  const { id, payload } = data;
+  const response = await axios.put(`/api/payments-received/${id}`, payload);
+  return response.data;
+};
+export const createPayment = async (payload: CreatePaymentPayload) => {
+  const response = await axios.post("/api/payments-received", payload);
+  return response.data;
 };
