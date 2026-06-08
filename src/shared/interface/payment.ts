@@ -48,10 +48,11 @@ export interface CreatePaymentPayload {
     invoiceId: string;
     amountApplied: number;
   }>;
-  id: string;
-  createdAt: string;
   amountApplied: number;
   unusedAmount: number;
+  // Server-managed — present on responses, omitted when creating.
+  id?: string;
+  createdAt?: string;
 }
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {

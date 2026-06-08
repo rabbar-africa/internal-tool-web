@@ -30,6 +30,7 @@ export const updatePayment = async (data: {
   const response = await axios.put(`/api/payments-received/${id}`, payload);
   return response.data;
 };
+
 export const createPayment = async (payload: CreatePaymentPayload) => {
   const response = await axios.post("/api/payments-received", payload);
   return response.data;
