@@ -198,9 +198,11 @@ export function useCreatePayment() {
   );
   const outstandingInvoices = useMemo(
     () =>
-      ((invoicesQuery.data?.data ?? []) as IInvoiceResponse[]).filter(
-        (inv) => toNum(inv.balance) > 0,
-      ),
+      // The list endpoint returns the rich invoice shape, but the service is
+      // typed with the legacy `Invoice`; cast to the real response type.
+      (
+        (invoicesQuery.data?.data ?? []) as unknown as IInvoiceResponse[]
+      ).filter((inv) => toNum(inv.balance) > 0),
     [invoicesQuery.data?.data],
   );
 
