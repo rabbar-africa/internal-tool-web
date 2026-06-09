@@ -7,79 +7,119 @@ import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DownloadButton } from "@/components/common/DownloadButton";
 import { RouteConstants } from "@/shared/constants/routes";
-import { formatCurrency } from "@/utils/calculations";
+import { formatMoney } from "@/hooks/useFormatMoney";
 import { useGetPaymentsQuery } from "../../api/query";
-import type { Payment, PaymentStatus } from "@/shared/interface/payment";
-import { PAYMENT_METHOD_LABELS } from "@/shared/interface/payment";
+import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
 
-const STATUS_STYLES: Record<PaymentStatus, { bg: string; color: string }> = {
-  completed: { bg: "green.50", color: "green.600" },
-  pending: { bg: "orange.50", color: "orange.600" },
-  failed: { bg: "red.50", color: "red.600" },
+const MODE_LABELS: Record<string, string> = {
+  CASH: "Cash",
+  BANK_TRANSFER: "Bank Transfer",
+  CARD: "Card",
+  MOBILE_MONEY: "Mobile Money",
+  CHEQUE: "Cheque",
+  ONLINE: "Online",
+  OTHER: "Other",
 };
 
-const columns: ColumnDef<Payment>[] = [
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  DRAFT: { bg: "gray.50", color: "gray.500" },
+  CONFIRMED: { bg: "green.50", color: "green.600" },
+  REFUNDED: { bg: "red.50", color: "red.600" },
+  PARTIALLY_REFUNDED: { bg: "orange.50", color: "orange.600" },
+};
+
+const money = (value: string, currencyCode?: string) =>
+  formatMoney(Number(value ?? 0) || 0, { currencyCode });
+
+const columns: ColumnDef<IPaymentReceived>[] = [
   {
     accessorKey: "paymentNumber",
     header: "Payment #",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
+        {(getValue() as string) || "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "invoiceNumber",
-    header: "Invoice #",
+    accessorKey: "referenceNumber",
+    header: "Reference #",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {getValue() as string}
+        {(getValue() as string) || "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "customer.name",
+    accessorKey: "customerName",
     header: "Customer",
-    cell: ({ getValue }) => (
+    cell: ({ row }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {getValue() as string}
+        {row.original.customerName || row.original.client?.displayName || "—"}
       </Text>
     ),
+  },
+  {
+    accessorKey: "mode",
+    header: "Mode",
+    cell: ({ getValue }) => {
+      const mode = getValue() as string;
+      return (
+        <Text textStyle="small-regular" color="gray.500">
+          {MODE_LABELS[mode] ?? mode}
+        </Text>
+      );
+    },
   },
   {
     accessorKey: "amount",
     header: "Amount",
-    cell: ({ getValue }) => (
+    cell: ({ row }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {formatCurrency(getValue() as number)}
+        {money(row.original.amount, row.original.currencyCode)}
       </Text>
     ),
   },
   {
-    accessorKey: "paymentMethod",
-    header: "Method",
-    cell: ({ getValue }) => (
+    accessorKey: "amountApplied",
+    header: "Applied",
+    cell: ({ row }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {PAYMENT_METHOD_LABELS[getValue() as Payment["paymentMethod"]]}
+        {money(row.original.amountApplied, row.original.currencyCode)}
       </Text>
     ),
   },
   {
-    accessorKey: "paymentDate",
+    accessorKey: "unusedAmount",
+    header: "Unused",
+    cell: ({ row }) => (
+      <Text textStyle="small-regular" color="gray.500">
+        {money(row.original.unusedAmount, row.original.currencyCode)}
+      </Text>
+    ),
+  },
+  {
+    accessorKey: "date",
     header: "Date",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {moment(getValue() as string).format("DD MMM YYYY")}
-      </Text>
-    ),
+    cell: ({ getValue }) => {
+      const value = getValue() as string;
+      return (
+        <Text textStyle="small-regular" color="gray.500">
+          {value ? moment(value).format("DD MMM YYYY") : "—"}
+        </Text>
+      );
+    },
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ getValue }) => {
-      const status = getValue() as PaymentStatus;
-      const styles = STATUS_STYLES[status];
+      const status = (getValue() as string) ?? "";
+      const styles = STATUS_STYLES[status] ?? {
+        bg: "gray.50",
+        color: "gray.500",
+      };
       return (
         <Box
           display="inline-flex"
@@ -95,7 +135,7 @@ const columns: ColumnDef<Payment>[] = [
             color={styles.color}
             textTransform="capitalize"
           >
-            {status}
+            {status.toLowerCase().replace(/_/g, " ")}
           </Text>
         </Box>
       );
@@ -105,25 +145,31 @@ const columns: ColumnDef<Payment>[] = [
 
 const CSV_HEADERS = {
   paymentNumber: "Payment #",
-  invoiceNumber: "Invoice #",
-  "customer.name": "Customer",
-  amount: "Amount (₦)",
-  paymentMethod: "Method",
-  paymentDate: "Date",
+  referenceNumber: "Reference #",
+  customerName: "Customer",
+  mode: "Mode",
+  amount: "Amount",
+  amountApplied: "Applied",
+  unusedAmount: "Unused",
+  date: "Date",
   status: "Status",
 } as const;
 
 export function PaymentListPage() {
   const navigate = useNavigate();
-  const { data: payments = [], isLoading } = useGetPaymentsQuery();
+  const { data, isLoading } = useGetPaymentsQuery();
+
+  const payments = (data?.data ?? []) as IPaymentReceived[];
 
   const csvData = payments.map((p) => ({
     paymentNumber: p.paymentNumber,
-    invoiceNumber: p.invoiceNumber,
-    "customer.name": p.customer.name,
+    referenceNumber: p.referenceNumber,
+    customerName: p.customerName || p.client?.displayName || "",
+    mode: MODE_LABELS[p.mode] ?? p.mode,
     amount: p.amount,
-    paymentMethod: PAYMENT_METHOD_LABELS[p.paymentMethod],
-    paymentDate: p.paymentDate,
+    amountApplied: p.amountApplied,
+    unusedAmount: p.unusedAmount,
+    date: p.date,
     status: p.status,
   }));
 

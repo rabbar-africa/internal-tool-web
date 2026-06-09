@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
-import { useGetAllInvoicesQuery } from "@/features/invoices/api/query";
+import {
+  useGetAllInvoicesQuery,
+  useGetInvoiceByIdQuery,
+} from "@/features/invoices/api/query";
 import {
   useGetOrganizationBankAccounts,
   useGetOrganizationDetails,
@@ -82,9 +85,19 @@ const toNum = (v: string | number | null | undefined) => Number(v ?? 0) || 0;
 
 export function useCreatePayment() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const presetInvoiceId = searchParams.get("invoiceId") ?? "";
+  const isPresetMode = Boolean(presetInvoiceId);
+
   const { mutateAsync, isPending } = useCreatePaymentMutation();
   const { data: orgData } = useGetOrganizationDetails();
   const orgCurrency = orgData?.data?.currency || "NGN";
+
+  // Preset flow: recording against a specific invoice (from its detail page).
+  const presetInvoiceQuery = useGetInvoiceByIdQuery(presetInvoiceId);
+  const presetInvoice = presetInvoiceQuery.data?.data as
+    | IInvoiceResponse
+    | undefined;
 
   // ─── Customers (searchable) ─────────────────────────────────────────────
   const [customerSearch, setCustomerSearch] = useState("");
@@ -140,8 +153,8 @@ export function useCreatePayment() {
       paymentNumber: "",
       referenceNumber: "",
       date: today,
-      mode: PaymentModeDto.CASH,
-      status: PaymentReceivedStatusDto.DRAFT,
+      mode: PaymentModeDto.BANK_TRANSFER,
+      status: PaymentReceivedStatusDto.CONFIRMED,
       currencyCode: orgCurrency,
       exchangeRate: "1",
       amount: "",
@@ -191,10 +204,10 @@ export function useCreatePayment() {
 
   const { values, setFieldValue } = formik;
 
-  // ─── Outstanding invoices for the selected customer ─────────────────────
+  // ─── Outstanding invoices for the selected customer (manual flow) ───────
   const invoicesQuery = useGetAllInvoicesQuery(
     { customerId: values.customerId, page: 1, limit: 100 },
-    { enabled: Boolean(values.customerId) },
+    { enabled: Boolean(values.customerId) && !isPresetMode },
   );
   const outstandingInvoices = useMemo(
     () =>
@@ -206,8 +219,9 @@ export function useCreatePayment() {
     [invoicesQuery.data?.data],
   );
 
-  // Rebuild allocation rows whenever the customer's outstanding invoices load.
+  // Manual flow: rebuild allocation rows when the customer's invoices load.
   useEffect(() => {
+    if (isPresetMode) return;
     const rows: AllocationRow[] = outstandingInvoices.map((inv) => ({
       invoiceId: inv.id,
       invoiceNumber: inv.invoiceNumber,
@@ -218,7 +232,40 @@ export function useCreatePayment() {
     }));
     setFieldValue("allocations", rows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outstandingInvoices]);
+  }, [outstandingInvoices, isPresetMode]);
+
+  // Preset flow: lock the form to the invoice from the URL.
+  const presetBalance = toNum(presetInvoice?.balance);
+  const presetApplied = useRef(false);
+  useEffect(() => {
+    if (!isPresetMode || !presetInvoice || presetApplied.current) return;
+    presetApplied.current = true;
+    const name =
+      presetInvoice.client?.displayName || presetInvoice.customerName || "";
+    setFieldValue("customerId", presetInvoice.customerId);
+    setFieldValue("customerName", name);
+    if (presetInvoice.currencyCode)
+      setFieldValue("currencyCode", presetInvoice.currencyCode);
+    setFieldValue("amount", presetBalance ? String(presetBalance) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPresetMode, presetInvoice]);
+
+  // Keep the single preset allocation in sync with the entered amount.
+  useEffect(() => {
+    if (!isPresetMode || !presetInvoice) return;
+    const applied = Math.min(toNum(values.amount), presetBalance);
+    setFieldValue("allocations", [
+      {
+        invoiceId: presetInvoice.id,
+        invoiceNumber: presetInvoice.invoiceNumber,
+        invoiceDate: presetInvoice.date,
+        dueDate: presetInvoice.dueDate,
+        balance: presetBalance,
+        amountApplied: applied ? String(applied) : "",
+      },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPresetMode, presetInvoice, values.amount, presetBalance]);
 
   const handleSelectCustomer = (id: string) => {
     setFieldValue("customerId", id);
@@ -270,12 +317,36 @@ export function useCreatePayment() {
     };
   }, [values.amount, values.allocations]);
 
+  // Read-only summary for the preset (invoice-driven) flow.
+  const presetSummary = useMemo(() => {
+    const amount = toNum(values.amount);
+    return {
+      invoiceNumber: presetInvoice?.invoiceNumber ?? "",
+      invoiceDate: presetInvoice?.date ?? "",
+      dueDate: presetInvoice?.dueDate ?? "",
+      customerName:
+        presetInvoice?.client?.displayName || presetInvoice?.customerName || "",
+      currencyCode: presetInvoice?.currencyCode || orgCurrency,
+      total: toNum(presetInvoice?.total),
+      balance: presetBalance,
+      amount,
+      balanceAfter: presetBalance - Math.min(amount, presetBalance),
+      overpaid: amount > presetBalance,
+    };
+  }, [presetInvoice, presetBalance, values.amount, orgCurrency]);
+
   const handleCancel = () => navigate(RouteConstants.payments.base.path);
 
   return {
     formik,
     isPending,
     orgCurrency,
+    // preset (invoice-driven) flow
+    isPresetMode,
+    isLoadingPresetInvoice: presetInvoiceQuery.isLoading && isPresetMode,
+    presetInvoiceNotFound:
+      isPresetMode && !presetInvoiceQuery.isLoading && !presetInvoice,
+    presetSummary,
     // customer
     customerOptions,
     customerSearch,

@@ -51,13 +51,13 @@ export function PaymentFormHeader({
         />
 
         <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-          <CustomInput
+          {/* <CustomInput
             label="Payment Number"
             name="paymentNumber"
             placeholder="Auto-generated if left blank"
             value={values.paymentNumber}
             onChange={formik.handleChange}
-          />
+          /> */}
           <CustomInput
             label="Reference Number"
             name="referenceNumber"

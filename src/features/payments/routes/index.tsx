@@ -6,9 +6,9 @@ const { PaymentList } = lazyImport(
   () => import("../pages/PaymentList"),
   "PaymentList",
 );
-const { CreatePayment } = lazyImport(
-  () => import("../pages/CreatePayment"),
-  "CreatePayment",
+const { CreatePaymentPage } = lazyImport(
+  () => import("../pages/CreatePaymentPage"),
+  "CreatePaymentPage",
 );
 
 export const PaymentRoutes: RouteObject[] = [
@@ -18,6 +18,6 @@ export const PaymentRoutes: RouteObject[] = [
   },
   {
     path: RouteConstants.payments.create.path,
-    element: <CreatePayment />,
+    element: <CreatePaymentPage />,
   },
 ];

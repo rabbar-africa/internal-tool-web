@@ -1,11 +1,11 @@
 import { Head } from "@/components/seo/head";
-import { CreatePaymentPage } from "../components/create-payment/CreatePaymentPage";
+import { CreatePayment } from "../components/create-payment/CreatePayment";
 
-export function CreatePayment() {
+export function CreatePaymentPage() {
   return (
     <>
       <Head title="Record Payment" description="Record a payment received" />
-      <CreatePaymentPage />
+      <CreatePayment />
     </>
   );
 }

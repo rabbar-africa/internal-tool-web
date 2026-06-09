@@ -17,8 +17,8 @@ interface PaymentDetailsProps {
 
 export function PaymentDetails({
   formik,
-  bankAccountOptions,
-  onSelectDepositAccount,
+  // bankAccountOptions,
+  // onSelectDepositAccount,
 }: PaymentDetailsProps) {
   const { values, errors, touched } = formik;
 
@@ -37,7 +37,7 @@ export function PaymentDetails({
           onChange={(opt: any) => formik.setFieldValue("mode", opt?.value?.[0])}
           error={touched.mode && errors.mode ? errors.mode : undefined}
         />
-
+        {/* 
         <CustomSelect
           label="Deposit To"
           placeholder="Select account..."
@@ -45,7 +45,7 @@ export function PaymentDetails({
           noOptionsText="No bank accounts configured"
           value={values.depositToAccountId ? [values.depositToAccountId] : []}
           onChange={(opt: any) => onSelectDepositAccount(opt?.value?.[0] ?? "")}
-        />
+        /> */}
 
         <CustomNumberInput
           label="Amount Received"

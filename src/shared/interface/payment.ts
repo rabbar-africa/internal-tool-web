@@ -25,6 +25,57 @@ export interface Payment {
   createdAt: string;
 }
 
+export interface IPaymentReceived {
+  id: string;
+  organizationId: string;
+  paymentNumber: string;
+  referenceNumber: string;
+  customerId: string;
+  customerName: string;
+  date: string;
+  mode: PaymentModeDto;
+  status: PaymentStatus;
+  currencyCode: string;
+  exchangeRate: string;
+  amount: string;
+  amountApplied: string;
+  amountRefunded: string;
+  unusedAmount: string;
+  bankCharges: string;
+  depositToAccountId: string;
+  depositToName: string;
+  notes: string;
+  source: string;
+  externalId: string;
+  createdAt: string;
+  updatedAt: string;
+  client: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    displayName: string;
+    email: string;
+  };
+  allocations: Array<{
+    id: string;
+    organizationId: string;
+    paymentId: string;
+    invoiceId: string;
+    amountApplied: string;
+    invoiceBalanceAfter: string;
+    createdAt: string;
+    invoice: {
+      id: string;
+      invoiceNumber: string;
+      date: string;
+      dueDate: string;
+      total: string;
+      balance: string;
+      status: string;
+    };
+  }>;
+}
+
 export interface CreatePaymentPayload {
   paymentNumber: string;
   referenceNumber: string;
