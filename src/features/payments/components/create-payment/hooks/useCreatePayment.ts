@@ -13,11 +13,16 @@ import {
   useGetOrganizationBankAccounts,
   useGetOrganizationDetails,
 } from "@/features/settings/api";
-import { useCreatePaymentMutation } from "../../../api/query";
+import {
+  useCreatePaymentMutation,
+  useGetPaymentByIdQuery,
+  useUpdatePaymentMutation,
+} from "../../../api/query";
 import {
   PaymentModeDto,
   PaymentReceivedStatusDto,
   type CreatePaymentPayload,
+  type IPaymentReceived,
 } from "@/shared/interface/payment";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 
@@ -87,9 +92,13 @@ export function useCreatePayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const presetInvoiceId = searchParams.get("invoiceId") ?? "";
-  const isPresetMode = Boolean(presetInvoiceId);
+  const editPaymentId = searchParams.get("paymentId") ?? "";
+  const isEditMode = Boolean(editPaymentId);
+  const isPresetMode = Boolean(presetInvoiceId) && !isEditMode;
 
   const { mutateAsync, isPending } = useCreatePaymentMutation();
+  const { mutateAsync: updateMutate, isPending: isUpdating } =
+    useUpdatePaymentMutation();
   const { data: orgData } = useGetOrganizationDetails();
   const orgCurrency = orgData?.data?.currency || "NGN";
 
@@ -97,6 +106,12 @@ export function useCreatePayment() {
   const presetInvoiceQuery = useGetInvoiceByIdQuery(presetInvoiceId);
   const presetInvoice = presetInvoiceQuery.data?.data as
     | IInvoiceResponse
+    | undefined;
+
+  // Edit flow: editing an existing payment (?paymentId=).
+  const editPaymentQuery = useGetPaymentByIdQuery(editPaymentId);
+  const editPayment = editPaymentQuery.data?.data as
+    | IPaymentReceived
     | undefined;
 
   // ─── Customers (searchable) ─────────────────────────────────────────────
@@ -197,7 +212,11 @@ export function useCreatePayment() {
         unusedAmount: Math.max(0, amount - amountApplied),
       };
 
-      await mutateAsync(payload);
+      if (isEditMode) {
+        await updateMutate({ id: editPaymentId, payload });
+      } else {
+        await mutateAsync(payload);
+      }
       navigate(RouteConstants.payments.base.path);
     },
   });
@@ -207,7 +226,7 @@ export function useCreatePayment() {
   // ─── Outstanding invoices for the selected customer (manual flow) ───────
   const invoicesQuery = useGetAllInvoicesQuery(
     { customerId: values.customerId, page: 1, limit: 100 },
-    { enabled: Boolean(values.customerId) && !isPresetMode },
+    { enabled: Boolean(values.customerId) && !isPresetMode && !isEditMode },
   );
   const outstandingInvoices = useMemo(
     () =>
@@ -221,7 +240,7 @@ export function useCreatePayment() {
 
   // Manual flow: rebuild allocation rows when the customer's invoices load.
   useEffect(() => {
-    if (isPresetMode) return;
+    if (isPresetMode || isEditMode) return;
     const rows: AllocationRow[] = outstandingInvoices.map((inv) => ({
       invoiceId: inv.id,
       invoiceNumber: inv.invoiceNumber,
@@ -233,6 +252,42 @@ export function useCreatePayment() {
     setFieldValue("allocations", rows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outstandingInvoices, isPresetMode]);
+
+  // Edit flow: prefill the form from the existing payment (once it loads).
+  const editApplied = useRef(false);
+  useEffect(() => {
+    if (!isEditMode || !editPayment || editApplied.current) return;
+    editApplied.current = true;
+    formik.setValues({
+      customerId: editPayment.customerId,
+      customerName:
+        editPayment.customerName || editPayment.client?.displayName || "",
+      paymentNumber: editPayment.paymentNumber ?? "",
+      referenceNumber: editPayment.referenceNumber ?? "",
+      date: editPayment.date ? editPayment.date.split("T")[0] : today,
+      mode: editPayment.mode,
+      status:
+        (editPayment.status as unknown as PaymentReceivedStatusDto) ??
+        PaymentReceivedStatusDto.CONFIRMED,
+      currencyCode: editPayment.currencyCode || orgCurrency,
+      exchangeRate: editPayment.exchangeRate || "1",
+      amount: editPayment.amount ?? "",
+      bankCharges: editPayment.bankCharges ?? "0",
+      depositToAccountId: editPayment.depositToAccountId ?? "",
+      depositToName: editPayment.depositToName ?? "",
+      notes: editPayment.notes ?? "",
+      allocations: (editPayment.allocations ?? []).map((a) => ({
+        invoiceId: a.invoiceId,
+        invoiceNumber: a.invoice?.invoiceNumber ?? "",
+        invoiceDate: a.invoice?.date ?? "",
+        dueDate: a.invoice?.dueDate ?? "",
+        // restore the pre-payment balance so the applied amount stays within max
+        balance: toNum(a.invoice?.balance) + toNum(a.amountApplied),
+        amountApplied: a.amountApplied ?? "",
+      })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editPayment]);
 
   // Preset flow: lock the form to the invoice from the URL.
   const presetBalance = toNum(presetInvoice?.balance);
@@ -339,8 +394,11 @@ export function useCreatePayment() {
 
   return {
     formik,
-    isPending,
+    isPending: isPending || isUpdating,
     orgCurrency,
+    // edit flow
+    isEditMode,
+    isLoadingEditPayment: editPaymentQuery.isLoading && isEditMode,
     // preset (invoice-driven) flow
     isPresetMode,
     isLoadingPresetInvoice: presetInvoiceQuery.isLoading && isPresetMode,

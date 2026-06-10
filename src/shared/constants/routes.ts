@@ -49,6 +49,7 @@ const invoices = {
 const payments = {
   base: defineRoute("/payments" as const),
   create: defineRoute("/payments/create" as const),
+  detail: defineRoute("/payments/:id" as const),
 } as const;
 
 const customers = {

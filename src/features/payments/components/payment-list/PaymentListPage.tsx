@@ -1,14 +1,15 @@
+import { useState } from "react";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-import { CustomTable } from "@/components/table";
-import { UserDashboardContainer } from "@/components/hoc";
+import { CustomTable, type TableAction } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DownloadButton } from "@/components/common/DownloadButton";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatMoney } from "@/hooks/useFormatMoney";
-import { useGetPaymentsQuery } from "../../api/query";
+import { useGetPaymentsQuery, useDeletePaymentMutation } from "../../api/query";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
 import Status from "@/components/ui/Status";
@@ -108,22 +109,22 @@ const columns: ColumnDef<IPaymentReceived>[] = [
       </Text>
     ),
   },
-  {
-    accessorKey: "unusedAmount",
-    header: "Unused",
-    cell: ({ row }) => {
-      const unused = toNum(row.original.unusedAmount);
-      return (
-        <Text
-          fontSize="13px"
-          color={unused > 0 ? "warning.600" : "gray.300"}
-          fontWeight={unused > 0 ? "600" : "400"}
-        >
-          {money(row.original.unusedAmount, row.original.currencyCode)}
-        </Text>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "unusedAmount",
+  //   header: "Unused",
+  //   cell: ({ row }) => {
+  //     const unused = toNum(row.original.unusedAmount);
+  //     return (
+  //       <Text
+  //         fontSize="13px"
+  //         color={unused > 0 ? "warning.600" : "gray.300"}
+  //         fontWeight={unused > 0 ? "600" : "400"}
+  //       >
+  //         {money(row.original.unusedAmount, row.original.currencyCode)}
+  //       </Text>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "date",
     header: "Date",
@@ -162,8 +163,42 @@ const CSV_HEADERS = {
 export function PaymentListPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useGetPaymentsQuery();
+  const { mutateAsync: deletePayment, isPending: isDeleting } =
+    useDeletePaymentMutation();
+  const [pendingDelete, setPendingDelete] = useState<IPaymentReceived | null>(
+    null,
+  );
 
   const payments = (data?.data ?? []) as IPaymentReceived[];
+
+  const actions: TableAction<IPaymentReceived>[] = [
+    {
+      label: "Edit",
+      value: "edit",
+      onClick: (row) =>
+        navigate(`${RouteConstants.payments.create.path}?paymentId=${row.id}`),
+    },
+    {
+      label: "Download PDF",
+      value: "download-pdf",
+      // Placeholder — client-side PDF to be wired up later.
+      // eslint-disable-next-line no-console
+      onClick: (row) => console.log("Download payment PDF", row.id),
+    },
+    {
+      label: "Delete",
+      value: "delete",
+      variant: "destructive",
+      separator: true,
+      onClick: (row) => setPendingDelete(row),
+    },
+  ];
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    await deletePayment(pendingDelete.id);
+    setPendingDelete(null);
+  };
 
   const csvData = payments.map((p) => ({
     paymentNumber: p.paymentNumber,
@@ -179,65 +214,86 @@ export function PaymentListPage() {
   }));
 
   return (
-    <UserDashboardContainer py="1.5rem">
-      <Stack gap="6">
-        <PageHeader
-          title="Payments Received"
-          subtitle="Track all payments received from customers"
-          action={
-            <Flex gap="2">
-              <DownloadButton
-                data={csvData}
-                filename="payments"
-                headers={CSV_HEADERS}
-              />
-              <Button
-                onClick={() => navigate(RouteConstants.payments.create.path)}
-              >
-                Record Payment
-              </Button>
-            </Flex>
-          }
-        />
-
-        <Box
-          pt="2rem"
-          pb="2rem"
-          bg="white"
-          px="1rem"
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex
-            justifyContent="space-between"
-            alignItems="center"
-            mb="1.5rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
-          >
-            <Box>
-              <Text textStyle="large-bold" color="gray.500">
-                All Payments
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                Payments received from customers
-              </Text>
-            </Box>
-            <SearchInput placeholder="Search by payment # or customer" />
-          </Flex>
-
-          <Box overflowX="auto" maxW="calc(100vw - 310px)">
-            <CustomTable
-              data={payments}
-              columns={columns}
-              loading={isLoading}
-              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+    <Stack gap="6">
+      <PageHeader
+        title="Payments Received"
+        subtitle="Track all payments received from customers"
+        action={
+          <Flex gap="2">
+            <DownloadButton
+              data={csvData}
+              filename="payments"
+              headers={CSV_HEADERS}
             />
+            <Button
+              onClick={() => navigate(RouteConstants.payments.create.path)}
+            >
+              Record Payment
+            </Button>
+          </Flex>
+        }
+      />
+
+      <Box
+        pt="2rem"
+        pb="2rem"
+        bg="white"
+        px="1rem"
+        rounded=".625rem"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.75"
+      >
+        <Flex
+          justifyContent="space-between"
+          alignItems="center"
+          mb="1.5rem"
+          gap="3"
+          direction={{ base: "column", md: "row" }}
+        >
+          <Box>
+            <Text textStyle="large-bold" color="gray.500">
+              All Payments
+            </Text>
+            <Text textStyle="small-regular" color="gray.300">
+              Payments received from customers
+            </Text>
           </Box>
+          <SearchInput placeholder="Search by payment # or customer" />
+        </Flex>
+
+        <Box overflowX="auto" maxW="calc(100vw - 310px)">
+          <CustomTable
+            data={payments}
+            columns={columns}
+            loading={isLoading}
+            actions={actions}
+            enableActions
+            onRowClick={(row) =>
+              navigate(
+                RouteConstants.payments.detail.generate({
+                  id: row.original.id,
+                }),
+              )
+            }
+            tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+          />
         </Box>
-      </Stack>
-    </UserDashboardContainer>
+      </Box>
+
+      <ConsentDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={({ open }) => {
+          if (!open) setPendingDelete(null);
+        }}
+        handleSubmit={confirmDelete}
+        heading="Delete payment?"
+        note={`This will permanently delete payment ${
+          pendingDelete?.paymentNumber || ""
+        }. This action cannot be undone.`}
+        isLoading={isDeleting}
+        confirmText="Yes, Delete"
+      />
+    </Stack>
   );
 }
