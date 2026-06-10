@@ -17,7 +17,7 @@ import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type {
   CreateInvoiceFormValues,
   LineItemFormRow,
-} from "./hooks/useCreateInvoice";
+} from "@/shared/interface/invoice";
 import type { Item } from "@/shared/interface/item";
 import { AddNewItemModal } from "./AddNewItemModal";
 import { addComma } from "@/utils/format-number";

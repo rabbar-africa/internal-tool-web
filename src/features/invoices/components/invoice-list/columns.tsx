@@ -6,6 +6,8 @@ import Status from "@/components/ui/Status";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { Invoice, InvoiceStatus } from "@/shared/interface/invoice";
 
+const toNum = (v: unknown) => Number(v ?? 0) || 0;
+
 export const STATUS_OPTIONS: { label: string; value: InvoiceStatus | "" }[] = [
   { label: "All", value: "" },
   { label: "Draft", value: "draft" },
@@ -25,8 +27,13 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         accessorKey: "invoiceNumber",
         header: "Invoice #",
         cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-            {getValue() as string}
+          <Text
+            fontSize="13px"
+            color="primary.300"
+            fontWeight="700"
+            letterSpacing="0.3px"
+          >
+            {(getValue() as string) || "—"}
           </Text>
         ),
       },
@@ -34,34 +41,45 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         accessorKey: "customerName",
         header: "Customer",
         cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500">
+          <Text fontSize="13px" color="gray.500" fontWeight="500">
             {(getValue() as string) ?? "—"}
           </Text>
         ),
       },
       {
-        accessorKey: "issueDate",
+        accessorKey: "date",
         header: "Issue Date",
-        cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500">
-            {moment(getValue() as string).format("DD MMM YYYY")}
-          </Text>
-        ),
+        cell: ({ getValue }) => {
+          const value = getValue() as string;
+          return (
+            <Text fontSize="12px" color="gray.300">
+              {value ? moment(value).format("DD MMM YYYY") : "—"}
+            </Text>
+          );
+        },
       },
       {
         accessorKey: "date",
         header: "Due Date",
-        cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500">
-            {moment(getValue() as string).format("DD MMM YYYY")}
-          </Text>
-        ),
+        cell: ({ getValue, row }) => {
+          const value = getValue() as string;
+          const isOverdue = row.original.status === "overdue";
+          return (
+            <Text
+              fontSize="12px"
+              color={isOverdue ? "error.300" : "gray.300"}
+              fontWeight={isOverdue ? "600" : "400"}
+            >
+              {value ? moment(value).format("DD MMM YYYY") : "—"}
+            </Text>
+          );
+        },
       },
       {
         accessorKey: "total",
         header: "Total",
         cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+          <Text fontSize="13px" color="gray.400">
             {formatMoney(getValue() as number | string)}
           </Text>
         ),
@@ -69,18 +87,29 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
       {
         accessorKey: "balance",
         header: "Amount Due",
-        cell: ({ getValue }) => (
-          <Text textStyle="small-regular" color="gray.500">
-            {formatMoney(getValue() as number | string)}
-          </Text>
-        ),
+        cell: ({ getValue, row }) => {
+          const balance = toNum(getValue());
+          const isPaid = balance <= 0;
+          const isOverdue = row.original.status === "overdue";
+          return (
+            <Text
+              fontSize="13px"
+              fontWeight="700"
+              color={
+                isPaid ? "success.300" : isOverdue ? "error.300" : "gray.500"
+              }
+            >
+              {isPaid ? "Paid" : formatMoney(getValue() as number | string)}
+            </Text>
+          );
+        },
       },
       {
         accessorKey: "status",
         header: "Status",
         cell: ({ getValue }) => {
           const status = getValue() as InvoiceStatus;
-          return <Status name={status} />;
+          return <Status name={status} px={".25rem"} />;
         },
       },
     ],

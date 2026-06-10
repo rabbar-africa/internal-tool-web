@@ -83,7 +83,7 @@ export function CreatePayment() {
               </Text>
             </SectionCard>
           ) : isPresetMode ? (
-            /* ── Invoice-driven flow ───────────────────────────────── */
+            /* ───────────────────────────────────────── Invoice-driven flow ───────────────────────────────── */
             <>
               <InvoicePreview summary={presetSummary} />
               <PresetPaymentFields formik={formik} />
@@ -102,7 +102,7 @@ export function CreatePayment() {
               </SectionCard>
             </>
           ) : (
-            /* ── Manual flow ───────────────────────────────────────── */
+            /* ───────────────────────────────────────── Manual flow ───────────────────────────────────────── */
             <>
               <PaymentFormHeader
                 formik={formik}

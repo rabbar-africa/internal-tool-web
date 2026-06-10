@@ -4,7 +4,7 @@ import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
-import type { CreateInvoiceFormValues } from "./hooks/useCreateInvoice";
+import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
 
 interface Totals {
   subtotal: number;

@@ -6,43 +6,16 @@ import { useCreateInvoiceMutation } from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { Item } from "@/shared/interface/item";
 import type { ICustomer } from "@/shared/interface/customer";
-import type { CreateInvoicePayload } from "@/shared/interface/invoice";
+import {
+  InvoiceStatusDto,
+  type CreateInvoiceFormValues,
+  type CreateInvoicePayload,
+  type LineItemFormRow,
+} from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
 import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
 import { formatTransactionSeries } from "@/utils/string-formatter";
-
-export interface LineItemFormRow {
-  itemId: string;
-  name: string;
-  description: string;
-  quantity: string;
-  rate: string;
-  discount: string;
-  unit: string;
-}
-
-export interface CreateInvoiceFormValues {
-  invoiceNumber: string;
-  customerId: string;
-  customer: {
-    name: string;
-    email: string;
-  };
-  referenceNumber: string;
-  date: string;
-  dueDate: string;
-  paymentTerms: string;
-  paymentTermsLabel: string;
-  notes: string;
-  terms: string;
-  discount: string;
-  discountType: "entityLevel" | "itemLevel";
-  adjustment: string;
-  adjustmentDescription: string;
-  isDiscountBeforeTax: boolean;
-  lineItems: LineItemFormRow[];
-}
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -79,6 +52,7 @@ const defaultValues: CreateInvoiceFormValues = {
   adjustmentDescription: "Adjustment",
   isDiscountBeforeTax: true,
   lineItems: [{ ...EMPTY_LINE_ITEM }],
+  status: InvoiceStatusDto.SENT,
 };
 
 const validationSchema = Yup.object({
@@ -228,12 +202,15 @@ export function useCreateInvoice() {
         discountType: values.discountType,
         adjustment: values.adjustment,
         adjustmentDescription: values.adjustmentDescription,
+        status: values.status,
       };
 
       // console.log("payload is ", payload);
 
-      await mutateAsync(payload);
-      navigate(RouteConstants.invoices.base.path);
+      const response = await mutateAsync(payload);
+      navigate(
+        RouteConstants.invoices.detail.generate({ id: response?.data?.id }),
+      );
     },
   });
 

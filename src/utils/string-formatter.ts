@@ -66,3 +66,24 @@ export function formatTransactionSeries({
     .filter((part) => part !== "" && part != null)
     .join(separator);
 }
+
+export function pascalToCapitalized(str?: string | null): string {
+  if (!str || typeof str !== "string") return "";
+
+  // First, replace underscores with spaces
+  const result = str.replace(/_/g, " ");
+
+  // Add space at word boundaries:
+  // - Betwe`en lowercase and uppercase letters
+  // - Before the last capital in a sequence of capitals followed by lowercase
+  const withSpaces = result
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+    .trim();
+
+  // Capitalize first letter of each word
+  return withSpaces
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

@@ -143,6 +143,7 @@ export interface CreateInvoicePayload {
   discountType: DiscountType;
   adjustment: string;
   adjustmentDescription: string;
+  status: InvoiceStatusDto;
 }
 
 export interface IGetInvoiceFilter extends IBaseFilter {
@@ -150,4 +151,46 @@ export interface IGetInvoiceFilter extends IBaseFilter {
   customerId?: string;
   dateFrom?: string;
   dateTo?: string;
+}
+
+export interface LineItemFormRow {
+  itemId: string;
+  name: string;
+  description: string;
+  quantity: string;
+  rate: string;
+  discount: string;
+  unit: string;
+}
+
+export interface CreateInvoiceFormValues {
+  invoiceNumber: string;
+  customerId: string;
+  customer: {
+    name: string;
+    email: string;
+  };
+  referenceNumber: string;
+  date: string;
+  dueDate: string;
+  paymentTerms: string;
+  paymentTermsLabel: string;
+  notes: string;
+  terms: string;
+  discount: string;
+  discountType: "entityLevel" | "itemLevel";
+  adjustment: string;
+  adjustmentDescription: string;
+  isDiscountBeforeTax: boolean;
+  lineItems: LineItemFormRow[];
+  status: InvoiceStatusDto;
+}
+export enum InvoiceStatusDto {
+  DRAFT = "DRAFT",
+  SENT = "SENT",
+  PAID = "PAID",
+  VOID = "VOID",
+  OVERDUE = "OVERDUE",
+  CLOSED = "CLOSED",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
 }

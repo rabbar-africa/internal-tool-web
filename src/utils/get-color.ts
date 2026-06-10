@@ -70,6 +70,7 @@ export const getStatusColor = (status: string) => {
     case "medium":
     case "in review":
     case "in_progress":
+    case "partially_paid":
     case "pending approval":
     case "pendingApproval":
     case "reviewdue":
@@ -104,6 +105,11 @@ export const getStatusColor = (status: string) => {
       return {
         bg: "yellow.50",
         text: "yellow.400",
+      };
+    case "sent":
+      return {
+        bg: "blue.50",
+        text: "blue.700",
       };
     case "access":
     case "data portability":

@@ -59,7 +59,7 @@ export function CreateInvoicePage() {
                 loading={isPending}
                 loadingText="Saving..."
               >
-                Save as Draft
+                Proceed
               </Button>
             </Flex>
           </Flex>
@@ -112,7 +112,7 @@ export function CreateInvoicePage() {
               Cancel
             </Button>
             <Button type="submit" loading={isPending} loadingText="Saving...">
-              Save as Draft
+              Proceed
             </Button>
           </Flex>
         </Stack>

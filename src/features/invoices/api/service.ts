@@ -47,9 +47,7 @@ export const downloadInvoicePdf = async (
   window.URL.revokeObjectURL(url);
 };
 
-export const createInvoice = async (
-  payload: CreateInvoicePayload,
-): Promise<Invoice> => {
+export const createInvoice = async (payload: CreateInvoicePayload) => {
   await delay(500);
 
   const lineItems = payload.lineItems.map((li, idx) => {
@@ -103,7 +101,6 @@ export const createInvoice = async (
     totalAmount,
     amountPaid: 0,
     amountDue: totalAmount,
-    status: "draft",
     linkedExpenseIds: [],
     totalLinkedExpenses: 0,
     profit,
@@ -112,7 +109,10 @@ export const createInvoice = async (
     createdAt: new Date().toISOString().split("T")[0],
   };
   // console.log("final payload is ", finalPayload);
-  const { data } = await axios.post("/invoices", finalPayload);
+  const { data } = await axios.post<ApiResponse<IInvoiceResponse>>(
+    "/invoices",
+    finalPayload,
+  );
 
   return data;
 };

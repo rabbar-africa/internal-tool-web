@@ -11,6 +11,7 @@ import { formatMoney } from "@/hooks/useFormatMoney";
 import { useGetPaymentsQuery } from "../../api/query";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
+import Status from "@/components/ui/Status";
 
 const MODE_LABELS: Record<string, string> = {
   CASH: "Cash",
@@ -22,40 +23,55 @@ const MODE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  DRAFT: { bg: "gray.50", color: "gray.500" },
-  CONFIRMED: { bg: "green.50", color: "green.600" },
-  REFUNDED: { bg: "red.50", color: "red.600" },
-  PARTIALLY_REFUNDED: { bg: "orange.50", color: "orange.600" },
-};
-
+const toNum = (v: unknown) => Number(v ?? 0) || 0;
 const money = (value: string, currencyCode?: string) =>
-  formatMoney(Number(value ?? 0) || 0, { currencyCode });
+  formatMoney(toNum(value), { currencyCode });
+
+const invoiceNumbersOf = (payment: IPaymentReceived): string[] =>
+  (payment.allocations ?? [])
+    .map((a) => a.invoice?.invoiceNumber)
+    .filter(Boolean) as string[];
 
 const columns: ColumnDef<IPaymentReceived>[] = [
   {
     accessorKey: "paymentNumber",
     header: "Payment #",
     cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+      <Text
+        fontSize="13px"
+        color="primary.300"
+        fontWeight="700"
+        letterSpacing="0.3px"
+      >
         {(getValue() as string) || "—"}
       </Text>
     ),
   },
   {
-    accessorKey: "referenceNumber",
-    header: "Reference #",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as string) || "—"}
-      </Text>
-    ),
+    id: "invoiceNumbers",
+    header: "Invoice #",
+    cell: ({ row }) => {
+      const numbers = invoiceNumbersOf(row.original);
+      if (!numbers.length)
+        return (
+          <Text fontSize="12px" color="gray.300">
+            —
+          </Text>
+        );
+      const [first, ...rest] = numbers;
+      return (
+        <Text fontSize="12px" color="gray.400" fontWeight="500">
+          {first}
+          {rest.length ? ` +${rest.length}` : ""}
+        </Text>
+      );
+    },
   },
   {
     accessorKey: "customerName",
     header: "Customer",
     cell: ({ row }) => (
-      <Text textStyle="small-regular" color="gray.500">
+      <Text fontSize="13px" color="gray.500" fontWeight="500">
         {row.original.customerName || row.original.client?.displayName || "—"}
       </Text>
     ),
@@ -66,9 +82,11 @@ const columns: ColumnDef<IPaymentReceived>[] = [
     cell: ({ getValue }) => {
       const mode = getValue() as string;
       return (
-        <Text textStyle="small-regular" color="gray.500">
-          {MODE_LABELS[mode] ?? mode}
-        </Text>
+        <Box display="inline-flex" bg="gray.50" px="8px" py="3px" rounded="md">
+          <Text fontSize="11px" fontWeight="500" color="gray.400">
+            {MODE_LABELS[mode] ?? mode}
+          </Text>
+        </Box>
       );
     },
   },
@@ -76,7 +94,7 @@ const columns: ColumnDef<IPaymentReceived>[] = [
     accessorKey: "amount",
     header: "Amount",
     cell: ({ row }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+      <Text fontSize="13px" color="gray.500" fontWeight="700">
         {money(row.original.amount, row.original.currencyCode)}
       </Text>
     ),
@@ -85,7 +103,7 @@ const columns: ColumnDef<IPaymentReceived>[] = [
     accessorKey: "amountApplied",
     header: "Applied",
     cell: ({ row }) => (
-      <Text textStyle="small-regular" color="gray.500">
+      <Text fontSize="13px" color="success.300" fontWeight="500">
         {money(row.original.amountApplied, row.original.currencyCode)}
       </Text>
     ),
@@ -93,11 +111,18 @@ const columns: ColumnDef<IPaymentReceived>[] = [
   {
     accessorKey: "unusedAmount",
     header: "Unused",
-    cell: ({ row }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {money(row.original.unusedAmount, row.original.currencyCode)}
-      </Text>
-    ),
+    cell: ({ row }) => {
+      const unused = toNum(row.original.unusedAmount);
+      return (
+        <Text
+          fontSize="13px"
+          color={unused > 0 ? "warning.600" : "gray.300"}
+          fontWeight={unused > 0 ? "600" : "400"}
+        >
+          {money(row.original.unusedAmount, row.original.currencyCode)}
+        </Text>
+      );
+    },
   },
   {
     accessorKey: "date",
@@ -105,7 +130,7 @@ const columns: ColumnDef<IPaymentReceived>[] = [
     cell: ({ getValue }) => {
       const value = getValue() as string;
       return (
-        <Text textStyle="small-regular" color="gray.500">
+        <Text fontSize="12px" color="gray.300">
           {value ? moment(value).format("DD MMM YYYY") : "—"}
         </Text>
       );
@@ -114,37 +139,16 @@ const columns: ColumnDef<IPaymentReceived>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ getValue }) => {
-      const status = (getValue() as string) ?? "";
-      const styles = STATUS_STYLES[status] ?? {
-        bg: "gray.50",
-        color: "gray.500",
-      };
-      return (
-        <Box
-          display="inline-flex"
-          bg={styles.bg}
-          px="10px"
-          py="4px"
-          rounded="md"
-          alignItems="center"
-        >
-          <Text
-            fontSize="12px"
-            fontWeight="500"
-            color={styles.color}
-            textTransform="capitalize"
-          >
-            {status.toLowerCase().replace(/_/g, " ")}
-          </Text>
-        </Box>
-      );
+    cell: (props) => {
+      const status = props.row.original.status;
+      return <Status name={status} />;
     },
   },
 ];
 
 const CSV_HEADERS = {
   paymentNumber: "Payment #",
+  invoiceNumbers: "Invoice #",
   referenceNumber: "Reference #",
   customerName: "Customer",
   mode: "Mode",
@@ -163,6 +167,7 @@ export function PaymentListPage() {
 
   const csvData = payments.map((p) => ({
     paymentNumber: p.paymentNumber,
+    invoiceNumbers: invoiceNumbersOf(p).join(", "),
     referenceNumber: p.referenceNumber,
     customerName: p.customerName || p.client?.displayName || "",
     mode: MODE_LABELS[p.mode] ?? p.mode,

@@ -4,7 +4,7 @@ import type { FormikProps } from "formik";
 import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
-import type { CreateInvoiceFormValues } from "./hooks/useCreateInvoice";
+import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
 import {
   PAYMENT_TERMS_OPTIONS,
   DEFAULT_INVOICE_PREFIX,
