@@ -10,6 +10,7 @@ import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatMoney } from "@/hooks/useFormatMoney";
 import { useGetPaymentsQuery, useDeletePaymentMutation } from "../../api/query";
+import { useReceiptPdf } from "../../hooks/useReceiptPdf";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
 import Status from "@/components/ui/Status";
@@ -165,6 +166,7 @@ export function PaymentListPage() {
   const { data, isLoading } = useGetPaymentsQuery();
   const { mutateAsync: deletePayment, isPending: isDeleting } =
     useDeletePaymentMutation();
+  const { download: downloadReceipt } = useReceiptPdf();
   const [pendingDelete, setPendingDelete] = useState<IPaymentReceived | null>(
     null,
   );
@@ -181,9 +183,7 @@ export function PaymentListPage() {
     {
       label: "Download PDF",
       value: "download-pdf",
-      // Placeholder — client-side PDF to be wired up later.
-      // eslint-disable-next-line no-console
-      onClick: (row) => console.log("Download payment PDF", row.id),
+      onClick: (row) => void downloadReceipt(row),
     },
     {
       label: "Delete",

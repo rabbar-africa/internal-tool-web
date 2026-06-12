@@ -5,6 +5,7 @@ import {
   useGetPaymentByIdQuery,
   useDeletePaymentMutation,
 } from "../../api/query";
+import { useReceiptPdf } from "../../hooks/useReceiptPdf";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 
 export function usePaymentDetail() {
@@ -16,6 +17,8 @@ export function usePaymentDetail() {
 
   const { mutateAsync: deletePayment, isPending: isDeleting } =
     useDeletePaymentMutation();
+  const { download: downloadReceipt, isGenerating: isDownloading } =
+    useReceiptPdf();
   const [pendingDelete, setPendingDelete] = useState(false);
 
   const goBack = () => navigate(RouteConstants.payments.base.path);
@@ -23,10 +26,8 @@ export function usePaymentDetail() {
   const handleEdit = () =>
     navigate(`${RouteConstants.payments.create.path}?paymentId=${id}`);
 
-  // Placeholder — client-side PDF to be wired up later.
   const handleDownloadPdf = () => {
-    // eslint-disable-next-line no-console
-    console.log("Download payment PDF", id);
+    if (payment) void downloadReceipt(payment);
   };
 
   const requestDelete = () => setPendingDelete(true);
@@ -44,6 +45,7 @@ export function usePaymentDetail() {
     goBack,
     handleEdit,
     handleDownloadPdf,
+    isDownloading,
     pendingDelete,
     requestDelete,
     cancelDelete,
