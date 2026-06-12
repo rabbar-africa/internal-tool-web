@@ -213,11 +213,17 @@ export function useCreatePayment() {
       };
 
       if (isEditMode) {
-        await updateMutate({ id: editPaymentId, payload });
+        const response = await updateMutate({ id: editPaymentId, payload });
+        navigate(
+          RouteConstants.payments.detail.generate({ id: response?.data?.id }),
+        );
       } else {
-        await mutateAsync(payload);
+        const response = await mutateAsync(payload);
+        navigate(
+          RouteConstants.payments.detail.generate({ id: response?.data?.id }),
+        );
       }
-      navigate(RouteConstants.payments.base.path);
+      // navigate(RouteConstants.payments.base.path);
     },
   });
 
