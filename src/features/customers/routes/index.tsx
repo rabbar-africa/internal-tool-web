@@ -6,9 +6,9 @@ const { CustomerList } = lazyImport(
   () => import("../pages/CustomerList"),
   "CustomerList",
 );
-const { CustomerDetail } = lazyImport(
-  () => import("../pages/CustomerDetail"),
-  "CustomerDetail",
+const { CustomerDetailPage } = lazyImport(
+  () => import("../pages/CustomerDetailPage"),
+  "CustomerDetailPage",
 );
 const { CreateCustomer } = lazyImport(
   () => import("../pages/CreateCustomer"),
@@ -26,6 +26,6 @@ export const CustomerRoutes: RouteObject[] = [
   },
   {
     path: RouteConstants.customers.detail.path,
-    element: <CustomerDetail />,
+    element: <CustomerDetailPage />,
   },
 ];

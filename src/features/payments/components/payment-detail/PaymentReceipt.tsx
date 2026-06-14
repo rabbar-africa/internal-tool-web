@@ -4,6 +4,8 @@ import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { formatAddress } from "@/utils/string-formatter";
 import type { IPaymentReceived } from "@/shared/interface/payment";
+import { Link } from "react-router-dom";
+import { RouteConstants } from "@/shared/constants/routes";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v?: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
@@ -188,9 +190,15 @@ export function PaymentReceipt({ payment }: PaymentReceiptProps) {
           <Text fontSize="12px" color="gray.400">
             Received From
           </Text>
-          <Text fontSize="16px" fontWeight="700" color="primary.300">
-            {customerName}
-          </Text>
+          <Link
+            to={RouteConstants.customers.detail.generate({
+              id: payment?.customerId,
+            })}
+          >
+            <Text fontSize="16px" fontWeight="700" color="primary.300">
+              {customerName}
+            </Text>
+          </Link>
         </Stack>
 
         {/* Payment for */}

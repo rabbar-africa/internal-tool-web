@@ -10,9 +10,10 @@ import {
 } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { UserDashboardContainer } from "@/components/hoc";
+import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import {
@@ -20,13 +21,14 @@ import {
   useGetVehiclesByClientQuery,
 } from "../../api/query";
 import type { Vehicle } from "../../api/service";
-import { MOCK_INVOICES, MOCK_PAYMENTS } from "@/shared/data/mock";
+import { useGetAllInvoicesQuery } from "@/features/invoices/api/query";
+import { useGetPaymentsQuery } from "@/features/payments/api/query";
 import type { Invoice } from "@/shared/interface/invoice";
-import type { Payment } from "@/shared/interface/payment";
+import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
 import SectionLoader from "@/components/common/SectionLoader";
 import { AddVehicleModal } from "./AddVehicleModal";
-import { ArrowLeft, PlusIcon } from "@/assets/custom";
+import { PlusIcon } from "@/assets/custom";
 
 // ── Column definitions ──────────────────────────────────────────────────────
 
@@ -95,7 +97,7 @@ const invoiceColumns: ColumnDef<Invoice>[] = [
   },
 ];
 
-const paymentColumns: ColumnDef<Payment>[] = [
+const paymentColumns: ColumnDef<IPaymentReceived>[] = [
   {
     accessorKey: "paymentNumber",
     header: "Payment #",
@@ -106,11 +108,15 @@ const paymentColumns: ColumnDef<Payment>[] = [
     ),
   },
   {
-    accessorKey: "invoiceNumber",
-    header: "Invoice #",
+    accessorKey: "mode",
+    header: "Mode",
     cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.400">
-        {getValue() as string}
+      <Text
+        textStyle="small-regular"
+        color="gray.400"
+        textTransform="capitalize"
+      >
+        {((getValue() as string) ?? "").replace(/_/g, " ").toLowerCase() || "—"}
       </Text>
     ),
   },
@@ -119,12 +125,12 @@ const paymentColumns: ColumnDef<Payment>[] = [
     header: "Amount",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {formatCurrency(getValue() as number)}
+        {formatCurrency(Number(getValue() as string) || 0)}
       </Text>
     ),
   },
   {
-    accessorKey: "paymentDate",
+    accessorKey: "date",
     header: "Date",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.400">
@@ -149,7 +155,7 @@ const paymentColumns: ColumnDef<Payment>[] = [
           color="green.600"
           textTransform="capitalize"
         >
-          {getValue() as string}
+          {((getValue() as string) ?? "").toLowerCase()}
         </Text>
       </Box>
     ),
@@ -235,9 +241,8 @@ const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-export function CustomerDetailPage() {
+export function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
 
   const { data: customerQueryData, isLoading } = useGetCustomerByIdQuery(
@@ -246,12 +251,19 @@ export function CustomerDetailPage() {
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useGetVehiclesByClientQuery(id ?? "");
 
+  const { data: invoicesData, isLoading: invoicesLoading } =
+    useGetAllInvoicesQuery({ customerId: id ?? "" }, { enabled: Boolean(id) });
+  const { data: paymentsData, isLoading: paymentsLoading } =
+    useGetPaymentsQuery({ customerId: id ?? "" });
+
   const customer = customerQueryData?.data;
   const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
-
-  const customerInvoices = MOCK_INVOICES.filter((inv) => inv.customerId === id);
-  const customerPayments = MOCK_PAYMENTS.filter((p) => p.customerId === id);
-  const totalPaid = customerPayments.reduce((s, p) => s + p.amount, 0);
+  const customerInvoices: Invoice[] = invoicesData?.data ?? [];
+  const customerPayments: IPaymentReceived[] = paymentsData?.data ?? [];
+  const totalPaid = customerPayments.reduce(
+    (s, p) => s + (Number(p.amount) || 0),
+    0,
+  );
 
   const vehicleActions: TableAction<Vehicle>[] = [];
 
@@ -285,19 +297,13 @@ export function CustomerDetailPage() {
     <>
       <UserDashboardContainer py="1.5rem">
         <Stack gap="5">
-          {/* Back link */}
-          <Button
-            variant="ghost"
-            size="sm"
-            alignSelf="flex-start"
-            color="gray.400"
-            px="0"
-            _hover={{ color: "gray.500", bg: "transparent" }}
-            onClick={() => navigate(RouteConstants.customers.base.path)}
-          >
-            <ArrowLeft />
-            Back to Customers
-          </Button>
+          {/* Breadcrumb */}
+          <CustomBreadCrumb
+            items={[
+              { label: "Customers", to: RouteConstants.customers.base.path },
+              { label: customer.displayName, isCurrent: true },
+            ]}
+          />
 
           {/* Hero header card */}
           <Box
@@ -564,7 +570,7 @@ export function CustomerDetailPage() {
                 <CustomTable
                   data={customerInvoices}
                   columns={invoiceColumns}
-                  loading={false}
+                  loading={invoicesLoading}
                   tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
                 />
               </Tabs.Content>
@@ -573,7 +579,7 @@ export function CustomerDetailPage() {
                 <CustomTable
                   data={customerPayments}
                   columns={paymentColumns}
-                  loading={false}
+                  loading={paymentsLoading}
                   tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
                 />
               </Tabs.Content>

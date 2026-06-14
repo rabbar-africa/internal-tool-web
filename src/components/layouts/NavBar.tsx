@@ -9,8 +9,6 @@ import {
   Portal,
   Text,
 } from "@chakra-ui/react";
-
-import AvatarImage from "@/assets/images/michael-peters.png";
 import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
@@ -112,7 +110,10 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
                     bg="white"
                   >
                     <Avatar.Fallback name="MP" />
-                    <Avatar.Image src={AvatarImage} alt="avatar-image" />
+                    <Avatar.Image
+                      src={userOrganization?.logoUrl}
+                      alt="avatar-image"
+                    />
                   </Avatar.Root>
                   <Flex
                     mx="10px"

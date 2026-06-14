@@ -1,14 +1,14 @@
 import { Head } from "@/components/seo/head";
-import { CustomerDetailPage } from "../components/customer-detail/CustomerDetailPage";
+import { CustomerDetail } from "../components/customer-detail/CustomerDetail";
 
-export function CustomerDetail() {
+export function CustomerDetailPage() {
   return (
     <>
       <Head
         title="Customer Details"
         description="View customer details and history"
       />
-      <CustomerDetailPage />
+      <CustomerDetail />
     </>
   );
 }

@@ -10,8 +10,6 @@ import { axios } from "@/lib/axios";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 import type { ApiResponse } from "@/shared/interface/api";
 
-const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
-
 export const getAllInvoices = async (filter?: IGetInvoiceFilter) => {
   const baseUrl = "/invoices";
   const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
@@ -48,8 +46,6 @@ export const downloadInvoicePdf = async (
 };
 
 export const createInvoice = async (payload: CreateInvoicePayload) => {
-  await delay(500);
-
   const lineItems = payload.lineItems.map((li, idx) => {
     const rate =
       typeof li.rate === "string" ? parseFloat(li.rate) || 0 : li.rate;
@@ -80,19 +76,11 @@ export const createInvoice = async (payload: CreateInvoicePayload) => {
   const profit = calculateProfit(totalAmount, 0);
   const marginPercent = calculateMarginPercent(profit, totalAmount);
 
-  // console.log("payload is ", payload);
-
   const finalPayload = {
     ...payload,
     id: `inv-${Date.now()}`,
-    // invoiceNumber: `INV-2026-${String(MOCK_INVOICES.length + 1).padStart(3, "0")}`,
     customerId: payload.customerId,
-    // customer: {
-    //   id: payload.customerId,
-    //   name: "New Customer",
-    //   email: "",
-    //   phone: "",
-    // },
+
     issueDate: payload.date,
     dueDate: payload.dueDate,
     lineItems,
