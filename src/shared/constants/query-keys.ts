@@ -34,5 +34,35 @@ export const customQueryKey = {
     getAll: "get-all-admin-users",
     getById: "get-admin-user-by-id",
   },
+  customers: {
+    getAll: "get-all-customers",
+    getById: "get-customer-by-id",
+  },
+  vehicles: {
+    getAll: "get-all-vehicles",
+    getByClient: "get-vehicles-by-client",
+    getById: "get-vehicle-by-id",
+  },
+  items: {
+    getAll: "get-all-items",
+    getById: "get-item-by-id",
+    getSimple: "get-item-list-simple",
+  },
+  invoices: {
+    getAll: "get-all-invoices",
+    getById: "get-invoice-by-id",
+  },
+  inspections: {
+    getAll: "get-all-inspections",
+    getById: "get-inspection-by-id",
+  },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
+  organizations: {
+    details: "get-organization-details",
+    addresses: "get-organization-addresses",
+    bankAccounts: "get-organization-bank-accounts",
+    currencies: "get-organization-currencies",
+    taxes: "get-organization-taxes",
+    transactionSeries: "get-organization-transaction-series",
+  },
 };

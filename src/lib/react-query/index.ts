@@ -1,4 +1,4 @@
-import { toaster } from "@/components/ui";
+import { toaster } from "@/components/ui/toaster";
 import { getErrorMessage } from "@/utils/handle-error";
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import type {
@@ -7,6 +7,19 @@ import type {
   DefaultOptions,
 } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
+
+export type MutationMeta = {
+  successMessage?: string;
+  errorMessage?: string;
+  /** Each inner array is one query key, e.g. [['contacts'], ['clients', id]] */
+  invalidatesQueryKeys?: readonly (readonly unknown[])[];
+};
+
+declare module "@tanstack/react-query" {
+  interface Register {
+    mutationMeta: MutationMeta;
+  }
+}
 
 const defaultOptions: DefaultOptions = {
   queries: {
@@ -51,10 +64,26 @@ export const queryClient = new QueryClient({
     },
     onSettled: (_data, _error, _variables, _context, mutation) => {
       // console.log('in global config settled');
+      // console.log('mutation meta is ', mutation.meta);
 
-      if (mutation?.meta?.invalidatesQuery) {
-        queryClient.invalidateQueries({
-          queryKey: mutation?.meta?.invalidatesQuery as any,
+      /** 
+       * 
+       * meta: {
+  successMessage: 'Profile updated!',
+  invalidatesQueryKeys: [
+    // simple key
+    [queryKey.auth.getOnboardingStatus],
+    // key with dynamic id
+    [queryKey.client.getById, clientId],
+    // another key
+    [queryKey.users.getAllUsers],
+  ],
+},
+
+      */
+      if (mutation?.meta?.invalidatesQueryKeys) {
+        mutation.meta.invalidatesQueryKeys.forEach((queryKey) => {
+          queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
         });
       }
     },
@@ -75,9 +104,26 @@ export type MutationConfig<Fn extends (...args: any) => Promise<any>> = Omit<
   "mutationFn"
 >;
 
+// Export other hooks directly
 export {
-  useQuery,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+
+// Custom useQuery wrapper that defaults to 'any' instead of 'unknown'
+import {
+  useQuery as useQueryOriginal,
+  type UseQueryOptions as UseQueryOptionsOriginal,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+
+export function useQuery<
+  TQueryFnData = any,
+  TError = AxiosError,
+  TData = TQueryFnData,
+>(
+  options: UseQueryOptionsOriginal<TQueryFnData, TError, TData>,
+): UseQueryResult<TData, TError> {
+  return useQueryOriginal(options);
+}

@@ -7,7 +7,6 @@ export function CustomFileInput({
   required = false,
   disabled = false,
   error,
-  register,
   labelProps,
   inputProps,
   ...props
@@ -56,7 +55,6 @@ export function CustomFileInput({
           alignItems={"center"}
           pt={".5rem"}
           h={"2.5rem"}
-          {...register}
           {...props}
           {...inputProps}
         />

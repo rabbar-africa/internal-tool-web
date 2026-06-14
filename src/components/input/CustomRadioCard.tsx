@@ -8,7 +8,6 @@ export const CustomRadioCard: React.FC<CustomRadioGroupProps> = ({
   required = false,
   disabled = false,
   error,
-  register,
   items = [],
   itemProps,
   labelProps,
@@ -35,12 +34,7 @@ export const CustomRadioCard: React.FC<CustomRadioGroupProps> = ({
           {required && <Field.RequiredIndicator color={"error.300"} mb={0} />}
         </Field.Label>
       )}
-      <RadioCard.Root
-        disabled={disabled}
-        {...register}
-        {...props}
-        variant="outline"
-      >
+      <RadioCard.Root disabled={disabled} {...props} variant="outline">
         <Stack gap="18px">
           {items.map((item: any) => {
             const IconComponent = item.icon;

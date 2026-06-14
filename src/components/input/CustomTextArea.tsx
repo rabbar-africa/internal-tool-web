@@ -1,7 +1,8 @@
 import type { CustomTextareaProps } from "@/shared/interface/input";
 import React from "react";
 import { Field, Textarea } from "@chakra-ui/react";
-export const CustomTextarea: React.FC<CustomTextareaProps> = ({
+
+export const CustomTextArea: React.FC<CustomTextareaProps> = ({
   label,
   placeholder,
   helperText,
@@ -12,9 +13,12 @@ export const CustomTextarea: React.FC<CustomTextareaProps> = ({
   error,
   rows = 4,
   resize = "vertical",
-  register,
   labelProps,
   textAreaProps,
+  value,
+  onChange,
+  onBlur,
+  name,
   ...props
 }) => {
   return (
@@ -42,10 +46,18 @@ export const CustomTextarea: React.FC<CustomTextareaProps> = ({
         rounded={".625rem"}
         size={size}
         rows={rows}
-        color={"gray.300"}
+        color={"gray.500"}
         resize={resize}
         p="16px"
-        {...register}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        _placeholder={{
+          textStyle: "tiny-regular",
+          // ...inputProps?._placeholder,
+          color: "gray.100",
+        }}
         {...props}
         {...textAreaProps}
       />

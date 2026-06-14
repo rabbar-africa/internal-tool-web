@@ -1,5 +1,11 @@
 import type { ButtonProps } from "@chakra-ui/react";
 import type { ComponentType } from "react";
+import type {
+  IOrgAddress,
+  IOrgBankAccount,
+  IOrgCurrency,
+  IOrgTax,
+} from "./settings";
 
 export interface TabContentProps {
   value: string;
@@ -43,16 +49,64 @@ export type TRopaStatus =
   | "UnderReview"
   | "Archived";
 
+export interface IOrganizationConfig {
+  organizationId: string;
+  fiscalYearStartMonth: number;
+  dateFormat: string;
+  timeFormat: string;
+  decimalPlaces: number;
+  numberFormat: string;
+  isInclusiveTaxDefault: boolean;
+  isDiscountBeforeTaxDefault: boolean;
+  defaultPaymentTerms: number;
+  allowNegativeStock: boolean;
+  requireSignatureOnInspection: boolean;
+  allowedPaymentMethods: Array<string>;
+  brandPrimaryColor: string;
+  brandSecondaryColor: string;
+  brandFont: string | null;
+  invoiceFooter: string | null;
+  invoiceNotesDefault: string | null;
+  invoiceTermsDefault: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 export interface IOrganization {
   id: string;
   name: string;
+  slug: string;
   email: string;
-  logo: string;
-  industry: string;
+  companyEmail: string;
+  phone: string;
+  phone2: string | null;
+  fax: string | null;
   website: string;
-  userId: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string | null;
+  country: string;
+  postalCode: string | null;
+  logoUrl: string;
+  taxId: string | null;
+  rcNumber: string;
+  industry: string;
+  description: string | null;
+  registrationNumber: string | null;
+  timezone: string;
+  currency: string;
+  invoicePrefix: string;
+  autoGenerateInvoiceNumber: boolean;
+  invoiceSequence: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
+
+  config: IOrganizationConfig;
+  primaryAddress: IOrgAddress;
+  primaryBankAccount: IOrgBankAccount;
+  defaultCurrency: IOrgCurrency;
+  defaultTax: IOrgTax;
 }
 export interface IGeneralMetaOptions {
   id: string;
@@ -81,4 +135,13 @@ export interface IBusiness {
   description: string;
   created_by: string;
   is_email_verified: boolean;
+}
+
+export interface IVehicle {
+  id: string;
+  registrationNumber: string;
+  make: string;
+  model: string;
+  year?: string;
+  color?: string;
 }

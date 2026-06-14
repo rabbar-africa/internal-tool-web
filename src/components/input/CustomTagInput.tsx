@@ -11,8 +11,7 @@ export const CustomTagInput: React.FC<CustomTagInputProps> = ({
   error,
   value: externalValue = [],
   onChange,
-  register,
-  setValue,
+
   name,
   placeholder = "Add email address and press Enter",
   ...props
@@ -22,10 +21,7 @@ export const CustomTagInput: React.FC<CustomTagInputProps> = ({
 
   useEffect(() => {
     setInternalValue(externalValue);
-    if (setValue && name) {
-      setValue(name, externalValue.join(","), { shouldValidate: true });
-    }
-  }, [externalValue, name, setValue]);
+  }, [externalValue, name]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === "Enter" || e.key === ",") && inputValue.trim()) {
@@ -36,17 +32,6 @@ export const CustomTagInput: React.FC<CustomTagInputProps> = ({
         setInternalValue(newValue);
         setInputValue("");
         onChange?.(newValue);
-
-        if (setValue && name) {
-          setValue(name, newValue.join(","), { shouldValidate: true });
-        }
-        register?.onChange?.({
-          target: {
-            name: register.name,
-            value: newValue.join(","),
-            type: "text",
-          },
-        });
       }
     }
   };
@@ -55,17 +40,6 @@ export const CustomTagInput: React.FC<CustomTagInputProps> = ({
     const newValue = internalValue.filter((t) => t !== tag);
     setInternalValue(newValue);
     onChange?.(newValue);
-
-    if (setValue && name) {
-      setValue(name, newValue.join(","), { shouldValidate: true });
-    }
-    register?.onChange?.({
-      target: {
-        name: register.name,
-        value: newValue.join(","),
-        type: "text",
-      },
-    });
   };
 
   return (
@@ -122,13 +96,6 @@ export const CustomTagInput: React.FC<CustomTagInputProps> = ({
               color: "gray.75",
               fontWeight: "400",
             }}
-            {...(register
-              ? {
-                  name: register.name,
-                  onBlur: register.onBlur,
-                  ref: register.ref,
-                }
-              : {})}
             {...props}
             onChange={(e) => setInputValue(e.target.value)}
           />

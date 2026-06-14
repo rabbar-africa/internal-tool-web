@@ -1,4 +1,5 @@
 import { getStatusColor } from "@/utils/get-color";
+import { pascalToCapitalized } from "@/utils/string-formatter";
 import { type BoxProps, Center } from "@chakra-ui/react";
 import React, { useCallback } from "react";
 
@@ -16,10 +17,9 @@ export default function Status({
       fontWeight={600}
       fontSize={".625rem"}
       color={getColorFun()?.text}
-      textTransform={"uppercase"}
       {...props}
     >
-      {name}
+      {pascalToCapitalized(name?.toLowerCase() || "")}
     </Center>
   );
 }

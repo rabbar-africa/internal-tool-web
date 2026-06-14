@@ -26,3 +26,5 @@ dist-ssr
 .vercel
 msc.*
 msc*
+CLAUDE.*
+**/for-claude/

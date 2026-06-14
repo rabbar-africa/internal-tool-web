@@ -8,7 +8,6 @@ export const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({
   required = false,
   disabled = false,
   error,
-  register,
   direction = "row",
   items = [],
   labelProps,
@@ -34,7 +33,6 @@ export const CustomRadioGroup: React.FC<CustomRadioGroupProps> = ({
       )}
 
       <RadioGroup.Root
-        {...register}
         {...props}
         disabled={disabled}
         variant="outline"

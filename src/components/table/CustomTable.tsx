@@ -420,7 +420,7 @@ export function CustomTable<T = any>({
         </Table.Root>
       </Table.ScrollArea>
 
-      {pagination && pageCount && pageCount > 1 && (
+      {pagination && pageCount && pageCount > 1 ? (
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
@@ -430,9 +430,9 @@ export function CustomTable<T = any>({
           totalItems={totalItems}
           itemsPerPage={pagination.pageSize}
         />
-      )}
+      ) : null}
 
-      {enableRowSelection && Object.keys(rowSelection).length > 0 && (
+      {enableRowSelection && Object.keys(rowSelection).length > 0 ? (
         <Flex
           justify="space-between"
           align="center"
@@ -454,7 +454,7 @@ export function CustomTable<T = any>({
             ✕
           </IconButton>
         </Flex>
-      )}
+      ) : null}
     </Box>
   );
 }

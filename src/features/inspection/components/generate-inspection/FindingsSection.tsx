@@ -11,23 +11,33 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { LuFileText, LuPlus, LuTrash2 } from "react-icons/lu";
 import { CustomInput, CustomSelect } from "@/components/input";
+import { toaster } from "@/components/ui";
 import type { InspectionFormValues } from "./inspection-form.types";
 import { STATUS_OPTIONS } from "./inspection-form.types";
-
-const asRegister = (name: string, handleChange: any, handleBlur: any) => ({
-  name,
-  onChange: handleChange as any,
-  onBlur: handleBlur as any,
-  ref: () => {},
-});
+import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
 
 interface FindingsSectionProps {
   arrayHelpers: FieldArrayRenderProps;
 }
 
 const EMPTY_FINDING = { component: "", observation: "", status: "" };
+
+const guardedPush = (
+  findings: InspectionFormValues["findings"],
+  push: (val: typeof EMPTY_FINDING) => void,
+) => {
+  const last = findings[findings.length - 1];
+  if (!last?.component || !last?.status) {
+    toaster.create({
+      description:
+        "Please complete the component and status for the current finding before adding another.",
+      type: "error",
+    });
+    return;
+  }
+  push(EMPTY_FINDING);
+};
 
 export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
@@ -48,7 +58,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
               align="center"
               justify="center"
             >
-              <LuFileText color="var(--chakra-colors-primary-300)" />
+              <FileTextIcon color="var(--chakra-colors-primary-300)" />
             </Flex>
             <Box>
               <Text fontWeight="600" color="gray.500" fontSize=".875rem">
@@ -64,9 +74,9 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
             variant="outline"
             borderColor="primary.300"
             color="primary.300"
-            onClick={() => arrayHelpers.push(EMPTY_FINDING)}
+            onClick={() => guardedPush(findings, arrayHelpers.push)}
           >
-            <LuPlus />
+            <PlusIcon />
             <Text display={{ base: "none", sm: "inline" }}>Add Finding</Text>
           </Button>
         </Flex>
@@ -121,7 +131,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       color="error.300"
                       onClick={() => arrayHelpers.remove(index)}
                     >
-                      <LuTrash2 />
+                      <TrashIcon />
                     </IconButton>
                   )}
                 </Flex>
@@ -132,12 +142,10 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       label="Component"
                       placeholder="e.g. Spark Plugs"
                       required
-                      register={asRegister(
-                        `findings.${index}.component`,
-                        handleChange,
-                        handleBlur,
-                      )}
+                      name={`findings.${index}.component`}
                       value={findings[index].component}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                       error={
                         findingTouched?.component && findingErrors?.component
                           ? findingErrors.component
@@ -173,12 +181,10 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                   <CustomInput
                     label="Observation Details"
                     placeholder="e.g. Faulty and require replacement"
-                    register={asRegister(
-                      `findings.${index}.observation`,
-                      handleChange,
-                      handleBlur,
-                    )}
+                    name={`findings.${index}.observation`}
                     value={findings[index].observation}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                 </Box>
               </Box>
@@ -186,15 +192,15 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
           })}
 
           {/* Quick add at bottom when many findings */}
-          {findings.length >= 3 && (
+          {findings.length >= 1 && (
             <Button
               variant="ghost"
               size="sm"
               color="primary.300"
               alignSelf="center"
-              onClick={() => arrayHelpers.push(EMPTY_FINDING)}
+              onClick={() => guardedPush(findings, arrayHelpers.push)}
             >
-              <LuPlus /> Add Another Finding
+              <PlusIcon /> Add Another Finding
             </Button>
           )}
         </Stack>

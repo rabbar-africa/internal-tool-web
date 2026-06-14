@@ -39,6 +39,35 @@ const inspection = {
   inspectionDetails: defineRoute("/inspection/:id" as const),
   createInspection: defineRoute("/inspection/create" as const),
 } as const;
+
+const invoices = {
+  base: defineRoute("/invoices" as const),
+  create: defineRoute("/invoices/create" as const),
+  detail: defineRoute("/invoices/:id" as const),
+} as const;
+
+const payments = {
+  base: defineRoute("/payments" as const),
+  create: defineRoute("/payments/create" as const),
+  detail: defineRoute("/payments/:id" as const),
+} as const;
+
+const customers = {
+  base: defineRoute("/customers" as const),
+  create: defineRoute("/customers/create" as const),
+  detail: defineRoute("/customers/:id" as const),
+} as const;
+
+const items = {
+  base: defineRoute("/items" as const),
+  create: defineRoute("/items/create" as const),
+} as const;
+
+const expenses = {
+  base: defineRoute("/expenses" as const),
+  create: defineRoute("/expenses/create" as const),
+} as const;
+
 const user = {
   base: defineRoute("/user" as const),
   userDetails: defineRoute("/user/:id" as const),
@@ -98,6 +127,14 @@ const systemLogs = {
 
 const settings = {
   base: defineRoute("/settings" as const),
+  generalConfig: defineRoute("/settings/general" as const),
+  profile: defineRoute("/settings/profile" as const),
+  logo: defineRoute("/settings/logo" as const),
+  addresses: defineRoute("/settings/addresses" as const),
+  currency: defineRoute("/settings/currency" as const),
+  accountDetails: defineRoute("/settings/account-details" as const),
+  taxes: defineRoute("/settings/taxes" as const),
+  transactionSeries: defineRoute("/settings/transaction-series" as const),
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),
   teamManagement: defineRoute("/settings/team-management" as const),
@@ -109,6 +146,11 @@ export const RouteConstants = {
   auth,
   overview,
   inspection,
+  invoices,
+  payments,
+  customers,
+  items,
+  expenses,
   transactionLedger,
   wallet,
   systemConfiguration,

@@ -1,6 +1,6 @@
-import type { TokenDefinition } from "node_modules/@chakra-ui/react/dist/types/styled-system/types";
+import { defineTokens } from "@chakra-ui/react";
 
-export const colors: TokenDefinition["colors"] = {
+export const colors = defineTokens.colors({
   transparent: { value: "transparent" },
   current: { value: "currentColor" },
   black: { value: "#001F3E" }, // Maastricht blue
@@ -90,4 +90,4 @@ export const colors: TokenDefinition["colors"] = {
     800: { value: "#001224" },
     900: { value: "#000c18" },
   },
-};
+});

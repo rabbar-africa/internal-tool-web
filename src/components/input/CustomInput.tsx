@@ -11,9 +11,13 @@ export function CustomInput({
   type = "text",
   leftElement,
   rightElement,
-  register,
+  // register,
   labelProps,
   inputProps,
+  value,
+  onChange,
+  onBlur,
+  name,
   ...props
 }: CustomInputProps) {
   return (
@@ -60,7 +64,11 @@ export function CustomInput({
             ...inputProps?._placeholder,
             color: "gray.100",
           }}
-          {...register}
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          // {...register}
           {...props}
           {...inputProps}
         />

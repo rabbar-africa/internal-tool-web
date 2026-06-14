@@ -5,8 +5,8 @@ export const QUERY_PATH = {
     getOtp: "auth/login/otp",
     passwordResetRequest: "auth/password-reset/request",
     passwordResetConfirm: "auth/password-reset/confirm",
-    refreshToken: "auth/refresh-tokens",
-    getCurrentUser: "user/logged-in",
+    refreshToken: "auth/refresh-token",
+    getCurrentUser: "auth/me",
     getUserOrganization: "/organizations",
   },
   users: {

@@ -1,12 +1,17 @@
 import { LogoLoader } from "@/components/elements/loader/Loader";
-import { Box } from "@chakra-ui/react";
-import React, { type ReactNode, Suspense } from "react";
+import { Box, Flex } from "@chakra-ui/react";
+import type { ReactNode } from "react";
+import { Suspense } from "react";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <div>
-      <Box my={"2rem"}>Test Layout for Auth pages</Box>
-
+    <Flex
+      h={"100vh"}
+      alignItems={"center"}
+      justifyContent={"center"}
+      bg={"gray.50"}
+      px={"1rem"}
+    >
       <Suspense
         fallback={
           <Box h={"100vh"}>
@@ -16,6 +21,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         {children}
       </Suspense>
-    </div>
+    </Flex>
   );
 }

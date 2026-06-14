@@ -49,8 +49,8 @@ export const buttonRecipe = defineRecipe({
         color: "primary.400",
         border: "1px solid",
         borderColor: "primary.400",
-        _hover: { bg: "primary.400", color: "white" },
-        _focus: { bg: "primary.400", color: "white" },
+        _hover: { bg: "transparent" },
+        _focus: { bg: "transparent" },
 
         _disabled: {
           bg: "transparent",

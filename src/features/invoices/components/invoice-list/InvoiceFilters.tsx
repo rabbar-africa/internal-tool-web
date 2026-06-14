@@ -1,0 +1,79 @@
+import { Flex } from "@chakra-ui/react";
+import { CustomSelect } from "@/components/input/CustomSelect";
+import { CustomInput } from "@/components/input/CustomInput";
+import { SearchInput } from "@/components/input/SearchInput";
+import { STATUS_OPTIONS } from "./columns";
+
+interface InvoiceFiltersProps {
+  searchInput: string;
+  onSearchInputChange: (value: string) => void;
+  onSearchCommit: (value: string) => void;
+  status: string;
+  onStatusChange: (value: string) => void;
+  dueDateFrom: string;
+  dueDateTo: string;
+  onDueDateFromChange: (value: string) => void;
+  onDueDateToChange: (value: string) => void;
+  isLoading?: boolean;
+}
+
+export function InvoiceFilters({
+  searchInput,
+  onSearchInputChange,
+  onSearchCommit,
+  status,
+  onStatusChange,
+  dueDateFrom,
+  dueDateTo,
+  onDueDateFromChange,
+  onDueDateToChange,
+  isLoading,
+}: InvoiceFiltersProps) {
+  return (
+    <Flex
+      justifyContent="flex-start"
+      alignItems={{ base: "stretch", md: "center" }}
+      mb="1.5rem"
+      gap="3"
+      direction={{ base: "column", md: "row" }}
+      wrap="wrap"
+    >
+      <CustomSelect
+        placeholder="All Status"
+        options={STATUS_OPTIONS}
+        value={status ? [status] : undefined}
+        onChange={(opt: { value: string[] }) =>
+          onStatusChange(opt?.value?.[0] ?? "")
+        }
+        rootProps={{ size: "sm" }}
+        controlProps={{ w: "140px" }}
+      />
+
+      <Flex gap="2" align="center">
+        <CustomInput
+          type="date"
+          placeholder="Due from"
+          value={dueDateFrom}
+          onChange={(e) => onDueDateFromChange(e.target.value)}
+          inputProps={{ h: "36px", fontSize: "13px" }}
+        />
+        <CustomInput
+          type="date"
+          placeholder="Due to"
+          value={dueDateTo}
+          onChange={(e) => onDueDateToChange(e.target.value)}
+          inputProps={{ h: "36px", fontSize: "13px" }}
+        />
+      </Flex>
+
+      <SearchInput
+        placeholder="Search by invoice # or customer"
+        value={searchInput}
+        onChange={onSearchInputChange}
+        onSearch={onSearchCommit}
+        debounceMs={500}
+        loading={isLoading}
+      />
+    </Flex>
+  );
+}

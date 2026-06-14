@@ -1,13 +1,14 @@
-export interface ApiResponse<T = any> extends IMeta {
+export interface ApiResponse<T = any> {
   status: boolean;
-  result?: T;
-  data?: { result: T };
+  data: T;
+  meta: IMeta;
 }
 
 export interface IMeta {
   limit: number;
   page: number;
   count: number;
+  total: number;
   exceedCount: boolean;
   exceedTotalPages: boolean;
   hasNextPage: boolean;

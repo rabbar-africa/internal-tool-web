@@ -1,8 +1,49 @@
 import { axios } from "@/lib/axios";
 import { createDownloadLink } from "@/utils/file-helper";
-import type { InspectionFormValues } from "../components/generate-inspection";
+import type {
+  InspectionPayload,
+  SummarizeNotesPayload,
+} from "../components/generate-inspection/inspection-form.types";
+import type { InspectionFilter } from "@/shared/interface/inspection";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 
-export const downloadInspectionReport = async (data: InspectionFormValues) => {
+export const getInspections = async (filters: InspectionFilter = {}) => {
+  const baseUrl = "/inspections";
+  const apiUrl = buildUrlWithQueryParams(baseUrl, filters);
+
+  const res = await axios.get(apiUrl);
+  return res.data;
+};
+
+export const getInspectionById = async (id: string) => {
+  const res = await axios.get(`/inspections/${id}`);
+  return res.data;
+};
+
+export const deleteInspection = async (id: string) => {
+  const res = await axios.delete(`/inspections/${id}`);
+  return res.data;
+};
+
+export const downloadInspectionReportById = async (id: string) => {
+  const res = await axios.get(`/inspections/${id}/pdf`, {
+    responseType: "blob",
+  });
+
+  const disposition = res.headers["content-disposition"] as string | undefined;
+  const filenameMatch = disposition?.match(/filename="?([^"]+)"?/);
+  const fileName = filenameMatch?.[1] ?? "inspection-report.pdf";
+
+  createDownloadLink(res.data as Blob, fileName);
+  return res.data;
+};
+
+export const summarizeInspectionNotes = async (data: SummarizeNotesPayload) => {
+  const res = await axios.post("/inspections/ai/summarize-notes", data);
+  return res.data;
+};
+
+export const downloadInspectionReport = async (data: InspectionPayload) => {
   const res = await axios.post("/inspections/generate", data, {
     responseType: "blob",
   });
@@ -14,4 +55,5 @@ export const downloadInspectionReport = async (data: InspectionFormValues) => {
 
   // res.data IS the blob when responseType is 'blob'
   createDownloadLink(res.data as Blob, fileName);
+  return res.data;
 };
