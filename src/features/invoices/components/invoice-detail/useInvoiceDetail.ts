@@ -29,7 +29,7 @@ export function useInvoiceDetail() {
 
   const handleEdit = () => {
     if (!invoice) return;
-    navigate(RouteConstants.invoices.detail.generate({ id: invoice.id }));
+    navigate(RouteConstants.invoices.edit.generate({ id: invoice.id }));
   };
 
   const handleRecordPayment = () => {

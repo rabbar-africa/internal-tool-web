@@ -146,6 +146,8 @@ export interface CreateInvoicePayload {
   status: InvoiceStatusDto;
 }
 
+export type UpdateInvoicePayload = Partial<CreateInvoicePayload>;
+
 export interface IGetInvoiceFilter extends IBaseFilter {
   status?: string;
   customerId?: string;

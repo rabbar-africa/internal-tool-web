@@ -1,8 +1,12 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useCreateInvoiceMutation } from "../../../api/query";
+import {
+  useCreateInvoiceMutation,
+  useUpdateInvoiceMutation,
+  useGetInvoiceByIdQuery,
+} from "../../../api/query";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { Item } from "@/shared/interface/item";
 import type { ICustomer } from "@/shared/interface/customer";
@@ -10,6 +14,8 @@ import {
   InvoiceStatusDto,
   type CreateInvoiceFormValues,
   type CreateInvoicePayload,
+  type DiscountType,
+  type IInvoiceResponse,
   type LineItemFormRow,
 } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
@@ -55,6 +61,45 @@ const defaultValues: CreateInvoiceFormValues = {
   status: InvoiceStatusDto.SENT,
 };
 
+// Maps an invoice fetched from the API back onto the create-invoice form
+// shape so the same form components can be reused for editing.
+export function mapInvoiceToFormValues(
+  invoice: IInvoiceResponse,
+): CreateInvoiceFormValues {
+  return {
+    invoiceNumber: invoice.invoiceNumber ?? "",
+    customerId: invoice.customerId ?? "",
+    customer: {
+      name: invoice.customerName ?? invoice.client?.displayName ?? "",
+      email: invoice.client?.email ?? "",
+    },
+    referenceNumber: invoice.referenceNumber ?? "",
+    date: invoice.date ? invoice.date.split("T")[0] : today,
+    dueDate: invoice.dueDate ? invoice.dueDate.split("T")[0] : today,
+    paymentTerms: String(invoice.paymentTerms ?? 0),
+    paymentTermsLabel: invoice.paymentTermsLabel ?? "Due on Receipt",
+    notes: invoice.notes ?? "",
+    terms: invoice.terms ?? "",
+    discount: invoice.discount ?? "0",
+    discountType: (invoice.discountType as DiscountType) || "entityLevel",
+    adjustment: invoice.adjustment ?? "",
+    adjustmentDescription: invoice.adjustmentDescription ?? "Adjustment",
+    isDiscountBeforeTax: invoice.isDiscountBeforeTax ?? true,
+    lineItems: (invoice.lineItems ?? []).map((li) => ({
+      itemId: li.itemId ?? "",
+      name: li.name ?? "",
+      description: li.description ?? "",
+      quantity: String(li.quantity ?? "1"),
+      rate: String(li.rate ?? "0"),
+      discount: li.discount ?? "0%",
+      unit: li.unit != null ? String(li.unit) : "",
+    })),
+    status:
+      (invoice.status?.toUpperCase() as InvoiceStatusDto) ||
+      InvoiceStatusDto.SENT,
+  };
+}
+
 const validationSchema = Yup.object({
   invoiceNumber: Yup.string().required("Invoice number is required"),
   customerId: Yup.string().required("Customer is required"),
@@ -81,9 +126,23 @@ export const PAYMENT_TERMS_OPTIONS = [
   { label: "Net 60", value: "60" },
 ];
 
-export function useCreateInvoice() {
+export interface UseInvoiceFormOptions {
+  mode?: "create" | "edit";
+}
+
+export function useCreateInvoice(options?: UseInvoiceFormOptions) {
+  const mode = options?.mode ?? "create";
+  const isEdit = mode === "edit";
+  const { id = "" } = useParams<{ id: string }>();
+
   const navigate = useNavigate();
-  const { mutateAsync, isPending } = useCreateInvoiceMutation();
+  const { mutateAsync, isPending: isCreating } = useCreateInvoiceMutation();
+  const { mutateAsync: updateAsync, isPending: isUpdating } =
+    useUpdateInvoiceMutation();
+
+  // Only fetched in edit mode (query is disabled when id is empty).
+  const invoiceQuery = useGetInvoiceByIdQuery(isEdit ? id : "");
+
   const itemsQuery = useGetItemListSimpleQuery({ page: 1, limit: 1000 });
   const itemsData = useMemo(
     () => itemsQuery?.data?.data || [],
@@ -205,7 +264,11 @@ export function useCreateInvoice() {
         status: values.status,
       };
 
-      // console.log("payload is ", payload);
+      if (isEdit) {
+        await updateAsync({ id, payload });
+        navigate(RouteConstants.invoices.detail.generate({ id }));
+        return;
+      }
 
       const response = await mutateAsync(payload);
       navigate(
@@ -214,20 +277,48 @@ export function useCreateInvoice() {
     },
   });
 
-  const customerOptions = useMemo(
-    () =>
-      customerArray.map((c) => ({
-        label: c.displayName,
-        value: c.id,
-        subLabel: c.email ?? undefined,
-      })),
-    [customerArray],
-  );
+  // In edit mode, hydrate the form once the invoice resolves and seed the
+  // customer cache so the billing block + combobox label render immediately.
+  const appliedInvoiceRef = useRef(false);
+  useEffect(() => {
+    const invoice = invoiceQuery.data?.data;
+    if (!isEdit || appliedInvoiceRef.current || !invoice) return;
+    appliedInvoiceRef.current = true;
+    formik.setValues(mapInvoiceToFormValues(invoice));
+    if (invoice.client) {
+      setCustomerCache((prev) => ({
+        ...prev,
+        [invoice.client.id]: invoice.client,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceQuery.data, isEdit]);
 
   const selectedCustomer = useMemo(
     () => customerCache[formik.values.customerId] ?? null,
     [customerCache, formik.values.customerId],
   );
+
+  const customerOptions = useMemo(() => {
+    const opts = customerArray.map((c) => ({
+      label: c.displayName,
+      value: c.id,
+      subLabel: c.email ?? undefined,
+    }));
+    // Ensure the selected customer is always selectable even when it's not in
+    // the current (possibly searched/paginated) result set — e.g. on edit.
+    if (
+      selectedCustomer &&
+      !opts.some((o) => o.value === selectedCustomer.id)
+    ) {
+      opts.unshift({
+        label: selectedCustomer.displayName,
+        value: selectedCustomer.id,
+        subLabel: selectedCustomer.email ?? undefined,
+      });
+    }
+    return opts;
+  }, [customerArray, selectedCustomer]);
 
   const handleItemSelect = (idx: number, itemId: string) => {
     const item = items.find((i) => i.id === itemId);
@@ -287,7 +378,7 @@ export function useCreateInvoice() {
   // user hasn't already edited the field away from the default.
   const appliedSeriesRef = useRef(false);
   useEffect(() => {
-    if (appliedSeriesRef.current || !seriesInvoiceNumber) return;
+    if (isEdit || appliedSeriesRef.current || !seriesInvoiceNumber) return;
     appliedSeriesRef.current = true;
     formik.setFieldValue("invoiceNumber", seriesInvoiceNumber);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -307,6 +398,9 @@ export function useCreateInvoice() {
   }, [itemsData]);
 
   return {
+    mode,
+    isEdit,
+    isLoadingInvoice: isEdit && invoiceQuery.isLoading,
     formik,
     addLineItem,
     removeLineItem,
@@ -315,7 +409,7 @@ export function useCreateInvoice() {
     handleItemSelect,
     totals,
     getLineAmount,
-    isPending,
+    isPending: isEdit ? isUpdating : isCreating,
     handleCancel,
     items,
     addNewItem,

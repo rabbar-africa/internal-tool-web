@@ -1,12 +1,27 @@
-import { Box, Button, Flex, Separator, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Center,
+  Flex,
+  Separator,
+  Spinner,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { UserDashboardContainer } from "@/components/hoc";
 import { useCreateInvoice } from "./hooks/useCreateInvoice";
 import { InvoiceFormHeader } from "./InvoiceFormHeader";
 import { LineItemsTable } from "./LineItemsTable";
 import { InvoiceFooter } from "./InvoiceFooter";
 
-export function CreateInvoicePage() {
+interface CreateInvoicePageProps {
+  mode?: "create" | "edit";
+}
+
+export function CreateInvoicePage({ mode = "create" }: CreateInvoicePageProps) {
   const {
+    isEdit,
+    isLoadingInvoice,
     formik,
     addLineItem,
     removeLineItem,
@@ -23,7 +38,15 @@ export function CreateInvoicePage() {
     addNewCustomer,
     handleCustomerSearch,
     isSearchingCustomers,
-  } = useCreateInvoice();
+  } = useCreateInvoice({ mode });
+
+  if (isLoadingInvoice) {
+    return (
+      <Center py="20">
+        <Spinner color="primary.400" />
+      </Center>
+    );
+  }
 
   return (
     <UserDashboardContainer py="1.5rem">
@@ -38,10 +61,12 @@ export function CreateInvoicePage() {
           >
             <Box>
               <Text textStyle="h3-bold" color="gray.500">
-                New Invoice
+                {isEdit ? "Edit Invoice" : "New Invoice"}
               </Text>
               <Text textStyle="small-regular" color="gray.300" mt="0.5">
-                Fill in the details below to create an invoice
+                {isEdit
+                  ? "Update the details below and save your changes"
+                  : "Fill in the details below to create an invoice"}
               </Text>
             </Box>
             <Flex gap="2" wrap="wrap">
@@ -59,7 +84,7 @@ export function CreateInvoicePage() {
                 loading={isPending}
                 loadingText="Saving..."
               >
-                Proceed
+                {isEdit ? "Save Changes" : "Proceed"}
               </Button>
             </Flex>
           </Flex>
@@ -112,7 +137,7 @@ export function CreateInvoicePage() {
               Cancel
             </Button>
             <Button type="submit" loading={isPending} loadingText="Saving...">
-              Proceed
+              {isEdit ? "Save Changes" : "Proceed"}
             </Button>
           </Flex>
         </Stack>

@@ -14,6 +14,10 @@ const { InvoiceDetail } = lazyImport(
   () => import("../pages/InvoiceDetail"),
   "InvoiceDetail",
 );
+const { EditInvoice } = lazyImport(
+  () => import("../pages/EditInvoice"),
+  "EditInvoice",
+);
 
 export const InvoiceRoutes: RouteObject[] = [
   {
@@ -23,6 +27,10 @@ export const InvoiceRoutes: RouteObject[] = [
   {
     path: RouteConstants.invoices.create.path,
     element: <CreateInvoice />,
+  },
+  {
+    path: RouteConstants.invoices.edit.path,
+    element: <EditInvoice />,
   },
   {
     path: RouteConstants.invoices.detail.path,

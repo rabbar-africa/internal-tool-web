@@ -52,9 +52,10 @@ export function RevenueExpenseChart() {
       bg="white"
       rounded="lg"
       shadow="sm"
-      p="6"
+      p={{ base: "4", md: "6" }}
       borderWidth="1px"
       borderColor="gray.75"
+      overflow="hidden"
     >
       <Text fontSize="15px" fontWeight="600" color="gray.500" mb="1">
         Revenue vs Expenses
@@ -67,6 +68,7 @@ export function RevenueExpenseChart() {
         series={series}
         type="area"
         height={280}
+        width="100%"
       />
     </Box>
   );
