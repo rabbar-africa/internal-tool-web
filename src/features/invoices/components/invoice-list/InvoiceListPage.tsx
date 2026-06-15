@@ -56,7 +56,7 @@ export function InvoiceListPage() {
             title="Invoices"
             subtitle="Manage and track all your invoices"
             action={
-              <Flex gap="2">
+              <Flex gap="2" wrap="wrap">
                 <DownloadButton
                   data={csvData}
                   filename={downloadFilename}
@@ -73,10 +73,10 @@ export function InvoiceListPage() {
           />
 
           <Box
-            pt="2rem"
-            pb="2rem"
+            pt={{ base: "1.25rem", md: "2rem" }}
+            pb={{ base: "1.25rem", md: "2rem" }}
             bg="white"
-            px="1rem"
+            px={{ base: "0.75rem", md: "1rem" }}
             rounded=".625rem"
             shadow="sm"
             borderWidth="1px"
@@ -84,7 +84,10 @@ export function InvoiceListPage() {
           >
             <Flex justify="space-between" align="center" mb="1rem">
               <Box>
-                <Text textStyle="large-bold" color="gray.500">
+                <Text
+                  textStyle={{ base: "default-bold", md: "large-bold" }}
+                  color="gray.500"
+                >
                   All Invoices
                 </Text>
                 <Text textStyle="small-regular" color="gray.300">
@@ -112,7 +115,12 @@ export function InvoiceListPage() {
               isLoading={isFetching}
             />
 
-            <Box overflowX="auto" maxW="calc(100vw - 380px)">
+            <Box
+              overflowX="auto"
+              // w="100%"
+              // maxW={{ base: "100%", lg: "calc(100vw - 380px)" }}
+              minW={0}
+            >
               <CustomTable
                 data={invoices}
                 columns={columns}

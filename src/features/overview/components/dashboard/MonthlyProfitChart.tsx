@@ -47,10 +47,12 @@ export function MonthlyProfitChart() {
       bg="white"
       rounded="lg"
       shadow="sm"
-      p={{ base: "4", md: "6" }}
+      p={{ base: "2", lg: "6" }}
+      py={"6"}
       borderWidth="1px"
       borderColor="gray.75"
       overflow="hidden"
+      minW="0"
     >
       <Text fontSize="15px" fontWeight="600" color="gray.500" mb="1">
         Monthly Profit

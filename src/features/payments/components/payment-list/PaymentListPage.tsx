@@ -259,10 +259,13 @@ export function PaymentListPage() {
               Payments received from customers
             </Text>
           </Box>
-          <SearchInput placeholder="Search by payment # or customer" />
+          <SearchInput
+            width={{ base: "100%", md: "21rem" }}
+            placeholder="Search by payment # or customer"
+          />
         </Flex>
 
-        <Box overflowX="auto" maxW="calc(100vw - 310px)">
+        <Box overflowX="auto" minW={0}>
           <CustomTable
             data={payments}
             columns={columns}

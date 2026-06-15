@@ -45,11 +45,11 @@ export function InvoiceFilters({
         onChange={(opt: { value: string[] }) =>
           onStatusChange(opt?.value?.[0] ?? "")
         }
-        rootProps={{ size: "sm" }}
-        controlProps={{ w: "140px" }}
+        rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
+        controlProps={{ w: { base: "100%", md: "140px" } }}
       />
 
-      <Flex gap="2" align="center">
+      <Flex gap="2" align="center" w={{ base: "100%", md: "auto" }}>
         <CustomInput
           type="date"
           placeholder="Due from"
@@ -73,6 +73,7 @@ export function InvoiceFilters({
         onSearch={onSearchCommit}
         debounceMs={500}
         loading={isLoading}
+        width={{ base: "100%", md: "21rem" }}
       />
     </Flex>
   );
