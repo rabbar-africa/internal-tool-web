@@ -106,6 +106,23 @@ export const createInvoice = async (payload: CreateInvoicePayload) => {
   return data;
 };
 
+export interface WriteOffInvoicePayload {
+  /** Date the write-off is recorded (defaults to today server-side if omitted). */
+  date?: string;
+  reason?: string;
+}
+
+export const writeOffInvoice = async (
+  id: string,
+  payload: WriteOffInvoicePayload = {},
+) => {
+  const { data } = await axios.post<ApiResponse<IInvoiceResponse>>(
+    `/invoices/${id}/write-off`,
+    payload,
+  );
+  return data;
+};
+
 export const updateInvoice = async (
   id: string,
   payload: UpdateInvoicePayload,

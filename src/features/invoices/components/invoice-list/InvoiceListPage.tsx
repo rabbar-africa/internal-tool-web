@@ -122,6 +122,7 @@ export function InvoiceListPage() {
               minW={0}
             >
               <CustomTable
+                stickyHeader
                 data={invoices}
                 columns={columns}
                 loading={isLoading}
