@@ -13,14 +13,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <Box height="100vh" display="flex" flexDirection="column" bg="#F7F7F7">
       <Flex flex="1" overflow="hidden">
         {/* Desktop sidebar — hidden on mobile */}
-        <Box display={{ base: "none", md: "block" }}>
+        <Box display={{ base: "none", lg: "block" }}>
           <Sidebar
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setCollapsed((c) => !c)}
           />
         </Box>
 
-        <Stack gap={0} flex="1" minHeight={0} position="relative">
+        <Stack gap={0} flex="1" minHeight={0} minWidth={0} position="relative">
           <NavBar onMenuToggle={() => setMobileNavOpen(true)} />
           <Box flex="1" overflow="auto">
             <UserDashboardContainer pt={"1.75rem"}>

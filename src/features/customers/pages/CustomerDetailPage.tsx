@@ -1,5 +1,6 @@
 import { Head } from "@/components/seo/head";
 import { CustomerDetail } from "../components/customer-detail/CustomerDetail";
+import { UserDashboardContainer } from "@/components/hoc";
 
 export function CustomerDetailPage() {
   return (
@@ -8,7 +9,9 @@ export function CustomerDetailPage() {
         title="Customer Details"
         description="View customer details and history"
       />
-      <CustomerDetail />
+      <UserDashboardContainer py="1.5rem">
+        <CustomerDetail />
+      </UserDashboardContainer>
     </>
   );
 }

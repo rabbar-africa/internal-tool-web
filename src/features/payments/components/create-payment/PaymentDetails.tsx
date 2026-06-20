@@ -1,6 +1,6 @@
 import { Grid } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
-import { CustomInput } from "@/components/input/CustomInput";
+// import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { SectionCard } from "./SectionCard";
@@ -59,7 +59,7 @@ export function PaymentDetails({
           error={touched.amount && errors.amount ? errors.amount : undefined}
         />
 
-        <CustomNumberInput
+        {/* <CustomNumberInput
           label="Bank Charges"
           precision={2}
           allowNegative={false}
@@ -94,7 +94,7 @@ export function PaymentDetails({
               ? errors.exchangeRate
               : undefined
           }
-        />
+        /> */}
       </Grid>
     </SectionCard>
   );

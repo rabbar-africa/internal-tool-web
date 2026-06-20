@@ -19,6 +19,7 @@ interface InvoiceDetailHeaderProps {
   invoice: IInvoiceResponse;
   onEdit: () => void;
   onRecordPayment: () => void;
+  onWriteOff: () => void;
   onDownloadPdf: () => Promise<void> | void;
   onDelete: () => void;
   isDownloading: boolean;
@@ -28,12 +29,19 @@ export function InvoiceDetailHeader({
   invoice,
   onEdit,
   onRecordPayment,
+  onWriteOff,
   onDownloadPdf,
   onDelete,
   isDownloading,
 }: InvoiceDetailHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const showRecordPayment = invoice.status !== "paid";
+  const status = invoice.status?.toLowerCase();
+  const hasBalance = Number(invoice.balance ?? 0) > 0;
+  const showRecordPayment = status !== "paid";
+  // Write-off only makes sense while money is still outstanding and the
+  // invoice isn't already closed/void/written off.
+  const showWriteOff =
+    hasBalance && !["paid", "void", "written_off"].includes(status ?? "");
 
   // Sync action: closes the menu immediately, then runs the handler.
   const handleSync = (handler: () => void) => () => {
@@ -99,6 +107,12 @@ export function InvoiceDetailHeader({
                     onClick={handleSync(onRecordPayment)}
                   >
                     Record Payment
+                  </Menu.Item>
+                )}
+
+                {showWriteOff && (
+                  <Menu.Item value="write-off" onClick={handleSync(onWriteOff)}>
+                    Write off invoice
                   </Menu.Item>
                 )}
 

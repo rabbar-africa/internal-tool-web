@@ -3,10 +3,10 @@ import { defineRecipe } from "@chakra-ui/react";
 export const buttonRecipe = defineRecipe({
   base: {
     borderRadius: ".625rem",
-    fontSize: "1rem",
+    fontSize: { base: ".875rem", lg: "1rem" },
     fontWeight: "400",
     backgroundColor: "primary",
-    py: "1.625rem",
+    py: { base: "1.125rem", lg: "1.625rem" },
     px: { base: "1.25rem" },
     _loading: {
       opacity: 0.6,
@@ -123,9 +123,9 @@ export const buttonRecipe = defineRecipe({
         fontSize: "0.875rem",
       },
       md: {
-        h: "3.25rem",
+        h: { base: "0", md: "3.25rem" },
         fontSize: ".875rem",
-        py: "1rem",
+        py: "1.125rem",
       },
       lg: {
         // h: '3.25rem',

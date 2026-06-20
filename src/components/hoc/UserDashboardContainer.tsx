@@ -12,7 +12,7 @@ export function UserDashboardContainer({
 }: PageSectionProps) {
   return (
     <Container
-      px={{ base: "1rem", md: "2rem" }}
+      px={{ base: ".5rem", md: "2rem" }}
       maxW="75rem"
       mx={"auto"}
       {...props}

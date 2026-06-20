@@ -33,9 +33,9 @@ export interface SearchInputProps extends Omit<
   showFilterButton?: boolean;
   onFilterClick?: () => void;
 
-  // Layout props
-  width?: string | number;
-  maxWidth?: string | number;
+  // Layout props (accepts responsive values, e.g. { base: "100%", md: "21rem" })
+  width?: InputProps["width"];
+  maxWidth?: InputProps["maxWidth"];
 
   // Field container props
   fieldProps?: FieldRootProps;

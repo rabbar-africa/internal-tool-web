@@ -3,7 +3,6 @@ import { UserDashboardContainer } from "@/components/hoc";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCardsGrid } from "./StatCardsGrid";
 import { RevenueExpenseChart } from "./RevenueExpenseChart";
-import { MonthlyProfitChart } from "./MonthlyProfitChart";
 import { InvoiceStatusChart } from "./InvoiceStatusChart";
 
 export function DashboardPage() {
@@ -21,8 +20,6 @@ export function DashboardPage() {
           <RevenueExpenseChart />
           <InvoiceStatusChart />
         </Grid>
-
-        <MonthlyProfitChart />
       </Stack>
     </UserDashboardContainer>
   );
