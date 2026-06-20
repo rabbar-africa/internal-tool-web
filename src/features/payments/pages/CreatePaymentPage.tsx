@@ -7,7 +7,6 @@ export function CreatePaymentPage() {
     <>
       <Head title="Record Payment" description="Record a payment received" />
       <UserDashboardContainer py="1.5rem">
-        {" "}
         <CreatePayment />
       </UserDashboardContainer>
     </>

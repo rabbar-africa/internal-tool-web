@@ -235,8 +235,8 @@ export function PaymentListPage() {
       />
 
       <Box
-        pt="2rem"
-        pb="2rem"
+        pt={{ base: ".875rem", lg: "2rem" }}
+        pb={{ base: ".875rem", lg: "2rem" }}
         bg="white"
         px="1rem"
         rounded=".625rem"
@@ -246,7 +246,7 @@ export function PaymentListPage() {
       >
         <Flex
           justifyContent="space-between"
-          alignItems="center"
+          alignItems={{ base: "unset", lg: "center" }}
           mb="1.5rem"
           gap="3"
           direction={{ base: "column", md: "row" }}
