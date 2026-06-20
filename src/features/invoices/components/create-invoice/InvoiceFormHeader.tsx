@@ -61,33 +61,35 @@ export function InvoiceFormHeader({
       >
         {/* Left: Customer */}
         <Stack gap="4">
-          <SearchCombobox
-            label="Customer Name"
-            required
-            options={customerOptions}
-            placeholder="Search customer..."
-            value={formik.values.customerId || undefined}
-            onChange={(val, option) => {
-              formik.setFieldValue("customerId", val);
-              formik.setFieldValue("customer", {
-                name: option.label,
-                email: option.subLabel ?? "",
-              });
-            }}
-            onSearchChange={onCustomerSearch}
-            searchDebounceMs={400}
-            serverSearch
-            isLoading={isSearchingCustomers}
-            error={
-              formik.touched.customerId && formik.errors.customerId
-                ? String(formik.errors.customerId)
-                : undefined
-            }
-            footerAction={{
-              label: "Add Customer",
-              onClick: () => setAddCustomerOpen(true),
-            }}
-          />
+          <Box maxW={{ base: "15rem", lg: "unset" }}>
+            <SearchCombobox
+              label="Customer Name"
+              required
+              options={customerOptions}
+              placeholder="Search customer..."
+              value={formik.values.customerId || undefined}
+              onChange={(val, option) => {
+                formik.setFieldValue("customerId", val);
+                formik.setFieldValue("customer", {
+                  name: option.label,
+                  email: option.subLabel ?? "",
+                });
+              }}
+              onSearchChange={onCustomerSearch}
+              searchDebounceMs={400}
+              serverSearch
+              isLoading={isSearchingCustomers}
+              error={
+                formik.touched.customerId && formik.errors.customerId
+                  ? String(formik.errors.customerId)
+                  : undefined
+              }
+              footerAction={{
+                label: "Add Customer",
+                onClick: () => setAddCustomerOpen(true),
+              }}
+            />
+          </Box>
 
           {selectedCustomer ? (
             <Box
@@ -214,7 +216,7 @@ export function InvoiceFormHeader({
           </Grid>
 
           {/* Invoice Date + Terms + Due Date */}
-          <Grid templateColumns="1fr 1fr" gap="4">
+          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
             <CustomInput
               label="Invoice Date"
               type="date"
