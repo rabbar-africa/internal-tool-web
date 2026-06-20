@@ -1,6 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { CustomSelect } from "@/components/input/CustomSelect";
-import { CustomInput } from "@/components/input/CustomInput";
+import { DateField } from "@/components/input/DateField";
 import { SearchInput } from "@/components/input/SearchInput";
 import { STATUS_OPTIONS } from "./columns";
 
@@ -49,20 +49,25 @@ export function InvoiceFilters({
         controlProps={{ w: { base: "100%", md: "140px" } }}
       />
 
-      <Flex gap="2" align="center" w={{ base: "100%", md: "auto" }}>
-        <CustomInput
-          type="date"
-          placeholder="Due from"
+      <Flex
+        flexWrap={{ base: "wrap", lg: "unset" }}
+        gap="2"
+        align="center"
+        w={{ base: "100%", md: "auto" }}
+      >
+        <DateField
+          label="From"
           value={dueDateFrom}
-          onChange={(e) => onDueDateFromChange(e.target.value)}
-          inputProps={{ h: "36px", fontSize: "13px" }}
+          max={dueDateTo || undefined}
+          onChange={onDueDateFromChange}
+          containerProps={{ flex: { base: "1", lg: "unset" } }}
         />
-        <CustomInput
-          type="date"
-          placeholder="Due to"
+        <DateField
+          label="To"
           value={dueDateTo}
-          onChange={(e) => onDueDateToChange(e.target.value)}
-          inputProps={{ h: "36px", fontSize: "13px" }}
+          min={dueDateFrom || undefined}
+          onChange={onDueDateToChange}
+          containerProps={{ flex: { base: "1", lg: "unset" } }}
         />
       </Flex>
 
