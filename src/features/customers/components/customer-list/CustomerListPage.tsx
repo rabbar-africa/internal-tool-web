@@ -226,6 +226,13 @@ export function CustomerListPage() {
                 loading={isLoading}
                 enableActions
                 actions={tableActions}
+                onRowClick={(row) =>
+                  navigate(
+                    RouteConstants.customers.detail.generate({
+                      id: row.original.id,
+                    }),
+                  )
+                }
                 tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
                 pagination={{
                   pageIndex: filters.page - 1,

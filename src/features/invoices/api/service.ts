@@ -116,7 +116,7 @@ export const writeOffInvoice = async (
   id: string,
   payload: WriteOffInvoicePayload = {},
 ) => {
-  const { data } = await axios.post<ApiResponse<IInvoiceResponse>>(
+  const { data } = await axios.patch<ApiResponse<IInvoiceResponse>>(
     `/invoices/${id}/write-off`,
     payload,
   );
