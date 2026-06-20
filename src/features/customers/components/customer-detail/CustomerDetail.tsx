@@ -1,7 +1,6 @@
 import { Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { UserDashboardContainer } from "@/components/hoc";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import { RouteConstants } from "@/shared/constants/routes";
 import SectionLoader from "@/components/common/SectionLoader";
@@ -51,53 +50,43 @@ export function CustomerDetail() {
   );
 
   if (isLoading) {
-    return (
-      <UserDashboardContainer py="1.5rem">
-        <SectionLoader />
-      </UserDashboardContainer>
-    );
+    return <SectionLoader />;
   }
 
   if (!customer) {
-    return (
-      <UserDashboardContainer py="1.5rem">
-        <Text color="gray.400">Customer not found.</Text>
-      </UserDashboardContainer>
-    );
+    return <Text color="gray.400">Customer not found.</Text>;
   }
 
   return (
     <>
-      <UserDashboardContainer py="1.5rem">
-        <Stack gap="5">
-          <CustomBreadCrumb
-            items={[
-              { label: "Customers", to: RouteConstants.customers.base.path },
-              { label: customer.displayName, isCurrent: true },
-            ]}
-          />
+      <Stack gap="5">
+        <CustomBreadCrumb
+          items={[
+            { label: "Customers", to: RouteConstants.customers.base.path },
+            { label: customer.displayName, isCurrent: true },
+          ]}
+        />
 
-          <CustomerDetailHeader customer={customer} />
+        <CustomerDetailHeader customer={customer} />
 
-          <CustomerStats
-            totalPaid={totalPaid}
-            outstanding={customer.outstandingBalance ?? 0}
-            totalInvoices={customer.totalInvoices ?? 0}
-          />
+        <CustomerStats
+          totalPaid={totalPaid}
+          outstanding={customer.outstandingBalance ?? 0}
+          totalInvoices={customer.totalInvoices ?? 0}
+        />
 
-          <CustomerInfo customer={customer} />
+        <CustomerInfo customer={customer} />
 
-          <CustomerTabs
-            vehicles={vehicles}
-            vehiclesLoading={vehiclesLoading}
-            invoices={customerInvoices}
-            invoicesLoading={invoicesLoading}
-            payments={customerPayments}
-            paymentsLoading={paymentsLoading}
-            onAddVehicle={() => setAddVehicleOpen(true)}
-          />
-        </Stack>
-      </UserDashboardContainer>
+        <CustomerTabs
+          vehicles={vehicles}
+          vehiclesLoading={vehiclesLoading}
+          invoices={customerInvoices}
+          invoicesLoading={invoicesLoading}
+          payments={customerPayments}
+          paymentsLoading={paymentsLoading}
+          onAddVehicle={() => setAddVehicleOpen(true)}
+        />
+      </Stack>
 
       <AddVehicleModal
         open={addVehicleOpen}

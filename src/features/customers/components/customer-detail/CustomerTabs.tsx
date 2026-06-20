@@ -1,5 +1,5 @@
 import { Box, Button, Flex, Tabs } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import { PlusIcon } from "@/assets/custom";
@@ -10,6 +10,9 @@ import type { Vehicle } from "../../api/service";
 import { paymentColumns, vehicleColumns } from "./columns";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
+
+const TAB_VALUES = ["invoices", "vehicles", "payments"] as const;
+const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
   vehicles: Vehicle[];
@@ -31,8 +34,27 @@ export function CustomerTabs({
   onAddVehicle,
 }: CustomerTabsProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const invoiceColumns = useInvoiceListColumns();
   const vehicleActions: TableAction<Vehicle>[] = [];
+
+  const sectionParam = searchParams.get("section");
+  const activeTab = TAB_VALUES.includes(
+    sectionParam as (typeof TAB_VALUES)[number],
+  )
+    ? (sectionParam as string)
+    : DEFAULT_TAB;
+
+  const handleTabChange = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("section", value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   return (
     <Box
@@ -43,7 +65,10 @@ export function CustomerTabs({
       shadow="xs"
       overflow="hidden"
     >
-      <Tabs.Root defaultValue="vehicles">
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={({ value }) => handleTabChange(value)}
+      >
         <Tabs.List
           px="6"
           pt="3"
@@ -51,11 +76,11 @@ export function CustomerTabs({
           borderColor="gray.75"
           bg="gray.50/50"
         >
-          <Tabs.Trigger value="vehicles" fontSize="13px">
-            Vehicles ({vehicles.length})
-          </Tabs.Trigger>
           <Tabs.Trigger value="invoices" fontSize="13px">
             Invoices ({invoices.length})
+          </Tabs.Trigger>
+          <Tabs.Trigger value="vehicles" fontSize="13px">
+            Vehicles ({vehicles.length})
           </Tabs.Trigger>
           <Tabs.Trigger value="payments" fontSize="13px">
             Payments ({payments.length})
