@@ -1,6 +1,7 @@
 export * from "./CustomCheckBox";
 export * from "./CustomCheckboxCard";
 export * from "./CustomInput";
+export * from "./DateField";
 export * from "./CustomNumberInput";
 export * from "./CustomRadioCard";
 export * from "./CustomRadioGroup";

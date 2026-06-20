@@ -150,11 +150,11 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
           <Text fontSize="14px" fontWeight="700" color="gray.500">
             {client?.displayName ?? invoice.customerName ?? "—"}
           </Text>
-          {invoice.billingAddress && (
+          {/* {invoice.billingAddress && (
             <Text fontSize="12px" color="gray.400" whiteSpace="pre-line">
               {invoice.billingAddress}
             </Text>
-          )}
+          )} */}
         </Stack>
 
         <Stack gap="2" justify="flex-end">

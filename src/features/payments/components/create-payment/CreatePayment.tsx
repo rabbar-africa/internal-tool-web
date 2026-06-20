@@ -43,7 +43,7 @@ export function CreatePayment() {
 
   return (
     <form onSubmit={formik.handleSubmit}>
-      <Stack gap="5">
+      <Stack gap="5" pb={"1.5rem"}>
         {/* Top bar */}
         <Flex
           justify="space-between"

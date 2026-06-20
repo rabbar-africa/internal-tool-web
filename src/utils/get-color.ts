@@ -43,6 +43,7 @@ export const getStatusColor = (status: string) => {
   switch (status?.toLowerCase()) {
     case "active":
     case "paid":
+    case "written_off":
     case "approved":
     case "verified":
       return {

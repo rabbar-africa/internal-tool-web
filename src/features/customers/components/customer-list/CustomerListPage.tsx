@@ -215,16 +215,24 @@ export function CustomerListPage() {
                 onSearch={(val) => setFilters({ search: val, page: 1 })}
                 debounceMs={500}
                 loading={isLoading}
+                width={{ base: "100%", md: "21rem" }}
               />
             </Flex>
 
-            <Box overflowX="auto" maxW="calc(100vw - 380px)">
+            <Box overflowX="auto" minW={0}>
               <CustomTable
                 data={customers || []}
                 columns={columns}
                 loading={isLoading}
                 enableActions
                 actions={tableActions}
+                onRowClick={(row) =>
+                  navigate(
+                    RouteConstants.customers.detail.generate({
+                      id: row.original.id,
+                    }),
+                  )
+                }
                 tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
                 pagination={{
                   pageIndex: filters.page - 1,

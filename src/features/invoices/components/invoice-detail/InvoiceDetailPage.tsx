@@ -1,25 +1,34 @@
 import { Center, Spinner, Stack, Text } from "@chakra-ui/react";
+import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { DeleteInvoiceConfirm } from "../invoice-list/DeleteInvoiceConfirm";
 import { useInvoiceDetail } from "./useInvoiceDetail";
 import { InvoiceDetailHeader } from "./InvoiceDetailHeader";
 import { InvoicePdfView } from "./InvoicePdfView";
+import { ConnectedPayments } from "./ConnectedPayments";
+import { WriteOffInvoiceConfirm } from "./WriteOffInvoiceConfirm";
 
 export function InvoiceDetailPage() {
+  const { formatMoney } = useFormatMoney();
   const {
     invoice,
     isLoading,
     isError,
-
+    payments,
+    viewPayment,
     handleEdit,
     handleRecordPayment,
     handleDownloadPdf,
     isDownloading,
-
     pendingDelete,
     requestDelete,
     cancelDelete,
     confirmDelete,
     isDeleting,
+    pendingWriteOff,
+    requestWriteOff,
+    cancelWriteOff,
+    confirmWriteOff,
+    isWritingOff,
   } = useInvoiceDetail();
 
   if (isLoading) {
@@ -46,9 +55,16 @@ export function InvoiceDetailPage() {
           invoice={invoice}
           onEdit={handleEdit}
           onRecordPayment={handleRecordPayment}
+          onWriteOff={requestWriteOff}
           onDownloadPdf={handleDownloadPdf}
           onDelete={requestDelete}
           isDownloading={isDownloading}
+        />
+
+        <ConnectedPayments
+          payments={payments}
+          invoiceId={invoice.id}
+          onViewPayment={viewPayment}
         />
 
         <InvoicePdfView invoice={invoice} />
@@ -63,6 +79,15 @@ export function InvoiceDetailPage() {
         isDeleting={isDeleting}
         onCancel={cancelDelete}
         onConfirm={confirmDelete}
+      />
+
+      <WriteOffInvoiceConfirm
+        open={pendingWriteOff}
+        invoiceNumber={invoice.invoiceNumber}
+        balanceLabel={formatMoney(Number(invoice.balance ?? 0) || 0)}
+        isWritingOff={isWritingOff}
+        onCancel={cancelWriteOff}
+        onConfirm={confirmWriteOff}
       />
     </>
   );
