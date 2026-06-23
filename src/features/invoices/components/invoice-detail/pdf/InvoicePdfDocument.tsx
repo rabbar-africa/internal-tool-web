@@ -180,6 +180,13 @@ export function InvoicePdfDocument({
 }: InvoicePdfDocumentProps) {
   const client = invoice.client;
   const currencyCode = invoice.currencyCode || organization?.currency;
+  // The API can return a non-string (e.g. an empty object) for billingAddress
+  // despite its declared type. Only render a genuine, non-empty string —
+  // rendering an object as a child throws React error #31 inside react-pdf.
+  const billingAddress =
+    typeof invoice.billingAddress === "string"
+      ? invoice.billingAddress.trim()
+      : "";
 
   const subtotal = toNum(invoice.subTotal);
   const discountAmount = toNum(invoice.discount);
@@ -255,9 +262,9 @@ export function InvoicePdfDocument({
             <Text style={styles.billName}>
               {client?.displayName ?? invoice.customerName ?? "—"}
             </Text>
-            {invoice.billingAddress ? (
+            {billingAddress ? (
               <Text style={[styles.orgLine, { marginTop: 3 }]}>
-                {invoice.billingAddress}
+                {billingAddress}
               </Text>
             ) : null}
           </View>
