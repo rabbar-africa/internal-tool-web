@@ -21,8 +21,13 @@ export const createDownloadLink = (blob: Blob, fileName: string) => {
   const link = document.createElement("a");
   link.href = url;
   link.setAttribute("download", fileName);
+  link.rel = "noopener";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  window.URL.revokeObjectURL(url);
+  // Defer revoking the object URL. Mobile browsers (iOS Safari, Android Chrome)
+  // start the download asynchronously, so revoking synchronously here cancels
+  // it before the blob is read — which is why downloads silently fail on
+  // mobile while working on desktop.
+  window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
 };
