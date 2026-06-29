@@ -182,7 +182,7 @@ export function CustomerInfoSection() {
         open={addCustomerOpen}
         onClose={() => setAddCustomerOpen(false)}
         onSave={(customer) => {
-          handleNewCustomerSaved(customer);
+          handleNewCustomerSaved(customer as ICustomer);
           setAddCustomerOpen(false);
         }}
       />
