@@ -1,21 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Box, Flex, Grid, IconButton, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
 import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
-import {
-  PAYMENT_TERMS_OPTIONS,
-  DEFAULT_INVOICE_PREFIX,
-  DEFAULT_INVOICE_NEXT,
-} from "./hooks/useCreateInvoice";
+import { PAYMENT_TERMS_OPTIONS } from "./hooks/useCreateInvoice";
 import type { ICustomer } from "@/shared/interface/customer";
-import {
-  InvoiceNumberConfigModal,
-  type InvoiceNumberConfig,
-} from "./InvoiceNumberConfigModal";
+import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
 import { AddNewCustomerModal } from "./AddNewCustomerModal";
+import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
 
 interface InvoiceFormHeaderProps {
   formik: FormikProps<CreateInvoiceFormValues>;
@@ -36,21 +30,14 @@ export function InvoiceFormHeader({
 }: InvoiceFormHeaderProps) {
   const [showConfig, setShowConfig] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
-  const [invoiceConfig, setInvoiceConfig] = useState<InvoiceNumberConfig>({
-    mode: "auto",
-    prefix: DEFAULT_INVOICE_PREFIX,
-    nextNumber: DEFAULT_INVOICE_NEXT,
-  });
 
-  const handleSaveConfig = (config: InvoiceNumberConfig) => {
-    setInvoiceConfig(config);
-    if (config.mode === "auto") {
-      formik.setFieldValue(
-        "invoiceNumber",
-        `${config.prefix}${config.nextNumber}`,
-      );
-    }
-  };
+  const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
+  const isAutoInvoiceNumber = useMemo(
+    () =>
+      (txnSeriesData?.data ?? []).find((s) => s.module === "INVOICE")
+        ?.autoGenerate ?? true,
+    [txnSeriesData?.data],
+  );
 
   return (
     <>
@@ -181,7 +168,7 @@ export function InvoiceFormHeader({
                     value={formik.values.invoiceNumber}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    disabled={invoiceConfig.mode === "auto"}
+                    disabled={isAutoInvoiceNumber}
                     error={
                       (formik.touched.invoiceNumber ||
                         formik.submitCount > 0) &&
@@ -266,8 +253,7 @@ export function InvoiceFormHeader({
       <InvoiceNumberConfigModal
         open={showConfig}
         onClose={() => setShowConfig(false)}
-        config={invoiceConfig}
-        onSave={handleSaveConfig}
+        onApplyNumber={(num) => formik.setFieldValue("invoiceNumber", num)}
       />
 
       <AddNewCustomerModal
