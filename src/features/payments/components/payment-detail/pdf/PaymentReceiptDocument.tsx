@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   // Status ribbon (rotated corner banner)
   ribbon: {
     position: "absolute",
-    top: 22,
-    left: -32,
+    top: 14,
+    left: -46,
     width: 140,
     transform: "rotate(-45deg)",
     color: c.white,

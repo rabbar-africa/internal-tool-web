@@ -316,6 +316,9 @@ export function LineItemsTable({
   onAddNewItem,
 }: LineItemsTableProps) {
   const [addItemOpen, setAddItemOpen] = useState(false);
+  // Remembers which line row opened the modal so the newly created item can be
+  // auto-selected back into that row.
+  const [activeRowIdx, setActiveRowIdx] = useState<number | null>(null);
 
   const searchOptions: SearchComboboxOption[] = useMemo(
     () =>
@@ -341,7 +344,10 @@ export function LineItemsTable({
           lineAmount={getLineAmount(lineItem)}
           canRemove={formik.values.lineItems.length > 1}
           onRemove={() => removeLineItem(idx)}
-          onOpenAddItem={() => setAddItemOpen(true)}
+          onOpenAddItem={() => {
+            setActiveRowIdx(idx);
+            setAddItemOpen(true);
+          }}
         />
       ))}
 
@@ -360,10 +366,31 @@ export function LineItemsTable({
 
       <AddNewItemModal
         open={addItemOpen}
-        onClose={() => setAddItemOpen(false)}
+        onClose={() => {
+          setAddItemOpen(false);
+          setActiveRowIdx(null);
+        }}
         onSave={(item) => {
           onAddNewItem(item);
+          // Auto-select the new item into the row that opened the modal.
+          if (activeRowIdx !== null) {
+            formik.setFieldValue(`lineItems.${activeRowIdx}.itemId`, item.id);
+            formik.setFieldValue(`lineItems.${activeRowIdx}.name`, item.name);
+            formik.setFieldValue(
+              `lineItems.${activeRowIdx}.description`,
+              item.description ?? "",
+            );
+            formik.setFieldValue(
+              `lineItems.${activeRowIdx}.rate`,
+              String(item.unitPrice),
+            );
+            formik.setFieldValue(
+              `lineItems.${activeRowIdx}.unit`,
+              item.unit ?? "",
+            );
+          }
           setAddItemOpen(false);
+          setActiveRowIdx(null);
         }}
       />
     </Box>

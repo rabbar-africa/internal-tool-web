@@ -1,15 +1,16 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useUrlState } from "@/hooks/useUrlState";
 import type { TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { Invoice } from "@/shared/interface/invoice";
-import { downloadInvoicePdf } from "../../api/service";
+import { getInvoiceById } from "../../api/service";
 import {
   useDeleteInvoiceMutation,
   useGetAllInvoicesQuery,
 } from "../../api/query";
+import { useInvoicePdf } from "../../hooks/useInvoicePdf";
 import { toCsvRow } from "./columns";
 
 const FILTER_SCHEMA = {
@@ -27,9 +28,27 @@ export function useInvoiceList() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pendingDelete, setPendingDelete] = useState<Invoice | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { mutateAsync: deleteInvoice, isPending: isDeleting } =
     useDeleteInvoiceMutation();
+
+  // Generate PDFs client-side via the same hook the detail page uses. List rows
+  // only carry the lightweight shape, so fetch the full invoice before render.
+  const { download: downloadPdf } = useInvoicePdf();
+
+  const handleDownloadPdf = useCallback(
+    async (invoice: Invoice) => {
+      setDownloadingId(invoice.id);
+      try {
+        const { data } = await getInvoiceById(invoice.id);
+        await downloadPdf(data);
+      } finally {
+        setDownloadingId(null);
+      }
+    },
+    [downloadPdf],
+  );
 
   const { data, isLoading, isFetching } = useGetAllInvoicesQuery({
     page: filters.page,
@@ -71,8 +90,7 @@ export function useInvoiceList() {
       {
         label: "Download PDF",
         value: "pdf",
-        onClick: (invoice) =>
-          downloadInvoicePdf(invoice.id, invoice.invoiceNumber),
+        onClick: (invoice) => handleDownloadPdf(invoice),
       },
       {
         label: "Delete",
@@ -82,7 +100,7 @@ export function useInvoiceList() {
         onClick: (invoice) => setPendingDelete(invoice),
       },
     ],
-    [navigate],
+    [navigate, handleDownloadPdf],
   );
 
   const confirmDelete = async (id: string) => {
@@ -123,6 +141,7 @@ export function useInvoiceList() {
 
     // actions
     tableActions,
+    downloadingId,
     navigateToDetail: (invoice: Invoice) =>
       navigate(RouteConstants.invoices.detail.generate({ id: invoice.id })),
 

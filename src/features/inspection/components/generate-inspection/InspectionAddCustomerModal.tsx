@@ -8,7 +8,7 @@ import type { ICustomer } from "@/shared/interface/customer";
 interface InspectionAddCustomerModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (customer: ICustomer) => void;
+  onSave: (customer?: ICustomer) => void;
 }
 
 const validationSchema = Yup.object({
@@ -45,7 +45,7 @@ export function InspectionAddCustomerModal({
         country: "Nigeria",
       });
       // createCustomer returns response.data which is the ICustomer object
-      onSave(result);
+      onSave(result.data);
       resetForm();
     },
   });
