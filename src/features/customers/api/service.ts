@@ -28,7 +28,10 @@ export const getCustomerById = async (id: string) => {
 };
 
 export const createCustomer = async (payload: CreateCustomerPayload) => {
-  const response = await axios.post("/clients", payload);
+  const response = await axios.post<ApiResponse<ICustomer>>(
+    "/clients",
+    payload,
+  );
   return response.data;
 };
 
