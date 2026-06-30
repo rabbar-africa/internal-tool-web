@@ -2,7 +2,7 @@ import { Head } from "@/components/seo/head";
 import { UserDashboardContainer } from "@/components/hoc";
 import { PaymentDetail } from "../components/payment-detail/PaymentDetail";
 import { ForceDesktopView } from "@/components/common";
-
+//for deployment
 export function PaymentDetailPage() {
   return (
     <>
