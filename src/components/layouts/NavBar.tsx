@@ -40,7 +40,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
         <Flex alignItems="center" justifyContent="space-between">
           <Flex alignItems="center" gap="12px">
             {/* Hamburger – visible only on mobile */}
-            <Box display={{ base: "flex", md: "none" }}>
+            <Box display={{ base: "flex", lg: "none" }}>
               <IconButton
                 aria-label="Open menu"
                 variant="ghost"

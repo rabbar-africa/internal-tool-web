@@ -59,7 +59,7 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         },
       },
       {
-        accessorKey: "date",
+        accessorKey: "dueDate",
         header: "Due Date",
         cell: ({ getValue, row }) => {
           const value = getValue() as string;

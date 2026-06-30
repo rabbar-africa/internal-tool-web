@@ -4,7 +4,9 @@ import { RouteConstants } from "@/shared/constants/routes";
 import {
   useDeleteInvoiceMutation,
   useGetInvoiceByIdQuery,
+  useWriteOffInvoiceMutation,
 } from "../../api/query";
+import { useGetPaymentsQuery } from "@/features/payments/api";
 import { useInvoicePdf } from "../../hooks/useInvoicePdf";
 
 export function useInvoiceDetail() {
@@ -14,7 +16,14 @@ export function useInvoiceDetail() {
   const { data: invoiceData, isLoading, isError } = useGetInvoiceByIdQuery(id);
   const { mutateAsync: deleteInvoice, isPending: isDeleting } =
     useDeleteInvoiceMutation();
+  const { mutateAsync: writeOffInvoice, isPending: isWritingOff } =
+    useWriteOffInvoiceMutation();
   const invoice = invoiceData?.data;
+
+  // Payments linked to this invoice (via their allocations).
+  const { data: paymentsData, isLoading: isLoadingPayments } =
+    useGetPaymentsQuery(id ? { invoiceId: id } : undefined);
+  const payments = paymentsData?.data ?? [];
 
   const {
     download: downloadPdf,
@@ -24,12 +33,16 @@ export function useInvoiceDetail() {
   } = useInvoicePdf(invoice);
 
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [pendingWriteOff, setPendingWriteOff] = useState(false);
 
   const goBack = () => navigate(RouteConstants.invoices.base.path);
 
+  const viewPayment = (paymentId: string) =>
+    navigate(RouteConstants.payments.detail.generate({ id: paymentId }));
+
   const handleEdit = () => {
     if (!invoice) return;
-    navigate(RouteConstants.invoices.detail.generate({ id: invoice.id }));
+    navigate(RouteConstants.invoices.edit.generate({ id: invoice.id }));
   };
 
   const handleRecordPayment = () => {
@@ -51,10 +64,23 @@ export function useInvoiceDetail() {
     navigate(RouteConstants.invoices.base.path);
   };
 
+  const requestWriteOff = () => setPendingWriteOff(true);
+  const cancelWriteOff = () => setPendingWriteOff(false);
+
+  const confirmWriteOff = async (reason?: string) => {
+    if (!invoice) return;
+    await writeOffInvoice({ id: invoice.id, reason });
+    setPendingWriteOff(false);
+  };
+
   return {
     invoice,
     isLoading,
     isError,
+
+    payments,
+    isLoadingPayments,
+    viewPayment,
 
     goBack,
     handleEdit,
@@ -69,5 +95,11 @@ export function useInvoiceDetail() {
     cancelDelete,
     confirmDelete,
     isDeleting,
+
+    pendingWriteOff,
+    requestWriteOff,
+    cancelWriteOff,
+    confirmWriteOff,
+    isWritingOff,
   };
 }

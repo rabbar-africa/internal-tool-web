@@ -29,7 +29,8 @@ export function Login() {
     validateOnBlur: true,
     onSubmit: (values) => {
       loginMutation.mutate({
-        email: values.email,
+        // Normalize to guard against mobile keyboards that auto-capitalize.
+        email: values.email.trim().toLowerCase(),
         password: values.password,
       });
     },
@@ -56,10 +57,18 @@ export function Login() {
           }}
           mx={"auto"}
         >
-          <Text textStyle={"h3-bold"} color={"gray.900"} mb={".625rem"}>
+          <Text
+            textStyle={{ base: "h4-semibold", lg: "h3-bold" }}
+            color={"gray.900"}
+            mb={".625rem"}
+            textAlign={{ base: "center", lg: "left" }}
+          >
             Sign In to Your Account
           </Text>
-          <Text textStyle={"small-regular"}>
+          <Text
+            textStyle={"small-regular"}
+            textAlign={{ base: "center", lg: "left" }}
+          >
             Please enter your registered email address and password to access
             your workspace.
           </Text>
