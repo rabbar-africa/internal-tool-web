@@ -28,3 +28,6 @@ msc.*
 msc*
 CLAUDE.*
 **/for-claude/
+# Stale tsc emit artifacts that shadow vite.config.ts
+vite.config.js
+vite.config.d.ts

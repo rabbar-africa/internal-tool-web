@@ -17,6 +17,24 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
 const fileNameFor = (invoice: IInvoiceResponse) =>
   `${invoice.invoiceNumber || `invoice-${invoice.id ?? ""}`}.pdf`;
 
+/**
+ * Installed iOS PWAs (standalone mode) silently swallow `window.open` of a
+ * blob URL — the new tab/window never appears. Detect that case so we can fall
+ * back to a download instead. Android, desktop, and in-browser iOS are fine.
+ */
+const isIosStandalone = (): boolean => {
+  if (typeof navigator === "undefined" || typeof window === "undefined")
+    return false;
+  const isIos =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS 13+ reports as a Mac; disambiguate via touch support.
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone =
+    (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches;
+  return isIos && standalone;
+};
+
 export function useInvoicePdf(invoice?: IInvoiceResponse) {
   const { userOrganization } = useCurrentUser();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -90,6 +108,14 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   /** Generate and open the PDF in a new browser tab. */
   const open = useCallback(
     async (target?: IInvoiceResponse): Promise<void> => {
+      // Installed iOS PWAs can't open a blob URL in a new tab — download instead
+      // so the user still gets the PDF (they can preview/share it from Files).
+      if (isIosStandalone()) {
+        const blob = await getBlob(target);
+        const name = target ? fileNameFor(target) : fileName;
+        createDownloadLink(blob, name);
+        return;
+      }
       const url = await getBlobUrl(target);
       const win = window.open(url, "_blank");
       // Revoke once the tab has had time to load the document.
@@ -98,7 +124,7 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
       }
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     },
-    [getBlobUrl],
+    [getBlobUrl, getBlob, fileName],
   );
 
   /** Generate and open the system print dialog via a hidden iframe. */
