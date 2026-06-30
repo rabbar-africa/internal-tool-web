@@ -103,8 +103,6 @@ export function VerifyEmailStep({ email, onCompleted }: VerifyEmailStepProps) {
           Didn't get the code?
         </Text>
         <Text
-          as="button"
-          type="button"
           fontSize="13px"
           fontWeight="600"
           color={cooldown > 0 ? "gray.300" : "primary.400"}

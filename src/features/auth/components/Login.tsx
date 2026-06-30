@@ -3,7 +3,7 @@ import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff, Lock, Mail } from "@/assets/custom";
 import { Box, Button, Text, chakra } from "@chakra-ui/react";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useLoginMutation } from "../api";
@@ -150,13 +150,8 @@ export function Login() {
               color="gray.400"
             >
               Don't have an account?{" "}
-              <Text
-                as={RouterLink}
-                to={RouteConstants.auth.signup.path}
-                color="primary.400"
-                fontWeight="600"
-              >
-                Sign up
+              <Text asChild color="primary.400" fontWeight="600">
+                <Link to={RouteConstants.auth.signup.path}>Sign up</Link>
               </Text>
             </Text>
           </chakra.form>
