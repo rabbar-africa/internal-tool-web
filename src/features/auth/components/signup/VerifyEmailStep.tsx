@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Flex, Input, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Input,
+  Spinner,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import {
   useResendVerificationMutation,
   useVerifyEmailMutation,
 } from "../../api";
 
-const RESEND_COOLDOWN = 60; // seconds
-
+const RESEND_COOLDOWN = 30; // second
 interface VerifyEmailStepProps {
   email?: string;
   /** Called once the email is successfully verified. */
@@ -102,15 +109,24 @@ export function VerifyEmailStep({ email, onCompleted }: VerifyEmailStepProps) {
         <Text fontSize="13px" color="gray.400">
           Didn't get the code?
         </Text>
-        <Text
+        <Flex
+          align="center"
+          gap="1.5"
           fontSize="13px"
           fontWeight="600"
-          color={cooldown > 0 ? "gray.300" : "primary.400"}
-          cursor={cooldown > 0 ? "default" : "pointer"}
+          color={cooldown > 0 || isResending ? "gray.300" : "primary.400"}
+          cursor={cooldown > 0 || isResending ? "default" : "pointer"}
           onClick={handleResend}
         >
-          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
-        </Text>
+          {isResending && <Spinner size="xs" />}
+          <Text>
+            {isResending
+              ? "Sending..."
+              : cooldown > 0
+                ? `Resend in ${cooldown}s`
+                : "Resend code"}
+          </Text>
+        </Flex>
       </Flex>
     </Stack>
   );
