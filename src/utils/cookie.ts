@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import type { DurationType } from "@/shared/interface/time";
 
-const cookiePrefix = "hanypay_super_admin__";
+const cookiePrefix = "rabbar_app__";
 
 export type CookieKeyType =
   | "refresh_token"
@@ -50,7 +50,10 @@ function serializeCookie(
 ): string {
   const {
     duration = DEFAULT_EXPIRY_DURATION,
-    secure = true,
+    // Secure cookies are dropped by browsers over plain http (e.g. localhost),
+    // so only flag them as secure when actually served over https.
+    secure = typeof window !== "undefined" &&
+      window.location.protocol === "https:",
     sameSite = "strict",
     path = "/",
     domain,

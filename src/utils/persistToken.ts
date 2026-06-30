@@ -1,31 +1,32 @@
 import type { DurationType } from "@/shared/interface/time";
-import storage from "./storage";
+import cookie from "./cookie";
 import { access_token, refresh_token } from "@/shared/constants/storage";
 
 export function getToken() {
-  const accessToken = storage.getValue(access_token);
-  const refreshToken = storage.getValue(refresh_token);
+  const accessToken = cookie.getValue<string>(access_token);
+  const refreshToken = cookie.getValue<string>(refresh_token);
 
   return {
     accessToken,
     refreshToken,
   };
 }
+
 export function setAccessToken(
   token: string,
   duration: DurationType = { unit: "DAY", value: 30 },
 ) {
-  storage.setValue(access_token, token, duration);
+  cookie.setValue(access_token, token, { duration });
 }
 
 export function setRefreshToken(
   token: string,
   duration: DurationType = { unit: "DAY", value: 30 },
 ) {
-  storage.setValue(refresh_token, token, duration);
+  cookie.setValue(refresh_token, token, { duration });
 }
 
 export function removeToken() {
-  storage.clearValue(access_token);
-  storage.clearValue(refresh_token);
+  cookie.clearValue(access_token);
+  cookie.clearValue(refresh_token);
 }

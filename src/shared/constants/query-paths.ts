@@ -8,6 +8,9 @@ export const QUERY_PATH = {
     refreshToken: "auth/refresh-token",
     getCurrentUser: "auth/me",
     getUserOrganization: "/organizations",
+    register: "organizations/register",
+    verifyEmail: "auth/verify-email",
+    resendVerification: "auth/resend-verification",
   },
   users: {
     getAccountUsers: "accounts/users",

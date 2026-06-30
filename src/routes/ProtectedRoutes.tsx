@@ -2,6 +2,7 @@
 // import SectionLoader from '@/components/common/SectionLoader';
 import SectionLoader from "@/components/common/SectionLoader";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
+import { EmailVerifyGate } from "@/features/auth/components/EmailVerifyGate";
 import { RouteConstants } from "@/shared/constants/routes";
 import { getToken, removeToken } from "@/utils/persistToken";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
@@ -12,7 +13,12 @@ export default function ProtectedRoutes() {
 
   const isAuthenticated = Boolean(token?.accessToken);
 
-  const { isLoading, isSuccess, isError } = useGetCurrentUserQuery({
+  const {
+    data: user,
+    isLoading,
+    isSuccess,
+    isError,
+  } = useGetCurrentUserQuery({
     enabled: isAuthenticated,
   });
   if (!isAuthenticated) {
@@ -42,6 +48,10 @@ export default function ProtectedRoutes() {
   }
 
   if (isSuccess) {
+    // Gate unverified users behind the OTP screen before any protected route.
+    if (user && user.isEmailVerified === false) {
+      return <EmailVerifyGate email={user.email} />;
+    }
     return <Outlet />;
   }
 

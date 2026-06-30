@@ -4,6 +4,8 @@ import type {
   LoginCredentials,
   LoginResponse,
   RefreshTokenResponse,
+  RegisterPayload,
+  RegisterResponse,
 } from "./types";
 import { type ApiResponse } from "@/shared/interface/api";
 import { type IUser } from "@/shared/interface/user";
@@ -18,6 +20,26 @@ export const authService = {
       },
     );
     return response.data.data;
+  },
+
+  register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
+    const response = await axios.post<{ data: RegisterResponse }>(
+      QUERY_PATH.auth.register,
+      payload,
+    );
+    return response.data.data;
+  },
+
+  verifyEmail: async (code: string): Promise<IUser> => {
+    const response = await axios.post<{ data: IUser }>(
+      QUERY_PATH.auth.verifyEmail,
+      { code },
+    );
+    return response.data.data;
+  },
+
+  resendVerification: async (): Promise<void> => {
+    await axios.post(QUERY_PATH.auth.resendVerification);
   },
 
   refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {

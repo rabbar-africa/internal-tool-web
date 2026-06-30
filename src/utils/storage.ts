@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import type { DurationType } from "@/shared/interface/time";
 
-const storagePrefix = "rabbar_super_admin__";
+const storagePrefix = "rabbar_app__";
 
 export type keyType =
   | "refresh_token"
