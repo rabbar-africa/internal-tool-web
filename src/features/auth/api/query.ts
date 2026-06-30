@@ -7,7 +7,6 @@ import {
   removeToken,
 } from "@/utils/persistToken";
 import { toaster } from "@/components/ui";
-import { getErrorMessage } from "@/utils/handle-error";
 import { RouteConstants } from "@/shared/constants/routes";
 
 export function useLoginMutation() {
@@ -19,12 +18,6 @@ export function useLoginMutation() {
       setRefreshToken(data.refreshToken);
 
       window.location.replace(RouteConstants.overview.base.path);
-    },
-    onError: (error) => {
-      toaster.create({
-        type: "error",
-        description: getErrorMessage(error),
-      });
     },
   });
 }
@@ -38,24 +31,12 @@ export function useRegisterMutation() {
       setAccessToken(data.accessToken);
       setRefreshToken(data.refreshToken);
     },
-    onError: (error) => {
-      toaster.create({
-        type: "error",
-        description: getErrorMessage(error),
-      });
-    },
   });
 }
 
 export function useVerifyEmailMutation() {
   return useMutation({
     mutationFn: (code: string) => authService.verifyEmail(code),
-    onError: (error) => {
-      toaster.create({
-        type: "error",
-        description: getErrorMessage(error),
-      });
-    },
   });
 }
 
@@ -66,12 +47,6 @@ export function useResendVerificationMutation() {
       toaster.create({
         type: "success",
         description: "A new verification code has been sent to your email",
-      });
-    },
-    onError: (error) => {
-      toaster.create({
-        type: "error",
-        description: getErrorMessage(error),
       });
     },
   });
