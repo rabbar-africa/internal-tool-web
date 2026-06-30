@@ -3,9 +3,11 @@ import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff, Lock, Mail } from "@/assets/custom";
 import { Box, Button, Text, chakra } from "@chakra-ui/react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useLoginMutation } from "../api";
+import { RouteConstants } from "@/shared/constants/routes";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -140,6 +142,18 @@ export function Login() {
             >
               Sign In
             </Button>
+
+            <Text
+              textStyle="small-regular"
+              textAlign="center"
+              mt="1.5rem"
+              color="gray.400"
+            >
+              Don't have an account?{" "}
+              <Text asChild color="primary.400" fontWeight="600">
+                <Link to={RouteConstants.auth.signup.path}>Sign up</Link>
+              </Text>
+            </Text>
           </chakra.form>
         </Box>
       </Box>

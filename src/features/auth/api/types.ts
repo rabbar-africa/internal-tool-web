@@ -23,3 +23,22 @@ export interface RefreshTokenResponse {
   refreshToken: string;
   expiresIn: number;
 }
+
+export interface RegisterPayload {
+  name: string;
+  slug: string;
+  email?: string;
+  phone?: string;
+  logoUrl?: string;
+  website?: string;
+  taxId?: string;
+  timezone?: string;
+  currency?: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerEmail: string;
+  ownerPassword: string;
+  ownerPhone?: string;
+}
+
+export type RegisterResponse = LoginResponse;
