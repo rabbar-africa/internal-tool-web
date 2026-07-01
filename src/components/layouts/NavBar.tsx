@@ -1,7 +1,7 @@
 import { removeToken } from "@/utils/persistToken";
 import {
   Avatar,
-  Badge,
+  // Badge,
   Box,
   Flex,
   IconButton,
@@ -12,7 +12,7 @@ import {
 import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
-import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
+// import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 import { SearchInput } from "@/components/input/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -71,7 +71,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
             </Box>
 
             {/* Notification bell */}
-            <Box position="relative">
+            {/* <Box position="relative">
               <IconButton
                 aria-label="Notifications"
                 variant="ghost"
@@ -97,7 +97,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               >
                 3
               </Badge>
-            </Box>
+            </Box> */}
 
             <Menu.Root>
               <Menu.Trigger asChild>
