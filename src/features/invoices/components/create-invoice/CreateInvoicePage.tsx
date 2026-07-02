@@ -29,6 +29,7 @@ export function CreateInvoicePage({ mode = "create" }: CreateInvoicePageProps) {
     selectedCustomer,
     handleItemSelect,
     totals,
+    applyVat,
     getLineAmount,
     isPending,
     handleCancel,
@@ -124,7 +125,11 @@ export function CreateInvoicePage({ mode = "create" }: CreateInvoicePageProps) {
             <Separator borderColor="gray.75" />
 
             {/* Notes + Totals */}
-            <InvoiceFooter formik={formik} totals={totals} />
+            <InvoiceFooter
+              formik={formik}
+              totals={totals}
+              onApplyVat={applyVat}
+            />
           </Box>
 
           {/* Bottom actions */}
