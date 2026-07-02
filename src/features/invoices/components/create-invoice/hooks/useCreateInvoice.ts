@@ -25,6 +25,9 @@ import { formatTransactionSeries } from "@/utils/string-formatter";
 
 const today = new Date().toISOString().split("T")[0];
 
+// Nigerian standard VAT rate (7.5%).
+export const VAT_RATE = 0.075;
+
 // Generated once per session
 export const DEFAULT_INVOICE_PREFIX = "RINV-";
 export const DEFAULT_INVOICE_NEXT = String(
@@ -55,7 +58,7 @@ const defaultValues: CreateInvoiceFormValues = {
   discount: "0",
   discountType: "entityLevel",
   adjustment: "",
-  adjustmentDescription: "Adjustment",
+  adjustmentDescription: "VAT",
   isDiscountBeforeTax: true,
   lineItems: [{ ...EMPTY_LINE_ITEM }],
   status: InvoiceStatusDto.SENT,
@@ -367,6 +370,16 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     formik.values.adjustment,
   ]);
 
+  // Auto-calculate Nigerian VAT (7.5%) on the taxable base (subtotal less any
+  // entity-level discount) and set it as the adjustment.
+  const applyVat = useCallback(() => {
+    const base = Math.max(totals.subtotal - totals.entityDiscount, 0);
+    const vat = base * VAT_RATE;
+    formik.setFieldValue("adjustment", vat.toFixed(2));
+    formik.setFieldValue("adjustmentDescription", "VAT");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totals.subtotal, totals.entityDiscount]);
+
   const getLineAmount = (li: LineItemFormRow) => {
     const qty = parseFloat(li.quantity) || 0;
     const rate = parseFloat(li.rate) || 0;
@@ -408,6 +421,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     selectedCustomer,
     handleItemSelect,
     totals,
+    applyVat,
     getLineAmount,
     isPending: isEdit ? isUpdating : isCreating,
     handleCancel,

@@ -1,68 +1,79 @@
 import ReactApexChart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
-import { Box, Text } from "@chakra-ui/react";
-import { MOCK_DASHBOARD_STATS } from "@/shared/data/mock";
+import { Center, Text } from "@chakra-ui/react";
+import { DashboardCard } from "./DashboardCard";
+import { prettyStatus, statusColor } from "./chart-theme";
+import type { InvoiceStatusBreakdownItem } from "../../interface";
 
-const { paid, outstanding, overdue } =
-  MOCK_DASHBOARD_STATS.invoiceStatusBreakdown;
+interface InvoiceStatusChartProps {
+  data: InvoiceStatusBreakdownItem[];
+}
 
-const options: ApexOptions = {
-  chart: { type: "donut", fontFamily: "inherit" },
-  labels: ["Paid", "Outstanding", "Overdue"],
-  colors: ["#2e7d32", "#e65100", "#c62828"],
-  legend: { position: "bottom", fontSize: "12px" },
-  plotOptions: {
-    pie: {
-      donut: {
-        size: "70%",
-        labels: {
-          show: true,
-          total: {
+export function InvoiceStatusChart({ data }: InvoiceStatusChartProps) {
+  const items = data.filter((d) => d.count > 0);
+  const total = items.reduce((acc, d) => acc + d.count, 0);
+
+  const options: ApexOptions = {
+    chart: { type: "donut", fontFamily: "inherit" },
+    labels: items.map((d) => prettyStatus(d.status)),
+    colors: items.map((d, i) => statusColor(d.status, i)),
+    legend: {
+      position: "bottom",
+      fontSize: "12px",
+      markers: { size: 5 },
+      itemMargin: { horizontal: 6, vertical: 2 },
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "72%",
+          labels: {
             show: true,
-            label: "Total",
-            fontSize: "13px",
-            fontWeight: "600",
-            formatter: () => String(paid + outstanding + overdue),
+            value: {
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#3B3F46",
+            },
+            total: {
+              show: true,
+              label: "Invoices",
+              fontSize: "12px",
+              fontWeight: "500",
+              color: "#9AA1AD",
+              formatter: () => String(total),
+            },
           },
         },
       },
     },
-  },
-  dataLabels: { enabled: false },
-  stroke: { width: 0 },
-  tooltip: {
-    y: {
-      formatter: (val) => `${val} invoice${val !== 1 ? "s" : ""}`,
+    dataLabels: { enabled: false },
+    stroke: { width: 2, colors: ["#fff"] },
+    tooltip: {
+      y: {
+        formatter: (val) => `${val} invoice${val === 1 ? "" : "s"}`,
+      },
     },
-  },
-};
+  };
 
-const series = [paid, outstanding, overdue];
+  const series = items.map((d) => d.count);
 
-export function InvoiceStatusChart() {
   return (
-    <Box
-      bg="white"
-      rounded="lg"
-      shadow="sm"
-      p={{ base: "4", md: "6" }}
-      borderWidth="1px"
-      borderColor="gray.75"
-      overflow="hidden"
-    >
-      <Text fontSize="15px" fontWeight="600" color="gray.500" mb="1">
-        Invoice Status
-      </Text>
-      <Text fontSize="12px" color="gray.300" mb="2">
-        Breakdown by status
-      </Text>
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="donut"
-        height={280}
-        width="100%"
-      />
-    </Box>
+    <DashboardCard title="Invoice Status" subtitle="Breakdown by status">
+      {total > 0 ? (
+        <ReactApexChart
+          options={options}
+          series={series}
+          type="donut"
+          height={280}
+          width="100%"
+        />
+      ) : (
+        <Center h="280px">
+          <Text fontSize="13px" color="gray.300">
+            No invoices yet
+          </Text>
+        </Center>
+      )}
+    </DashboardCard>
   );
 }

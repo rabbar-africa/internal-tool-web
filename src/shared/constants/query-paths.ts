@@ -11,9 +11,13 @@ export const QUERY_PATH = {
     register: "organizations/register",
     verifyEmail: "auth/verify-email",
     resendVerification: "auth/resend-verification",
+    getCurrentSubscription: "/subscriptions/me",
   },
   users: {
     getAccountUsers: "accounts/users",
     getAdminUsers: "admin/users",
+  },
+  analytics: {
+    dashboard: "analytics/dashboard",
   },
 };

@@ -8,6 +8,7 @@ import {
 } from "@/utils/persistToken";
 import { toaster } from "@/components/ui";
 import { RouteConstants } from "@/shared/constants/routes";
+import { customQueryKey } from "@/shared/constants/query-keys";
 
 export function useLoginMutation() {
   return useMutation({
@@ -54,7 +55,7 @@ export function useResendVerificationMutation() {
 
 export function useGetCurrentUserQuery(options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: ["auth", "current-user"],
+    queryKey: [customQueryKey.user.getMe],
     queryFn: () => authService.getCurrentUser(),
     enabled: options?.enabled ?? true,
     retry: false,
@@ -67,3 +68,14 @@ export function useLogout() {
     window.location.replace(RouteConstants.auth.login.path);
   };
 }
+
+export const useGetCurrentSubscriptionQuery = (options?: {
+  enabled?: boolean;
+}) => {
+  return useQuery({
+    queryKey: [customQueryKey.user.getCurrentSubscription],
+    queryFn: () => authService.getCurrentSubscription(),
+    enabled: options?.enabled ?? true,
+    retry: false,
+  });
+};
