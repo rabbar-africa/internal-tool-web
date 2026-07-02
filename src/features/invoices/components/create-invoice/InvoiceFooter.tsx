@@ -16,9 +16,14 @@ interface Totals {
 interface InvoiceFooterProps {
   formik: FormikProps<CreateInvoiceFormValues>;
   totals: Totals;
+  onApplyVat: () => void;
 }
 
-export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
+export function InvoiceFooter({
+  formik,
+  totals,
+  onApplyVat,
+}: InvoiceFooterProps) {
   const { formatMoney } = useFormatMoney();
   const { subtotal, entityDiscount, adjustmentVal, total } = totals;
 
@@ -107,9 +112,28 @@ export function InvoiceFooter({ formik, totals }: InvoiceFooterProps) {
 
           <Flex justify="space-between" align="center" py="2" gap="4">
             <Box>
-              <Text fontSize="13px" color="gray.400">
-                Adjustment
-              </Text>
+              <Flex align="center" gap="2">
+                {/* <Text fontSize="13px" color="gray.400">
+                  Adjustment
+                </Text> */}
+                <Box
+                  border={"1px solid black"}
+                  padding={"2px 4px"}
+                  rounded={"10px"}
+                  h="auto"
+                  cursor={"pointer"}
+                  onClick={onApplyVat}
+                >
+                  <Text
+                    p="0"
+                    fontSize="11px"
+                    fontWeight="700"
+                    color="primary.500"
+                  >
+                    Apply VAT (7.5%)
+                  </Text>
+                </Box>
+              </Flex>
               <CustomInput
                 placeholder="Label"
                 name="adjustmentDescription"

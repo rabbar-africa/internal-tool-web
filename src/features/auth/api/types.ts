@@ -42,3 +42,27 @@ export interface RegisterPayload {
 }
 
 export type RegisterResponse = LoginResponse;
+
+export type SubscriptionStatus =
+  | "ACTIVE"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "INACTIVE";
+
+export interface SubscriptionPlan {
+  id: string;
+  tier: string;
+  name: string;
+}
+
+export interface Subscription {
+  id: string;
+  status: SubscriptionStatus;
+  plan: SubscriptionPlan;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  expiresAt: string;
+  daysUntilExpiry: number;
+  isExpiringSoon: boolean;
+  isExpired: boolean;
+}

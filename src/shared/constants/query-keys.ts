@@ -5,6 +5,7 @@ export const customQueryKey = {
     getMyPermissions: "get-my-permissions",
     getMyTeams: "get-my-teams",
     getAllMyTeams: "get-all-my-teams",
+    getCurrentSubscription: "get-current-subscription",
   },
 
   roles: {
@@ -57,6 +58,9 @@ export const customQueryKey = {
     getById: "get-inspection-by-id",
   },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
+  analytics: {
+    dashboard: "get-dashboard-analytics",
+  },
   organizations: {
     details: "get-organization-details",
     addresses: "get-organization-addresses",
