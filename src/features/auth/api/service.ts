@@ -6,6 +6,7 @@ import type {
   RefreshTokenResponse,
   RegisterPayload,
   RegisterResponse,
+  Subscription,
 } from "./types";
 import { type ApiResponse } from "@/shared/interface/api";
 import { type IUser } from "@/shared/interface/user";
@@ -53,6 +54,13 @@ export const authService = {
   getCurrentUser: async () => {
     const response = await axios.get<ApiResponse<IUser>>(
       QUERY_PATH.auth.getCurrentUser,
+    );
+    return response.data.data;
+  },
+
+  getCurrentSubscription: async (): Promise<Subscription | null> => {
+    const response = await axios.get<ApiResponse<Subscription | null>>(
+      QUERY_PATH.auth.getCurrentSubscription,
     );
     return response.data.data;
   },

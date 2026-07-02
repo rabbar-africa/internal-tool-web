@@ -1,7 +1,7 @@
 import { AuthRoutes } from "@/features/auth/routes";
 import { type RouteObject } from "react-router-dom";
 import { BaseApp } from "./BaseApp";
-import { RouteError } from "@/components/error";
+import { NotFound, RouteError } from "@/components/error";
 import ProtectedRoutes from "./ProtectedRoutes";
 import { DashboardRoutes } from "./DashboardRoutes";
 
@@ -21,6 +21,6 @@ export const RoutesList: RouteObject[] = [
   },
   {
     path: "*",
-    element: <div>Not Found</div>,
+    element: <NotFound />,
   },
 ];
