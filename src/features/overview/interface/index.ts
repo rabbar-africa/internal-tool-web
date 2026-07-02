@@ -1,3 +1,12 @@
+export interface DashboardAnalyticsFilter {
+  /** Start of the reporting period (ISO date). */
+  from?: string;
+  /** End of the reporting period (ISO date). */
+  to?: string;
+  /** Number of months in the revenue trend series (1–36). */
+  trendMonths?: number;
+}
+
 export interface DashboardPeriod {
   from: string;
   to: string;
@@ -29,6 +38,12 @@ export interface TopCustomer {
   customerId: string;
   customerName: string;
   total: number;
+}
+
+export interface TopDebtor {
+  customerId: string;
+  customerName: string;
+  amountOwed: number;
 }
 
 /** Chart-ready monthly bucket — fixed buckets, zero-filled by the API. */
@@ -63,6 +78,7 @@ export interface DashboardAnalytics {
   summary: DashboardSummary;
   invoiceStatusBreakdown: InvoiceStatusBreakdownItem[];
   topCustomers: TopCustomer[];
+  topDebtors: TopDebtor[];
   revenueTrend: RevenueTrendPoint[];
   recentInvoices: RecentInvoice[];
   recentPayments: RecentPayment[];

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Center, Grid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { UserDashboardContainer } from "@/components/hoc";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -5,9 +6,16 @@ import { StatCardsGrid } from "./StatCardsGrid";
 import { RevenueTrendChart } from "./RevenueTrendChart";
 import { InvoiceStatusChart } from "./InvoiceStatusChart";
 import { TopCustomersPanel } from "./TopCustomersPanel";
-import { RecentInvoicesPanel } from "./RecentInvoicesPanel";
+import { TopDebtorsPanel } from "./TopDebtorsPanel";
+// import { RecentInvoicesPanel } from "./RecentInvoicesPanel";
+import {
+  DashboardFilters,
+  DEFAULT_PRESET,
+  getPresetFilter,
+} from "./DashboardFilters";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
 import { useGetDashboardAnalyticsQuery } from "../../api";
+import type { DashboardAnalyticsFilter } from "../../interface";
 
 function formatPeriod(orgName: string, from?: string, to?: string): string {
   const fallback = `Financial overview for ${orgName}`;
@@ -26,7 +34,10 @@ function formatPeriod(orgName: string, from?: string, to?: string): string {
 }
 
 export function DashboardPage() {
-  const { data, isLoading, isError } = useGetDashboardAnalyticsQuery();
+  const [filter, setFilter] = useState<DashboardAnalyticsFilter>(() =>
+    getPresetFilter(DEFAULT_PRESET),
+  );
+  const { data, isLoading, isError } = useGetDashboardAnalyticsQuery(filter);
   const { data: user } = useGetCurrentUserQuery();
   const currency = data?.currency ?? "NGN";
   const orgName = user?.organization?.name ?? "your organization";
@@ -37,6 +48,7 @@ export function DashboardPage() {
         <PageHeader
           title="Dashboard"
           subtitle={formatPeriod(orgName, data?.period?.from, data?.period?.to)}
+          action={<DashboardFilters onChange={setFilter} />}
         />
 
         {isError ? (
@@ -58,7 +70,26 @@ export function DashboardPage() {
               currency={currency}
               isLoading={isLoading}
             />
-
+            <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
+              {isLoading || !data ? (
+                <>
+                  <Skeleton height="260px" rounded="xl" />
+                  <Skeleton height="260px" rounded="xl" />
+                </>
+              ) : (
+                <>
+                  <TopCustomersPanel
+                    data={data.topCustomers}
+                    currency={currency}
+                  />
+                  <TopDebtorsPanel data={data.topDebtors} currency={currency} />
+                  {/* <RecentInvoicesPanel
+                    data={data.recentInvoices}
+                    currency={currency}
+                  /> */}
+                </>
+              )}
+            </Grid>
             <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
               {isLoading || !data ? (
                 <>
@@ -72,26 +103,6 @@ export function DashboardPage() {
                     currency={currency}
                   />
                   <InvoiceStatusChart data={data.invoiceStatusBreakdown} />
-                </>
-              )}
-            </Grid>
-
-            <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
-              {isLoading || !data ? (
-                <>
-                  <Skeleton height="260px" rounded="xl" />
-                  <Skeleton height="260px" rounded="xl" />
-                </>
-              ) : (
-                <>
-                  <TopCustomersPanel
-                    data={data.topCustomers}
-                    currency={currency}
-                  />
-                  <RecentInvoicesPanel
-                    data={data.recentInvoices}
-                    currency={currency}
-                  />
                 </>
               )}
             </Grid>
