@@ -83,7 +83,7 @@ export function AddNewCustomerModal({
       // from the form values so the combobox always has id/displayName/email to
       // select on, even if the response omits a field.
       const serverCustomer = (res?.data ?? res ?? {}) as Partial<ICustomer>;
-      const created: ICustomer = {
+      const created = {
         firstName: values.firstName,
         middleName: "",
         lastName: values.lastName,
@@ -112,11 +112,17 @@ export function AddNewCustomerModal({
         postalCode: null,
         status: "active",
         emailMarketingConsent: false,
+        followUpDate: null,
+        followUpDays: null,
+        followUpDue: false,
+        followUpInDays: null,
+        followUpNote: null,
+        followUpSetAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         ...serverCustomer,
         id: serverCustomer.id ?? "",
-      };
+      } as ICustomer;
 
       onSave(created);
       resetForm();

@@ -43,6 +43,30 @@ export const updateCustomer = async (
   return response.data;
 };
 
+// ── Follow-up ─────────────────────────────────────────────────────────────────
+
+export interface FollowUpPayload {
+  /** Interval, in days, used to schedule the next follow-up. */
+  days?: number;
+  /** Next date customer care should reach out (ISO date). */
+  date?: string;
+  /** Optional reason / context for the follow-up. */
+  note?: string;
+}
+
+export const updateClientFollowUp = async (
+  id: string,
+  payload: FollowUpPayload,
+) => {
+  const response = await axios.post(`/clients/${id}/follow-up`, payload);
+  return response.data;
+};
+
+export const deleteClientFollowUp = async (id: string) => {
+  const response = await axios.delete(`/clients/${id}/follow-up`);
+  return response.data;
+};
+
 // ── Vehicles ──────────────────────────────────────────────────────────────────
 
 export interface Vehicle {
