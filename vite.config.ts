@@ -20,62 +20,17 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       svgr(),
+      // PWA removed. `selfDestroying` keeps emitting a service worker at the
+      // same /sw.js URL, but its only job is to unregister any previously
+      // installed worker and delete its precached caches, then reload clients
+      // with fresh network content. This is what unsticks devices (e.g. iOS
+      // Safari/Chrome) that cached the old app shell. Once all clients have
+      // loaded this at least once, vite-plugin-pwa can be uninstalled entirely.
       VitePWA({
-        // New builds are fetched in the background and applied on the next full
-        // app reopen — no store, no prompt, no manual update step for users.
-        registerType: "autoUpdate",
-        // Plugin injects the service-worker registration for us; no extra code.
+        selfDestroying: true,
         injectRegister: "auto",
-        includeAssets: ["favicon.ico", "apple-touch-icon.png"],
-        manifest: {
-          name: "Rabbar Africa Internal Tool",
-          short_name: "Rabbar",
-          description:
-            "Rabbar Africa internal business dashboard — invoicing, inspection reports, and overview.",
-          theme_color: "#013064",
-          background_color: "#ffffff",
-          display: "standalone",
-          orientation: "portrait",
-          start_url: "/",
-          scope: "/",
-          icons: [
-            {
-              src: "pwa-192x192.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "pwa-512x512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "maskable-icon-512x512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "maskable",
-            },
-          ],
-        },
-        workbox: {
-          // Precache the built app shell so the app launches instantly and is
-          // installable. API calls live on a different origin (VITE_API_BASE_URL)
-          // and are intentionally NOT cached — every request hits the network,
-          // exactly like today, so there is no stale-data or offline-token risk.
-          globPatterns: ["**/*.{js,css,html,svg,png,ico,woff,woff2}"],
-          // Serve index.html for client-side routes in standalone mode.
-          navigateFallback: "index.html",
-          // Don't hijack cross-origin API requests with the SPA fallback.
-          navigateFallbackDenylist: [/^\/api/],
-          cleanupOutdatedCaches: true,
-        },
-        devOptions: {
-          // Keep the SW disabled in `yarn dev` to avoid caching surprises while
-          // developing; it activates in the production build/preview.
-          enabled: false,
-        },
+        // No web app manifest — this is no longer an installable PWA.
+        manifest: false,
       }),
     ],
     resolve: {
