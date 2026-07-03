@@ -14,6 +14,10 @@ const { CreateCustomer } = lazyImport(
   () => import("../pages/CreateCustomer"),
   "CreateCustomer",
 );
+const { EditCustomer } = lazyImport(
+  () => import("../pages/EditCustomer"),
+  "EditCustomer",
+);
 
 export const CustomerRoutes: RouteObject[] = [
   {
@@ -23,6 +27,10 @@ export const CustomerRoutes: RouteObject[] = [
   {
     path: RouteConstants.customers.create.path,
     element: <CreateCustomer />,
+  },
+  {
+    path: RouteConstants.customers.edit.path,
+    element: <EditCustomer />,
   },
   {
     path: RouteConstants.customers.detail.path,

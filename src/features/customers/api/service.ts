@@ -1,4 +1,5 @@
 import type {
+  ClientStats,
   CreateCustomerPayload,
   ICustomer,
 } from "@/shared/interface/customer";
@@ -27,6 +28,13 @@ export const getCustomerById = async (id: string) => {
   return response.data;
 };
 
+export const getClientStats = async (id: string): Promise<ClientStats> => {
+  const response = await axios.get<ApiResponse<ClientStats>>(
+    `/clients/${id}/stats`,
+  );
+  return response.data.data;
+};
+
 export const createCustomer = async (payload: CreateCustomerPayload) => {
   const response = await axios.post<ApiResponse<ICustomer>>(
     "/clients",
@@ -40,6 +48,30 @@ export const updateCustomer = async (
   payload: Partial<CreateCustomerPayload>,
 ) => {
   const response = await axios.put(`/clients/${id}`, payload);
+  return response.data;
+};
+
+// ── Follow-up ─────────────────────────────────────────────────────────────────
+
+export interface FollowUpPayload {
+  /** Interval, in days, used to schedule the next follow-up. */
+  days?: number;
+  /** Next date customer care should reach out (ISO date). */
+  date?: string;
+  /** Optional reason / context for the follow-up. */
+  note?: string;
+}
+
+export const updateClientFollowUp = async (
+  id: string,
+  payload: FollowUpPayload,
+) => {
+  const response = await axios.post(`/clients/${id}/follow-up`, payload);
+  return response.data;
+};
+
+export const deleteClientFollowUp = async (id: string) => {
+  const response = await axios.delete(`/clients/${id}/follow-up`);
   return response.data;
 };
 

@@ -1,6 +1,8 @@
-import { Avatar, Box, Flex, Text } from "@chakra-ui/react";
+import { Avatar, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
 import type { ICustomer } from "@/shared/interface/customer";
+import { CustomerFollowUp } from "./CustomerFollowUp";
+import { CustomerActionsMenu } from "./CustomerActionsMenu";
 
 const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
   CUSTOMER: { bg: "green.50", color: "green.600" },
@@ -42,44 +44,44 @@ export function CustomerDetailHeader({ customer }: CustomerDetailHeaderProps) {
         gradientTo="primary.50"
       />
 
-      <Flex
-        px={{ base: "5", md: "8" }}
-        pb="6"
-        pt="0"
-        gap="5"
-        align="flex-end"
-        direction={{ base: "column", sm: "row" }}
-      >
-        {/* Avatar overlapping the stripe */}
-        <Avatar.Root
-          size="2xl"
-          mt="-6"
-          bg="primary.200"
-          color="white"
-          borderWidth="3px"
-          borderColor="white"
-          shadow="md"
-          flexShrink={0}
-        >
-          <Avatar.Fallback fontWeight="700" fontSize="xl">
-            {initials}
-          </Avatar.Fallback>
-        </Avatar.Root>
+      <Box px={{ base: "4", md: "8" }} pb="6">
+        {/* Top row: avatar overlaps the stripe, actions stay top-right */}
+        <Flex justify="space-between" align="flex-start">
+          <Avatar.Root
+            size={{ base: "xl", md: "2xl" }}
+            mt="-6"
+            bg="primary.200"
+            color="white"
+            borderWidth="3px"
+            borderColor="white"
+            shadow="md"
+            flexShrink={0}
+          >
+            <Avatar.Fallback fontWeight="700" fontSize="xl">
+              {initials}
+            </Avatar.Fallback>
+          </Avatar.Root>
 
+          <Box pt="3" flexShrink={0}>
+            <CustomerActionsMenu customer={customer} />
+          </Box>
+        </Flex>
+
+        {/* Identity + meta */}
         <Flex
-          flex="1"
+          mt="3"
           justify="space-between"
-          align={{ base: "flex-start", md: "center" }}
+          align={{ base: "flex-start", md: "flex-end" }}
           direction={{ base: "column", md: "row" }}
-          gap="3"
-          pb="1"
+          gap="4"
         >
-          <Box>
+          <Box minW="0">
             <Text
-              fontSize="1.2rem"
+              fontSize={{ base: "1.05rem", md: "1.2rem" }}
               fontWeight="700"
               color="gray.600"
               lineHeight="1.2"
+              wordBreak="break-word"
             >
               {customer.displayName}
             </Text>
@@ -110,11 +112,18 @@ export function CustomerDetailHeader({ customer }: CustomerDetailHeaderProps) {
             </Flex>
           </Box>
 
-          <Text fontSize="11px" color="gray.300">
-            Since {moment(customer.createdAt).format("MMM YYYY")}
-          </Text>
+          <Stack
+            gap="2"
+            align={{ base: "flex-start", md: "flex-end" }}
+            flexShrink={0}
+          >
+            <CustomerFollowUp customer={customer} />
+            <Text fontSize="11px" color="gray.300">
+              Since {moment(customer.createdAt).format("MMM YYYY")}
+            </Text>
+          </Stack>
         </Flex>
-      </Flex>
+      </Box>
     </Box>
   );
 }
