@@ -41,6 +41,41 @@ export interface ICustomer {
   followUpSetAt: string | null;
 }
 
+export interface ClientStatsInvoiceRef {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  total: number;
+  balance: number;
+  status: string;
+}
+
+export interface ClientStatsPaymentRef {
+  id: string;
+  paymentNumber: string;
+  date: string;
+  amount: number;
+}
+
+export interface ClientStats {
+  clientId: string;
+  currency: string;
+  /** LTV — confirmed money actually collected (excl. soft-deleted payments). */
+  lifetimeValue: number;
+  /** Sum of invoice totals (excl. VOID/DELETED). */
+  totalInvoiced: number;
+  invoiceCount: number;
+  paidInvoiceCount: number;
+  /** totalInvoiced / invoiceCount. */
+  averageInvoiceValue: number;
+  /** Unpaid balance across open invoices. */
+  outstanding: number;
+  /** Open invoices past their due date. */
+  overdue: { amount: number; count: number };
+  lastInvoice: ClientStatsInvoiceRef | null;
+  lastPayment: ClientStatsPaymentRef | null;
+}
+
 export interface CreateCustomerPayload {
   email: string;
   phone: string;

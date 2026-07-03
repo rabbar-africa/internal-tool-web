@@ -1,4 +1,5 @@
 import type {
+  ClientStats,
   CreateCustomerPayload,
   ICustomer,
 } from "@/shared/interface/customer";
@@ -25,6 +26,13 @@ export const getCustomerById = async (id: string) => {
   const baseUrl = `/clients/${id}`;
   const response = await axios.get(baseUrl);
   return response.data;
+};
+
+export const getClientStats = async (id: string): Promise<ClientStats> => {
+  const response = await axios.get<ApiResponse<ClientStats>>(
+    `/clients/${id}/stats`,
+  );
+  return response.data.data;
 };
 
 export const createCustomer = async (payload: CreateCustomerPayload) => {
