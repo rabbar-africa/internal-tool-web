@@ -25,7 +25,7 @@ export function StatCard({
     <Card.Root
       bg="white"
       rounded="lg"
-      shadow="sm"
+      boxShadow="0 1px 2px rgba(16, 24, 40, 0.04)"
       borderWidth="1px"
       borderColor="gray.75"
       p="0"
@@ -45,8 +45,8 @@ export function StatCard({
             </Text>
             <Text
               fontSize="24px"
-              fontWeight="700"
-              color="gray.500"
+              fontWeight="500"
+              color="gray.900"
               lineHeight="1"
             >
               {value}

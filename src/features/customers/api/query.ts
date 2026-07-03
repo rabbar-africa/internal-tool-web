@@ -2,9 +2,13 @@ import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
 import {
   getCustomers,
   getCustomerById,
+  getClientStats,
   createCustomer,
   type CustomerFilter,
   updateCustomer,
+  updateClientFollowUp,
+  deleteClientFollowUp,
+  type FollowUpPayload,
   getVehiclesByClient,
   createVehicle,
   updateVehicle,
@@ -32,6 +36,13 @@ export const useGetCustomerByIdQuery = (id: string) =>
     enabled: Boolean(id),
   });
 
+export const useGetClientStatsQuery = (id: string) =>
+  useQuery({
+    queryKey: [customQueryKey.customers.stats, id],
+    queryFn: () => getClientStats(id),
+    enabled: Boolean(id),
+  });
+
 export const useCreateCustomerMutation = () => {
   return useMutation({
     mutationFn: (payload: CreateCustomerPayload) => createCustomer(payload),
@@ -51,6 +62,34 @@ export const useUpdateCustomerMutation = (id: string) => {
     meta: {
       successMessage: "Customer updated successfully",
       invalidatesQueryKeys: [[customQueryKey.customers.getAll]],
+    },
+  });
+};
+
+// ── Follow-up hooks ───────────────────────────────────────────────────────────
+
+export const useUpdateFollowUpMutation = (id: string) => {
+  return useMutation({
+    mutationFn: (payload: FollowUpPayload) => updateClientFollowUp(id, payload),
+    meta: {
+      successMessage: "Follow-up updated",
+      invalidatesQueryKeys: [
+        [customQueryKey.customers.getById, id],
+        [customQueryKey.customers.getAll],
+      ],
+    },
+  });
+};
+
+export const useDeleteFollowUpMutation = (id: string) => {
+  return useMutation({
+    mutationFn: () => deleteClientFollowUp(id),
+    meta: {
+      successMessage: "Follow-up removed",
+      invalidatesQueryKeys: [
+        [customQueryKey.customers.getById, id],
+        [customQueryKey.customers.getAll],
+      ],
     },
   });
 };

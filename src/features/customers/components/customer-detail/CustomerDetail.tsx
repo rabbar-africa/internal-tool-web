@@ -10,6 +10,7 @@ import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import type { ICustomer } from "@/shared/interface/customer";
 import {
+  useGetClientStatsQuery,
   useGetCustomerByIdQuery,
   useGetVehiclesByClientQuery,
 } from "../../api/query";
@@ -33,6 +34,9 @@ export function CustomerDetail() {
   const { data: customerQueryData, isLoading } = useGetCustomerByIdQuery(
     id ?? "",
   );
+  const { data: statsData, isLoading: statsLoading } = useGetClientStatsQuery(
+    id ?? "",
+  );
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useGetVehiclesByClientQuery(id ?? "");
   const { data: invoicesData, isLoading: invoicesLoading } =
@@ -44,10 +48,6 @@ export function CustomerDetail() {
   const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
   const customerInvoices: Invoice[] = invoicesData?.data ?? [];
   const customerPayments: IPaymentReceived[] = paymentsData?.data ?? [];
-  const totalPaid = customerPayments.reduce(
-    (s, p) => s + (Number(p.amount) || 0),
-    0,
-  );
 
   if (isLoading) {
     return <SectionLoader />;
@@ -69,11 +69,7 @@ export function CustomerDetail() {
 
         <CustomerDetailHeader customer={customer} />
 
-        <CustomerStats
-          totalPaid={totalPaid}
-          outstanding={customer.outstandingBalance ?? 0}
-          totalInvoices={customer.totalInvoices ?? 0}
-        />
+        <CustomerStats stats={statsData} isLoading={statsLoading} />
 
         <CustomerInfo customer={customer} />
 
