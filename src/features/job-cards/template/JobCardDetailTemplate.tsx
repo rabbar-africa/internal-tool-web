@@ -7,6 +7,7 @@ import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
+  JOB_CARD_STATUS_LABELS,
   JOB_CARD_STATUS_OPTIONS,
   type JobCardStatus,
 } from "@/shared/interface/job-card";
@@ -28,6 +29,9 @@ export function JobCardDetailTemplate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<JobCardStatus | null>(
+    null,
+  );
 
   const { data, isLoading } = useGetJobCardByIdQuery(id ?? "");
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } =
@@ -42,9 +46,10 @@ export function JobCardDetailTemplate() {
     return <Text color="gray.400">Job card not found.</Text>;
   }
 
-  const handleStatusChange = async (status: JobCardStatus) => {
-    if (status === jobCard.status) return;
-    await updateStatus({ id: jobCard.id, status });
+  const confirmStatusChange = async () => {
+    if (!pendingStatus) return;
+    await updateStatus({ id: jobCard.id, status: pendingStatus });
+    setPendingStatus(null);
   };
 
   const handleDelete = async () => {
@@ -114,7 +119,7 @@ export function JobCardDetailTemplate() {
           value={[jobCard.status]}
           onChange={(opt: { value: string[] }) => {
             const status = opt?.value?.[0] as JobCardStatus | undefined;
-            if (status) handleStatusChange(status);
+            if (status && status !== jobCard.status) setPendingStatus(status);
           }}
           rootProps={{ size: "sm", w: "auto" }}
           controlProps={{ w: "185px" }}
@@ -132,6 +137,25 @@ export function JobCardDetailTemplate() {
           </Box>
         </Stack>
       </Stack>
+
+      <ConsentDialog
+        open={Boolean(pendingStatus)}
+        onOpenChange={({ open }) => {
+          if (!open) setPendingStatus(null);
+        }}
+        variant="info"
+        heading={`Move ${jobCard.jobNumber} to ${
+          pendingStatus ? JOB_CARD_STATUS_LABELS[pendingStatus] : ""
+        }?`}
+        note={
+          pendingStatus === "DELIVERED" || pendingStatus === "CANCELLED"
+            ? "This closes the job card — the closed date will be set automatically."
+            : `Status will change from ${JOB_CARD_STATUS_LABELS[jobCard.status]}.`
+        }
+        confirmText="Yes, Update"
+        handleSubmit={confirmStatusChange}
+        isLoading={isUpdatingStatus}
+      />
 
       <ConsentDialog
         open={deleteOpen}

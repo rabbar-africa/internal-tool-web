@@ -8,6 +8,8 @@ interface LinkInvoiceModalProps {
   open: boolean;
   onClose: () => void;
   jobCardId: string;
+  /** Job card's client — only their invoices are offered for linking. */
+  clientId?: string | null;
   /** Invoices already on the job card — excluded from the picker. */
   linkedInvoiceIds: string[];
 }
@@ -16,11 +18,12 @@ export function LinkInvoiceModal({
   open,
   onClose,
   jobCardId,
+  clientId,
   linkedInvoiceIds,
 }: LinkInvoiceModalProps) {
   const [invoiceId, setInvoiceId] = useState("");
   const { data, isLoading } = useGetAllInvoicesQuery(
-    { limit: 100 },
+    { limit: 100, ...(clientId ? { customerId: clientId } : {}) },
     { enabled: open },
   );
   const { mutateAsync: linkInvoice, isPending } =
@@ -72,7 +75,11 @@ export function LinkInvoiceModal({
                   placeholder="Select invoice..."
                   options={options}
                   loading={isLoading}
-                  noOptionsText="No unlinked invoices found"
+                  noOptionsText={
+                    clientId
+                      ? "No unlinked invoices for this customer"
+                      : "No unlinked invoices found"
+                  }
                   value={invoiceId ? [invoiceId] : undefined}
                   onChange={(opt: { value: string[] }) =>
                     setInvoiceId(opt?.value?.[0] ?? "")

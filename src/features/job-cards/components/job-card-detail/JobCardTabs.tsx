@@ -514,6 +514,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
         open={linkInvoiceOpen}
         onClose={() => setLinkInvoiceOpen(false)}
         jobCardId={jobCard.id}
+        clientId={jobCard.clientId}
         linkedInvoiceIds={jobCard.invoices.map((invoice) => invoice.id)}
       />
       <LinkInspectionModal
