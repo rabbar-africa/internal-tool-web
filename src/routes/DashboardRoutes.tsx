@@ -7,6 +7,7 @@ import { InspectionRoutes } from "@/features/inspection/routes";
 import { InvoiceRoutes } from "@/features/invoices/routes";
 import { PaymentRoutes } from "@/features/payments/routes";
 import { CustomerRoutes } from "@/features/customers/routes";
+import { PaperworkRoutes } from "@/features/paperwork/routes";
 import { ItemRoutes } from "@/features/items/routes";
 import { ExpenseRoutes } from "@/features/expenses/routes";
 import { ReportRoutes } from "@/features/reports/routes";
@@ -39,6 +40,7 @@ export const DashboardRoutes: RouteObject = {
     ...InvoiceRoutes,
     ...PaymentRoutes,
     ...CustomerRoutes,
+    ...PaperworkRoutes,
     ...ItemRoutes,
     ...ExpenseRoutes,
     ...ReportRoutes,

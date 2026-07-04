@@ -13,6 +13,7 @@ import {
   DEFAULT_PRESET,
   getPresetFilter,
 } from "./DashboardFilters";
+import { ExpiringPaperworkPanel } from "@/features/paperwork/components/ExpiringPaperworkPanel";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
 import { useGetDashboardAnalyticsQuery } from "../../api";
 import type { DashboardAnalyticsFilter } from "../../interface";
@@ -83,13 +84,10 @@ export function DashboardPage() {
                     currency={currency}
                   />
                   <TopDebtorsPanel data={data.topDebtors} currency={currency} />
-                  {/* <RecentInvoicesPanel
-                    data={data.recentInvoices}
-                    currency={currency}
-                  /> */}
                 </>
               )}
             </Grid>
+            <ExpiringPaperworkPanel />
             <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
               {isLoading || !data ? (
                 <>
