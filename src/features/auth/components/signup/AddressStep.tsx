@@ -30,7 +30,7 @@ export function AddressStep({ onCompleted, onSkip }: AddressStepProps) {
 
   const formik = useFormik({
     initialValues: {
-      label: "",
+      label: "Head Office",
       type: "OFFICE" as OrgAddressType,
       attention: "",
       addressLine1: "",
@@ -67,14 +67,14 @@ export function AddressStep({ onCompleted, onSkip }: AddressStepProps) {
     <form onSubmit={formik.handleSubmit}>
       <Stack gap="4">
         <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-          <CustomInput
+          {/* <CustomInput
             label="Label"
             name="label"
             value={formik.values.label}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             placeholder="e.g. Head Office"
-          />
+          /> */}
           {/* <CustomSelect
             label="Type"
             options={TYPE_OPTIONS}
@@ -85,7 +85,7 @@ export function AddressStep({ onCompleted, onSkip }: AddressStepProps) {
           /> */}
         </Grid>
         <CustomInput
-          label="Address Line 1"
+          label="Address"
           required
           name="addressLine1"
           value={formik.values.addressLine1}
@@ -98,14 +98,14 @@ export function AddressStep({ onCompleted, onSkip }: AddressStepProps) {
               : undefined
           }
         />
-        <CustomInput
+        {/* <CustomInput
           label="Address Line 2"
           name="addressLine2"
           value={formik.values.addressLine2}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           placeholder="Optional"
-        />
+        /> */}
         <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr 1fr" }} gap="4">
           <CustomInput
             label="City"

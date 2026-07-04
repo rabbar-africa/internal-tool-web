@@ -39,6 +39,19 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   const { userOrganization } = useCurrentUser();
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Whether this device can share files via the native share sheet. True on
+  // most phones (iOS Safari, Android Chrome) and some desktops; use it to gate
+  // the "Send PDF" action so it only appears where it actually opens a share UI.
+  const canShareFiles = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const nav = navigator as Navigator & {
+      canShare?: (data?: ShareData) => boolean;
+    };
+    return (
+      typeof nav.share === "function" && typeof nav.canShare === "function"
+    );
+  }, []);
+
   const fileName = useMemo(
     () => `${invoice?.invoiceNumber || `invoice-${invoice?.id ?? ""}`}.pdf`,
     [invoice?.invoiceNumber, invoice?.id],
@@ -105,6 +118,43 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
     [getBlob, fileName],
   );
 
+  /**
+   * Generate the PDF and hand it to the OS share sheet (Web Share API level 2).
+   * On phones (iOS Safari / Android Chrome) this opens the native "Share" menu
+   * so the user can send the file straight to WhatsApp, Mail, Drive, etc. —
+   * friendlier than a download that lands buried in the Files app. Falls back to
+   * a normal download when file-level sharing isn't available.
+   */
+  const share = useCallback(
+    async (target?: IInvoiceResponse): Promise<void> => {
+      const file = await getFile(target);
+      const nav = navigator as Navigator & {
+        canShare?: (data?: ShareData) => boolean;
+      };
+      const subject = target ?? invoice;
+      const shareData: ShareData = {
+        files: [file],
+        title: file.name,
+        ...(subject?.invoiceNumber
+          ? { text: `Invoice ${subject.invoiceNumber}` }
+          : {}),
+      };
+
+      if (nav.canShare?.({ files: [file] })) {
+        try {
+          await nav.share(shareData);
+          return;
+        } catch (err) {
+          // User dismissed the sheet — respect that, don't force a download.
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          // Any other failure: fall through to a download so they still get it.
+        }
+      }
+      createDownloadLink(file, file.name);
+    },
+    [getFile, invoice],
+  );
+
   /** Generate and open the PDF in a new browser tab. */
   const open = useCallback(
     async (target?: IInvoiceResponse): Promise<void> => {
@@ -156,10 +206,12 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   return {
     fileName,
     isGenerating,
+    canShareFiles,
     getBlob,
     getFile,
     getBlobUrl,
     download,
+    share,
     open,
     print,
   };

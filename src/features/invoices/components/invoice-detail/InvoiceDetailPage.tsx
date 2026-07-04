@@ -18,6 +18,9 @@ export function InvoiceDetailPage() {
     handleEdit,
     handleRecordPayment,
     handleDownloadPdf,
+    handleSharePdf,
+    canShareFiles,
+    isSharing,
     isDownloading,
     pendingDelete,
     requestDelete,
@@ -57,6 +60,9 @@ export function InvoiceDetailPage() {
           onRecordPayment={handleRecordPayment}
           onWriteOff={requestWriteOff}
           onDownloadPdf={handleDownloadPdf}
+          onSharePdf={handleSharePdf}
+          canShare={canShareFiles}
+          isSharing={isSharing}
           onDelete={requestDelete}
           isDownloading={isDownloading}
         />
