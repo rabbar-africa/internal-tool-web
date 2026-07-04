@@ -2,35 +2,35 @@ import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
-const { CustomerList } = lazyImport(
-  () => import("../pages/CustomerList"),
-  "CustomerList",
+const { CustomerListPage } = lazyImport(
+  () => import("../pages/CustomerListPage"),
+  "CustomerListPage",
 );
 const { CustomerDetailPage } = lazyImport(
   () => import("../pages/CustomerDetailPage"),
   "CustomerDetailPage",
 );
-const { CreateCustomer } = lazyImport(
-  () => import("../pages/CreateCustomer"),
-  "CreateCustomer",
+const { CreateCustomerPage } = lazyImport(
+  () => import("../pages/CreateCustomerPage"),
+  "CreateCustomerPage",
 );
-const { EditCustomer } = lazyImport(
-  () => import("../pages/EditCustomer"),
-  "EditCustomer",
+const { EditCustomerPage } = lazyImport(
+  () => import("../pages/EditCustomerPage"),
+  "EditCustomerPage",
 );
 
 export const CustomerRoutes: RouteObject[] = [
   {
     path: RouteConstants.customers.base.path,
-    element: <CustomerList />,
+    element: <CustomerListPage />,
   },
   {
     path: RouteConstants.customers.create.path,
-    element: <CreateCustomer />,
+    element: <CreateCustomerPage />,
   },
   {
     path: RouteConstants.customers.edit.path,
-    element: <EditCustomer />,
+    element: <EditCustomerPage />,
   },
   {
     path: RouteConstants.customers.detail.path,

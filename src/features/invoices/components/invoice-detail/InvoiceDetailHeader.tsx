@@ -21,6 +21,10 @@ interface InvoiceDetailHeaderProps {
   onRecordPayment: () => void;
   onWriteOff: () => void;
   onDownloadPdf: () => Promise<void> | void;
+  onSharePdf: () => Promise<void> | void;
+  /** Whether this device supports the native file share sheet (phones). */
+  canShare: boolean;
+  isSharing: boolean;
   onDelete: () => void;
   isDownloading: boolean;
 }
@@ -31,6 +35,9 @@ export function InvoiceDetailHeader({
   onRecordPayment,
   onWriteOff,
   onDownloadPdf,
+  onSharePdf,
+  canShare,
+  isSharing,
   onDelete,
   isDownloading,
 }: InvoiceDetailHeaderProps) {
@@ -116,10 +123,25 @@ export function InvoiceDetailHeader({
                   </Menu.Item>
                 )}
 
+                {canShare && (
+                  <Menu.Item
+                    value="share-pdf"
+                    closeOnSelect={false}
+                    disabled={isSharing || isDownloading}
+                    onSelect={() => {
+                      // Builds the PDF, then opens the phone's native share
+                      // sheet (WhatsApp, Mail, …) via the Web Share API.
+                      void handleAsync(onSharePdf)();
+                    }}
+                  >
+                    {isSharing ? "Preparing…" : "Send PDF"}
+                  </Menu.Item>
+                )}
+
                 <Menu.Item
                   value="download-pdf"
                   closeOnSelect={false}
-                  disabled={isDownloading}
+                  disabled={isDownloading || isSharing}
                   onSelect={() => {
                     // closeOnSelect={false} keeps the menu open;
                     // handleAsync closes it after the work resolves.

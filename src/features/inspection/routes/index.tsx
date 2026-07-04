@@ -2,32 +2,32 @@ import { lazyImport } from "@/utils/lazyImports";
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 
-const { ViewAllInspectionReports } = lazyImport(
-  () => import("../pages/ViewAllReports"),
-  "ViewAllInspectionReports",
+const { ViewAllReportsPage } = lazyImport(
+  () => import("../pages/ViewAllReportsPage"),
+  "ViewAllReportsPage",
 );
 
-const { GenerateInspection } = lazyImport(
-  () => import("../pages/GenerateInspection"),
-  "GenerateInspection",
+const { GenerateInspectionPage } = lazyImport(
+  () => import("../pages/GenerateInspectionPage"),
+  "GenerateInspectionPage",
 );
 
-const { InspectionDetail } = lazyImport(
-  () => import("../pages/InspectionDetail"),
-  "InspectionDetail",
+const { InspectionDetailPage } = lazyImport(
+  () => import("../pages/InspectionDetailPage"),
+  "InspectionDetailPage",
 );
 
 export const InspectionRoutes: RouteObject[] = [
   {
     path: RouteConstants.inspection.base.path,
-    element: <ViewAllInspectionReports />,
+    element: <ViewAllReportsPage />,
   },
   {
     path: RouteConstants.inspection.createInspection.path,
-    element: <GenerateInspection />,
+    element: <GenerateInspectionPage />,
   },
   {
     path: RouteConstants.inspection.inspectionDetails.path,
-    element: <InspectionDetail />,
+    element: <InspectionDetailPage />,
   },
 ];

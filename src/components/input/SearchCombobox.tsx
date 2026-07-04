@@ -210,7 +210,11 @@ export function SearchCombobox({
             borderColor="gray.100"
             rounded="md"
             shadow="lg"
-            zIndex={1400}
+            zIndex="popover"
+            // Modal dialogs (ark/Radix) set body { pointer-events: none } while
+            // open; this portalled dropdown lives on <body>, so re-enable it or
+            // its options can't be clicked from inside a Dialog.
+            pointerEvents="auto"
             maxH="260px"
             display="flex"
             flexDirection="column"

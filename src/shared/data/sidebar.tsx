@@ -8,6 +8,7 @@ import { BriefCase } from "@/assets/custom/BriefCase";
 import { ClipboardTextIcon } from "@/assets/custom/ClipboardTextIcon";
 import { ChartBar } from "@/assets/custom/ChartBar";
 import { GearIcon } from "@/assets/custom/GearIcon";
+import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
 
 export const sideBarItems = [
   {
@@ -44,6 +45,13 @@ export const sideBarItems = [
     href: RouteConstants.customers.base.path,
     slug: "customers",
     paths: [RouteConstants.customers.base.path],
+  },
+  {
+    name: "Paperwork",
+    icon: ShieldCheckIcon,
+    href: RouteConstants.paperwork.base.path,
+    slug: "paperwork",
+    paths: [RouteConstants.paperwork.base.path],
   },
   {
     name: "Items / Services",

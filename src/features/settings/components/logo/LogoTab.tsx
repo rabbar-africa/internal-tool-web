@@ -75,7 +75,7 @@ export function LogoTab() {
             />
           ) : (
             <Text fontSize="12px" color="gray.300" textAlign="center" px="2">
-              No logo uploaded
+              Click to add logo
             </Text>
           )}
         </Box>

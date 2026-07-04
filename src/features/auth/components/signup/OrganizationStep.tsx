@@ -1,20 +1,21 @@
-import { useState } from "react";
-import { Box, Button, Grid, Stack, Text } from "@chakra-ui/react";
+import { useRef, useState } from "react";
+import { Box, Button, Flex, Grid, Image, Stack, Text } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { CustomInput, CustomSelect } from "@/components/input";
+import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff } from "@/assets/custom";
 import { useRegisterMutation } from "../../api";
+import { useUploadOrganizationLogo } from "@/features/settings/api";
 import type { RegisterPayload } from "../../api/types";
 
-const CURRENCY_OPTIONS = [
-  { label: "Nigerian Naira (NGN)", value: "NGN" },
-  { label: "US Dollar (USD)", value: "USD" },
-  { label: "British Pound (GBP)", value: "GBP" },
-  { label: "Euro (EUR)", value: "EUR" },
-  { label: "Ghanaian Cedi (GHS)", value: "GHS" },
-  { label: "Kenyan Shilling (KES)", value: "KES" },
-];
+// const CURRENCY_OPTIONS = [
+//   { label: "Nigerian Naira (NGN)", value: "NGN" },
+//   { label: "US Dollar (USD)", value: "USD" },
+//   { label: "British Pound (GBP)", value: "GBP" },
+//   { label: "Euro (EUR)", value: "EUR" },
+//   { label: "Ghanaian Cedi (GHS)", value: "GHS" },
+//   { label: "Kenyan Shilling (KES)", value: "KES" },
+// ];
 
 const validationSchema = Yup.object({
   name: Yup.string().trim().required("Organization name is required"),
@@ -46,6 +47,24 @@ interface OrganizationStepProps {
 export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
   const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync, isPending } = useRegisterMutation();
+  const { mutateAsync: uploadLogo } = useUploadOrganizationLogo();
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const clearLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -80,6 +99,18 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         ownerPhone: values.phone.trim(),
       };
       await mutateAsync(payload);
+
+      // Register persists the auth token, so the org now exists and we're
+      // authenticated — upload the logo if one was picked. Non-blocking: a
+      // failure shouldn't stop signup (it can be added later in Settings).
+      if (logoFile) {
+        try {
+          await uploadLogo(logoFile);
+        } catch {
+          // Ignored on purpose — logo is optional.
+        }
+      }
+
       onCompleted(payload.ownerEmail);
     },
   });
@@ -93,7 +124,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
           </Text>
           <Stack gap="4">
             <CustomInput
-              label="Organization Name"
+              label="Oganization Name"
               required
               name="name"
               value={formik.values.name}
@@ -103,6 +134,38 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
               error={
                 formik.touched.name && formik.errors.name
                   ? formik.errors.name
+                  : undefined
+              }
+              inputProps={{ id: "company" }}
+            />
+
+            <CustomInput
+              label="Oganization Email"
+              type="email"
+              required
+              name="email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              placeholder="you@example.com"
+              error={
+                formik.touched.email && formik.errors.email
+                  ? formik.errors.email
+                  : undefined
+              }
+            />
+
+            <CustomInput
+              label="Oganization Phone No"
+              required
+              name="phone"
+              value={formik.values.phone}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              placeholder="+234 800 000 0000"
+              error={
+                formik.touched.phone && formik.errors.phone
+                  ? formik.errors.phone
                   : undefined
               }
             />
@@ -125,7 +188,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
               />
             </Grid> */}
             <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-              <CustomSelect
+              {/* <CustomSelect
                 label="Currency"
                 options={CURRENCY_OPTIONS}
                 value={
@@ -134,16 +197,98 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
                 onChange={(opt: { value: string[] }) =>
                   formik.setFieldValue("currency", opt?.value?.[0] ?? "NGN")
                 }
-              />
-              <CustomInput
+              /> */}
+              {/* <CustomInput
                 label="Timezone"
                 name="timezone"
                 value={formik.values.timezone}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="Africa/Lagos"
-              />
+              /> */}
             </Grid>
+
+            {/* Company logo — optional. Uploaded right after the org is
+                created (see onSubmit). */}
+            <Box>
+              <Text fontSize="13px" fontWeight="500" color="gray.500" mb="2">
+                Oganization Logo{" "}
+                <Text as="span" color="gray.300" fontWeight="400">
+                  (optional)
+                </Text>
+              </Text>
+              <Flex align="center" gap="4">
+                <Box
+                  w="64px"
+                  h="64px"
+                  rounded="lg"
+                  borderWidth="1px"
+                  borderColor="gray.100"
+                  bg="gray.50"
+                  overflow="hidden"
+                  flexShrink={0}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  {logoPreview ? (
+                    <Image
+                      src={logoPreview}
+                      alt="Logo preview"
+                      w="full"
+                      h="full"
+                      objectFit="contain"
+                    />
+                  ) : (
+                    <Text
+                      fontSize="10px"
+                      color="gray.300"
+                      textAlign="center"
+                      px="1"
+                    >
+                      No logo
+                    </Text>
+                  )}
+                </Box>
+
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  style={{ display: "none" }}
+                  onChange={handleLogoChange}
+                />
+
+                <Stack gap="1.5">
+                  <Flex gap="2" wrap="wrap">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      {logoPreview ? "Change" : "Upload logo"}
+                    </Button>
+                    {logoFile && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        color="red.500"
+                        onClick={clearLogo}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </Flex>
+                  <Text fontSize="11px" color="gray.300">
+                    {logoFile
+                      ? logoFile.name
+                      : "PNG, JPG, SVG or WEBP. Shown on invoices."}
+                  </Text>
+                </Stack>
+              </Flex>
+            </Box>
           </Stack>
         </Box>
 
@@ -182,37 +327,10 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
                 }
               />
             </Grid>
-            <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-              <CustomInput
-                label="Email"
-                type="email"
-                required
-                name="email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                placeholder="you@example.com"
-                error={
-                  formik.touched.email && formik.errors.email
-                    ? formik.errors.email
-                    : undefined
-                }
-              />
-              <CustomInput
-                label="Phone"
-                required
-                name="phone"
-                value={formik.values.phone}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                placeholder="+234 800 000 0000"
-                error={
-                  formik.touched.phone && formik.errors.phone
-                    ? formik.errors.phone
-                    : undefined
-                }
-              />
-            </Grid>
+            <Grid
+              templateColumns={{ base: "1fr", sm: "1fr 1fr" }}
+              gap="4"
+            ></Grid>
             <CustomInput
               label="Password"
               required
@@ -243,7 +361,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         <Button
           type="submit"
           width="full"
-          loading={isPending}
+          loading={isPending || formik.isSubmitting}
           loadingText="Creating account..."
         >
           Create account
