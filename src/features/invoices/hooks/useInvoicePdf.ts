@@ -14,8 +14,22 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
  * invoice) — every action accepts an optional override argument.
  */
 
-const fileNameFor = (invoice: IInvoiceResponse) =>
-  `${invoice.invoiceNumber || `invoice-${invoice.id ?? ""}`}.pdf`;
+// Strip characters that aren't allowed in file names (customer names can
+// contain slashes, colons, etc.) and collapse whitespace.
+const sanitizeFileName = (value: string) =>
+  value
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** File name as "Customer Name - INV-000123.pdf" (falls back gracefully). */
+const fileNameFor = (invoice: IInvoiceResponse) => {
+  const name = sanitizeFileName(
+    invoice.customerName || invoice.client?.displayName || "",
+  );
+  const number = invoice.invoiceNumber || `invoice-${invoice.id ?? ""}`;
+  return `${name ? `${name} - ` : ""}${number}.pdf`;
+};
 
 /**
  * Installed iOS PWAs (standalone mode) silently swallow `window.open` of a
@@ -53,8 +67,8 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   }, []);
 
   const fileName = useMemo(
-    () => `${invoice?.invoiceNumber || `invoice-${invoice?.id ?? ""}`}.pdf`,
-    [invoice?.invoiceNumber, invoice?.id],
+    () => (invoice ? fileNameFor(invoice) : "invoice.pdf"),
+    [invoice],
   );
 
   /** Render the document to a Blob. */

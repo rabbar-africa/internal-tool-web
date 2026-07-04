@@ -7,7 +7,9 @@ import type { CreateOrgBankAccountPayload } from "@/shared/interface/settings";
 
 const validationSchema = Yup.object({
   accountName: Yup.string().required("Account name is required"),
-  accountNumber: Yup.string().required("Account number is required"),
+  accountNumber: Yup.string()
+    .required("Account number is required")
+    .matches(/^\d{10}$/, "Account number must be exactly 10 digits"),
   bankName: Yup.string().required("Bank name is required"),
 });
 
@@ -64,9 +66,14 @@ export function BankAccountStep({ onCompleted, onSkip }: BankAccountStepProps) {
           required
           name="accountNumber"
           value={formik.values.accountNumber}
-          onChange={formik.handleChange}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            // Digits only, capped at 10 (Nigerian account-number length).
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+            formik.setFieldValue("accountNumber", digits);
+          }}
           onBlur={formik.handleBlur}
           placeholder="0123456789"
+          inputProps={{ inputMode: "numeric", maxLength: 10 }}
           error={
             formik.touched.accountNumber && formik.errors.accountNumber
               ? formik.errors.accountNumber

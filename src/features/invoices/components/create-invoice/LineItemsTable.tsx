@@ -278,7 +278,10 @@ function LineItemRow({
             onBlur={formik.handleBlur}
             error={fieldError("description")}
           />
-          <Grid templateColumns="1fr 1fr 1fr" gap="3">
+          <Grid
+            templateColumns={{ base: "1fr 1fr", lg: "1fr 1fr 1fr" }}
+            gap="3"
+          >
             <CustomNumberInput
               label="Qty"
               placeholder="1"
