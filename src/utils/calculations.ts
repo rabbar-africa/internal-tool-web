@@ -3,6 +3,8 @@
  * All profit-related business logic lives here — keep UI components clean.
  */
 
+import { addComma } from "./format-number";
+
 export function calculateProfit(
   totalAmount: number,
   totalExpenses: number,
@@ -26,15 +28,14 @@ export function getProfitStatus(marginPercent: number): ProfitStatus {
   return "loss";
 }
 
-export function formatCurrency(amount = 0, currency = "NGN"): string {
-  if (currency === "NGN") {
-    return `₦${amount?.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
+export function formatCurrency(
+  amount: number | string = 0,
+  currency = "NGN",
+): string {
+  // API values are sometimes strings; addComma coerces to a number and adds
+  // thousands separators (and 2 decimals only when there's a fractional part).
+  const formatted = addComma(amount);
+  return currency === "NGN" ? `₦${formatted}` : `${currency} ${formatted}`;
 }
 
 export function sumBy<T extends Record<string, unknown>>(

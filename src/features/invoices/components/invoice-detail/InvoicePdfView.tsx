@@ -4,6 +4,8 @@ import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
+import { Link } from "react-router-dom";
+import { RouteConstants } from "@/shared/constants/routes";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v: string) => moment(v).format("DD MMM YYYY");
@@ -147,9 +149,13 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
           <Text fontSize="12px" color="gray.400">
             Bill To
           </Text>
-          <Text fontSize="14px" fontWeight="700" color="gray.500">
-            {client?.displayName ?? invoice.customerName ?? "—"}
-          </Text>
+          <Link
+            to={RouteConstants.customers.detail.generate({ id: client.id })}
+          >
+            <Text fontSize="14px" fontWeight="700" color="gray.500">
+              {client?.displayName ?? invoice.customerName ?? "—"}
+            </Text>
+          </Link>
           {/* {invoice.billingAddress && (
             <Text fontSize="12px" color="gray.400" whiteSpace="pre-line">
               {invoice.billingAddress}

@@ -39,6 +39,15 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   const { userOrganization } = useCurrentUser();
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Whether to offer the "Send PDF" action. We only require navigator.share to
+  // exist (true on iOS Safari, iOS Chrome, Android). iOS Chrome exposes share
+  // but can't share *files* (no navigator.canShare), so share() below detects
+  // that at call time and falls back to opening the PDF in a viewer instead.
+  const canShareFiles = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    return typeof navigator.share === "function";
+  }, []);
+
   const fileName = useMemo(
     () => `${invoice?.invoiceNumber || `invoice-${invoice?.id ?? ""}`}.pdf`,
     [invoice?.invoiceNumber, invoice?.id],
@@ -105,6 +114,69 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
     [getBlob, fileName],
   );
 
+  /**
+   * Generate the PDF and hand it to the OS share sheet (Web Share API level 2).
+   *
+   * iOS Safari and Android Chrome can share the file directly (native "Share"
+   * menu → WhatsApp, Mail, Drive, …). iOS Chrome/Firefox/Edge expose
+   * navigator.share but CANNOT share files, so there we fall back to opening the
+   * PDF in a new tab where the browser's own Share/Save controls take over.
+   *
+   * The fallback tab must be opened synchronously (before awaiting the PDF),
+   * otherwise iOS pops-up-blocks it once the user gesture is gone.
+   */
+  const share = useCallback(
+    async (target?: IInvoiceResponse): Promise<void> => {
+      const nav = navigator as Navigator & {
+        canShare?: (data?: ShareData) => boolean;
+      };
+      // File-level sharing only exists where navigator.canShare does (iOS
+      // Safari, Android). Where it doesn't (iOS Chrome), pre-open a blank tab
+      // now, inside the user gesture, so we can show the PDF after generating.
+      const supportsFileShare = typeof nav.canShare === "function";
+      const fallbackWin = supportsFileShare ? null : window.open("", "_blank");
+
+      let file: File;
+      try {
+        file = await getFile(target);
+      } catch {
+        fallbackWin?.close();
+        return;
+      }
+
+      const subject = target ?? invoice;
+
+      if (supportsFileShare && nav.canShare?.({ files: [file] })) {
+        try {
+          await nav.share({
+            files: [file],
+            title: file.name,
+            ...(subject?.invoiceNumber
+              ? { text: `Invoice ${subject.invoiceNumber}` }
+              : {}),
+          });
+          return;
+        } catch (err) {
+          // User dismissed the sheet — respect that, don't force a fallback.
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          // Any other failure: fall through to opening the PDF.
+        }
+      }
+
+      // Fallback: show the PDF so the user can share/save it from the viewer.
+      const url = URL.createObjectURL(file);
+      if (fallbackWin) {
+        fallbackWin.location.href = url;
+      } else {
+        const win = window.open(url, "_blank");
+        // Popup blocked (e.g. after the await on a stricter browser) → download.
+        if (!win) createDownloadLink(file, file.name);
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    },
+    [getFile, invoice],
+  );
+
   /** Generate and open the PDF in a new browser tab. */
   const open = useCallback(
     async (target?: IInvoiceResponse): Promise<void> => {
@@ -156,10 +228,12 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
   return {
     fileName,
     isGenerating,
+    canShareFiles,
     getBlob,
     getFile,
     getBlobUrl,
     download,
+    share,
     open,
     print,
   };

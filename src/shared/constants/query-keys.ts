@@ -58,6 +58,24 @@ export const customQueryKey = {
     getAll: "get-all-inspections",
     getById: "get-inspection-by-id",
   },
+  jobCards: {
+    getAll: "get-all-job-cards",
+    getById: "get-job-card-by-id",
+    financials: "get-job-card-financials",
+  },
+  technicians: {
+    getAll: "get-all-technicians",
+    getById: "get-technician-by-id",
+  },
+  expenses: {
+    getAll: "get-all-expenses",
+    getById: "get-expense-by-id",
+  },
+  paperwork: {
+    getAll: "get-all-paperwork",
+    getById: "get-paperwork-by-id",
+    expiring: "get-expiring-paperwork",
+  },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
   analytics: {
     dashboard: "get-dashboard-analytics",

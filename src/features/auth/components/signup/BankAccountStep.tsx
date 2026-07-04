@@ -1,4 +1,4 @@
-import { Button, Flex, Grid, Stack } from "@chakra-ui/react";
+import { Button, Flex, Stack } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { CustomInput } from "@/components/input";
@@ -7,7 +7,9 @@ import type { CreateOrgBankAccountPayload } from "@/shared/interface/settings";
 
 const validationSchema = Yup.object({
   accountName: Yup.string().required("Account name is required"),
-  accountNumber: Yup.string().required("Account number is required"),
+  accountNumber: Yup.string()
+    .required("Account number is required")
+    .matches(/^\d{10}$/, "Account number must be exactly 10 digits"),
   bankName: Yup.string().required("Bank name is required"),
 });
 
@@ -46,6 +48,40 @@ export function BankAccountStep({ onCompleted, onSkip }: BankAccountStepProps) {
     <form onSubmit={formik.handleSubmit}>
       <Stack gap="4">
         <CustomInput
+          label="Bank Name"
+          required
+          name="bankName"
+          value={formik.values.bankName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          placeholder="e.g. Guaranty Trust Bank"
+          error={
+            formik.touched.bankName && formik.errors.bankName
+              ? formik.errors.bankName
+              : undefined
+          }
+        />
+        <CustomInput
+          label="Account Number"
+          required
+          name="accountNumber"
+          value={formik.values.accountNumber}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            // Digits only, capped at 10 (Nigerian account-number length).
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+            formik.setFieldValue("accountNumber", digits);
+          }}
+          onBlur={formik.handleBlur}
+          placeholder="0123456789"
+          inputProps={{ inputMode: "numeric", maxLength: 10 }}
+          error={
+            formik.touched.accountNumber && formik.errors.accountNumber
+              ? formik.errors.accountNumber
+              : undefined
+          }
+        />
+
+        <CustomInput
           label="Account Name"
           required
           name="accountName"
@@ -59,36 +95,6 @@ export function BankAccountStep({ onCompleted, onSkip }: BankAccountStepProps) {
               : undefined
           }
         />
-        <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-          <CustomInput
-            label="Account Number"
-            required
-            name="accountNumber"
-            value={formik.values.accountNumber}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            placeholder="0123456789"
-            error={
-              formik.touched.accountNumber && formik.errors.accountNumber
-                ? formik.errors.accountNumber
-                : undefined
-            }
-          />
-          <CustomInput
-            label="Bank Name"
-            required
-            name="bankName"
-            value={formik.values.bankName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            placeholder="e.g. Guaranty Trust Bank"
-            error={
-              formik.touched.bankName && formik.errors.bankName
-                ? formik.errors.bankName
-                : undefined
-            }
-          />
-        </Grid>
 
         {/* <CustomSwitch
           reversed

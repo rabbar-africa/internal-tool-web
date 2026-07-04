@@ -2,9 +2,9 @@ import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
-const { PaymentList } = lazyImport(
-  () => import("../pages/PaymentList"),
-  "PaymentList",
+const { PaymentListPage } = lazyImport(
+  () => import("../pages/PaymentListPage"),
+  "PaymentListPage",
 );
 const { CreatePaymentPage } = lazyImport(
   () => import("../pages/CreatePaymentPage"),
@@ -18,7 +18,7 @@ const { PaymentDetailPage } = lazyImport(
 export const PaymentRoutes: RouteObject[] = [
   {
     path: RouteConstants.payments.base.path,
-    element: <PaymentList />,
+    element: <PaymentListPage />,
   },
   {
     path: RouteConstants.payments.create.path,
