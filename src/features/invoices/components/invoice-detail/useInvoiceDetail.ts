@@ -27,6 +27,8 @@ export function useInvoiceDetail() {
 
   const {
     download: downloadPdf,
+    share: sharePdf,
+    canShareFiles,
     open: openPdf,
     print: printPdf,
     isGenerating: isDownloading,
@@ -34,6 +36,7 @@ export function useInvoiceDetail() {
 
   const [pendingDelete, setPendingDelete] = useState(false);
   const [pendingWriteOff, setPendingWriteOff] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const goBack = () => navigate(RouteConstants.invoices.base.path);
 
@@ -53,6 +56,16 @@ export function useInvoiceDetail() {
   const handleDownloadPdf = async () => {
     if (!invoice) return;
     await downloadPdf();
+  };
+
+  const handleSharePdf = async () => {
+    if (!invoice) return;
+    setIsSharing(true);
+    try {
+      await sharePdf();
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const requestDelete = () => setPendingDelete(true);
@@ -86,6 +99,9 @@ export function useInvoiceDetail() {
     handleEdit,
     handleRecordPayment,
     handleDownloadPdf,
+    handleSharePdf,
+    canShareFiles,
+    isSharing,
     openPdf,
     printPdf,
     isDownloading,

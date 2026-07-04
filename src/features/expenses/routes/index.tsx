@@ -2,22 +2,22 @@ import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
-const { ExpenseList } = lazyImport(
-  () => import("../pages/ExpenseList"),
-  "ExpenseList",
+const { ExpenseListPage } = lazyImport(
+  () => import("../pages/ExpenseListPage"),
+  "ExpenseListPage",
 );
-const { CreateExpense } = lazyImport(
-  () => import("../pages/CreateExpense"),
-  "CreateExpense",
+const { CreateExpensePage } = lazyImport(
+  () => import("../pages/CreateExpensePage"),
+  "CreateExpensePage",
 );
 
 export const ExpenseRoutes: RouteObject[] = [
   {
     path: RouteConstants.expenses.base.path,
-    element: <ExpenseList />,
+    element: <ExpenseListPage />,
   },
   {
     path: RouteConstants.expenses.create.path,
-    element: <CreateExpense />,
+    element: <CreateExpensePage />,
   },
 ];

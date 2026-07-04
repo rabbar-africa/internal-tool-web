@@ -205,18 +205,38 @@ function LineItemRow({
         </Flex>
       </Grid>
 
-      {/* Mobile layout */}
+      {/* Mobile layout — each row is a distinct card so rows are easy to tell
+          apart on small screens. */}
       <Box
-        px="4"
-        py="4"
-        borderBottomWidth="1px"
-        borderColor="gray.50"
         display={{ base: "block", lg: "none" }}
+        mx="3"
+        mt="3"
+        p="4"
+        bg="gray.25"
+        borderWidth="1px"
+        borderColor="gray.100"
+        rounded="xl"
+        shadow="xs"
       >
-        <Flex justify="space-between" align="center" mb="3">
-          <Text fontSize="13px" fontWeight="600" color="gray.400">
-            Item {idx + 1}
-          </Text>
+        <Flex
+          justify="space-between"
+          align="center"
+          mb="3"
+          pb="2.5"
+          borderBottomWidth="1px"
+          borderColor="gray.100"
+        >
+          <Box
+            bg="primary.50"
+            color="primary.500"
+            px="2.5"
+            py="1"
+            rounded="full"
+          >
+            <Text fontSize="12px" fontWeight="600">
+              Item {idx + 1}
+            </Text>
+          </Box>
           {canRemove && (
             <Button
               variant="ghost"
@@ -258,7 +278,10 @@ function LineItemRow({
             onBlur={formik.handleBlur}
             error={fieldError("description")}
           />
-          <Grid templateColumns="1fr 1fr 1fr" gap="3">
+          <Grid
+            templateColumns={{ base: "1fr 1fr", lg: "1fr 1fr 1fr" }}
+            gap="3"
+          >
             <CustomNumberInput
               label="Qty"
               placeholder="1"

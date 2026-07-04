@@ -18,7 +18,7 @@ export function DownloadButton<T extends Record<string, unknown>>({
   return (
     <Button
       variant="outline"
-      size={"sm"}
+      // size={"sm"}
       onClick={() => exportToCSV(data, filename, headers)}
       borderColor="gray.100"
       color="gray.500"

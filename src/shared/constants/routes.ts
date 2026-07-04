@@ -65,6 +65,10 @@ const items = {
   create: defineRoute("/items/create" as const),
 } as const;
 
+const paperwork = {
+  base: defineRoute("/paperwork" as const),
+} as const;
+
 const expenses = {
   base: defineRoute("/expenses" as const),
   create: defineRoute("/expenses/create" as const),
@@ -152,6 +156,7 @@ export const RouteConstants = {
   payments,
   customers,
   items,
+  paperwork,
   expenses,
   transactionLedger,
   wallet,
