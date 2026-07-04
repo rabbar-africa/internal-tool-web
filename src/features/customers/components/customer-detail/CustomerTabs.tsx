@@ -6,12 +6,13 @@ import { PlusIcon } from "@/assets/custom";
 import { useInvoiceListColumns } from "@/features/invoices/components/invoice-list/columns";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
+import type { JobCard } from "@/shared/interface/job-card";
 import type { Vehicle } from "../../api/service";
 import { paymentColumns, vehicleColumns } from "./columns";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
-const TAB_VALUES = ["invoices", "vehicles", "payments"] as const;
+const TAB_VALUES = ["invoices", "vehicles", "payments", "job-cards"] as const;
 const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
@@ -21,6 +22,8 @@ interface CustomerTabsProps {
   invoicesLoading: boolean;
   payments: IPaymentReceived[];
   paymentsLoading: boolean;
+  jobCards: JobCard[];
+  jobCardsLoading: boolean;
   onAddVehicle: () => void;
 }
 
@@ -31,6 +34,7 @@ export function CustomerTabs({
   invoicesLoading,
   payments,
   paymentsLoading,
+
   onAddVehicle,
 }: CustomerTabsProps) {
   const navigate = useNavigate();
