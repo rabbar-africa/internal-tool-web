@@ -4,7 +4,9 @@ import { TaskIcon } from "@/assets/custom/TasksIcon";
 import { FileTextIcon } from "@/assets/custom/FileTextIcon";
 import { Money } from "@/assets/custom/Money";
 import { UsersIcon } from "@/assets/custom/UsersIcon";
+import { UsersThree } from "@/assets/custom/UsersThree";
 import { BriefCase } from "@/assets/custom/BriefCase";
+import { ClipboardIcon } from "@/assets/custom/ClipboardIcon";
 import { ClipboardTextIcon } from "@/assets/custom/ClipboardTextIcon";
 import { ChartBar } from "@/assets/custom/ChartBar";
 import { GearIcon } from "@/assets/custom/GearIcon";
@@ -17,6 +19,13 @@ export const sideBarItems = [
     href: RouteConstants.overview.base.path,
     slug: "dashboard",
     paths: [RouteConstants.overview.base.path],
+  },
+  {
+    name: "Job Cards",
+    icon: ClipboardIcon,
+    href: RouteConstants.jobCards.base.path,
+    slug: "job-cards",
+    paths: [RouteConstants.jobCards.base.path],
   },
   {
     name: "Inspection",
@@ -45,6 +54,13 @@ export const sideBarItems = [
     href: RouteConstants.customers.base.path,
     slug: "customers",
     paths: [RouteConstants.customers.base.path],
+  },
+  {
+    name: "Technicians",
+    icon: UsersThree,
+    href: RouteConstants.technicians.base.path,
+    slug: "technicians",
+    paths: [RouteConstants.technicians.base.path],
   },
   {
     name: "Paperwork",

@@ -144,6 +144,8 @@ export interface CreateInvoicePayload {
   adjustment: string;
   adjustmentDescription: string;
   status: InvoiceStatusDto;
+  /** Links the invoice to a job card at creation time. */
+  jobCardId?: string;
 }
 
 export type UpdateInvoicePayload = Partial<CreateInvoicePayload>;

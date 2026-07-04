@@ -1,6 +1,6 @@
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useCreateInvoiceMutation,
@@ -137,6 +137,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const mode = options?.mode ?? "create";
   const isEdit = mode === "edit";
   const { id = "" } = useParams<{ id: string }>();
+  // Present when arriving from a job card's invoice tab — links on create.
+  const [searchParams] = useSearchParams();
+  const jobCardId = searchParams.get("jobCardId") ?? "";
 
   const navigate = useNavigate();
   const { mutateAsync, isPending: isCreating } = useCreateInvoiceMutation();
@@ -265,6 +268,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         adjustment: values.adjustment,
         adjustmentDescription: values.adjustmentDescription,
         status: values.status,
+        ...(!isEdit && jobCardId ? { jobCardId } : {}),
       };
 
       if (isEdit) {

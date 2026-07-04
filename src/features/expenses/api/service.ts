@@ -1,23 +1,45 @@
-import type { Expense, CreateExpensePayload } from "@/shared/interface/expense";
-import { MOCK_EXPENSES } from "@/shared/data/mock";
+import { axios } from "@/lib/axios";
+import { buildUrlWithQueryParams } from "@/utils/build-url-query";
+import { type ApiResponse, type IMeta } from "@/shared/interface/api";
+import type {
+  CreateExpensePayload,
+  Expense,
+  IGetExpenseFilter,
+  UpdateExpensePayload,
+} from "@/shared/interface/expense";
 
-const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
-
-export const getExpenses = async (): Promise<Expense[]> => {
-  await delay(300);
-  return MOCK_EXPENSES;
+/** Expense list meta carries an extra running total of the filtered rows. */
+export type ExpenseListResponse = Omit<ApiResponse<Expense[]>, "meta"> & {
+  meta: IMeta & { totalAmount?: number };
 };
 
-export const createExpense = async (
-  payload: CreateExpensePayload,
-): Promise<Expense> => {
-  await delay(500);
-  return {
-    id: `exp-${Date.now()}`,
-    expenseNumber: `EXP-2025-${String(MOCK_EXPENSES.length + 1).padStart(3, "0")}`,
-    ...payload,
-    status: "pending",
-    addedBy: "Current User",
-    createdAt: new Date().toISOString().split("T")[0],
-  };
+export const getExpenses = async (filter?: IGetExpenseFilter) => {
+  const apiUrl = buildUrlWithQueryParams("/expenses", filter);
+  const response = await axios.get<ExpenseListResponse>(apiUrl);
+  return response.data;
+};
+
+export const getExpenseById = async (id: string) => {
+  const response = await axios.get<ApiResponse<Expense>>(`/expenses/${id}`);
+  return response.data;
+};
+
+export const createExpense = async (payload: CreateExpensePayload) => {
+  const response = await axios.post<ApiResponse<Expense>>("/expenses", payload);
+  return response.data;
+};
+
+export const updateExpense = async (
+  id: string,
+  payload: UpdateExpensePayload,
+) => {
+  const response = await axios.put<ApiResponse<Expense>>(
+    `/expenses/${id}`,
+    payload,
+  );
+  return response.data;
+};
+
+export const deleteExpense = async (id: string): Promise<void> => {
+  await axios.delete(`/expenses/${id}`);
 };

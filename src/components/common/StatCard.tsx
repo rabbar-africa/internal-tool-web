@@ -59,14 +59,14 @@ export function StatCard({
             )}
           </Box>
           <Flex
-            w="44px"
-            h="44px"
+            boxSize={"2rem"}
             rounded="lg"
             bg={iconBg}
             align="center"
             justify="center"
             flexShrink={0}
             ml="3"
+            p={".25rem"}
           >
             {icon}
           </Flex>

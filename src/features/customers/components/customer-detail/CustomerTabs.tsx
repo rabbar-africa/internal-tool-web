@@ -4,14 +4,16 @@ import { CustomTable, type TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import { PlusIcon } from "@/assets/custom";
 import { useInvoiceListColumns } from "@/features/invoices/components/invoice-list/columns";
+import { jobCardColumns } from "@/features/job-cards/components/job-card-list/columns";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
+import type { JobCard } from "@/shared/interface/job-card";
 import type { Vehicle } from "../../api/service";
 import { paymentColumns, vehicleColumns } from "./columns";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
-const TAB_VALUES = ["invoices", "vehicles", "payments"] as const;
+const TAB_VALUES = ["invoices", "vehicles", "payments", "job-cards"] as const;
 const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
@@ -21,6 +23,8 @@ interface CustomerTabsProps {
   invoicesLoading: boolean;
   payments: IPaymentReceived[];
   paymentsLoading: boolean;
+  jobCards: JobCard[];
+  jobCardsLoading: boolean;
   onAddVehicle: () => void;
 }
 
@@ -31,6 +35,8 @@ export function CustomerTabs({
   invoicesLoading,
   payments,
   paymentsLoading,
+  jobCards,
+  jobCardsLoading,
   onAddVehicle,
 }: CustomerTabsProps) {
   const navigate = useNavigate();
@@ -85,6 +91,9 @@ export function CustomerTabs({
           <Tabs.Trigger value="payments" fontSize="13px">
             Payments ({payments.length})
           </Tabs.Trigger>
+          <Tabs.Trigger value="job-cards" fontSize="13px">
+            Job Cards ({jobCards.length})
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="vehicles" px="4" pb="4" pt="3">
@@ -134,6 +143,22 @@ export function CustomerTabs({
             onRowClick={(row) =>
               navigate(
                 RouteConstants.payments.detail.generate({
+                  id: row.original.id,
+                }),
+              )
+            }
+            tableScrollAreaProps={scrollAreaProps}
+          />
+        </Tabs.Content>
+
+        <Tabs.Content value="job-cards" px="4" pb="4" pt="3">
+          <CustomTable
+            data={jobCards}
+            columns={jobCardColumns}
+            loading={jobCardsLoading}
+            onRowClick={(row) =>
+              navigate(
+                RouteConstants.jobCards.detail.generate({
                   id: row.original.id,
                 }),
               )

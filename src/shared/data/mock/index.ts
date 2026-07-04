@@ -4,7 +4,6 @@ import {
   calculateLineTotal,
 } from "@/utils/calculations";
 import type { Item } from "@/shared/interface/item";
-import type { Expense } from "@/shared/interface/expense";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { Payment } from "@/shared/interface/payment";
 
@@ -227,8 +226,33 @@ export const MOCK_ITEMS: Item[] = [
 ];
 
 // ─── Expenses ─────────────────────────────────────────────────────────────────
+// Frozen legacy shape — only the mock-driven reports page still consumes this.
+// The live expenses feature uses `Expense` from @/shared/interface/expense.
 
-export const MOCK_EXPENSES: Expense[] = [
+export interface MockExpense {
+  id: string;
+  expenseNumber: string;
+  title: string;
+  category:
+    | "parts"
+    | "labour"
+    | "overhead"
+    | "utilities"
+    | "marketing"
+    | "transport"
+    | "other";
+  vendor?: string;
+  amount: number;
+  expenseDate: string;
+  linkedInvoiceId?: string;
+  linkedInvoiceNumber?: string;
+  status: "pending" | "approved" | "rejected";
+  addedBy: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export const MOCK_EXPENSES: MockExpense[] = [
   {
     id: "exp-001",
     expenseNumber: "EXP-2025-001",

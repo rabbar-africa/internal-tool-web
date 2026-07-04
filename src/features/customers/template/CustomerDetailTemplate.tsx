@@ -6,8 +6,10 @@ import { RouteConstants } from "@/shared/constants/routes";
 import SectionLoader from "@/components/common/SectionLoader";
 import { useGetAllInvoicesQuery } from "@/features/invoices/api/query";
 import { useGetPaymentsQuery } from "@/features/payments/api/query";
+import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
+import type { JobCard } from "@/shared/interface/job-card";
 import type { ICustomer } from "@/shared/interface/customer";
 import {
   useGetClientStatsQuery,
@@ -43,11 +45,14 @@ export function CustomerDetailTemplate() {
     useGetAllInvoicesQuery({ customerId: id ?? "" }, { enabled: Boolean(id) });
   const { data: paymentsData, isLoading: paymentsLoading } =
     useGetPaymentsQuery({ customerId: id ?? "" });
+  const { data: jobCardsData, isLoading: jobCardsLoading } =
+    useGetJobCardsQuery({ clientId: id ?? "" }, { enabled: Boolean(id) });
 
   const customer = customerQueryData?.data as ICustomerDetail | undefined;
   const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
   const customerInvoices: Invoice[] = invoicesData?.data ?? [];
   const customerPayments: IPaymentReceived[] = paymentsData?.data ?? [];
+  const customerJobCards: JobCard[] = jobCardsData?.data ?? [];
 
   if (isLoading) {
     return <SectionLoader />;
@@ -80,6 +85,8 @@ export function CustomerDetailTemplate() {
           invoicesLoading={invoicesLoading}
           payments={customerPayments}
           paymentsLoading={paymentsLoading}
+          jobCards={customerJobCards}
+          jobCardsLoading={jobCardsLoading}
           onAddVehicle={() => setAddVehicleOpen(true)}
         />
       </Stack>
