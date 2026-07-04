@@ -13,15 +13,15 @@ import { ExpenseRoutes } from "@/features/expenses/routes";
 import { ReportRoutes } from "@/features/reports/routes";
 import { SettingsRoutes } from "@/features/settings/routes";
 
-const { Overview } = lazyImport(
-  () => import("../features/overview/pages/Overview"),
-  "Overview",
+const { OverviewPage } = lazyImport(
+  () => import("../features/overview/pages/OverviewPage"),
+  "OverviewPage",
 );
 
 export const DashboardRouteList: RouteObject[] = [
   {
     index: true,
-    element: <Overview />,
+    element: <OverviewPage />,
   },
 ];
 
