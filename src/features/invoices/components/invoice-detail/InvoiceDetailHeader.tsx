@@ -20,6 +20,7 @@ interface InvoiceDetailHeaderProps {
   onEdit: () => void;
   onRecordPayment: () => void;
   onWriteOff: () => void;
+  onCancelWriteOff: () => void;
   onDownloadPdf: () => Promise<void> | void;
   onSharePdf: () => Promise<void> | void;
   /** Whether this device supports the native file share sheet (phones). */
@@ -34,6 +35,7 @@ export function InvoiceDetailHeader({
   onEdit,
   onRecordPayment,
   onWriteOff,
+  onCancelWriteOff,
   onDownloadPdf,
   onSharePdf,
   canShare,
@@ -49,6 +51,8 @@ export function InvoiceDetailHeader({
   // invoice isn't already closed/void/written off.
   const showWriteOff =
     hasBalance && !["paid", "void", "written_off"].includes(status ?? "");
+  // Reverse a write-off only when the invoice is currently written off.
+  const showCancelWriteOff = status === "written_off";
 
   // Sync action: closes the menu immediately, then runs the handler.
   const handleSync = (handler: () => void) => () => {
@@ -120,6 +124,15 @@ export function InvoiceDetailHeader({
                 {showWriteOff && (
                   <Menu.Item value="write-off" onClick={handleSync(onWriteOff)}>
                     Write off invoice
+                  </Menu.Item>
+                )}
+
+                {showCancelWriteOff && (
+                  <Menu.Item
+                    value="cancel-write-off"
+                    onClick={handleSync(onCancelWriteOff)}
+                  >
+                    Cancel write-off
                   </Menu.Item>
                 )}
 
