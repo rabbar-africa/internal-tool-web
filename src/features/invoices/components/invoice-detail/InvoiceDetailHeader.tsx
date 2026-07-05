@@ -21,6 +21,8 @@ interface InvoiceDetailHeaderProps {
   onRecordPayment: () => void;
   onWriteOff: () => void;
   onCancelWriteOff: () => void;
+  onRecalculate: () => Promise<void> | void;
+  isRecalculating: boolean;
   onDownloadPdf: () => Promise<void> | void;
   onSharePdf: () => Promise<void> | void;
   /** Whether this device supports the native file share sheet (phones). */
@@ -36,6 +38,8 @@ export function InvoiceDetailHeader({
   onRecordPayment,
   onWriteOff,
   onCancelWriteOff,
+  onRecalculate,
+  isRecalculating,
   onDownloadPdf,
   onSharePdf,
   canShare,
@@ -135,6 +139,17 @@ export function InvoiceDetailHeader({
                     Cancel write-off
                   </Menu.Item>
                 )}
+
+                <Menu.Item
+                  value="recalculate"
+                  closeOnSelect={false}
+                  disabled={isRecalculating}
+                  onSelect={() => {
+                    void handleAsync(onRecalculate)();
+                  }}
+                >
+                  {isRecalculating ? "Recalculating…" : "Recalculate balance"}
+                </Menu.Item>
 
                 {canShare && (
                   <Menu.Item

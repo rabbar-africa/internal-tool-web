@@ -5,6 +5,7 @@ import {
   updateInvoice,
   writeOffInvoice,
   cancelWriteOffInvoice,
+  recalculateInvoice,
   getAllInvoices,
   deleteInvoice,
   type WriteOffInvoicePayload,
@@ -84,6 +85,19 @@ export const useCancelWriteOffInvoiceMutation = () => {
     mutationFn: (id: string) => cancelWriteOffInvoice(id),
     meta: {
       successMessage: "Write-off cancelled",
+      invalidatesQueryKeys: [
+        [customQueryKey.invoices.getAll],
+        [customQueryKey.invoices.getById],
+      ],
+    },
+  });
+};
+
+export const useRecalculateInvoiceMutation = () => {
+  return useMutation({
+    mutationFn: (id: string) => recalculateInvoice(id),
+    meta: {
+      successMessage: "Invoice balance recalculated",
       invalidatesQueryKeys: [
         [customQueryKey.invoices.getAll],
         [customQueryKey.invoices.getById],

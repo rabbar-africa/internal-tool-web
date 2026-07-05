@@ -18,6 +18,8 @@ export function InvoiceDetailTemplate() {
     viewPayment,
     handleEdit,
     handleRecordPayment,
+    handleRecalculate,
+    isRecalculating,
     handleDownloadPdf,
     handleSharePdf,
     canShareFiles,
@@ -65,6 +67,8 @@ export function InvoiceDetailTemplate() {
           onRecordPayment={handleRecordPayment}
           onWriteOff={requestWriteOff}
           onCancelWriteOff={requestCancelWriteOff}
+          onRecalculate={handleRecalculate}
+          isRecalculating={isRecalculating}
           onDownloadPdf={handleDownloadPdf}
           onSharePdf={handleSharePdf}
           canShare={canShareFiles}

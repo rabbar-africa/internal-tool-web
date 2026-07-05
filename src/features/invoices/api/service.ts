@@ -130,6 +130,13 @@ export const cancelWriteOffInvoice = async (id: string) => {
   return data;
 };
 
+export const recalculateInvoice = async (id: string) => {
+  const { data } = await axios.patch<ApiResponse<IInvoiceResponse>>(
+    `/invoices/${id}/recalculate`,
+  );
+  return data;
+};
+
 export const updateInvoice = async (
   id: string,
   payload: UpdateInvoicePayload,
