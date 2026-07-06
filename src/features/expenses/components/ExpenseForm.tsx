@@ -15,6 +15,7 @@ import {
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
+import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSwitch } from "@/components/input/CustomSwitch";
 import { CustomFileInput } from "@/components/common/CustomFileInput";
 import { uploadFile } from "@/features/paperwork/api/service";
@@ -44,11 +45,14 @@ const validationSchema = Yup.object({
   quantity: Yup.number()
     .transform((value, original) => (original === "" ? undefined : value))
     .typeError("Quantity must be a number")
-    .min(0, "Quantity cannot be negative"),
+    .moreThan(0, "Quantity must be greater than 0")
+    .required("Quantity is required"),
   unitCost: Yup.number()
     .transform((value, original) => (original === "" ? undefined : value))
     .typeError("Unit cost must be a number")
-    .min(0, "Unit cost cannot be negative"),
+    .min(0, "Unit cost cannot be negative")
+    .required("Unit cost is required"),
+  // Amount is derived from quantity × unit cost, so it's always present.
   amount: Yup.number()
     .transform((value, original) => (original === "" ? undefined : value))
     .typeError("Amount must be a number")
@@ -170,13 +174,23 @@ export function ExpenseForm({
     },
   });
 
-  // Keep amount in sync with quantity × unit cost while still allowing override.
-  const syncAmount = (quantity: string, unitCost: string) => {
-    const qty = Number(quantity);
-    const cost = Number(unitCost);
-    if (!Number.isNaN(qty) && !Number.isNaN(cost) && unitCost !== "") {
-      formik.setFieldValue("amount", String(qty * cost));
-    }
+  // Total amount is always derived from quantity × unit cost — the amount field
+  // is read-only, so unit cost (not amount) is the value the user enters.
+  const computeAmount = (quantity: string, unitCost: string) => {
+    const qty = Number(quantity) || 0;
+    const cost = Number(unitCost) || 0;
+    const total = qty * cost;
+    return total ? String(total) : "";
+  };
+
+  const handleQuantityChange = (raw: string) => {
+    formik.setFieldValue("quantity", raw);
+    formik.setFieldValue("amount", computeAmount(raw, formik.values.unitCost));
+  };
+
+  const handleUnitCostChange = (raw: string) => {
+    formik.setFieldValue("unitCost", raw);
+    formik.setFieldValue("amount", computeAmount(formik.values.quantity, raw));
   };
 
   const isBusy = isSubmitting || isUploading;
@@ -197,7 +211,7 @@ export function ExpenseForm({
             <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
               <Box gridColumn={{ sm: "1 / -1" }}>
                 <CustomInput
-                  label="Item / Description"
+                  label="Item Name"
                   required
                   name="name"
                   value={formik.values.name}
@@ -211,65 +225,59 @@ export function ExpenseForm({
                   }
                 />
               </Box>
-              <CustomSelect
-                label="Category"
-                options={EXPENSE_CATEGORY_OPTIONS}
-                value={[formik.values.category]}
-                onChange={(opt: { value: string[] }) =>
-                  formik.setFieldValue(
-                    "category",
-                    (opt?.value?.[0] as ExpenseCategory) ?? "PARTS",
-                  )
-                }
-              />
-              <CustomInput
-                label="Vendor / Supplier"
-                name="vendorName"
-                value={formik.values.vendorName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                placeholder="e.g. AutoParts Ltd"
-              />
-              <CustomInput
+              <Box gridColumn={{ sm: "1 / -1" }}>
+                <CustomTextArea
+                  label="Description (optional)"
+                  name="description"
+                  value={formik.values.description}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="e.g. Front ceramic brake pad set"
+                  rows={2}
+                />
+              </Box>
+              <CustomNumberInput
                 label="Quantity"
+                required
+                precision={2}
+                min={0}
+                allowNegative={false}
+                placeholder="1"
                 name="quantity"
                 value={formik.values.quantity}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  syncAmount(e.target.value, formik.values.unitCost);
-                }}
+                onValueChange={handleQuantityChange}
                 onBlur={formik.handleBlur}
-                placeholder="1"
                 error={
                   formik.touched.quantity && formik.errors.quantity
                     ? formik.errors.quantity
                     : undefined
                 }
               />
-              <CustomInput
+              <CustomNumberInput
                 label="Unit Cost (₦)"
+                required
+                precision={2}
+                min={0}
+                allowNegative={false}
+                placeholder="0.00"
                 name="unitCost"
                 value={formik.values.unitCost}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  syncAmount(formik.values.quantity, e.target.value);
-                }}
+                onValueChange={handleUnitCostChange}
                 onBlur={formik.handleBlur}
-                placeholder="0.00"
                 error={
                   formik.touched.unitCost && formik.errors.unitCost
                     ? formik.errors.unitCost
                     : undefined
                 }
               />
-              <CustomInput
+              <CustomNumberInput
                 label="Total Amount (₦)"
-                required
+                precision={2}
+                disabled
+                placeholder="0.00"
                 name="amount"
                 value={formik.values.amount}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                placeholder="0.00"
+                helperText="Auto-calculated (quantity × unit cost)"
                 error={
                   formik.touched.amount && formik.errors.amount
                     ? formik.errors.amount
@@ -291,18 +299,39 @@ export function ExpenseForm({
                 }
               />
               <CustomSelect
-                label="How It Was Paid"
-                placeholder="Select payment mode..."
-                options={PAYMENT_MODE_OPTIONS}
-                value={
-                  formik.values.paymentMode
-                    ? [formik.values.paymentMode]
-                    : undefined
-                }
+                label="Category"
+                options={EXPENSE_CATEGORY_OPTIONS}
+                value={[formik.values.category]}
                 onChange={(opt: { value: string[] }) =>
-                  formik.setFieldValue("paymentMode", opt?.value?.[0] ?? "")
+                  formik.setFieldValue(
+                    "category",
+                    (opt?.value?.[0] as ExpenseCategory) ?? "PARTS",
+                  )
                 }
               />
+              <CustomInput
+                label="Vendor / Supplier"
+                name="vendorName"
+                value={formik.values.vendorName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                placeholder="e.g. AutoParts Ltd"
+              />
+              <Box gridColumn={{ sm: "1 / -1" }}>
+                <CustomSelect
+                  label="How It Was Paid"
+                  placeholder="Select payment mode..."
+                  options={PAYMENT_MODE_OPTIONS}
+                  value={
+                    formik.values.paymentMode
+                      ? [formik.values.paymentMode]
+                      : undefined
+                  }
+                  onChange={(opt: { value: string[] }) =>
+                    formik.setFieldValue("paymentMode", opt?.value?.[0] ?? "")
+                  }
+                />
+              </Box>
             </Grid>
           </Card.Body>
         </Card.Root>
