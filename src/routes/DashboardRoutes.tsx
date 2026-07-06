@@ -12,6 +12,7 @@ import { ItemRoutes } from "@/features/items/routes";
 import { ExpenseRoutes } from "@/features/expenses/routes";
 import { JobCardRoutes } from "@/features/job-cards/routes";
 import { TechnicianRoutes } from "@/features/technicians/routes";
+import { ReminderRoutes } from "@/features/reminders/routes";
 import { ReportRoutes } from "@/features/reports/routes";
 import { SettingsRoutes } from "@/features/settings/routes";
 
@@ -47,6 +48,7 @@ export const DashboardRoutes: RouteObject = {
     ...ExpenseRoutes,
     ...JobCardRoutes,
     ...TechnicianRoutes,
+    ...ReminderRoutes,
     ...ReportRoutes,
     ...SettingsRoutes,
   ],
