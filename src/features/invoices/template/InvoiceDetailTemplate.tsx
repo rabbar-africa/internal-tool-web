@@ -1,9 +1,10 @@
-import { Center, Spinner, Stack, Text } from "@chakra-ui/react";
+import { Center, Stack, Text } from "@chakra-ui/react";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { DeleteInvoiceConfirm } from "@/features/invoices/components/invoice-list/DeleteInvoiceConfirm";
 import { useInvoiceDetail } from "@/features/invoices/components/invoice-detail/useInvoiceDetail";
 import { InvoiceDetailHeader } from "@/features/invoices/components/invoice-detail/InvoiceDetailHeader";
+import { InvoiceDetailSkeleton } from "@/features/invoices/components/invoice-detail/InvoiceDetailSkeleton";
 import { InvoicePdfView } from "@/features/invoices/components/invoice-detail/InvoicePdfView";
 import { ConnectedPayments } from "@/features/invoices/components/invoice-detail/ConnectedPayments";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
@@ -43,11 +44,7 @@ export function InvoiceDetailTemplate() {
   } = useInvoiceDetail();
 
   if (isLoading) {
-    return (
-      <Center py="20">
-        <Spinner color="primary.400" />
-      </Center>
-    );
+    return <InvoiceDetailSkeleton />;
   }
 
   if (isError || !invoice) {
