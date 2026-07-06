@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
+  useCancelWriteOffInvoiceMutation,
   useDeleteInvoiceMutation,
   useGetInvoiceByIdQuery,
+  useRecalculateInvoiceMutation,
   useWriteOffInvoiceMutation,
 } from "../../api/query";
 import { useGetPaymentsQuery } from "@/features/payments/api";
@@ -18,6 +20,12 @@ export function useInvoiceDetail() {
     useDeleteInvoiceMutation();
   const { mutateAsync: writeOffInvoice, isPending: isWritingOff } =
     useWriteOffInvoiceMutation();
+  const {
+    mutateAsync: cancelWriteOffInvoice,
+    isPending: isCancellingWriteOff,
+  } = useCancelWriteOffInvoiceMutation();
+  const { mutateAsync: recalculateInvoice, isPending: isRecalculating } =
+    useRecalculateInvoiceMutation();
   const invoice = invoiceData?.data;
 
   // Payments linked to this invoice (via their allocations).
@@ -36,6 +44,7 @@ export function useInvoiceDetail() {
 
   const [pendingDelete, setPendingDelete] = useState(false);
   const [pendingWriteOff, setPendingWriteOff] = useState(false);
+  const [pendingCancelWriteOff, setPendingCancelWriteOff] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
 
   const goBack = () => navigate(RouteConstants.invoices.base.path);
@@ -56,6 +65,11 @@ export function useInvoiceDetail() {
   const handleDownloadPdf = async () => {
     if (!invoice) return;
     await downloadPdf();
+  };
+
+  const handleRecalculate = async () => {
+    if (!invoice) return;
+    await recalculateInvoice(invoice.id);
   };
 
   const handleSharePdf = async () => {
@@ -86,6 +100,15 @@ export function useInvoiceDetail() {
     setPendingWriteOff(false);
   };
 
+  const requestCancelWriteOff = () => setPendingCancelWriteOff(true);
+  const cancelCancelWriteOff = () => setPendingCancelWriteOff(false);
+
+  const confirmCancelWriteOff = async () => {
+    if (!invoice) return;
+    await cancelWriteOffInvoice(invoice.id);
+    setPendingCancelWriteOff(false);
+  };
+
   return {
     invoice,
     isLoading,
@@ -106,6 +129,9 @@ export function useInvoiceDetail() {
     printPdf,
     isDownloading,
 
+    handleRecalculate,
+    isRecalculating,
+
     pendingDelete,
     requestDelete,
     cancelDelete,
@@ -117,5 +143,11 @@ export function useInvoiceDetail() {
     cancelWriteOff,
     confirmWriteOff,
     isWritingOff,
+
+    pendingCancelWriteOff,
+    requestCancelWriteOff,
+    cancelCancelWriteOff,
+    confirmCancelWriteOff,
+    isCancellingWriteOff,
   };
 }

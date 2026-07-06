@@ -428,7 +428,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
           </Tabs.Content>
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
-            <Flex justify="flex-end" mb="3">
+            {/* <Flex justify="flex-end" mb="3">
               <Button
                 size="sm"
                 onClick={() => navigate(RouteConstants.payments.create.path)}
@@ -436,7 +436,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
                 <PlusIcon />
                 Record Payment
               </Button>
-            </Flex>
+            </Flex> */}
             <CustomTable
               data={jobCard.payments}
               columns={paymentColumns}

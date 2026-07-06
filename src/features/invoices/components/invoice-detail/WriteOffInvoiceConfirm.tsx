@@ -73,7 +73,7 @@ export function WriteOffInvoiceConfirm({
                   <Text as="span" fontWeight="600" color="gray.500">
                     {invoiceNumber}
                   </Text>
-                  , marking it as settled without payment.
+                  , marking it as settled.
                 </Text>
 
                 <Stack gap="1.5">

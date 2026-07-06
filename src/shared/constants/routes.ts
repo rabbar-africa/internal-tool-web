@@ -86,6 +86,13 @@ const technicians = {
   base: defineRoute("/technicians" as const),
 } as const;
 
+const reminders = {
+  base: defineRoute("/reminders" as const),
+  create: defineRoute("/reminders/create" as const),
+  scheduleService: defineRoute("/reminders/schedule-service" as const),
+  edit: defineRoute("/reminders/:id/edit" as const),
+} as const;
+
 const user = {
   base: defineRoute("/user" as const),
   userDetails: defineRoute("/user/:id" as const),
@@ -172,6 +179,7 @@ export const RouteConstants = {
   expenses,
   jobCards,
   technicians,
+  reminders,
   transactionLedger,
   wallet,
   systemConfiguration,

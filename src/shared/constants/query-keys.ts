@@ -76,6 +76,11 @@ export const customQueryKey = {
     getById: "get-paperwork-by-id",
     expiring: "get-expiring-paperwork",
   },
+  reminders: {
+    getAll: "get-all-reminders",
+    getById: "get-reminder-by-id",
+    upcoming: "get-upcoming-reminders",
+  },
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
   analytics: {
     dashboard: "get-dashboard-analytics",

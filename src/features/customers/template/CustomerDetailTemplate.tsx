@@ -22,6 +22,7 @@ import { CustomerDetailHeader } from "@/features/customers/components/customer-d
 import { CustomerStats } from "@/features/customers/components/customer-detail/CustomerStats";
 import { CustomerInfo } from "@/features/customers/components/customer-detail/CustomerInfo";
 import { CustomerTabs } from "@/features/customers/components/customer-detail/CustomerTabs";
+import { ClientReminders } from "@/features/reminders/components/ClientReminders";
 
 // The detail endpoint returns the base customer plus a few aggregate fields.
 interface ICustomerDetail extends ICustomer {
@@ -77,6 +78,8 @@ export function CustomerDetailTemplate() {
         <CustomerStats stats={statsData} isLoading={statsLoading} />
 
         <CustomerInfo customer={customer} />
+
+        <ClientReminders clientId={id ?? ""} />
 
         <CustomerTabs
           vehicles={vehicles}

@@ -1,7 +1,6 @@
 import { Avatar, Box, Flex, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
 import type { ICustomer } from "@/shared/interface/customer";
-import { CustomerFollowUp } from "./CustomerFollowUp";
 import { CustomerActionsMenu } from "./CustomerActionsMenu";
 
 const STAGE_COLORS: Record<string, { bg: string; color: string }> = {
@@ -117,7 +116,6 @@ export function CustomerDetailHeader({ customer }: CustomerDetailHeaderProps) {
             align={{ base: "flex-start", md: "flex-end" }}
             flexShrink={0}
           >
-            <CustomerFollowUp customer={customer} />
             <Text fontSize="11px" color="gray.300">
               Since {moment(customer.createdAt).format("MMM YYYY")}
             </Text>

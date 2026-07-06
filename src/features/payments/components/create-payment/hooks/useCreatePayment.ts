@@ -232,7 +232,7 @@ export function useCreatePayment() {
   // ─── Outstanding invoices for the selected customer (manual flow) ───────
   const invoicesQuery = useGetAllInvoicesQuery(
     { customerId: values.customerId, page: 1, limit: 100 },
-    { enabled: Boolean(values.customerId) && !isPresetMode && !isEditMode },
+    { enabled: Boolean(values.customerId) && !isPresetMode },
   );
   const outstandingInvoices = useMemo(
     () =>
@@ -294,6 +294,58 @@ export function useCreatePayment() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, editPayment]);
+
+  // Edit flow: once the customer's invoices load, widen the allocation rows to
+  // every outstanding invoice (so the user can re-allocate), pre-filling the
+  // amounts this payment already applied. The balance shown is the pre-payment
+  // balance (current balance + what this payment applied), since a PUT reverses
+  // the old allocations before applying the new set.
+  const editAllocationsMerged = useRef(false);
+  useEffect(() => {
+    if (!isEditMode || !editPayment || editAllocationsMerged.current) return;
+    if (invoicesQuery.isFetching || !invoicesQuery.data) return;
+    editAllocationsMerged.current = true;
+
+    const existingApplied = new Map(
+      (editPayment.allocations ?? []).map((a) => [
+        a.invoiceId,
+        toNum(a.amountApplied),
+      ]),
+    );
+
+    // Union of the customer's outstanding invoices and the invoices this
+    // payment is already applied to (the latter may now show a zero balance
+    // because this payment settled them, so they'd be missing otherwise).
+    const rowByInvoice = new Map<string, AllocationRow>();
+
+    outstandingInvoices.forEach((inv) => {
+      const applied = existingApplied.get(inv.id) ?? 0;
+      rowByInvoice.set(inv.id, {
+        invoiceId: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        invoiceDate: inv.date,
+        dueDate: inv.dueDate,
+        balance: toNum(inv.balance) + applied,
+        amountApplied: applied > 0 ? String(applied) : "",
+      });
+    });
+
+    (editPayment.allocations ?? []).forEach((a) => {
+      if (rowByInvoice.has(a.invoiceId)) return;
+      const applied = toNum(a.amountApplied);
+      rowByInvoice.set(a.invoiceId, {
+        invoiceId: a.invoiceId,
+        invoiceNumber: a.invoice?.invoiceNumber ?? "",
+        invoiceDate: a.invoice?.date ?? "",
+        dueDate: a.invoice?.dueDate ?? "",
+        balance: toNum(a.invoice?.balance) + applied,
+        amountApplied: applied > 0 ? String(applied) : "",
+      });
+    });
+
+    setFieldValue("allocations", Array.from(rowByInvoice.values()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editPayment, invoicesQuery.isFetching, invoicesQuery.data]);
 
   // Preset flow: lock the form to the invoice from the URL.
   const presetBalance = toNum(presetInvoice?.balance);
@@ -397,6 +449,7 @@ export function useCreatePayment() {
   }, [presetInvoice, presetBalance, values.amount, orgCurrency]);
 
   const handleCancel = () => navigate(RouteConstants.payments.base.path);
+  // console.log("values is ", formik.values);
 
   return {
     formik,
