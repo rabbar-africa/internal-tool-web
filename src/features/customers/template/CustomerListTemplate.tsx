@@ -12,7 +12,6 @@ import { useGetAllCustomersQuery } from "@/features/customers/api/query";
 import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
 import { EditCustomerModal } from "@/features/customers/components/customer-list/EditCustomerModal";
-import { FollowUpBadge } from "@/features/customers/components/FollowUpBadge";
 import type { ICustomer } from "@/shared/interface/customer";
 
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
@@ -87,11 +86,6 @@ const columns: ColumnDef<ICustomer>[] = [
 
       return <Status name={status} />;
     },
-  },
-  {
-    accessorKey: "followUpDate",
-    header: "Next Follow-up",
-    cell: ({ row }) => <FollowUpBadge date={row.original.followUpDate} plain />,
   },
 ];
 
