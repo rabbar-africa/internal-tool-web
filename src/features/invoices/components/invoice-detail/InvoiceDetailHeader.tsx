@@ -20,6 +20,9 @@ interface InvoiceDetailHeaderProps {
   onEdit: () => void;
   onRecordPayment: () => void;
   onWriteOff: () => void;
+  onCancelWriteOff: () => void;
+  onRecalculate: () => Promise<void> | void;
+  isRecalculating: boolean;
   onDownloadPdf: () => Promise<void> | void;
   onSharePdf: () => Promise<void> | void;
   /** Whether this device supports the native file share sheet (phones). */
@@ -34,6 +37,9 @@ export function InvoiceDetailHeader({
   onEdit,
   onRecordPayment,
   onWriteOff,
+  onCancelWriteOff,
+  onRecalculate,
+  isRecalculating,
   onDownloadPdf,
   onSharePdf,
   canShare,
@@ -49,6 +55,8 @@ export function InvoiceDetailHeader({
   // invoice isn't already closed/void/written off.
   const showWriteOff =
     hasBalance && !["paid", "void", "written_off"].includes(status ?? "");
+  // Reverse a write-off only when the invoice is currently written off.
+  const showCancelWriteOff = status === "written_off";
 
   // Sync action: closes the menu immediately, then runs the handler.
   const handleSync = (handler: () => void) => () => {
@@ -122,6 +130,26 @@ export function InvoiceDetailHeader({
                     Write off invoice
                   </Menu.Item>
                 )}
+
+                {showCancelWriteOff && (
+                  <Menu.Item
+                    value="cancel-write-off"
+                    onClick={handleSync(onCancelWriteOff)}
+                  >
+                    Cancel write-off
+                  </Menu.Item>
+                )}
+
+                <Menu.Item
+                  value="recalculate"
+                  closeOnSelect={false}
+                  disabled={isRecalculating}
+                  onSelect={() => {
+                    void handleAsync(onRecalculate)();
+                  }}
+                >
+                  {isRecalculating ? "Recalculating…" : "Recalculate balance"}
+                </Menu.Item>
 
                 {canShare && (
                   <Menu.Item

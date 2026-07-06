@@ -33,12 +33,6 @@ export interface ICustomer {
   createdAt: string;
   emailMarketingConsent: boolean;
   status: CustomerStatus;
-  followUpDate: string | null;
-  followUpDays: string | null;
-  followUpDue: boolean;
-  followUpInDays: string | null;
-  followUpNote: string | null;
-  followUpSetAt: string | null;
 }
 
 export interface ClientStatsInvoiceRef {

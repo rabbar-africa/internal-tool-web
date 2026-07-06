@@ -11,6 +11,7 @@ import { ClipboardTextIcon } from "@/assets/custom/ClipboardTextIcon";
 import { ChartBar } from "@/assets/custom/ChartBar";
 import { GearIcon } from "@/assets/custom/GearIcon";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
+import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 
 export const sideBarItems = [
   {
@@ -61,6 +62,13 @@ export const sideBarItems = [
     href: RouteConstants.technicians.base.path,
     slug: "technicians",
     paths: [RouteConstants.technicians.base.path],
+  },
+  {
+    name: "Reminders",
+    icon: BellSimpleRingingIcon,
+    href: RouteConstants.reminders.base.path,
+    slug: "reminders",
+    paths: [RouteConstants.reminders.base.path],
   },
   {
     name: "Paperwork",

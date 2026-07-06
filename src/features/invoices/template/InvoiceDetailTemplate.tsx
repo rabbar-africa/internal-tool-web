@@ -1,5 +1,6 @@
 import { Center, Spinner, Stack, Text } from "@chakra-ui/react";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { DeleteInvoiceConfirm } from "@/features/invoices/components/invoice-list/DeleteInvoiceConfirm";
 import { useInvoiceDetail } from "@/features/invoices/components/invoice-detail/useInvoiceDetail";
 import { InvoiceDetailHeader } from "@/features/invoices/components/invoice-detail/InvoiceDetailHeader";
@@ -17,6 +18,8 @@ export function InvoiceDetailTemplate() {
     viewPayment,
     handleEdit,
     handleRecordPayment,
+    handleRecalculate,
+    isRecalculating,
     handleDownloadPdf,
     handleSharePdf,
     canShareFiles,
@@ -32,6 +35,11 @@ export function InvoiceDetailTemplate() {
     cancelWriteOff,
     confirmWriteOff,
     isWritingOff,
+    pendingCancelWriteOff,
+    requestCancelWriteOff,
+    cancelCancelWriteOff,
+    confirmCancelWriteOff,
+    isCancellingWriteOff,
   } = useInvoiceDetail();
 
   if (isLoading) {
@@ -58,6 +66,9 @@ export function InvoiceDetailTemplate() {
           onEdit={handleEdit}
           onRecordPayment={handleRecordPayment}
           onWriteOff={requestWriteOff}
+          onCancelWriteOff={requestCancelWriteOff}
+          onRecalculate={handleRecalculate}
+          isRecalculating={isRecalculating}
           onDownloadPdf={handleDownloadPdf}
           onSharePdf={handleSharePdf}
           canShare={canShareFiles}
@@ -93,6 +104,20 @@ export function InvoiceDetailTemplate() {
         isWritingOff={isWritingOff}
         onCancel={cancelWriteOff}
         onConfirm={confirmWriteOff}
+      />
+
+      <ConsentDialog
+        open={pendingCancelWriteOff}
+        onOpenChange={({ open }) => {
+          if (!open) cancelCancelWriteOff();
+        }}
+        variant="warning"
+        heading={`Cancel write-off on ${invoice.invoiceNumber}?`}
+        note="This reverses the write-off and restores the invoice's outstanding balance."
+        confirmText="Yes, Cancel write-off"
+        cancelText="Keep write-off"
+        isLoading={isCancellingWriteOff}
+        handleSubmit={confirmCancelWriteOff}
       />
     </>
   );

@@ -12,7 +12,7 @@ import {
   DEFAULT_PRESET,
   getPresetFilter,
 } from "@/features/overview/components/dashboard/DashboardFilters";
-import { ExpiringPaperworkPanel } from "@/features/paperwork/components/ExpiringPaperworkPanel";
+import { UpcomingRemindersPanel } from "@/features/reminders/components/UpcomingRemindersPanel";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
 import { useGetDashboardAnalyticsQuery } from "@/features/overview/api";
 import type { DashboardAnalyticsFilter } from "@/features/overview/interface";
@@ -85,7 +85,26 @@ export function OverviewTemplate() {
               </>
             )}
           </Grid>
-          <ExpiringPaperworkPanel />
+          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
+            <UpcomingRemindersPanel
+              title="Paperwork due"
+              subtitle="Next 5 documents expiring soon"
+              type="PAPERWORK"
+              withinDays={30}
+              limit={5}
+              showViewAll
+              emptyText="No paperwork due soon"
+            />
+            <UpcomingRemindersPanel
+              title="Service due"
+              subtitle="Next 5 vehicles due for service"
+              type="SERVICE"
+              withinDays={30}
+              limit={5}
+              showViewAll
+              emptyText="No services due soon"
+            />
+          </Grid>
           <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
             {isLoading || !data ? (
               <>
