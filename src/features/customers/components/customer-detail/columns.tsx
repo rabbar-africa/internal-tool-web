@@ -72,20 +72,20 @@ export const paymentColumns: ColumnDef<IPaymentReceived>[] = [
 
 export const vehicleColumns: ColumnDef<Vehicle>[] = [
   {
-    accessorKey: "registrationNumber",
-    header: "Reg. No.",
-    cell: ({ getValue }) => (
+    id: "vehicle",
+    header: "Vehicle",
+    cell: ({ row }) => (
       <Text textStyle="small-regular" color="gray.500" fontWeight="600">
-        {getValue() as string}
+        {row.original.year} {row.original.make} {row.original.model}
       </Text>
     ),
   },
   {
-    id: "vehicle",
-    header: "Vehicle",
-    cell: ({ row }) => (
+    accessorKey: "registrationNumber",
+    header: "Reg. No.",
+    cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {row.original.year} {row.original.make} {row.original.model}
+        {getValue() as string}
       </Text>
     ),
   },

@@ -3,7 +3,11 @@ import * as Yup from "yup";
 import { Button, Dialog, Flex, Grid, Portal, Stack } from "@chakra-ui/react";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
-import { useCreateVehicleMutation } from "../../api/query";
+import { SelectOrTypeField } from "@/components/input/SelectOrTypeField";
+import {
+  useCreateVehicleMutation,
+  useUpdateVehicleMutation,
+} from "../../api/query";
 import type { Vehicle } from "../../api/service";
 import {
   useVehicleMakesQuery,
@@ -15,6 +19,8 @@ interface AddVehicleModalProps {
   open: boolean;
   onClose: () => void;
   clientId: string;
+  /** Existing vehicle to edit; omit to add a new one. */
+  vehicle?: Vehicle | null;
   /** Called with the newly created vehicle after a successful save */
   onVehicleSaved?: (vehicle: Vehicle) => void;
 }
@@ -34,24 +40,43 @@ export function AddVehicleModal({
   open,
   onClose,
   clientId,
+  vehicle,
   onVehicleSaved,
 }: AddVehicleModalProps) {
-  const { mutateAsync, isPending } = useCreateVehicleMutation(clientId);
+  const isEdit = Boolean(vehicle);
+  const { mutateAsync: createVehicle, isPending: isCreating } =
+    useCreateVehicleMutation(clientId);
+  const { mutateAsync: updateVehicle, isPending: isUpdating } =
+    useUpdateVehicleMutation(vehicle?.id ?? "", clientId);
+  const isPending = isCreating || isUpdating;
   const { data: makeOptions = [], isLoading: makesLoading } =
     useVehicleMakesQuery();
 
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      make: "",
-      model: "",
-      year: "",
-      registrationNumber: "",
-      vin: "",
-      color: "",
+      make: vehicle?.make ?? "",
+      model: vehicle?.model ?? "",
+      year: vehicle?.year ? String(vehicle.year) : "",
+      registrationNumber: vehicle?.registrationNumber ?? "",
+      vin: vehicle?.vin ?? "",
+      color: vehicle?.color ?? "",
     },
     validationSchema,
     onSubmit: async (values) => {
-      const created = await mutateAsync({
+      if (isEdit) {
+        await updateVehicle({
+          make: values.make,
+          model: values.model,
+          year: Number(values.year),
+          registrationNumber: values.registrationNumber,
+          vin: values.vin || undefined,
+          color: values.color || undefined,
+        });
+        onClose();
+        return;
+      }
+      const created = await createVehicle({
         make: values.make,
         model: values.model,
         year: Number(values.year),
@@ -73,8 +98,7 @@ export function AddVehicleModal({
     onClose();
   };
 
-  const handleMakeChange = (opt: { value: string[] }) => {
-    const make = opt?.value?.[0] ?? "";
+  const handleMakeChange = (make: string) => {
     formik.setFieldValue("make", make);
     formik.setFieldValue("model", ""); // reset model when make changes
   };
@@ -94,24 +118,25 @@ export function AddVehicleModal({
           <Dialog.Content maxW="480px">
             <Dialog.Header borderBottomWidth="1px" borderColor="gray.75" pb="4">
               <Dialog.Title fontSize="16px" fontWeight="600" color="gray.500">
-                Add Vehicle
+                {isEdit ? "Edit Vehicle" : "Add Vehicle"}
               </Dialog.Title>
             </Dialog.Header>
 
             <form onSubmit={formik.handleSubmit}>
               <Dialog.Body py="5">
                 <Stack gap="4">
-                  {/* Make */}
-                  <CustomSelect
+                  {/* Make — pick from list or type manually */}
+                  <SelectOrTypeField
                     label="Make"
                     required
+                    name="make"
                     placeholder="Select make..."
+                    typePlaceholder="e.g. Toyota"
                     options={makeOptions}
                     loading={makesLoading}
-                    value={
-                      formik.values.make ? [formik.values.make] : undefined
-                    }
+                    value={formik.values.make}
                     onChange={handleMakeChange}
+                    onBlur={() => formik.setFieldTouched("make", true)}
                     error={
                       formik.touched.make && formik.errors.make
                         ? formik.errors.make
@@ -119,24 +144,23 @@ export function AddVehicleModal({
                     }
                   />
 
-                  {/* Model — disabled until make selected */}
-                  <CustomSelect
+                  {/* Model — pick from list or type manually (needs a make) */}
+                  <SelectOrTypeField
                     label="Model"
                     required
+                    name="model"
                     placeholder={
                       formik.values.make
                         ? "Select model..."
                         : "Select a make first"
                     }
+                    typePlaceholder="e.g. Corolla"
                     options={modelOptions}
                     loading={modelsLoading}
                     disabled={!formik.values.make}
-                    value={
-                      formik.values.model ? [formik.values.model] : undefined
-                    }
-                    onChange={(opt: { value: string[] }) =>
-                      formik.setFieldValue("model", opt?.value?.[0] ?? "")
-                    }
+                    value={formik.values.model}
+                    onChange={(model) => formik.setFieldValue("model", model)}
+                    onBlur={() => formik.setFieldTouched("model", true)}
                     error={
                       formik.touched.model && formik.errors.model
                         ? formik.errors.model
@@ -218,7 +242,7 @@ export function AddVehicleModal({
                     loading={isPending}
                     loadingText="Saving..."
                   >
-                    Add Vehicle
+                    {isEdit ? "Save Changes" : "Add Vehicle"}
                   </Button>
                 </Flex>
               </Dialog.Footer>

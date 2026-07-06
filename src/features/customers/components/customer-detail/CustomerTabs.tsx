@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Box, Button, Flex, Tabs } from "@chakra-ui/react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { PlusIcon } from "@/assets/custom";
 import { useInvoiceListColumns } from "@/features/invoices/components/invoice-list/columns";
@@ -9,7 +11,9 @@ import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import type { JobCard } from "@/shared/interface/job-card";
 import type { Vehicle } from "../../api/service";
+import { useDeleteVehicleMutation } from "../../api/query";
 import { paymentColumns, vehicleColumns } from "./columns";
+import { AddVehicleModal } from "./AddVehicleModal";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
@@ -17,6 +21,7 @@ const TAB_VALUES = ["invoices", "vehicles", "payments", "job-cards"] as const;
 const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
+  clientId: string;
   vehicles: Vehicle[];
   vehiclesLoading: boolean;
   invoices: Invoice[];
@@ -29,6 +34,7 @@ interface CustomerTabsProps {
 }
 
 export function CustomerTabs({
+  clientId,
   vehicles,
   vehiclesLoading,
   invoices,
@@ -42,7 +48,32 @@ export function CustomerTabs({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceColumns = useInvoiceListColumns();
-  const vehicleActions: TableAction<Vehicle>[] = [];
+
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const { mutateAsync: deleteVehicle, isPending: isDeleting } =
+    useDeleteVehicleMutation(clientId);
+
+  const vehicleActions: TableAction<Vehicle>[] = [
+    {
+      label: "Edit",
+      value: "edit",
+      onClick: (vehicle) => setEditVehicle(vehicle),
+    },
+    {
+      label: "Delete",
+      value: "delete",
+      variant: "destructive",
+      separator: true,
+      onClick: (vehicle) => setDeleteTarget(vehicle),
+    },
+  ];
+
+  const confirmDeleteVehicle = async () => {
+    if (!deleteTarget) return;
+    await deleteVehicle(deleteTarget.id);
+    setDeleteTarget(null);
+  };
 
   const sectionParam = searchParams.get("section");
   const activeTab = TAB_VALUES.includes(
@@ -63,110 +94,134 @@ export function CustomerTabs({
   };
 
   return (
-    <Box
-      bg="white"
-      rounded="xl"
-      borderWidth="1px"
-      borderColor="gray.75"
-      shadow="xs"
-      overflow="hidden"
-    >
-      <Tabs.Root
-        value={activeTab}
-        onValueChange={({ value }) => handleTabChange(value)}
+    <>
+      <Box
+        bg="white"
+        rounded="xl"
+        borderWidth="1px"
+        borderColor="gray.75"
+        shadow="xs"
+        overflow="hidden"
       >
-        <Tabs.List
-          px="6"
-          pt="3"
-          borderBottomWidth="1px"
-          borderColor="gray.75"
-          bg="gray.50/50"
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={({ value }) => handleTabChange(value)}
         >
-          <Tabs.Trigger value="invoices" fontSize="13px">
-            Invoices ({invoices.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger value="vehicles" fontSize="13px">
-            Vehicles ({vehicles.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger value="payments" fontSize="13px">
-            Payments ({payments.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger value="job-cards" fontSize="13px">
-            Job Cards ({jobCards.length})
-          </Tabs.Trigger>
-        </Tabs.List>
+          <Tabs.List
+            px="6"
+            pt="3"
+            borderBottomWidth="1px"
+            borderColor="gray.75"
+            bg="gray.50/50"
+          >
+            <Tabs.Trigger value="invoices" fontSize="13px">
+              Invoices ({invoices.length})
+            </Tabs.Trigger>
+            <Tabs.Trigger value="vehicles" fontSize="13px">
+              Vehicles ({vehicles.length})
+            </Tabs.Trigger>
+            <Tabs.Trigger value="payments" fontSize="13px">
+              Payments ({payments.length})
+            </Tabs.Trigger>
+            <Tabs.Trigger value="job-cards" fontSize="13px">
+              Job Cards ({jobCards.length})
+            </Tabs.Trigger>
+          </Tabs.List>
 
-        <Tabs.Content value="vehicles" px="4" pb="4" pt="3">
-          <Flex justify="flex-end" mb="3">
-            <Button
-              size="sm"
-              variant="outline"
-              borderColor="primary.300"
-              color="primary.300"
-              onClick={onAddVehicle}
-            >
-              <PlusIcon />
-              Add Vehicle
-            </Button>
-          </Flex>
-          <CustomTable
-            data={vehicles}
-            columns={vehicleColumns}
-            loading={vehiclesLoading}
-            enableActions
-            actions={vehicleActions}
-            tableScrollAreaProps={scrollAreaProps}
-          />
-        </Tabs.Content>
+          <Tabs.Content value="vehicles" px="4" pb="4" pt="3">
+            <Flex justify="flex-end" mb="3">
+              <Button
+                size="sm"
+                variant="outline"
+                borderColor="primary.300"
+                color="primary.300"
+                onClick={onAddVehicle}
+              >
+                <PlusIcon />
+                Add Vehicle
+              </Button>
+            </Flex>
+            <CustomTable
+              data={vehicles}
+              columns={vehicleColumns}
+              loading={vehiclesLoading}
+              enableActions
+              actions={vehicleActions}
+              tableScrollAreaProps={scrollAreaProps}
+            />
+          </Tabs.Content>
 
-        <Tabs.Content value="invoices" px="4" pb="4" pt="3">
-          <CustomTable
-            data={invoices}
-            columns={invoiceColumns}
-            loading={invoicesLoading}
-            onRowClick={(row) =>
-              navigate(
-                RouteConstants.invoices.detail.generate({
-                  id: row.original.id,
-                }),
-              )
-            }
-            tableScrollAreaProps={scrollAreaProps}
-          />
-        </Tabs.Content>
+          <Tabs.Content value="invoices" px="4" pb="4" pt="3">
+            <CustomTable
+              data={invoices}
+              columns={invoiceColumns}
+              loading={invoicesLoading}
+              onRowClick={(row) =>
+                navigate(
+                  RouteConstants.invoices.detail.generate({
+                    id: row.original.id,
+                  }),
+                )
+              }
+              tableScrollAreaProps={scrollAreaProps}
+            />
+          </Tabs.Content>
 
-        <Tabs.Content value="payments" px="4" pb="4" pt="3">
-          <CustomTable
-            data={payments}
-            columns={paymentColumns}
-            loading={paymentsLoading}
-            onRowClick={(row) =>
-              navigate(
-                RouteConstants.payments.detail.generate({
-                  id: row.original.id,
-                }),
-              )
-            }
-            tableScrollAreaProps={scrollAreaProps}
-          />
-        </Tabs.Content>
+          <Tabs.Content value="payments" px="4" pb="4" pt="3">
+            <CustomTable
+              data={payments}
+              columns={paymentColumns}
+              loading={paymentsLoading}
+              onRowClick={(row) =>
+                navigate(
+                  RouteConstants.payments.detail.generate({
+                    id: row.original.id,
+                  }),
+                )
+              }
+              tableScrollAreaProps={scrollAreaProps}
+            />
+          </Tabs.Content>
 
-        <Tabs.Content value="job-cards" px="4" pb="4" pt="3">
-          <CustomTable
-            data={jobCards}
-            columns={jobCardColumns}
-            loading={jobCardsLoading}
-            onRowClick={(row) =>
-              navigate(
-                RouteConstants.jobCards.detail.generate({
-                  id: row.original.id,
-                }),
-              )
-            }
-            tableScrollAreaProps={scrollAreaProps}
-          />
-        </Tabs.Content>
-      </Tabs.Root>
-    </Box>
+          <Tabs.Content value="job-cards" px="4" pb="4" pt="3">
+            <CustomTable
+              data={jobCards}
+              columns={jobCardColumns}
+              loading={jobCardsLoading}
+              onRowClick={(row) =>
+                navigate(
+                  RouteConstants.jobCards.detail.generate({
+                    id: row.original.id,
+                  }),
+                )
+              }
+              tableScrollAreaProps={scrollAreaProps}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
+      </Box>
+
+      <AddVehicleModal
+        open={Boolean(editVehicle)}
+        onClose={() => setEditVehicle(null)}
+        clientId={clientId}
+        vehicle={editVehicle}
+      />
+
+      <ConsentDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={({ open }) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        heading={`Delete ${
+          deleteTarget
+            ? `${deleteTarget.make} ${deleteTarget.model}`
+            : "vehicle"
+        }?`}
+        note="This removes the vehicle from this customer. Linked job cards and invoices are not affected."
+        handleSubmit={confirmDeleteVehicle}
+        isLoading={isDeleting}
+      />
+    </>
   );
 }
