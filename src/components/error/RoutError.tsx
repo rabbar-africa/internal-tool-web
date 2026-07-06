@@ -6,14 +6,34 @@ export const RouteError = () => {
   const error: any = useRouteError();
 
   useEffect(() => {
-    if (error) {
-      const errorMessage =
-        error.statusText?.toLowerCase() || error.message?.toLowerCase();
-      const reloadMessage = "failed to fetch dynamically imported module";
+    if (!error) return;
 
-      if (errorMessage?.includes(reloadMessage)) {
-        window.location.reload();
-      }
+    const errorMessage =
+      error.statusText?.toLowerCase() || error.message?.toLowerCase() || "";
+
+    // Both signal a stale deploy: the browser is holding old chunk URLs that the
+    // server no longer serves (it returns the index.html fallback instead).
+    // A one-time reload fetches the fresh build.
+    const reloadMessages = [
+      "failed to fetch dynamically imported module",
+      "is not a valid javascript mime type",
+    ];
+
+    const shouldReload = reloadMessages.some((message) =>
+      errorMessage.includes(message),
+    );
+
+    // Guard against an infinite reload loop: skip if we already reloaded within
+    // the last 10s (the error persisted), but still allow a fresh reload later
+    // in the session if a new deploy goes out.
+    const lastReload = Number(
+      sessionStorage.getItem("route-error-reloaded-at"),
+    );
+    const reloadedRecently = Date.now() - lastReload < 10_000;
+
+    if (shouldReload && !reloadedRecently) {
+      sessionStorage.setItem("route-error-reloaded-at", String(Date.now()));
+      window.location.reload();
     }
   }, [error]);
 

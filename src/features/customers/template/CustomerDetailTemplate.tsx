@@ -82,6 +82,7 @@ export function CustomerDetailTemplate() {
         <ClientReminders clientId={id ?? ""} />
 
         <CustomerTabs
+          clientId={id ?? ""}
           vehicles={vehicles}
           vehiclesLoading={vehiclesLoading}
           invoices={customerInvoices}
