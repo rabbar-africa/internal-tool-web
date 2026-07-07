@@ -179,15 +179,7 @@ const expenseColumns: ColumnDef<Expense>[] = [
       </Text>
     ),
   },
-  {
-    accessorKey: "vendorName",
-    header: "Vendor",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as string | null) || "—"}
-      </Text>
-    ),
-  },
+
   {
     accessorKey: "amount",
     header: "Amount",

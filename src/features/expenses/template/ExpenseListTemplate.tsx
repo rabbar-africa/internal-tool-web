@@ -81,15 +81,6 @@ const columns: ColumnDef<Expense>[] = [
     },
   },
   {
-    accessorKey: "vendorName",
-    header: "Vendor",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as string | null) || "—"}
-      </Text>
-    ),
-  },
-  {
     accessorKey: "amount",
     header: "Amount",
     cell: ({ getValue }) => (
@@ -116,26 +107,15 @@ const columns: ColumnDef<Expense>[] = [
       </Text>
     ),
   },
-  {
-    accessorKey: "isBillable",
-    header: "Billable",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as boolean) ? "Yes" : "No"}
-      </Text>
-    ),
-  },
 ];
 
 const CSV_HEADERS = {
   expenseNumber: "Expense #",
   name: "Item",
   category: "Category",
-  vendorName: "Vendor",
   amount: "Amount (₦)",
   date: "Date",
   jobNumber: "Job Card",
-  isBillable: "Billable",
 } as const;
 
 const FILTER_SCHEMA = {
@@ -174,11 +154,9 @@ export function ExpenseListTemplate() {
     expenseNumber: expense.expenseNumber,
     name: expense.name,
     category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
-    vendorName: expense.vendorName ?? "",
     amount: expense.amount,
     date: expense.date,
     jobNumber: expense.jobCard?.jobNumber ?? "",
-    isBillable: expense.isBillable ? "Yes" : "No",
   }));
 
   const tableActions: TableAction<Expense>[] = [

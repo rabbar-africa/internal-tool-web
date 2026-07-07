@@ -25,7 +25,6 @@ export interface Expense {
   quantity: string;
   unitCost: string;
   amount: string;
-  isBillable: boolean;
   paymentMode?: PaymentModeDto | null;
   currencyCode: string;
   fileUrl?: string | null;
@@ -50,7 +49,6 @@ export interface CreateExpensePayload {
   quantity?: number;
   unitCost?: number;
   amount?: number;
-  isBillable?: boolean;
   paymentMode?: PaymentModeDto;
   currencyCode?: string;
   fileUrl?: string;

@@ -231,6 +231,16 @@ export const JOB_CARD_PRIORITY_STYLES: Record<
   URGENT: { bg: "red.50", color: "red.600" },
 };
 
+/** "Toyota Corolla (2018)" from make/model/year — no registration number. */
+export const jobCardVehicleShortLabel = (
+  jobCard: Pick<JobCard, "vehicleMake" | "vehicleModel" | "vehicleYear">,
+): string => {
+  const name = [jobCard.vehicleMake, jobCard.vehicleModel]
+    .filter(Boolean)
+    .join(" ");
+  return jobCard.vehicleYear ? `${name} (${jobCard.vehicleYear})` : name;
+};
+
 /** "Toyota Corolla (2018) • ABC 123 XY" from whichever vehicle fields are set. */
 export const jobCardVehicleLabel = (
   jobCard: Pick<
@@ -238,13 +248,5 @@ export const jobCardVehicleLabel = (
     "vehicleMake" | "vehicleModel" | "vehicleYear" | "vehicleRegistrationNumber"
   >,
 ): string => {
-  const name = [jobCard.vehicleMake, jobCard.vehicleModel]
-    .filter(Boolean)
-    .join(" ");
-  const withYear = jobCard.vehicleYear
-    ? `${name} (${jobCard.vehicleYear})`
-    : name;
-  return [withYear, jobCard.vehicleRegistrationNumber]
-    .filter(Boolean)
-    .join(" • ");
+  return [jobCardVehicleShortLabel(jobCard)].filter(Boolean).join(" • ");
 };

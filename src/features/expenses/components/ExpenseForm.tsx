@@ -16,7 +16,6 @@ import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
-import { CustomSwitch } from "@/components/input/CustomSwitch";
 import { CustomFileInput } from "@/components/common/CustomFileInput";
 import { uploadFile } from "@/features/paperwork/api/service";
 import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
@@ -133,7 +132,6 @@ export function ExpenseForm({
       quantity: expense ? String(Number(expense.quantity)) : "1",
       unitCost: expense ? String(Number(expense.unitCost)) : "",
       amount: expense ? String(Number(expense.amount)) : "",
-      isBillable: expense?.isBillable ?? false,
       paymentMode: (expense?.paymentMode ?? "") as PaymentModeDto | "",
       notes: expense?.notes ?? "",
     },
@@ -166,7 +164,6 @@ export function ExpenseForm({
         quantity: values.quantity ? Number(values.quantity) : undefined,
         unitCost: values.unitCost ? Number(values.unitCost) : undefined,
         amount: values.amount ? Number(values.amount) : undefined,
-        isBillable: values.isBillable,
         paymentMode: values.paymentMode || undefined,
         notes: values.notes || undefined,
         ...receipt,
@@ -346,31 +343,18 @@ export function ExpenseForm({
             />
           </Card.Header>
           <Card.Body>
-            <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
-              <CustomSelect
-                label="Link to Job Card (optional)"
-                placeholder="Select job card..."
-                options={jobCardOptions}
-                loading={jobCardsLoading}
-                value={
-                  formik.values.jobCardId
-                    ? [formik.values.jobCardId]
-                    : undefined
-                }
-                onChange={(opt: { value: string[] }) =>
-                  formik.setFieldValue("jobCardId", opt?.value?.[0] ?? "")
-                }
-              />
-              <Flex align="flex-end" pb="2">
-                <CustomSwitch
-                  label="Billable to customer"
-                  checked={formik.values.isBillable}
-                  onCheckedChange={({ checked }: { checked: boolean }) =>
-                    formik.setFieldValue("isBillable", checked)
-                  }
-                />
-              </Flex>
-            </Grid>
+            <CustomSelect
+              label="Link to Job Card (optional)"
+              placeholder="Select job card..."
+              options={jobCardOptions}
+              loading={jobCardsLoading}
+              value={
+                formik.values.jobCardId ? [formik.values.jobCardId] : undefined
+              }
+              onChange={(opt: { value: string[] }) =>
+                formik.setFieldValue("jobCardId", opt?.value?.[0] ?? "")
+              }
+            />
           </Card.Body>
         </Card.Root>
 

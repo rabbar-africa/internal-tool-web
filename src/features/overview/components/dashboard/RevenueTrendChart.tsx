@@ -14,7 +14,9 @@ export function RevenueTrendChart({
   data,
   currency = "NGN",
 }: RevenueTrendChartProps) {
-  const hasData = data.some((d) => d.collected > 0 || d.invoiced > 0);
+  const hasData = data.some(
+    (d) => d.collected > 0 || d.invoiced > 0 || d.expenses > 0,
+  );
 
   const options: ApexOptions = {
     chart: {
@@ -24,7 +26,7 @@ export function RevenueTrendChart({
       parentHeightOffset: 0,
       animations: { speed: 400 },
     },
-    colors: [CHART.collected, CHART.invoiced],
+    colors: [CHART.collected, CHART.invoiced, CHART.expenses, CHART.profit],
     dataLabels: { enabled: false },
     stroke: { curve: "smooth", width: 2 },
     fill: {
@@ -71,10 +73,15 @@ export function RevenueTrendChart({
   const series = [
     { name: "Collected", data: data.map((d) => d.collected) },
     { name: "Invoiced", data: data.map((d) => d.invoiced) },
+    { name: "Expenses", data: data.map((d) => d.expenses) },
+    { name: "Profit", data: data.map((d) => d.profit) },
   ];
 
   return (
-    <DashboardCard title="Revenue Trend" subtitle="Collected vs invoiced">
+    <DashboardCard
+      title="Revenue Trend"
+      subtitle="Collected, invoiced, expenses & profit"
+    >
       {hasData ? (
         <ReactApexChart
           options={options}

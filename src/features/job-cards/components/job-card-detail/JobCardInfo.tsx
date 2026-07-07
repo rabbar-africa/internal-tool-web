@@ -78,18 +78,6 @@ export function JobCardInfo({ jobCard }: { jobCard: JobCardDetail }) {
           <InfoItem label="Phone" value={jobCard.customerPhone} />
           <InfoItem label="Vehicle" value={jobCardVehicleLabel(jobCard)} />
           <InfoItem
-            label="Odometer"
-            value={
-              jobCard.odometerIn != null
-                ? `${jobCard.odometerIn.toLocaleString()} km in${
-                    jobCard.odometerOut != null
-                      ? ` / ${jobCard.odometerOut.toLocaleString()} km out`
-                      : ""
-                  }`
-                : null
-            }
-          />
-          <InfoItem
             label="Opened"
             value={moment(jobCard.openedAt).format("DD MMM YYYY")}
           />
