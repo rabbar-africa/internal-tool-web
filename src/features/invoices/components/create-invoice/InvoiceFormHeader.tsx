@@ -50,7 +50,7 @@ export function InvoiceFormHeader({
         <Stack gap="4">
           <Box maxW={{ base: "15rem", lg: "unset" }}>
             <SearchCombobox
-              label="Customer Name"
+              label="Select Customer"
               required
               options={customerOptions}
               placeholder="Search customer..."
