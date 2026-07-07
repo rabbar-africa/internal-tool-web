@@ -153,6 +153,7 @@ export interface CreateJobCardPayload {
   notes?: string;
   odometerIn?: number;
   odometerOut?: number;
+  openedAt?: string;
   promisedDate?: string;
   technicianIds?: string[];
   jobNumber?: string;

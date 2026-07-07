@@ -1,6 +1,3 @@
-import { useMemo } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
 import {
   Box,
   Button,
@@ -14,11 +11,8 @@ import {
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
-import { useGetAllCustomersQuery } from "@/features/customers/api/query";
-import { useGetVehiclesByClientQuery } from "@/features/customers/api/query";
-import type { Vehicle } from "@/features/customers/api/service";
-import { useGetTechniciansQuery } from "@/features/technicians/api/query";
-import { technicianFullName } from "@/shared/interface/technician";
+import { SearchCombobox } from "@/components/input/SearchCombobox";
+import { AddVehicleModal } from "@/features/customers/components/customer-detail/AddVehicleModal";
 import {
   JOB_CARD_PRIORITY_OPTIONS,
   JOB_CARD_STATUS_OPTIONS,
@@ -27,6 +21,7 @@ import {
   type JobCardPriority,
   type JobCardStatus,
 } from "@/shared/interface/job-card";
+import { useJobCardForm } from "./useJobCardForm";
 
 interface JobCardFormProps {
   /** Existing job card when editing; omit to create. */
@@ -35,30 +30,6 @@ interface JobCardFormProps {
   onSubmit: (payload: CreateJobCardPayload) => Promise<void>;
   onCancel: () => void;
 }
-
-const validationSchema = Yup.object({
-  clientId: Yup.string(),
-  customerName: Yup.string().when("clientId", {
-    is: (clientId: string) => !clientId,
-    then: (schema) =>
-      schema.required("Select a customer or enter a customer name"),
-    otherwise: (schema) => schema,
-  }),
-  vehicleYear: Yup.number()
-    .transform((value, original) => (original === "" ? undefined : value))
-    .typeError("Year must be a number")
-    .integer("Year must be a whole number")
-    .min(1950, "Enter a valid year")
-    .max(new Date().getFullYear() + 1, "Enter a valid year"),
-  odometerIn: Yup.number()
-    .transform((value, original) => (original === "" ? undefined : value))
-    .typeError("Odometer must be a number")
-    .min(0, "Odometer cannot be negative"),
-  odometerOut: Yup.number()
-    .transform((value, original) => (original === "" ? undefined : value))
-    .typeError("Odometer must be a number")
-    .min(0, "Odometer cannot be negative"),
-});
 
 function SectionHeader({
   num,
@@ -103,119 +74,23 @@ export function JobCardForm({
   onSubmit,
   onCancel,
 }: JobCardFormProps) {
-  const isEdit = Boolean(jobCard);
-
-  const { data: customersData, isLoading: customersLoading } =
-    useGetAllCustomersQuery({ limit: 100 });
-  const { data: techniciansData, isLoading: techniciansLoading } =
-    useGetTechniciansQuery({ limit: 100, isActive: "true" });
-
-  const formik = useFormik({
-    initialValues: {
-      clientId: jobCard?.clientId ?? "",
-      customerName: jobCard?.customerName ?? "",
-      customerPhone: jobCard?.customerPhone ?? "",
-      vehicleId: jobCard?.vehicleId ?? "",
-      vehicleMake: jobCard?.vehicleMake ?? "",
-      vehicleModel: jobCard?.vehicleModel ?? "",
-      vehicleYear: jobCard?.vehicleYear ? String(jobCard.vehicleYear) : "",
-      vehicleRegistrationNumber: jobCard?.vehicleRegistrationNumber ?? "",
-      status: (jobCard?.status ?? "OPEN") as JobCardStatus,
-      priority: (jobCard?.priority ?? "NORMAL") as JobCardPriority,
-      complaint: jobCard?.complaint ?? "",
-      diagnosisNotes: jobCard?.diagnosisNotes ?? "",
-      notes: jobCard?.notes ?? "",
-      odometerIn: jobCard?.odometerIn != null ? String(jobCard.odometerIn) : "",
-      odometerOut:
-        jobCard?.odometerOut != null ? String(jobCard.odometerOut) : "",
-      promisedDate: jobCard?.promisedDate
-        ? jobCard.promisedDate.slice(0, 10)
-        : "",
-      technicianIds: [] as string[],
-    },
-    enableReinitialize: true,
-    validationSchema,
-    onSubmit: async (values) => {
-      const payload: CreateJobCardPayload = {
-        clientId: values.clientId || (isEdit ? null : undefined),
-        customerName: values.customerName || undefined,
-        customerPhone: values.customerPhone || undefined,
-        vehicleId: values.vehicleId || (isEdit ? null : undefined),
-        vehicleMake: values.vehicleMake || undefined,
-        vehicleModel: values.vehicleModel || undefined,
-        vehicleYear: values.vehicleYear
-          ? Number(values.vehicleYear)
-          : undefined,
-        vehicleRegistrationNumber:
-          values.vehicleRegistrationNumber || undefined,
-        status: values.status,
-        priority: values.priority,
-        complaint: values.complaint || undefined,
-        diagnosisNotes: values.diagnosisNotes || undefined,
-        notes: values.notes || undefined,
-        odometerIn: values.odometerIn ? Number(values.odometerIn) : undefined,
-        odometerOut: values.odometerOut
-          ? Number(values.odometerOut)
-          : undefined,
-        promisedDate: values.promisedDate || undefined,
-        ...(isEdit
-          ? {}
-          : values.technicianIds.length > 0
-            ? { technicianIds: values.technicianIds }
-            : {}),
-      };
-      await onSubmit(payload);
-    },
-  });
-
-  const { data: vehiclesData, isLoading: vehiclesLoading } =
-    useGetVehiclesByClientQuery(formik.values.clientId);
-
-  const customerOptions = useMemo(
-    () =>
-      (customersData?.data ?? []).map((customer) => ({
-        label: customer.displayName,
-        value: customer.id,
-      })),
-    [customersData?.data],
-  );
-
-  const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
-  const vehicleOptions = vehicles.map((vehicle) => ({
-    label: `${vehicle.make} ${vehicle.model} (${vehicle.year}) • ${vehicle.registrationNumber}`,
-    value: vehicle.id,
-  }));
-
-  const technicianOptions = (techniciansData?.data ?? []).map((technician) => ({
-    label: technicianFullName(technician),
-    value: technician.id,
-  }));
-
-  const handleClientChange = (opt: { value: string[] } | null) => {
-    const clientId = opt?.value?.[0] ?? "";
-    formik.setFieldValue("clientId", clientId);
-    formik.setFieldValue("vehicleId", "");
-    const client = (customersData?.data ?? []).find((c) => c.id === clientId);
-    if (client) {
-      formik.setFieldValue("customerName", client.displayName);
-      formik.setFieldValue("customerPhone", client.phone ?? "");
-    }
-  };
-
-  const handleVehicleChange = (opt: { value: string[] } | null) => {
-    const vehicleId = opt?.value?.[0] ?? "";
-    formik.setFieldValue("vehicleId", vehicleId);
-    const vehicle = vehicles.find((v) => v.id === vehicleId);
-    if (vehicle) {
-      formik.setFieldValue("vehicleMake", vehicle.make);
-      formik.setFieldValue("vehicleModel", vehicle.model);
-      formik.setFieldValue("vehicleYear", String(vehicle.year));
-      formik.setFieldValue(
-        "vehicleRegistrationNumber",
-        vehicle.registrationNumber,
-      );
-    }
-  };
+  const {
+    isEdit,
+    formik,
+    customerOptions,
+    isSearchingCustomers,
+    setCustomerSearch,
+    handleClientChange,
+    vehicleOptions,
+    vehiclesLoading,
+    handleVehicleChange,
+    handleVehicleSaved,
+    addVehicleOpen,
+    openAddVehicle,
+    closeAddVehicle,
+    technicianOptions,
+    techniciansLoading,
+  } = useJobCardForm({ jobCard, onSubmit });
 
   return (
     <form onSubmit={formik.handleSubmit}>
@@ -232,18 +107,17 @@ export function JobCardForm({
           <Card.Body>
             <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
               <Box gridColumn={{ sm: "1 / -1" }}>
-                <CustomSelect
+                <SearchCombobox
                   label="Existing Customer"
-                  placeholder="Select customer..."
+                  placeholder="Search customer by name..."
                   options={customerOptions}
-                  loading={customersLoading}
-                  value={
-                    formik.values.clientId
-                      ? [formik.values.clientId]
-                      : undefined
-                  }
+                  value={formik.values.clientId || undefined}
                   onChange={handleClientChange}
-                  helperText="Leave empty for a walk-in customer"
+                  onSearchChange={setCustomerSearch}
+                  searchDebounceMs={400}
+                  serverSearch
+                  isLoading={isSearchingCustomers}
+                  emptyText="No customers found. Leave empty for a walk-in."
                 />
               </Box>
               <CustomInput
@@ -278,72 +152,33 @@ export function JobCardForm({
             <SectionHeader
               num={2}
               title="Vehicle"
-              subtitle="Link a saved vehicle or enter the details manually"
+              subtitle="Choose one of the customer's saved vehicles, or add a new one"
             />
           </Card.Header>
           <Card.Body>
-            <Stack gap="4">
-              {formik.values.clientId && (
-                <CustomSelect
-                  label="Saved Vehicle"
-                  placeholder={
-                    vehicleOptions.length > 0
-                      ? "Select vehicle..."
-                      : "No saved vehicles for this customer"
-                  }
-                  options={vehicleOptions}
-                  loading={vehiclesLoading}
-                  value={
-                    formik.values.vehicleId
-                      ? [formik.values.vehicleId]
-                      : undefined
-                  }
-                  onChange={handleVehicleChange}
-                />
-              )}
-              <Grid
-                templateColumns={{ base: "1fr", sm: "1fr 1fr 1fr 1fr" }}
-                gap="4"
-              >
-                <CustomInput
-                  label="Make"
-                  name="vehicleMake"
-                  value={formik.values.vehicleMake}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="e.g. Toyota"
-                />
-                <CustomInput
-                  label="Model"
-                  name="vehicleModel"
-                  value={formik.values.vehicleModel}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="e.g. Corolla"
-                />
-                <CustomInput
-                  label="Year"
-                  name="vehicleYear"
-                  value={formik.values.vehicleYear}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="e.g. 2018"
-                  error={
-                    formik.touched.vehicleYear && formik.errors.vehicleYear
-                      ? formik.errors.vehicleYear
-                      : undefined
-                  }
-                />
-                <CustomInput
-                  label="Registration No."
-                  name="vehicleRegistrationNumber"
-                  value={formik.values.vehicleRegistrationNumber}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="e.g. ABC 123 XY"
-                />
-              </Grid>
-            </Stack>
+            {formik.values.clientId ? (
+              <SearchCombobox
+                label="Vehicle"
+                placeholder={
+                  vehicleOptions.length > 0
+                    ? "Search vehicle..."
+                    : "No saved vehicles yet — add one"
+                }
+                options={vehicleOptions}
+                value={formik.values.vehicleId || undefined}
+                onChange={handleVehicleChange}
+                isLoading={vehiclesLoading}
+                emptyText="No matching vehicles."
+                footerAction={{
+                  label: "Add Vehicle",
+                  onClick: openAddVehicle,
+                }}
+              />
+            ) : (
+              <Text textStyle="small-regular" color="gray.300">
+                Select a customer above to choose or add a vehicle.
+              </Text>
+            )}
           </Card.Body>
         </Card.Root>
 
@@ -383,6 +218,14 @@ export function JobCardForm({
                       (opt?.value?.[0] as JobCardPriority) ?? "NORMAL",
                     )
                   }
+                />
+                <CustomInput
+                  label="Opened Date"
+                  type="date"
+                  name="openedAt"
+                  value={formik.values.openedAt}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                 />
                 <CustomInput
                   label="Promised Date"
@@ -489,6 +332,13 @@ export function JobCardForm({
           </Button>
         </Flex>
       </Stack>
+
+      <AddVehicleModal
+        open={addVehicleOpen}
+        onClose={closeAddVehicle}
+        clientId={formik.values.clientId}
+        onVehicleSaved={handleVehicleSaved}
+      />
     </form>
   );
 }

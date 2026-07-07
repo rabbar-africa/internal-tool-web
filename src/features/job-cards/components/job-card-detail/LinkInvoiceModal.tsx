@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { Button, Dialog, Flex, Portal, Stack } from "@chakra-ui/react";
+import moment from "moment";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { useGetAllInvoicesQuery } from "@/features/invoices/api/query";
+import { formatCurrency } from "@/utils/calculations";
+import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { useLinkJobCardInvoiceMutation } from "../../api/query";
 
 interface LinkInvoiceModalProps {
@@ -31,12 +34,25 @@ export function LinkInvoiceModal({
 
   const options = useMemo(() => {
     const linked = new Set(linkedInvoiceIds);
-    return (data?.data ?? [])
+    // The list endpoint returns the rich invoice shape (date/total), but the
+    // service is typed with the legacy `Invoice`; cast to the real response.
+    const invoices = (data?.data ?? []) as unknown as IInvoiceResponse[];
+    return invoices
       .filter((invoice) => !linked.has(invoice.id))
-      .map((invoice) => ({
-        label: `${invoice.invoiceNumber} — ${invoice.customer?.name ?? ""}`,
-        value: invoice.id,
-      }));
+      .map((invoice) => {
+        const date = invoice.date
+          ? moment(invoice.date).format("DD MMM YYYY")
+          : "";
+        const parts = [
+          invoice.invoiceNumber,
+          date,
+          formatCurrency(invoice.total),
+        ].filter(Boolean);
+        return {
+          label: parts.join(" · "),
+          value: invoice.id,
+        };
+      });
   }, [data?.data, linkedInvoiceIds]);
 
   const handleClose = () => {
