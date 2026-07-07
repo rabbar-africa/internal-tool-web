@@ -6,10 +6,30 @@
 export const CHART = {
   collected: "#293885", // brand indigo — money in
   invoiced: "#B7BEDF", // soft indigo tint — billed
+  expenses: "#C1665A", // muted terracotta — money out
+  profit: "#4F9D77", // muted green — what's left
   grid: "#F1F2F5",
   axis: "#9AA1AD",
   axisLabelSize: "11px",
 };
+
+// Job-card status → muted swatch, cohesive with the invoice palette.
+const JOB_CARD_STATUS_COLORS: Record<string, string> = {
+  AWAITING_APPROVAL: "#D3A85C",
+  APPROVED: "#6478C0",
+  IN_PROGRESS: "#6478C0",
+  ON_HOLD: "#AEB4BF",
+  COMPLETED: "#4F9D77",
+  DELIVERED: "#293885",
+  CANCELLED: "#C7CCD4",
+};
+
+export function jobCardStatusColor(status: string, index = 0): string {
+  return (
+    JOB_CARD_STATUS_COLORS[status?.toUpperCase?.() ?? ""] ??
+    STATUS_FALLBACK[index % STATUS_FALLBACK.length]
+  );
+}
 
 // Invoice status → muted swatch. Unknown statuses fall back to a cohesive set.
 const STATUS_COLORS: Record<string, string> = {

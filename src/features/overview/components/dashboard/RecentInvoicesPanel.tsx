@@ -82,7 +82,7 @@ export function RecentInvoicesPanel({
                   color="gray.500"
                   minW="max-content"
                 >
-                  {formatCurrency(inv.total ?? 0, currency)}
+                  {formatCurrency(inv.total ?? 0, inv.currencyCode ?? currency)}
                 </Text>
               </Flex>
             </Flex>

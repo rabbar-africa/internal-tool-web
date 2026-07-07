@@ -4,9 +4,9 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { StatCardsGrid } from "@/features/overview/components/dashboard/StatCardsGrid";
 import { RevenueTrendChart } from "@/features/overview/components/dashboard/RevenueTrendChart";
 import { InvoiceStatusChart } from "@/features/overview/components/dashboard/InvoiceStatusChart";
-import { TopCustomersPanel } from "@/features/overview/components/dashboard/TopCustomersPanel";
+import { JobCardStatusChart } from "@/features/overview/components/dashboard/JobCardStatusChart";
 import { TopDebtorsPanel } from "@/features/overview/components/dashboard/TopDebtorsPanel";
-// import { RecentInvoicesPanel } from "@/features/overview/components/dashboard/RecentInvoicesPanel";
+import { RecentJobCardsPanel } from "@/features/overview/components/dashboard/RecentJobCardsPanel";
 import {
   DashboardFilters,
   DEFAULT_PRESET,
@@ -69,22 +69,21 @@ export function OverviewTemplate() {
             currency={currency}
             isLoading={isLoading}
           />
-          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
+          {/* top debtors */}
+          <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
             {isLoading || !data ? (
               <>
-                <Skeleton height="260px" rounded="xl" />
-                <Skeleton height="260px" rounded="xl" />
+                <Skeleton height="300px" rounded="xl" />
+                <Skeleton height="300px" rounded="xl" />
               </>
             ) : (
               <>
-                <TopCustomersPanel
-                  data={data.topCustomers}
-                  currency={currency}
-                />
                 <TopDebtorsPanel data={data.topDebtors} currency={currency} />
+                <JobCardStatusChart data={data.jobCardStatusBreakdown} />
               </>
             )}
           </Grid>
+          {/* upcoming reminders */}
           <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
             <UpcomingRemindersPanel
               title="Paperwork due"
@@ -105,6 +104,7 @@ export function OverviewTemplate() {
               emptyText="No services due soon"
             />
           </Grid>
+          {/* /revenue */}
           <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
             {isLoading || !data ? (
               <>
@@ -113,14 +113,17 @@ export function OverviewTemplate() {
               </>
             ) : (
               <>
-                <RevenueTrendChart
-                  data={data.revenueTrend}
-                  currency={currency}
-                />
+                <RevenueTrendChart data={data.trend} currency={currency} />
                 <InvoiceStatusChart data={data.invoiceStatusBreakdown} />
               </>
             )}
           </Grid>
+
+          {isLoading || !data ? (
+            <Skeleton height="300px" rounded="xl" />
+          ) : (
+            <RecentJobCardsPanel data={data.recentJobCards} />
+          )}
         </>
       )}
     </Stack>
