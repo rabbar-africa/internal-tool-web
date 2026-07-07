@@ -22,7 +22,15 @@ export interface DashboardSummary {
   outstandingReceivables: number;
   /** Past due date with a remaining balance. */
   overdue: { amount: number; count: number };
-  draftInvoices: number;
+  /** Expenses recorded in the period. */
+  expenses: number;
+  expenseCount: number;
+  /** Revenue collected minus expenses for the period. */
+  netProfit: number;
+  /** Job cards not yet closed/delivered. */
+  openJobCards: number;
+  /** Job cards created in the period. */
+  jobCardsCreated: number;
   totalCustomers: number;
   /** Clients created in the period. */
   newCustomers: number;
@@ -34,10 +42,15 @@ export interface InvoiceStatusBreakdownItem {
   amount: number;
 }
 
-export interface TopCustomer {
-  customerId: string;
-  customerName: string;
-  total: number;
+export interface JobCardStatusBreakdownItem {
+  status: string;
+  count: number;
+}
+
+export interface ExpenseCategoryItem {
+  category: string;
+  count: number;
+  amount: number;
 }
 
 export interface TopDebtor {
@@ -51,6 +64,8 @@ export interface RevenueTrendPoint {
   month: string;
   collected: number;
   invoiced: number;
+  expenses: number;
+  profit: number;
 }
 
 export interface RecentInvoice {
@@ -58,8 +73,9 @@ export interface RecentInvoice {
   invoiceNumber?: string;
   customerName?: string;
   status?: string;
-  total?: number;
-  balance?: number;
+  total?: number | string;
+  balance?: number | string;
+  currencyCode?: string;
   date?: string;
   dueDate?: string;
 }
@@ -68,8 +84,22 @@ export interface RecentPayment {
   id: string;
   paymentNumber?: string;
   customerName?: string;
-  amount?: number;
+  amount?: number | string;
+  mode?: string;
+  status?: string;
+  currencyCode?: string;
   date?: string;
+}
+
+export interface RecentJobCard {
+  id: string;
+  jobNumber?: string;
+  customerName?: string;
+  vehicleRegistrationNumber?: string;
+  status?: string;
+  priority?: string;
+  openedAt?: string;
+  createdAt?: string;
 }
 
 export interface DashboardAnalytics {
@@ -77,9 +107,11 @@ export interface DashboardAnalytics {
   period: DashboardPeriod;
   summary: DashboardSummary;
   invoiceStatusBreakdown: InvoiceStatusBreakdownItem[];
-  topCustomers: TopCustomer[];
+  jobCardStatusBreakdown: JobCardStatusBreakdownItem[];
+  expensesByCategory: ExpenseCategoryItem[];
   topDebtors: TopDebtor[];
-  revenueTrend: RevenueTrendPoint[];
+  trend: RevenueTrendPoint[];
   recentInvoices: RecentInvoice[];
   recentPayments: RecentPayment[];
+  recentJobCards: RecentJobCard[];
 }
