@@ -85,7 +85,11 @@ export function AddVehicleModal({
         color: values.color || undefined,
         clientId,
       });
-      onVehicleSaved?.(created);
+      // The API wraps the created vehicle in a { data } envelope, so unwrap it
+      // before handing it back (otherwise the vehicle's fields are undefined).
+      const saved =
+        (created as unknown as { data?: Vehicle }).data ?? (created as Vehicle);
+      onVehicleSaved?.(saved);
       onClose();
     },
   });

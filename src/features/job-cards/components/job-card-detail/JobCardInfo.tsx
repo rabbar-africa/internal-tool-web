@@ -1,5 +1,7 @@
-import { Box, Grid, Stack, Text } from "@chakra-ui/react";
+import { Box, Grid, Link, Stack, Text } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
 import moment from "moment";
+import { RouteConstants } from "@/shared/constants/routes";
 import {
   jobCardVehicleLabel,
   type JobCardDetail,
@@ -8,10 +10,14 @@ import {
 function InfoItem({
   label,
   value,
+  to,
 }: {
   label: string;
   value?: string | number | null;
+  /** When set (and a value exists), render the value as a link to this route. */
+  to?: string;
 }) {
+  const isEmpty = value === null || value === undefined || value === "";
   return (
     <Box>
       <Text
@@ -24,9 +30,21 @@ function InfoItem({
       >
         {label}
       </Text>
-      <Text textStyle="small-regular" color="gray.500">
-        {value === null || value === undefined || value === "" ? "—" : value}
-      </Text>
+      {!isEmpty && to ? (
+        <Link
+          asChild
+          textStyle="small-regular"
+          color="primary.400"
+          fontWeight="500"
+          _hover={{ textDecoration: "underline" }}
+        >
+          <RouterLink to={to}>{value}</RouterLink>
+        </Link>
+      ) : (
+        <Text textStyle="small-regular" color="gray.500">
+          {isEmpty ? "—" : value}
+        </Text>
+      )}
     </Box>
   );
 }
@@ -46,7 +64,17 @@ export function JobCardInfo({ jobCard }: { jobCard: JobCardDetail }) {
           templateColumns={{ base: "1fr 1fr", md: "repeat(4, 1fr)" }}
           gap="4"
         >
-          <InfoItem label="Customer" value={jobCard.customerName} />
+          <InfoItem
+            label="Customer"
+            value={jobCard.customerName}
+            to={
+              jobCard.clientId
+                ? RouteConstants.customers.detail.generate({
+                    id: jobCard.clientId,
+                  })
+                : undefined
+            }
+          />
           <InfoItem label="Phone" value={jobCard.customerPhone} />
           <InfoItem label="Vehicle" value={jobCardVehicleLabel(jobCard)} />
           <InfoItem
