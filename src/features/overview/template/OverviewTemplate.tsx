@@ -69,19 +69,7 @@ export function OverviewTemplate() {
             currency={currency}
             isLoading={isLoading}
           />
-          <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
-            {isLoading || !data ? (
-              <>
-                <Skeleton height="340px" rounded="xl" />
-                <Skeleton height="340px" rounded="xl" />
-              </>
-            ) : (
-              <>
-                <RevenueTrendChart data={data.trend} currency={currency} />
-                <InvoiceStatusChart data={data.invoiceStatusBreakdown} />
-              </>
-            )}
-          </Grid>
+          {/* top debtors */}
           <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
             {isLoading || !data ? (
               <>
@@ -95,6 +83,7 @@ export function OverviewTemplate() {
               </>
             )}
           </Grid>
+          {/* upcoming reminders */}
           <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
             <UpcomingRemindersPanel
               title="Paperwork due"
@@ -115,6 +104,21 @@ export function OverviewTemplate() {
               emptyText="No services due soon"
             />
           </Grid>
+          {/* /revenue */}
+          <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap="4">
+            {isLoading || !data ? (
+              <>
+                <Skeleton height="340px" rounded="xl" />
+                <Skeleton height="340px" rounded="xl" />
+              </>
+            ) : (
+              <>
+                <RevenueTrendChart data={data.trend} currency={currency} />
+                <InvoiceStatusChart data={data.invoiceStatusBreakdown} />
+              </>
+            )}
+          </Grid>
+
           {isLoading || !data ? (
             <Skeleton height="300px" rounded="xl" />
           ) : (
