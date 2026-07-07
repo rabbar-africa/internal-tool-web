@@ -7,6 +7,7 @@ import {
   JOB_CARD_STATUS_LABELS,
   JOB_CARD_STATUS_STYLES,
   jobCardVehicleLabel,
+  jobCardVehicleShortLabel,
   type JobCard,
   type JobCardPriority,
   type JobCardStatus,
@@ -90,7 +91,7 @@ export const jobCardColumns: ColumnDef<JobCard>[] = [
     header: "Vehicle",
     cell: ({ row }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {jobCardVehicleLabel(row.original) || "—"}
+        {jobCardVehicleShortLabel(row.original) || "—"}
       </Text>
     ),
   },
@@ -100,35 +101,6 @@ export const jobCardColumns: ColumnDef<JobCard>[] = [
     cell: ({ getValue }) => (
       <JobCardStatusBadge status={getValue() as JobCardStatus} />
     ),
-  },
-  {
-    accessorKey: "priority",
-    header: "Priority",
-    cell: ({ getValue }) => (
-      <JobCardPriorityBadge priority={getValue() as JobCardPriority} />
-    ),
-  },
-  {
-    id: "technicians",
-    header: "Technicians",
-    cell: ({ row }) => {
-      const assignments = row.original.technicians ?? [];
-      if (assignments.length === 0) {
-        return (
-          <Text textStyle="small-regular" color="gray.300">
-            Unassigned
-          </Text>
-        );
-      }
-      const lead = assignments.find((a) => a.isLead) ?? assignments[0];
-      const extra = assignments.length - 1;
-      return (
-        <Text textStyle="small-regular" color="gray.500">
-          {technicianFullName(lead.technician)}
-          {extra > 0 ? ` +${extra}` : ""}
-        </Text>
-      );
-    },
   },
   {
     accessorKey: "promisedDate",
