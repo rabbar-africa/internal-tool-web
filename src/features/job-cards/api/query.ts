@@ -82,8 +82,15 @@ export const useUpdateJobCardMutation = () =>
 
 export const useUpdateJobCardStatusMutation = () =>
   useMutation({
-    mutationFn: ({ id, status }: { id: string; status: JobCardStatus }) =>
-      updateJobCardStatus(id, status),
+    mutationFn: ({
+      id,
+      status,
+      closedAt,
+    }: {
+      id: string;
+      status: JobCardStatus;
+      closedAt?: string;
+    }) => updateJobCardStatus(id, status, closedAt),
     meta: {
       successMessage: "Job card status updated",
       invalidatesQueryKeys: detailInvalidations,

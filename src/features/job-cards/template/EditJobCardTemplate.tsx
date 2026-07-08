@@ -2,7 +2,7 @@ import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import SectionLoader from "@/components/common/SectionLoader";
 import { RouteConstants } from "@/shared/constants/routes";
-import type { CreateJobCardPayload } from "@/shared/interface/job-card";
+import type { JobCardFormPayload } from "@/shared/interface/job-card";
 import { useGetJobCardByIdQuery, useUpdateJobCardMutation } from "../api/query";
 import { JobCardForm } from "../components/job-card-form/JobCardForm";
 
@@ -23,7 +23,7 @@ export function EditJobCardTemplate() {
     id: jobCard.id,
   });
 
-  const handleSubmit = async (payload: CreateJobCardPayload) => {
+  const handleSubmit = async (payload: JobCardFormPayload) => {
     // The form never sets technicianIds in edit mode (PUT rejects it).
     await updateJobCard({ id: jobCard.id, payload });
     navigate(detailPath);

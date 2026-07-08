@@ -1,4 +1,5 @@
 import { Button, Dialog, Flex, Portal, Text } from "@chakra-ui/react";
+import type { ReactNode } from "react";
 import { WarningIcon } from "@/assets/custom";
 
 interface ConsentDialogProps {
@@ -7,6 +8,8 @@ interface ConsentDialogProps {
   handleSubmit: () => void;
   heading: string;
   note?: string;
+  /** Optional extra content (e.g. a form field) rendered below the note. */
+  children?: ReactNode;
   isLoading?: boolean;
   confirmText?: string;
   cancelText?: string;
@@ -19,6 +22,7 @@ export default function ConsentDialog({
   handleSubmit,
   heading,
   note,
+  children,
   isLoading = false,
   confirmText = "Yes, Delete",
   cancelText = "Cancel",
@@ -74,9 +78,19 @@ export default function ConsentDialog({
               </Text>
 
               {note && (
-                <Text textStyle="default-regular" color="gray.200" mb="2rem">
+                <Text
+                  textStyle="default-regular"
+                  color="gray.200"
+                  mb={children ? "1.25rem" : "2rem"}
+                >
                   {note}
                 </Text>
+              )}
+
+              {children && (
+                <Flex textAlign="left" direction="column" mb="2rem">
+                  {children}
+                </Flex>
               )}
             </Dialog.Body>
 

@@ -59,10 +59,11 @@ export const updateJobCard = async (
 export const updateJobCardStatus = async (
   id: string,
   status: JobCardStatus,
+  closedAt?: string,
 ) => {
   const response = await axios.patch<ApiResponse<JobCard>>(
     `/job-cards/${id}/status`,
-    { status },
+    { status, ...(closedAt ? { closedAt } : {}) },
   );
   return response.data;
 };

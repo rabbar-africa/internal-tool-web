@@ -5,6 +5,7 @@ import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import SectionLoader from "@/components/common/SectionLoader";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSelect } from "@/components/input/CustomSelect";
+import { CustomInput } from "@/components/input/CustomInput";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
   JOB_CARD_STATUS_LABELS,
@@ -32,6 +33,7 @@ export function JobCardDetailTemplate() {
   const [pendingStatus, setPendingStatus] = useState<JobCardStatus | null>(
     null,
   );
+  const [closedAt, setClosedAt] = useState("");
 
   const { data, isLoading } = useGetJobCardByIdQuery(id ?? "");
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } =
@@ -46,10 +48,21 @@ export function JobCardDetailTemplate() {
     return <Text color="gray.400">Job card not found.</Text>;
   }
 
+  const isClosingStatus =
+    pendingStatus === "DELIVERED" || pendingStatus === "CANCELLED";
+
   const confirmStatusChange = async () => {
     if (!pendingStatus) return;
-    await updateStatus({ id: jobCard.id, status: pendingStatus });
+    await updateStatus({
+      id: jobCard.id,
+      status: pendingStatus,
+      closedAt:
+        isClosingStatus && closedAt
+          ? new Date(closedAt).toISOString()
+          : undefined,
+    });
     setPendingStatus(null);
+    setClosedAt("");
   };
 
   const handleDelete = async () => {
@@ -141,21 +154,37 @@ export function JobCardDetailTemplate() {
       <ConsentDialog
         open={Boolean(pendingStatus)}
         onOpenChange={({ open }) => {
-          if (!open) setPendingStatus(null);
+          if (!open) {
+            setPendingStatus(null);
+            setClosedAt("");
+          }
         }}
         variant="info"
         heading={`Move ${jobCard.jobNumber} to ${
           pendingStatus ? JOB_CARD_STATUS_LABELS[pendingStatus] : ""
         }?`}
         note={
-          pendingStatus === "DELIVERED" || pendingStatus === "CANCELLED"
-            ? "This closes the job card — the closed date will be set automatically."
+          isClosingStatus
+            ? "This closes the job card. Leave the date blank to close it as of now, or pick a date to backdate it."
             : `Status will change from ${JOB_CARD_STATUS_LABELS[jobCard.status]}.`
         }
         confirmText="Yes, Update"
         handleSubmit={confirmStatusChange}
         isLoading={isUpdatingStatus}
-      />
+      >
+        {isClosingStatus && (
+          <CustomInput
+            label="Closed date (optional)"
+            type="date"
+            name="closedAt"
+            value={closedAt}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setClosedAt(e.target.value)
+            }
+            inputProps={{ max: new Date().toISOString().slice(0, 10) }}
+          />
+        )}
+      </ConsentDialog>
 
       <ConsentDialog
         open={deleteOpen}
