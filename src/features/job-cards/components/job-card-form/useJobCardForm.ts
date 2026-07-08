@@ -10,8 +10,8 @@ import type { Vehicle } from "@/features/customers/api/service";
 import { useGetTechniciansQuery } from "@/features/technicians/api/query";
 import { technicianFullName } from "@/shared/interface/technician";
 import type {
-  CreateJobCardPayload,
   JobCardDetail,
+  JobCardFormPayload,
   JobCardPriority,
   JobCardStatus,
 } from "@/shared/interface/job-card";
@@ -42,7 +42,7 @@ const validationSchema = Yup.object({
 
 interface UseJobCardFormArgs {
   jobCard?: JobCardDetail;
-  onSubmit: (payload: CreateJobCardPayload) => Promise<void>;
+  onSubmit: (payload: JobCardFormPayload) => Promise<void>;
 }
 
 /** All state, data and handlers for the job card form — the component is just
@@ -83,12 +83,13 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
       promisedDate: jobCard?.promisedDate
         ? jobCard.promisedDate.slice(0, 10)
         : "",
+      closedAt: jobCard?.closedAt ? jobCard.closedAt.slice(0, 10) : "",
       technicianIds: [] as string[],
     },
     enableReinitialize: true,
     validationSchema,
     onSubmit: async (values) => {
-      const payload: CreateJobCardPayload = {
+      const payload: JobCardFormPayload = {
         clientId: values.clientId || (isEdit ? null : undefined),
         customerName: values.customerName || undefined,
         customerPhone: values.customerPhone || undefined,
@@ -112,7 +113,9 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
         openedAt: values.openedAt || undefined,
         promisedDate: values.promisedDate || undefined,
         ...(isEdit
-          ? {}
+          ? values.closedAt
+            ? { closedAt: new Date(values.closedAt).toISOString() }
+            : {}
           : values.technicianIds.length > 0
             ? { technicianIds: values.technicianIds }
             : {}),
