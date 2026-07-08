@@ -16,8 +16,8 @@ import { AddVehicleModal } from "@/features/customers/components/customer-detail
 import {
   JOB_CARD_PRIORITY_OPTIONS,
   JOB_CARD_STATUS_OPTIONS,
-  type CreateJobCardPayload,
   type JobCardDetail,
+  type JobCardFormPayload,
   type JobCardPriority,
   type JobCardStatus,
 } from "@/shared/interface/job-card";
@@ -27,7 +27,7 @@ interface JobCardFormProps {
   /** Existing job card when editing; omit to create. */
   jobCard?: JobCardDetail;
   isSubmitting: boolean;
-  onSubmit: (payload: CreateJobCardPayload) => Promise<void>;
+  onSubmit: (payload: JobCardFormPayload) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -235,6 +235,17 @@ export function JobCardForm({
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                 />
+                {isEdit && (
+                  <CustomInput
+                    label="Closed Date"
+                    type="date"
+                    name="closedAt"
+                    value={formik.values.closedAt}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    helperText="Set when the job is delivered or cancelled"
+                  />
+                )}
               </Grid>
 
               <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
