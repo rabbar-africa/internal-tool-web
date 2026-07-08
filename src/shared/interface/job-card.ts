@@ -160,7 +160,16 @@ export interface CreateJobCardPayload {
 }
 
 /** PUT accepts everything except technicianIds (managed via dedicated endpoints). */
-export type UpdateJobCardPayload = Omit<CreateJobCardPayload, "technicianIds">;
+export type UpdateJobCardPayload = Omit<
+  CreateJobCardPayload,
+  "technicianIds"
+> & {
+  /** Close/delivery time — set when the job card is in a closing status. */
+  closedAt?: string;
+};
+
+/** Output of the job card form — create fields plus closedAt (edit-only). */
+export type JobCardFormPayload = CreateJobCardPayload & { closedAt?: string };
 
 export interface AssignTechnicianPayload {
   technicianId: string;
