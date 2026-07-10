@@ -1,9 +1,8 @@
-import { useFormikContext } from "formik";
 import { Box, Button, Card, Field, Flex, Text } from "@chakra-ui/react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
-import type { InspectionFormValues } from "./inspection-form.types";
 import { useSummarizeInspectionNotesMutation } from "../../api/query";
+import type { InspectionFormApi } from "./useInspectionForm";
 
 const QUILL_MODULES = {
   toolbar: [
@@ -16,8 +15,8 @@ const QUILL_MODULES = {
 
 const QUILL_FORMATS = ["header", "bold", "italic", "underline", "list"];
 
-export function AdditionalNotesSection() {
-  const { values, setFieldValue } = useFormikContext<InspectionFormValues>();
+export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
+  const { values, setFieldValue } = form.formik;
   const { mutateAsync: summarize, isPending } =
     useSummarizeInspectionNotesMutation();
 

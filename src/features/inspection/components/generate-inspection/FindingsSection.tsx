@@ -1,4 +1,3 @@
-import { type FieldArrayRenderProps, useFormikContext } from "formik";
 import {
   Box,
   Button,
@@ -12,36 +11,14 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { CustomInput, CustomSelect } from "@/components/input";
-import { toaster } from "@/components/ui";
-import type { InspectionFormValues } from "./inspection-form.types";
 import { STATUS_OPTIONS } from "./inspection-form.types";
 import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
+import type { InspectionFormApi } from "./useInspectionForm";
 
-interface FindingsSectionProps {
-  arrayHelpers: FieldArrayRenderProps;
-}
-
-const EMPTY_FINDING = { component: "", observation: "", status: "" };
-
-const guardedPush = (
-  findings: InspectionFormValues["findings"],
-  push: (val: typeof EMPTY_FINDING) => void,
-) => {
-  const last = findings[findings.length - 1];
-  if (!last?.component || !last?.status) {
-    toaster.create({
-      description:
-        "Please complete the component and status for the current finding before adding another.",
-      type: "error",
-    });
-    return;
-  }
-  push(EMPTY_FINDING);
-};
-
-export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
+export function FindingsSection({ form }: { form: InspectionFormApi }) {
+  const { formik, addFinding, removeFinding } = form;
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
-    useFormikContext<InspectionFormValues>();
+    formik;
 
   const findings = values.findings;
 
@@ -74,7 +51,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
             variant="outline"
             borderColor="primary.300"
             color="primary.300"
-            onClick={() => guardedPush(findings, arrayHelpers.push)}
+            onClick={addFinding}
           >
             <PlusIcon />
             <Text display={{ base: "none", sm: "inline" }}>Add Finding</Text>
@@ -83,7 +60,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
       </Card.Header>
       <Card.Body>
         <Stack gap="4">
-          {findings.map((_finding, index) => {
+          {findings.map((finding, index) => {
             const findingErrors = (
               errors.findings as
                 | Array<Record<string, string> | undefined>
@@ -104,7 +81,6 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                 borderColor="gray.50"
                 bg="gray.50/50"
               >
-                {/* Finding number badge + delete */}
                 <Flex justify="space-between" align="center" mb="3">
                   <HStack gap="2">
                     <Flex
@@ -129,7 +105,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       size="xs"
                       variant="ghost"
                       color="error.300"
-                      onClick={() => arrayHelpers.remove(index)}
+                      onClick={() => removeFinding(index)}
                     >
                       <TrashIcon />
                     </IconButton>
@@ -143,7 +119,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       placeholder="e.g. Spark Plugs"
                       required
                       name={`findings.${index}.component`}
-                      value={findings[index].component}
+                      value={finding.component}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       error={
@@ -159,10 +135,8 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                       placeholder="Select status"
                       required
                       options={STATUS_OPTIONS}
-                      value={
-                        findings[index].status ? [findings[index].status] : []
-                      }
-                      onChange={(val: any) => {
+                      value={finding.status ? [finding.status] : []}
+                      onChange={(val: { value: string[] | string }) => {
                         const v = Array.isArray(val?.value)
                           ? val.value[0]
                           : val?.value;
@@ -182,7 +156,7 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
                     label="Observation Details"
                     placeholder="e.g. Faulty and require replacement"
                     name={`findings.${index}.observation`}
-                    value={findings[index].observation}
+                    value={finding.observation}
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
@@ -191,14 +165,13 @@ export function FindingsSection({ arrayHelpers }: FindingsSectionProps) {
             );
           })}
 
-          {/* Quick add at bottom when many findings */}
           {findings.length >= 1 && (
             <Button
               variant="ghost"
               size="sm"
               color="primary.300"
               alignSelf="center"
-              onClick={() => guardedPush(findings, arrayHelpers.push)}
+              onClick={addFinding}
             >
               <PlusIcon /> Add Another Finding
             </Button>

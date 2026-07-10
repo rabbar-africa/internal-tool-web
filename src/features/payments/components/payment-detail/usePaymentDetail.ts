@@ -17,9 +17,14 @@ export function usePaymentDetail() {
 
   const { mutateAsync: deletePayment, isPending: isDeleting } =
     useDeletePaymentMutation();
-  const { download: downloadReceipt, isGenerating: isDownloading } =
-    useReceiptPdf();
+  const {
+    download: downloadReceipt,
+    share: shareReceipt,
+    canShareFiles,
+    isGenerating: isDownloading,
+  } = useReceiptPdf();
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const goBack = () => navigate(RouteConstants.payments.base.path);
 
@@ -28,6 +33,16 @@ export function usePaymentDetail() {
 
   const handleDownloadPdf = () => {
     if (payment) void downloadReceipt(payment);
+  };
+
+  const handleSharePdf = async () => {
+    if (!payment) return;
+    setIsSharing(true);
+    try {
+      await shareReceipt(payment);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const requestDelete = () => setPendingDelete(true);
@@ -45,6 +60,9 @@ export function usePaymentDetail() {
     goBack,
     handleEdit,
     handleDownloadPdf,
+    handleSharePdf,
+    canShareFiles,
+    isSharing,
     isDownloading,
     pendingDelete,
     requestDelete,
