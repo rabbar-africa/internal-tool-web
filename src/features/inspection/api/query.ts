@@ -1,7 +1,6 @@
 import { useMutation, useQuery, type QueryConfigType } from "@/lib/react-query";
 import {
-  downloadInspectionReport,
-  downloadInspectionReportById,
+  createInspection,
   summarizeInspectionNotes,
   getInspections,
   getInspectionById,
@@ -24,11 +23,12 @@ export const useGetAllInspectionsQuery = (
     ...config,
   });
 
-export const useGenerateInspectionReportMutation = () =>
+export const useCreateInspectionMutation = () =>
   useMutation({
-    mutationFn: (data: InspectionPayload) => downloadInspectionReport(data),
+    mutationFn: (data: InspectionPayload) => createInspection(data),
     meta: {
-      successMessage: "Inspection report downloaded successfully",
+      successMessage: "Inspection created successfully",
+      invalidatesQueryKeys: [[customQueryKey.inspections.getAll]],
     },
   });
 
@@ -54,13 +54,5 @@ export const useDeleteInspectionMutation = () =>
     meta: {
       successMessage: "Inspection deleted successfully",
       invalidatesQueryKeys: [[customQueryKey.inspections.getAll]],
-    },
-  });
-
-export const useDownloadInspectionByIdMutation = () =>
-  useMutation({
-    mutationFn: (id: string) => downloadInspectionReportById(id),
-    meta: {
-      successMessage: "Report downloaded successfully",
     },
   });

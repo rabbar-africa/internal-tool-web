@@ -20,7 +20,10 @@ import {
 } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
-import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
+import {
+  useGetOrganizationTransactionSeries,
+  useGetOrganizationDetails,
+} from "@/features/settings/api";
 import { formatTransactionSeries } from "@/utils/string-formatter";
 
 const today = new Date().toISOString().split("T")[0];
@@ -217,6 +220,10 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     setCustomerCache((prev) => ({ ...prev, [customer.id]: customer }));
   }, []);
 
+  // Default invoice terms come from the organization's general config.
+  const { data: orgDetails } = useGetOrganizationDetails();
+  const defaultTerms = orgDetails?.data?.config?.invoiceTermsDefault ?? "";
+
   // Derive the next invoice number from the active INVOICE transaction series.
   const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
   const seriesInvoiceNumber = useMemo(() => {
@@ -400,6 +407,16 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     formik.setFieldValue("invoiceNumber", seriesInvoiceNumber);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seriesInvoiceNumber]);
+
+  // Seed the terms field with the org's default once it resolves, unless the
+  // user has already typed their own.
+  const appliedTermsRef = useRef(false);
+  useEffect(() => {
+    if (isEdit || appliedTermsRef.current || !defaultTerms) return;
+    appliedTermsRef.current = true;
+    if (!formik.values.terms) formik.setFieldValue("terms", defaultTerms);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultTerms]);
 
   const handleCancel = () => navigate(RouteConstants.invoices.base.path);
 

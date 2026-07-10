@@ -11,8 +11,8 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import {
   useGetAllInspectionsQuery,
   useDeleteInspectionMutation,
-  useDownloadInspectionByIdMutation,
 } from "@/features/inspection/api/query";
+import { useInspectionPdf } from "@/features/inspection/hooks/useInspectionPdf";
 import type { IInspection } from "@/shared/interface/inspection";
 import moment from "moment";
 import { TableActionItem } from "@/components/common/TableActionItem";
@@ -94,7 +94,7 @@ export function ViewAllReportsTemplate() {
   const [searchInput, setSearchInput] = useState(filters.search);
 
   const { mutateAsync: deleteInspection } = useDeleteInspectionMutation();
-  const { mutateAsync: downloadReport } = useDownloadInspectionByIdMutation();
+  const { download: downloadReport } = useInspectionPdf();
 
   const tableActions = useMemo<TableAction<IInspection>[]>(
     () => [
@@ -112,7 +112,7 @@ export function ViewAllReportsTemplate() {
           <TableActionItem label={"Download Report"} Icon={DownloadSimple} />
         ),
         value: "download",
-        onClick: (row) => downloadReport(row.id),
+        onClick: (row) => downloadReport(row),
       },
       {
         label: <TableActionItem label={"Delete"} Icon={TrashIcon} />,

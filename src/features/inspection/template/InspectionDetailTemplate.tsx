@@ -17,9 +17,12 @@ import Status from "@/components/common/Status";
 import {
   useGetInspectionByIdQuery,
   useDeleteInspectionMutation,
-  useDownloadInspectionByIdMutation,
 } from "@/features/inspection/api/query";
-import type { IInspectionFinding } from "@/shared/interface/inspection";
+import { useInspectionPdf } from "@/features/inspection/hooks/useInspectionPdf";
+import type {
+  IInspection,
+  IInspectionFinding,
+} from "@/shared/interface/inspection";
 import {
   ArrowLeft,
   DownloadSimple,
@@ -84,10 +87,15 @@ export function InspectionDetailTemplate() {
   const { data: queryData, isLoading } = useGetInspectionByIdQuery(id ?? "");
   const { mutateAsync: deleteInspection, isPending: isDeleting } =
     useDeleteInspectionMutation();
-  const { mutateAsync: downloadReport, isPending: isDownloading } =
-    useDownloadInspectionByIdMutation();
+  const {
+    download: downloadReport,
+    share: shareReport,
+    canShareFiles,
+    isGenerating,
+  } = useInspectionPdf();
+  const [isSharing, setIsSharing] = useState(false);
 
-  const inspection = queryData?.data ?? queryData;
+  const inspection = (queryData?.data ?? queryData) as IInspection | undefined;
 
   const handleDelete = async () => {
     if (!id) return;
@@ -96,8 +104,17 @@ export function InspectionDetailTemplate() {
   };
 
   const handleDownload = async () => {
-    if (!id) return;
-    await downloadReport(id);
+    if (inspection) await downloadReport(inspection);
+  };
+
+  const handleSend = async () => {
+    if (!inspection) return;
+    setIsSharing(true);
+    try {
+      await shareReport(inspection);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   if (isLoading) {
@@ -199,16 +216,31 @@ export function InspectionDetailTemplate() {
               </Button>
               <Button
                 size="sm"
-                bg="primary.300"
-                color="white"
-                _hover={{ bg: "primary.400" }}
-                loading={isDownloading}
-                loadingText="Downloading..."
+                variant="outline"
+                borderColor="gray.100"
+                color="gray.500"
+                _hover={{ bg: "gray.50" }}
+                loading={isGenerating && !isSharing}
+                loadingText="Preparing..."
                 onClick={handleDownload}
               >
                 <DownloadSimple />
-                Download PDF
+                Save PDF
               </Button>
+              {canShareFiles && (
+                <Button
+                  size="sm"
+                  bg="primary.300"
+                  color="white"
+                  _hover={{ bg: "primary.400" }}
+                  loading={isSharing}
+                  loadingText="Preparing..."
+                  onClick={handleSend}
+                >
+                  <DownloadSimple />
+                  Send
+                </Button>
+              )}
             </HStack>
           </Flex>
         </Box>

@@ -5,11 +5,14 @@ export interface Finding {
 }
 
 export interface InspectionFormValues {
-  // IDs sent to backend
+  // Selection state
   clientId: string;
   vehicleId: string;
-  // Display-only (auto-filled from selection, not sent to backend)
+  technicianName: string;
+  // Auto-filled from the selected customer / vehicle — never entered by hand.
   customerName: string;
+  customerEmail: string;
+  customerPhone: string;
   vehicleNumber: string;
   vehicleName: string;
   vehicleColor: string;
@@ -18,12 +21,21 @@ export interface InspectionFormValues {
   inspectionDate: string;
 }
 
+/**
+ * Create/update payload. Mirrors the backend CreateInspectionDto:
+ * `vehicleId`, `technicianName` and `customerName` are required; the rest are
+ * optional. Findings are free-text (checklist entries are not used).
+ */
 export interface InspectionPayload {
-  clientId: string;
   vehicleId: string;
-  findings: Finding[];
-  additionalNotes: string;
+  technicianName: string;
+  customerName: string;
+  customerId?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  generalNotes?: string;
   inspectionDate: string;
+  findings: Finding[];
 }
 
 export type AiTone = "professional" | "friendly" | "technical";
