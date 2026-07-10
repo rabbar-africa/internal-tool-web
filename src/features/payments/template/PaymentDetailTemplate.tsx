@@ -23,6 +23,9 @@ export function PaymentDetailTemplate() {
     goBack,
     handleEdit,
     handleDownloadPdf,
+    handleSharePdf,
+    canShareFiles,
+    isSharing,
     pendingDelete,
     requestDelete,
     cancelDelete,
@@ -109,6 +112,23 @@ export function PaymentDetailTemplate() {
                 <Menu.Item value="edit" onClick={runAndClose(handleEdit)}>
                   Edit
                 </Menu.Item>
+                {canShareFiles && (
+                  <Menu.Item
+                    value="send-pdf"
+                    closeOnSelect={false}
+                    disabled={isSharing}
+                    onSelect={() => {
+                      // Builds the PDF, then opens the phone's native share
+                      // sheet (WhatsApp, Mail, …) via the Web Share API.
+                      void (async () => {
+                        await handleSharePdf();
+                        setMenuOpen(false);
+                      })();
+                    }}
+                  >
+                    {isSharing ? "Preparing…" : "Send PDF"}
+                  </Menu.Item>
+                )}
                 <Menu.Item
                   value="download-pdf"
                   onClick={runAndClose(handleDownloadPdf)}
