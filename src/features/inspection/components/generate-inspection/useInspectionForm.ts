@@ -85,7 +85,7 @@ export function useInspectionForm() {
   const { data: itemsData, isLoading: componentsLoading } =
     useGetItemListSimpleQuery({
       page: 1,
-      limit: 100,
+      limit: 50,
       search: componentSearch || undefined,
     });
 
