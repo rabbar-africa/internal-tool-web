@@ -16,6 +16,13 @@ export interface SearchComboboxOption {
   subLabel?: string;
 }
 
+// Ceiling for the dropdown height; the actual height shrinks to fit the space
+// available above/below the input so the panel never runs off-screen.
+const DROPDOWN_MAX_HEIGHT = 260;
+// Gap between the input and the dropdown, and the min space it needs below the
+// input before it flips to open upward instead.
+const DROPDOWN_GAP = 4;
+
 export interface SearchComboboxProps {
   options: SearchComboboxOption[];
   value?: string;
@@ -71,7 +78,14 @@ export function SearchCombobox({
   const setQuery = (val: string) => {
     if (!isInputControlled) setInternalQuery(val);
   };
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPos, setDropdownPos] = useState({
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 0,
+    maxHeight: DROPDOWN_MAX_HEIGHT,
+    openUp: false,
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,13 +110,26 @@ export function SearchCombobox({
 
   const updatePosition = () => {
     const rect = inputRef.current?.getBoundingClientRect();
-    if (rect) {
-      setDropdownPos({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
+    if (!rect) return;
+    const spaceBelow = window.innerHeight - rect.bottom - DROPDOWN_GAP;
+    const spaceAbove = rect.top - DROPDOWN_GAP;
+    // Flip upward only when the space below can't fit the dropdown AND there's
+    // genuinely more room above — otherwise keep it below the input.
+    const openUp = spaceBelow < DROPDOWN_MAX_HEIGHT && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(
+      120,
+      Math.min(DROPDOWN_MAX_HEIGHT, openUp ? spaceAbove : spaceBelow),
+    );
+    setDropdownPos({
+      top: rect.bottom + DROPDOWN_GAP,
+      // Distance from the viewport bottom to the input's top — used when the
+      // panel opens upward so it grows from the input, not the screen edge.
+      bottom: window.innerHeight - rect.top + DROPDOWN_GAP,
+      left: rect.left,
+      width: rect.width,
+      maxHeight,
+      openUp,
+    });
   };
 
   useEffect(() => {
@@ -123,6 +150,21 @@ export function SearchCombobox({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // While open, keep the fixed-position dropdown anchored to the input as the
+  // page (or any scroll container) scrolls or the window resizes. Without this
+  // the panel stays frozen at its original spot and appears to float loose.
+  useEffect(() => {
+    if (!isOpen) return;
+    const reposition = () => updatePosition();
+    // `true` = capture phase, so scrolls inside nested scroll containers count.
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
@@ -202,7 +244,8 @@ export function SearchCombobox({
           <Box
             ref={dropdownRef}
             position="fixed"
-            top={`${dropdownPos.top}px`}
+            top={dropdownPos.openUp ? undefined : `${dropdownPos.top}px`}
+            bottom={dropdownPos.openUp ? `${dropdownPos.bottom}px` : undefined}
             left={`${dropdownPos.left}px`}
             w={`${dropdownPos.width}px`}
             bg="white"
@@ -215,7 +258,7 @@ export function SearchCombobox({
             // open; this portalled dropdown lives on <body>, so re-enable it or
             // its options can't be clicked from inside a Dialog.
             pointerEvents="auto"
-            maxH="260px"
+            maxH={`${dropdownPos.maxHeight}px`}
             display="flex"
             flexDirection="column"
             overflow="hidden"
