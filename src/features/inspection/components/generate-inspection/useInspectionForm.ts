@@ -11,6 +11,8 @@ import {
 } from "@/features/customers/api/query";
 import type { Vehicle } from "@/features/customers/api/service";
 import type { ICustomer } from "@/shared/interface/customer";
+import { useGetItemListSimpleQuery } from "@/features/items/api";
+import type { Item } from "@/shared/interface/item";
 import { useCreateInspectionMutation } from "../../api/query";
 import type {
   Finding,
@@ -65,11 +67,27 @@ export function useInspectionForm() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Component search (debounced, server-side) ────────────────────────────
+  const [componentSearch, setComponentSearch] = useState("");
+  const componentDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
 
   const { data: customersData, isLoading: customersLoading } =
     useGetAllCustomersQuery({ search: debouncedSearch, limit: 20 });
+
+  // Items catalog powers the findings "Component" combobox — same source the
+  // invoice line items search. Searched server-side as the user types
+  // (see handleComponentSearch, which debounces the query).
+  const { data: itemsData, isLoading: componentsLoading } =
+    useGetItemListSimpleQuery({
+      page: 1,
+      limit: 100,
+      search: componentSearch || undefined,
+    });
 
   const formik = useFormik<InspectionFormValues>({
     initialValues,
@@ -147,6 +165,18 @@ export function useInspectionForm() {
     subLabel: v.registrationNumber,
   }));
 
+  // Findings store the component name (a free-text string), so the option value
+  // is the item name itself — selecting fills the name, and any typed value that
+  // isn't in the catalog is kept as-is (users can't create catalog items here).
+  const componentOptions = useMemo<SearchComboboxOption[]>(() => {
+    const items: Item[] = itemsData?.data ?? [];
+    return items.map((item) => ({
+      label: item.name,
+      value: item.name,
+      subLabel: item.code || undefined,
+    }));
+  }, [itemsData]);
+
   const selectedVehicle = useMemo(
     () => vehicles.find((v) => v.id === formik.values.vehicleId),
     [vehicles, formik.values.vehicleId],
@@ -156,6 +186,15 @@ export function useInspectionForm() {
   const handleCustomerSearch = (query: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(query), 400);
+  };
+
+  const handleComponentSearch = (query: string) => {
+    if (componentDebounceRef.current)
+      clearTimeout(componentDebounceRef.current);
+    componentDebounceRef.current = setTimeout(
+      () => setComponentSearch(query),
+      800,
+    );
   };
 
   const clearVehicleFields = () => {
@@ -233,6 +272,9 @@ export function useInspectionForm() {
     // customer / vehicle
     customerOptions,
     vehicleOptions,
+    componentOptions,
+    componentsLoading,
+    handleComponentSearch,
     customersLoading,
     vehiclesLoading,
     selectedVehicle,

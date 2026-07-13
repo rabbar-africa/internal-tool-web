@@ -708,3 +708,11 @@ function CheckItem({ finding }: { finding: IInspectionFinding }) {
     </View>
   );
 }
+
+/**
+ * Oil Condition (engine oil, gear oil)
+ * Radiator Coolant
+ * Brake Fluid Level
+ * Diagnosis
+ * Brake Light
+ */
