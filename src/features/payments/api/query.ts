@@ -10,12 +10,31 @@ import type {
   CreatePaymentPayload,
   IGetPaymentsReceivedFilter,
 } from "@/shared/interface/payment";
+import { customQueryKey } from "@/shared/constants/query-keys";
 
 const KEYS = {
   all: ["payments"] as const,
   list: (filter?: IGetPaymentsReceivedFilter) =>
     ["payments", "list", filter] as const,
   detail: (id: string) => ["payments", "detail", id] as const,
+};
+
+// A payment updates the invoice it settles and, if that invoice is linked to a
+// job card, the job card's collected/outstanding figures — refresh both.
+const invalidateLinkedRecords = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({ queryKey: KEYS.all });
+  queryClient.invalidateQueries({ queryKey: [customQueryKey.invoices.getAll] });
+  queryClient.invalidateQueries({
+    queryKey: [customQueryKey.invoices.getById],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [customQueryKey.jobCards.getById],
+  });
+  queryClient.invalidateQueries({
+    queryKey: [customQueryKey.jobCards.financials],
+  });
 };
 
 export const useGetPaymentsQuery = (filter?: IGetPaymentsReceivedFilter) =>
@@ -35,7 +54,7 @@ export const useCreatePaymentMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreatePaymentPayload) => createPayment(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.all }),
+    onSuccess: () => invalidateLinkedRecords(queryClient),
     meta: { successMessage: "Payment recorded successfully" },
   });
 };
@@ -45,7 +64,7 @@ export const useUpdatePaymentMutation = () => {
   return useMutation({
     mutationFn: (data: { id: string; payload: CreatePaymentPayload }) =>
       updatePayment(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.all }),
+    onSuccess: () => invalidateLinkedRecords(queryClient),
     meta: { successMessage: "Payment updated successfully" },
   });
 };
@@ -54,7 +73,7 @@ export const useDeletePaymentMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deletePayment(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.all }),
+    onSuccess: () => invalidateLinkedRecords(queryClient),
     meta: { successMessage: "Payment deleted successfully" },
   });
 };

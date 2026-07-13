@@ -30,6 +30,8 @@ interface LineItemsTableProps {
   handleItemSelect: (idx: number, itemId: string) => void;
   getLineAmount: (li: LineItemFormRow) => number;
   onAddNewItem: (item: Item) => void;
+  onItemSearch: (query: string) => void;
+  isSearchingItems: boolean;
 }
 
 const COL_WIDTHS = "36px 1fr 90px 130px 80px 100px 36px";
@@ -72,6 +74,8 @@ interface LineItemRowProps {
   canRemove: boolean;
   onRemove: () => void;
   onOpenAddItem: () => void;
+  onItemSearch: (query: string) => void;
+  isSearchingItems: boolean;
 }
 
 function LineItemRow({
@@ -83,6 +87,8 @@ function LineItemRow({
   canRemove,
   onRemove,
   onOpenAddItem,
+  onItemSearch,
+  isSearchingItems,
 }: LineItemRowProps) {
   const { formatMoney } = useFormatMoney();
   const lineItem = formik.values.lineItems[idx];
@@ -126,6 +132,9 @@ function LineItemRow({
             options={searchOptions}
             value={lineItem.itemId || undefined}
             inputValue={lineItem.name}
+            serverSearch
+            isLoading={isSearchingItems}
+            onSearchChange={onItemSearch}
             onChange={(val) => handleItemSelect(idx, val)}
             onInputChange={(text) => {
               formik.setFieldValue(`lineItems.${idx}.name`, text);
@@ -255,6 +264,9 @@ function LineItemRow({
             options={searchOptions}
             value={lineItem.itemId || undefined}
             inputValue={lineItem.name}
+            serverSearch
+            isLoading={isSearchingItems}
+            onSearchChange={onItemSearch}
             onChange={(val) => handleItemSelect(idx, val)}
             onInputChange={(text) => {
               formik.setFieldValue(`lineItems.${idx}.name`, text);
@@ -337,6 +349,8 @@ export function LineItemsTable({
   handleItemSelect,
   getLineAmount,
   onAddNewItem,
+  onItemSearch,
+  isSearchingItems,
 }: LineItemsTableProps) {
   const [addItemOpen, setAddItemOpen] = useState(false);
   // Remembers which line row opened the modal so the newly created item can be
@@ -367,6 +381,8 @@ export function LineItemsTable({
           lineAmount={getLineAmount(lineItem)}
           canRemove={formik.values.lineItems.length > 1}
           onRemove={() => removeLineItem(idx)}
+          onItemSearch={onItemSearch}
+          isSearchingItems={isSearchingItems}
           onOpenAddItem={() => {
             setActiveRowIdx(idx);
             setAddItemOpen(true);

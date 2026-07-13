@@ -10,13 +10,21 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { CustomInput, CustomSelect } from "@/components/input";
+import { CustomInput } from "@/components/input";
+import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { STATUS_OPTIONS } from "./inspection-form.types";
 import { FileTextIcon, PlusIcon, TrashIcon } from "@/assets/custom";
 import type { InspectionFormApi } from "./useInspectionForm";
 
 export function FindingsSection({ form }: { form: InspectionFormApi }) {
-  const { formik, addFinding, removeFinding } = form;
+  const {
+    formik,
+    addFinding,
+    removeFinding,
+    componentOptions,
+    componentsLoading,
+    handleComponentSearch,
+  } = form;
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;
 
@@ -114,14 +122,23 @@ export function FindingsSection({ form }: { form: InspectionFormApi }) {
 
                 <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
                   <GridItem>
-                    <CustomInput
+                    <SearchCombobox
                       label="Component"
-                      placeholder="e.g. Spark Plugs"
+                      placeholder="Search or type a component..."
                       required
-                      name={`findings.${index}.component`}
-                      value={finding.component}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
+                      options={componentOptions}
+                      value={finding.component || undefined}
+                      inputValue={finding.component}
+                      serverSearch
+                      isLoading={componentsLoading}
+                      onSearchChange={handleComponentSearch}
+                      onChange={(val) =>
+                        void setFieldValue(`findings.${index}.component`, val)
+                      }
+                      onInputChange={(text) =>
+                        void setFieldValue(`findings.${index}.component`, text)
+                      }
+                      emptyText="No matching component. Keep typing to add it manually."
                       error={
                         findingTouched?.component && findingErrors?.component
                           ? findingErrors.component
@@ -130,18 +147,19 @@ export function FindingsSection({ form }: { form: InspectionFormApi }) {
                     />
                   </GridItem>
                   <GridItem>
-                    <CustomSelect
+                    <SearchCombobox
                       label="Status"
-                      placeholder="Select status"
+                      placeholder="Select or type a status..."
                       required
                       options={STATUS_OPTIONS}
-                      value={finding.status ? [finding.status] : []}
-                      onChange={(val: { value: string[] | string }) => {
-                        const v = Array.isArray(val?.value)
-                          ? val.value[0]
-                          : val?.value;
-                        void setFieldValue(`findings.${index}.status`, v || "");
-                      }}
+                      value={finding.status || undefined}
+                      onChange={(val) =>
+                        void setFieldValue(`findings.${index}.status`, val)
+                      }
+                      onInputChange={(text) =>
+                        void setFieldValue(`findings.${index}.status`, text)
+                      }
+                      emptyText="No matching status. Keep typing to use it as-is."
                       error={
                         findingTouched?.status && findingErrors?.status
                           ? findingErrors.status

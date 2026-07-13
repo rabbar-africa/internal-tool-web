@@ -152,7 +152,24 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // Only fetched in edit mode (query is disabled when id is empty).
   const invoiceQuery = useGetInvoiceByIdQuery(isEdit ? id : "");
 
-  const itemsQuery = useGetItemListSimpleQuery({ page: 1, limit: 1000 });
+  // Item search with debounce (server-side, mirrors the customer search below).
+  const [itemSearch, setItemSearch] = useState("");
+  const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
+  const itemSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleItemSearch = useCallback((query: string) => {
+    setItemSearch(query);
+    if (itemSearchTimerRef.current) clearTimeout(itemSearchTimerRef.current);
+    itemSearchTimerRef.current = setTimeout(() => {
+      setDebouncedItemSearch(query);
+    }, 400);
+  }, []);
+
+  const itemsQuery = useGetItemListSimpleQuery({
+    page: 1,
+    limit: 50,
+    ...(debouncedItemSearch ? { search: debouncedItemSearch } : {}),
+  });
   const itemsData = useMemo(
     () => itemsQuery?.data?.data || [],
     [itemsQuery?.data?.data],
@@ -174,6 +191,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      if (itemSearchTimerRef.current) clearTimeout(itemSearchTimerRef.current);
     };
   }, []);
 
@@ -453,5 +471,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     handleCustomerSearch,
     isSearchingCustomers: customersQuery.isFetching,
     itemsData: itemsQuery?.data?.data || [],
+    itemSearch,
+    handleItemSearch,
+    isSearchingItems: itemsQuery.isFetching,
   };
 }

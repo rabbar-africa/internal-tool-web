@@ -40,6 +40,8 @@ export function CreateInvoiceTemplate({
     addNewCustomer,
     handleCustomerSearch,
     isSearchingCustomers,
+    handleItemSearch,
+    isSearchingItems,
   } = useCreateInvoice({ mode });
 
   if (isLoadingInvoice) {
@@ -120,6 +122,8 @@ export function CreateInvoiceTemplate({
             handleItemSelect={handleItemSelect}
             getLineAmount={getLineAmount}
             onAddNewItem={addNewItem}
+            onItemSearch={handleItemSearch}
+            isSearchingItems={isSearchingItems}
           />
 
           <Separator borderColor="gray.75" />

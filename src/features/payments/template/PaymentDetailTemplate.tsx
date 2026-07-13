@@ -6,7 +6,6 @@ import {
   IconButton,
   Menu,
   Portal,
-  Spinner,
   Text,
 } from "@chakra-ui/react";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
@@ -14,6 +13,7 @@ import { ThreeDotsIcon } from "@/assets/custom/ThreeDotsIcon";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { usePaymentDetail } from "@/features/payments/components/payment-detail/usePaymentDetail";
 import { PaymentReceipt } from "@/features/payments/components/payment-detail/PaymentReceipt";
+import { PaymentDetailSkeleton } from "@/features/payments/components/payment-detail/PaymentDetailSkeleton";
 
 export function PaymentDetailTemplate() {
   const {
@@ -40,11 +40,7 @@ export function PaymentDetailTemplate() {
   };
 
   if (isLoading) {
-    return (
-      <Center py="20">
-        <Spinner color="primary.400" />
-      </Center>
-    );
+    return <PaymentDetailSkeleton />;
   }
 
   if (isError || !payment) {

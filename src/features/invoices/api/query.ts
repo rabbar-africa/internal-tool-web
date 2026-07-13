@@ -40,8 +40,14 @@ export const useCreateInvoiceMutation = () => {
     mutationFn: (payload: CreateInvoicePayload) => createInvoice(payload),
 
     meta: {
-      successMessage: "Customer created successfully",
-      invalidatesQueryKeys: [[customQueryKey.invoices.getAll]],
+      successMessage: "Invoice created successfully",
+      // A linked job card's invoice list + P&L change when a new invoice is
+      // raised against it, so refresh those too.
+      invalidatesQueryKeys: [
+        [customQueryKey.invoices.getAll],
+        [customQueryKey.jobCards.getById],
+        [customQueryKey.jobCards.financials],
+      ],
     },
   });
 };
