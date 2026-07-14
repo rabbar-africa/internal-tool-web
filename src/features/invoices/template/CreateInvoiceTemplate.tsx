@@ -12,6 +12,7 @@ import { useCreateInvoice } from "@/features/invoices/components/create-invoice/
 import { InvoiceFormHeader } from "@/features/invoices/components/create-invoice/InvoiceFormHeader";
 import { LineItemsTable } from "@/features/invoices/components/create-invoice/LineItemsTable";
 import { InvoiceFooter } from "@/features/invoices/components/create-invoice/InvoiceFooter";
+import { BroughtForwardSection } from "@/features/invoices/components/create-invoice/BroughtForwardSection";
 
 interface CreateInvoiceTemplateProps {
   mode?: "create" | "edit";
@@ -35,6 +36,8 @@ export function CreateInvoiceTemplate({
     isPending,
     handleCancel,
     items,
+    carry,
+    skipCarryFlush,
 
     addNewItem,
     addNewCustomer,
@@ -134,7 +137,64 @@ export function CreateInvoiceTemplate({
             totals={totals}
             onApplyVat={applyVat}
           />
+
+          <Separator borderColor="gray.75" />
+
+          {/* Carry a prior unpaid invoice's balance onto this one */}
+          <BroughtForwardSection
+            carried={carry.carried}
+            availableCandidates={carry.availableCandidates}
+            isLoadingCandidates={carry.isLoadingCandidates}
+            onAdd={carry.add}
+            onRemove={carry.remove}
+            isMutating={carry.isMutating || carry.isFlushing}
+            broughtForwardTotal={carry.broughtForwardTotal}
+            invoiceTotal={totals.total}
+            customerId={formik.values.customerId}
+            flushFailures={carry.flushFailures}
+          />
         </Box>
+
+        {/* The invoice saved but some balances couldn't be carried onto it. */}
+        {carry.flushFailures.length > 0 && (
+          <Box
+            borderWidth="1px"
+            borderColor="red.200"
+            bg="red.50"
+            rounded="lg"
+            p="4"
+          >
+            <Text fontSize="13px" fontWeight="600" color="red.600">
+              Invoice saved, but {carry.flushFailures.length}{" "}
+              {carry.flushFailures.length === 1 ? "balance" : "balances"} could
+              not be brought forward
+            </Text>
+            <Text fontSize="12px" color="red.500" mt="1">
+              {carry.flushFailures
+                .map((f) => `${f.invoice.invoiceNumber}: ${f.message}`)
+                .join(" · ")}
+            </Text>
+            <Flex gap="2" mt="3">
+              <Button
+                type="submit"
+                size="sm"
+                loading={carry.isFlushing}
+                loadingText="Retrying..."
+              >
+                Retry
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={carry.isFlushing}
+                onClick={skipCarryFlush}
+              >
+                Skip and view invoice
+              </Button>
+            </Flex>
+          </Box>
+        )}
 
         {/* Bottom actions */}
         <Flex justify="flex-end" gap="3" pb="4">

@@ -8,6 +8,7 @@ import { useGetAllCustomersQuery } from "@/features/customers/api";
 import {
   useGetAllInvoicesQuery,
   useGetInvoiceByIdQuery,
+  useCollectInvoicePaymentMutation,
 } from "@/features/invoices/api/query";
 import {
   useGetOrganizationBankAccounts,
@@ -99,6 +100,8 @@ export function useCreatePayment() {
   const { mutateAsync, isPending } = useCreatePaymentMutation();
   const { mutateAsync: updateMutate, isPending: isUpdating } =
     useUpdatePaymentMutation();
+  const { mutateAsync: collectMutate, isPending: isCollecting } =
+    useCollectInvoicePaymentMutation();
   const { data: orgData } = useGetOrganizationDetails();
   const orgCurrency = orgData?.data?.currency || "NGN";
 
@@ -180,11 +183,35 @@ export function useCreatePayment() {
       allocations: [],
     },
     onSubmit: async (values) => {
+      const amount = toNum(values.amount);
+
+      // Invoice-driven flow: let the server split the amount across any
+      // balances brought forward onto this invoice (oldest first) and then the
+      // invoice itself. Sending hand-built allocations here would under-apply
+      // the payment, because this form only knows this invoice's own balance.
+      if (isPresetMode && presetInvoice) {
+        const response = await collectMutate({
+          id: presetInvoice.id,
+          payload: {
+            amount,
+            date: values.date,
+            mode: values.mode,
+            ...(values.referenceNumber
+              ? { referenceNumber: values.referenceNumber }
+              : {}),
+            ...(values.notes ? { notes: values.notes } : {}),
+          },
+        });
+        navigate(
+          RouteConstants.payments.detail.generate({ id: response?.data?.id }),
+        );
+        return;
+      }
+
       const amountApplied = values.allocations.reduce(
         (sum, a) => sum + toNum(a.amountApplied),
         0,
       );
-      const amount = toNum(values.amount);
 
       const payload: CreatePaymentPayload = {
         paymentNumber: values.paymentNumber,
@@ -349,6 +376,21 @@ export function useCreatePayment() {
 
   // Preset flow: lock the form to the invoice from the URL.
   const presetBalance = toNum(presetInvoice?.balance);
+  // Balances carried onto this invoice are settled by the same payment, so the
+  // amount actually collectable is the invoice's balance plus those.
+  const presetBroughtForward = useMemo(
+    () => presetInvoice?.broughtForward ?? [],
+    [presetInvoice?.broughtForward],
+  );
+  const presetBroughtForwardTotal =
+    presetInvoice?.broughtForwardTotal != null
+      ? Number(presetInvoice.broughtForwardTotal) || 0
+      : presetBroughtForward.reduce((sum, c) => sum + toNum(c.balance), 0);
+  const presetDueNow =
+    presetInvoice?.totalDueNow != null
+      ? Number(presetInvoice.totalDueNow) || 0
+      : presetBalance + presetBroughtForwardTotal;
+
   const presetApplied = useRef(false);
   useEffect(() => {
     if (!isPresetMode || !presetInvoice || presetApplied.current) return;
@@ -359,26 +401,13 @@ export function useCreatePayment() {
     setFieldValue("customerName", name);
     if (presetInvoice.currencyCode)
       setFieldValue("currencyCode", presetInvoice.currencyCode);
-    setFieldValue("amount", presetBalance ? String(presetBalance) : "");
+    setFieldValue("amount", presetDueNow ? String(presetDueNow) : "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPresetMode, presetInvoice]);
 
-  // Keep the single preset allocation in sync with the entered amount.
-  useEffect(() => {
-    if (!isPresetMode || !presetInvoice) return;
-    const applied = Math.min(toNum(values.amount), presetBalance);
-    setFieldValue("allocations", [
-      {
-        invoiceId: presetInvoice.id,
-        invoiceNumber: presetInvoice.invoiceNumber,
-        invoiceDate: presetInvoice.date,
-        dueDate: presetInvoice.dueDate,
-        balance: presetBalance,
-        amountApplied: applied ? String(applied) : "",
-      },
-    ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPresetMode, presetInvoice, values.amount, presetBalance]);
+  // The preset flow deliberately keeps `allocations` empty: POST /collect
+  // splits the amount server-side across the brought-forward invoices and this
+  // one, which is knowledge this form doesn't have.
 
   const handleSelectCustomer = (id: string) => {
     setFieldValue("customerId", id);
@@ -433,6 +462,33 @@ export function useCreatePayment() {
   // Read-only summary for the preset (invoice-driven) flow.
   const presetSummary = useMemo(() => {
     const amount = toNum(values.amount);
+
+    // Preview of the server's split: brought-forward invoices settle first
+    // (oldest first), then this invoice. Mirrors POST /collect so the user sees
+    // where the money lands before committing — the server remains the source
+    // of truth, and the real allocations come back on the payment.
+    let remaining = amount;
+    const allocationPreview = [...presetBroughtForward]
+      .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
+      .map((prev) => {
+        const applied = Math.min(remaining, toNum(prev.balance));
+        remaining -= applied;
+        return {
+          invoiceNumber: prev.invoiceNumber,
+          balance: toNum(prev.balance),
+          applied,
+          isCarried: true,
+        };
+      });
+    const appliedToThis = Math.min(remaining, presetBalance);
+    remaining -= appliedToThis;
+    allocationPreview.push({
+      invoiceNumber: presetInvoice?.invoiceNumber ?? "",
+      balance: presetBalance,
+      applied: appliedToThis,
+      isCarried: false,
+    });
+
     return {
       invoiceNumber: presetInvoice?.invoiceNumber ?? "",
       invoiceDate: presetInvoice?.date ?? "",
@@ -442,18 +498,31 @@ export function useCreatePayment() {
       currencyCode: presetInvoice?.currencyCode || orgCurrency,
       total: toNum(presetInvoice?.total),
       balance: presetBalance,
+      broughtForward: presetBroughtForward,
+      broughtForwardTotal: presetBroughtForwardTotal,
+      dueNow: presetDueNow,
+      allocationPreview,
       amount,
-      balanceAfter: presetBalance - Math.min(amount, presetBalance),
-      overpaid: amount > presetBalance,
+      balanceAfter: presetDueNow - Math.min(amount, presetDueNow),
+      unusedAmount: remaining,
+      overpaid: amount > presetDueNow,
     };
-  }, [presetInvoice, presetBalance, values.amount, orgCurrency]);
+  }, [
+    presetInvoice,
+    presetBalance,
+    presetBroughtForward,
+    presetBroughtForwardTotal,
+    presetDueNow,
+    values.amount,
+    orgCurrency,
+  ]);
 
   const handleCancel = () => navigate(RouteConstants.payments.base.path);
   // console.log("values is ", formik.values);
 
   return {
     formik,
-    isPending: isPending || isUpdating,
+    isPending: isPending || isUpdating || isCollecting,
     orgCurrency,
     // edit flow
     isEditMode,

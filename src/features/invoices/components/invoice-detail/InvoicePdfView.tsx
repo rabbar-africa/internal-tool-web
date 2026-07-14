@@ -26,6 +26,20 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
 
+  // Balances carried from earlier unpaid invoices. These are NOT part of this
+  // invoice's total — they stay receivables on their own documents — but the
+  // customer settles them first, so the document must show what's due overall.
+  const broughtForward = invoice.broughtForward ?? [];
+  const hasCarry = broughtForward.length > 0;
+  const broughtForwardTotal =
+    invoice.broughtForwardTotal != null
+      ? Number(invoice.broughtForwardTotal) || 0
+      : broughtForward.reduce((sum, c) => sum + toNum(c.balance), 0);
+  const totalDueNow =
+    invoice.totalDueNow != null
+      ? Number(invoice.totalDueNow) || 0
+      : balance + broughtForwardTotal;
+
   const orgLocation = [userOrganization?.city, userOrganization?.country]
     .filter(Boolean)
     .join(" , ");
@@ -134,10 +148,10 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
           </Text>
           <Box mt="4">
             <Text fontSize="12px" color="gray.300" fontWeight="500">
-              Balance Due
+              {hasCarry ? "Total Due Now" : "Balance Due"}
             </Text>
             <Text fontSize="20px" fontWeight="700" color="gray.500" mt="0.5">
-              {formatWithCode(balance)}
+              {formatWithCode(hasCarry ? totalDueNow : balance)}
             </Text>
           </Box>
         </Stack>
@@ -267,16 +281,56 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             labelBold
             valueBold
           />
-          <Box bg="gray.50" px="3" py="3" rounded="sm" mt="1">
-            <Flex justify="space-between" align="center">
-              <Text fontSize="13px" fontWeight="700" color="gray.500">
-                Balance Due
-              </Text>
-              <Text fontSize="14px" fontWeight="700" color="gray.500">
-                {formatWithCode(balance)}
-              </Text>
-            </Flex>
-          </Box>
+
+          {hasCarry ? (
+            <>
+              <TotalRow
+                label="Balance on this invoice"
+                value={formatPlain(balance)}
+              />
+
+              <Box borderTopWidth="1px" borderColor="gray.75" mt="2" pt="2">
+                <Text
+                  fontSize="12px"
+                  fontWeight="600"
+                  color="gray.400"
+                  px="3"
+                  mb="1"
+                >
+                  Previous Balance
+                </Text>
+                {broughtForward.map((prev) => (
+                  <TotalRow
+                    key={prev.id}
+                    label={prev.invoiceNumber}
+                    value={formatPlain(toNum(prev.balance))}
+                  />
+                ))}
+              </Box>
+
+              <Box bg="gray.50" px="3" py="3" rounded="sm" mt="1">
+                <Flex justify="space-between" align="center">
+                  <Text fontSize="13px" fontWeight="700" color="gray.500">
+                    Total Due Now
+                  </Text>
+                  <Text fontSize="14px" fontWeight="700" color="gray.500">
+                    {formatWithCode(totalDueNow)}
+                  </Text>
+                </Flex>
+              </Box>
+            </>
+          ) : (
+            <Box bg="gray.50" px="3" py="3" rounded="sm" mt="1">
+              <Flex justify="space-between" align="center">
+                <Text fontSize="13px" fontWeight="700" color="gray.500">
+                  Balance Due
+                </Text>
+                <Text fontSize="14px" fontWeight="700" color="gray.500">
+                  {formatWithCode(balance)}
+                </Text>
+              </Flex>
+            </Box>
+          )}
         </Stack>
       </Flex>
 

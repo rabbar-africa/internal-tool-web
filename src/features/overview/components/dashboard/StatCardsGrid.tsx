@@ -6,7 +6,7 @@ import { UsersIcon } from "@/assets/custom/UsersIcon";
 import { WarningIcon } from "@/assets/custom/WarningIcon";
 import { NoteIcon } from "@/assets/custom/NoteIcon";
 import { MonitorArrowUp } from "@/assets/custom/MonitorArrowUp";
-import { PoliceCarIcon } from "@/assets/custom/PoliceCarIcon";
+import { Money } from "@/assets/custom/Money";
 import type { DashboardSummary } from "../../interface";
 
 interface StatCardsGridProps {
@@ -71,11 +71,12 @@ export function StatCardsGrid({
         trendValue={`${summary.overdue.count} invoice${summary.overdue.count === 1 ? "" : "s"} past due`}
       />
       <StatCard
-        label="Open Job Cards"
-        value={String(summary.openJobCards)}
-        icon={<PoliceCarIcon width="22px" height="22px" color="#6478C0" />}
-        iconBg="#EEF1FB"
-        trendValue={`${summary.jobCardsCreated} created this period`}
+        label="Total Revenue"
+        value={money(summary.revenueCollected)}
+        icon={<Money width="22px" height="22px" color="#4F9D77" />}
+        iconBg="#EBF4EF"
+        trend={summary.revenueCollected > 0 ? "up" : "neutral"}
+        trendValue="Payments received this period"
       />
       <StatCard
         label="Customers"

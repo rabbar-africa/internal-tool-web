@@ -1,7 +1,15 @@
 import { Box, Flex, Grid, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
+import type { CarriedInvoice } from "@/shared/interface/invoice";
 import { SectionCard } from "./SectionCard";
+
+interface AllocationPreviewRow {
+  invoiceNumber: string;
+  balance: number;
+  applied: number;
+  isCarried: boolean;
+}
 
 interface InvoicePreviewProps {
   summary: {
@@ -12,8 +20,13 @@ interface InvoicePreviewProps {
     currencyCode: string;
     total: number;
     balance: number;
+    broughtForward: CarriedInvoice[];
+    broughtForwardTotal: number;
+    dueNow: number;
+    allocationPreview: AllocationPreviewRow[];
     amount: number;
     balanceAfter: number;
+    unusedAmount: number;
     overpaid: boolean;
   };
 }
@@ -23,12 +36,17 @@ export function InvoicePreview({ summary }: InvoicePreviewProps) {
   const money = (n: number) =>
     formatMoney(n, { currencyCode: summary.currencyCode });
   const date = (v: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
+  const hasCarry = summary.broughtForward.length > 0;
 
   return (
     <SectionCard
       step={1}
       title="Invoice"
-      subtitle="You're recording a payment for this invoice"
+      subtitle={
+        hasCarry
+          ? "This invoice also carries an earlier unpaid balance — one payment settles both"
+          : "You're recording a payment for this invoice"
+      }
     >
       <Stack gap="4">
         <Grid
@@ -54,8 +72,8 @@ export function InvoicePreview({ summary }: InvoicePreviewProps) {
         >
           <Stat label="Invoice Total" value={money(summary.total)} />
           <Stat
-            label="Outstanding Balance"
-            value={money(summary.balance)}
+            label={hasCarry ? "Total Due Now" : "Outstanding Balance"}
+            value={money(hasCarry ? summary.dueNow : summary.balance)}
             color="orange.600"
           />
           <Stat
@@ -64,6 +82,53 @@ export function InvoicePreview({ summary }: InvoicePreviewProps) {
             color={summary.balanceAfter <= 0 ? "green.600" : "gray.500"}
           />
         </Grid>
+
+        {hasCarry && (
+          <Box borderTopWidth="1px" borderColor="gray.75" pt="4">
+            <Text fontSize="12px" fontWeight="600" color="gray.500" mb="1">
+              How this payment will be applied
+            </Text>
+            <Text fontSize="11px" color="gray.300" mb="3">
+              Older invoices are settled first, then this one.
+            </Text>
+
+            <Stack gap="2">
+              {summary.allocationPreview.map((row) => (
+                <Flex
+                  key={row.invoiceNumber}
+                  justify="space-between"
+                  align="center"
+                  gap="3"
+                  px="3"
+                  py="2"
+                  rounded="md"
+                  bg="gray.50"
+                >
+                  <Flex align="center" gap="2" minW="0">
+                    <Text fontSize="13px" fontWeight="600" color="gray.500">
+                      {row.invoiceNumber || "—"}
+                    </Text>
+                    <Text fontSize="11px" color="gray.300">
+                      {row.isCarried ? "· brought forward" : "· this invoice"}
+                    </Text>
+                  </Flex>
+                  <Text
+                    fontSize="13px"
+                    fontWeight="600"
+                    color={row.applied > 0 ? "green.600" : "gray.300"}
+                    flexShrink={0}
+                  >
+                    {money(row.applied)}
+                    <Text as="span" fontSize="11px" color="gray.300">
+                      {" "}
+                      / {money(row.balance)}
+                    </Text>
+                  </Text>
+                </Flex>
+              ))}
+            </Stack>
+          </Box>
+        )}
 
         {summary.overpaid && (
           <Box
@@ -75,8 +140,9 @@ export function InvoicePreview({ summary }: InvoicePreviewProps) {
             py="2"
           >
             <Text fontSize="12px" color="orange.700">
-              Amount received exceeds the outstanding balance by{" "}
-              {money(summary.amount - summary.balance)}. The excess will be
+              Amount received exceeds the{" "}
+              {hasCarry ? "total due now" : "outstanding balance"} by{" "}
+              {money(summary.amount - summary.dueNow)}. The excess will be
               recorded as unused credit.
             </Text>
           </Box>

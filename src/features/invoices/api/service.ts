@@ -4,7 +4,11 @@ import type {
   UpdateInvoicePayload,
   IGetInvoiceFilter,
   IInvoiceResponse,
+  CarriedInvoice,
+  InvoiceCarry,
+  CollectInvoicePaymentPayload,
 } from "@/shared/interface/invoice";
+import type { IPaymentReceived } from "@/shared/interface/payment";
 // import { MOCK_INVOICES } from "@/shared/data/mock";
 import { calculateProfit, calculateMarginPercent } from "@/utils/calculations";
 import { axios } from "@/lib/axios";
@@ -103,6 +107,50 @@ export const createInvoice = async (payload: CreateInvoicePayload) => {
     finalPayload,
   );
 
+  return data;
+};
+
+// ─── Carry-forward ────────────────────────────────────────────────────────
+// A prior unpaid invoice can be linked to a newer one so a single payment
+// settles the old debt first. The newer invoice's total is never altered —
+// the old balance stays a receivable on its own document.
+
+/** The same customer's other unpaid invoices eligible to bring forward. */
+export const getOutstandingInvoices = async (id: string) => {
+  const { data } = await axios.get<ApiResponse<CarriedInvoice[]>>(
+    `/invoices/${id}/outstanding`,
+  );
+  return data;
+};
+
+export const addCarriedInvoice = async (id: string, carriedId: string) => {
+  const { data } = await axios.post<ApiResponse<InvoiceCarry>>(
+    `/invoices/${id}/carried-invoices`,
+    { invoiceId: carriedId },
+  );
+  return data;
+};
+
+export const removeCarriedInvoice = async (id: string, carriedId: string) => {
+  const { data } = await axios.delete<ApiResponse<InvoiceCarry>>(
+    `/invoices/${id}/carried-invoices/${carriedId}`,
+  );
+  return data;
+};
+
+/**
+ * Records a payment against an invoice. The server splits the amount across
+ * any brought-forward invoices (oldest first) and then this invoice, so the
+ * caller must NOT clamp the amount to the invoice's own balance.
+ */
+export const collectInvoicePayment = async (
+  id: string,
+  payload: CollectInvoicePaymentPayload,
+) => {
+  const { data } = await axios.post<ApiResponse<IPaymentReceived>>(
+    `/invoices/${id}/collect`,
+    payload,
+  );
   return data;
 };
 

@@ -1,5 +1,6 @@
 import type { ICustomer } from "./customer";
 import type { IBaseFilter } from "./filter";
+import type { PaymentModeDto } from "./payment";
 
 export type InvoiceStatus =
   | "draft"
@@ -17,6 +18,30 @@ export interface LineItem {
   unitPrice: number;
   taxRate: number;
   lineTotal: number;
+}
+
+/**
+ * A prior unpaid invoice whose balance rides on a newer invoice. The newer
+ * invoice's own `total` never absorbs this amount — it stays a receivable on
+ * the original document and is settled first when a payment comes in.
+ */
+export interface CarriedInvoice {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  dueDate: string | null;
+  total: string;
+  balance: string;
+  status: string;
+}
+
+/** The link row joining a newer invoice to the prior invoice it carries. */
+export interface InvoiceCarry {
+  id: string;
+  invoiceId: string;
+  carriedInvoiceId: string;
+  createdAt: string;
+  carriedInvoice: CarriedInvoice;
 }
 
 export interface IInvoiceResponse {
@@ -82,7 +107,30 @@ export interface IInvoiceResponse {
     total: string;
   }>;
   client: ICustomer;
+  /** Link rows for prior unpaid invoices brought forward onto this one. */
+  carries?: InvoiceCarry[];
+  /** `carries` flattened to the carried invoices themselves. */
+  broughtForward?: CarriedInvoice[];
+  /** Sum of the brought-forward balances. NOT included in `total`. */
+  broughtForwardTotal?: number;
+  /** `balance` + `broughtForwardTotal` — what the customer actually owes now. */
+  totalDueNow?: number;
 }
+
+/**
+ * Records a payment against an invoice, settling any balances brought forward
+ * onto it first (oldest first) before the invoice's own balance. Omit
+ * `allocations` to let the server do that split.
+ */
+export interface CollectInvoicePaymentPayload {
+  amount: number;
+  date: string;
+  mode?: PaymentModeDto;
+  referenceNumber?: string;
+  notes?: string;
+  allocations?: Array<{ invoiceId: string; amountApplied: number }>;
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string;
