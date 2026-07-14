@@ -20,6 +20,7 @@ import {
 } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetAllCustomersQuery } from "@/features/customers/api";
+import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
 import {
   useGetOrganizationTransactionSeries,
   useGetOrganizationDetails,
@@ -258,6 +259,17 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     });
   }, [txnSeriesData?.data]);
 
+  // `useInvoiceCarryForward` needs the customer id off `formik.values`, so it
+  // can only run once the form exists — this ref lets `onSubmit` (which fires
+  // long after render) reach back into it.
+  const carryRef = useRef<ReturnType<typeof useInvoiceCarryForward> | null>(
+    null,
+  );
+  // Holds the new invoice's id when it saved but some carry links were
+  // rejected, so retrying the form links onto it instead of creating a second
+  // invoice.
+  const createdInvoiceIdRef = useRef("");
+
   const formik = useFormik<CreateInvoiceFormValues>({
     initialValues: defaultValues,
     validationSchema,
@@ -302,10 +314,34 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         return;
       }
 
+      const carry = carryRef.current;
+
+      // Re-submitting after a partial failure: the invoice is already saved, so
+      // only retry the links that were rejected.
+      if (createdInvoiceIdRef.current) {
+        const retryId = createdInvoiceIdRef.current;
+        const failures = await carry?.flush(
+          retryId,
+          carry.flushFailures.map((f) => f.invoice),
+        );
+        if (failures?.length) return;
+        navigate(RouteConstants.invoices.detail.generate({ id: retryId }));
+        return;
+      }
+
       const response = await mutateAsync(payload);
-      navigate(
-        RouteConstants.invoices.detail.generate({ id: response?.data?.id }),
-      );
+      const newInvoiceId = response?.data?.id ?? "";
+
+      // Carry links can only be written once the invoice has an id. A rejection
+      // here leaves a saved invoice with missing links rather than failing the
+      // whole create, so stay on the form and let the user retry or move on.
+      const failures = await carry?.flush(newInvoiceId);
+      if (failures?.length) {
+        createdInvoiceIdRef.current = newInvoiceId;
+        return;
+      }
+
+      navigate(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
     },
   });
 
@@ -325,6 +361,24 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceQuery.data, isEdit]);
+
+  const carry = useInvoiceCarryForward({
+    isEdit,
+    invoiceId: isEdit ? id : "",
+    customerId: formik.values.customerId,
+    serverCarried: invoiceQuery.data?.data?.broughtForward ?? [],
+  });
+
+  carryRef.current = carry;
+
+  /** Abandons the rejected links and moves on to the saved invoice. */
+  const skipCarryFlush = useCallback(() => {
+    const savedId = createdInvoiceIdRef.current;
+    if (!savedId) return;
+    carry.clearFlushFailures();
+    navigate(RouteConstants.invoices.detail.generate({ id: savedId }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carry.clearFlushFailures]);
 
   const selectedCustomer = useMemo(
     () => customerCache[formik.values.customerId] ?? null,
@@ -462,8 +516,12 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     totals,
     applyVat,
     getLineAmount,
-    isPending: isEdit ? isUpdating : isCreating,
+    isPending: isEdit ? isUpdating : isCreating || carry.isFlushing,
     handleCancel,
+
+    // Carry-forward ("bring past unpaid balance")
+    carry,
+    skipCarryFlush,
     items,
     addNewItem,
     addNewCustomer,
