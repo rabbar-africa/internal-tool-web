@@ -53,6 +53,7 @@ export const customQueryKey = {
   invoices: {
     getAll: "get-all-invoices",
     getById: "get-invoice-by-id",
+    outstanding: "get-invoice-outstanding",
   },
   inspections: {
     getAll: "get-all-inspections",
