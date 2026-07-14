@@ -156,6 +156,21 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  // Previous balance (invoices carried onto this one)
+  carryBlock: {
+    borderTopWidth: 1,
+    borderTopColor: c.gray75,
+    marginTop: 4,
+    paddingTop: 4,
+  },
+  carryTitle: {
+    fontSize: 8,
+    fontWeight: 600,
+    color: c.gray400,
+    paddingHorizontal: 10,
+    marginBottom: 2,
+  },
+
   // Footer blocks
   section: { marginTop: 16 },
   sectionTitle: {
@@ -194,6 +209,20 @@ export function InvoicePdfDocument({
   const adjustment = toNum(invoice.adjustment);
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
+
+  // Balances carried from earlier unpaid invoices. These are NOT part of this
+  // invoice's total — they stay receivables on their own documents — but the
+  // customer settles them first, so the document must show what's due overall.
+  const broughtForward = invoice.broughtForward ?? [];
+  const hasCarry = broughtForward.length > 0;
+  const broughtForwardTotal =
+    invoice.broughtForwardTotal != null
+      ? Number(invoice.broughtForwardTotal) || 0
+      : broughtForward.reduce((sum, c) => sum + toNum(c.balance), 0);
+  const totalDueNow =
+    invoice.totalDueNow != null
+      ? Number(invoice.totalDueNow) || 0
+      : balance + broughtForwardTotal;
 
   const orgConfig = organization?.config;
   const bankAccount = organization?.primaryBankAccount;
@@ -250,8 +279,12 @@ export function InvoicePdfDocument({
           <View style={styles.metaCol}>
             <Text style={styles.invoiceTitle}>Invoice</Text>
             <Text style={styles.invoiceNumber}># {invoice.invoiceNumber}</Text>
-            <Text style={styles.balanceLabel}>Balance Due</Text>
-            <Text style={styles.balanceValue}>{withCode(balance)}</Text>
+            <Text style={styles.balanceLabel}>
+              {hasCarry ? "Total Due Now" : "Balance Due"}
+            </Text>
+            <Text style={styles.balanceValue}>
+              {withCode(hasCarry ? totalDueNow : balance)}
+            </Text>
           </View>
         </View>
 
@@ -339,12 +372,44 @@ export function InvoicePdfDocument({
               />
             ) : null}
             <TotalRow label="Total" value={withCode(total)} bold />
-            <View style={styles.balanceBox}>
-              <Text style={[styles.totalLabel, styles.bold]}>Balance Due</Text>
-              <Text style={[styles.totalValue, styles.bold]}>
-                {withCode(balance)}
-              </Text>
-            </View>
+
+            {hasCarry ? (
+              <>
+                <TotalRow
+                  label="Balance on this invoice"
+                  value={plain(balance)}
+                />
+
+                <View style={styles.carryBlock}>
+                  <Text style={styles.carryTitle}>Previous Balance</Text>
+                  {broughtForward.map((prev) => (
+                    <TotalRow
+                      key={prev.id}
+                      label={prev.invoiceNumber}
+                      value={plain(toNum(prev.balance))}
+                    />
+                  ))}
+                </View>
+
+                <View style={styles.balanceBox}>
+                  <Text style={[styles.totalLabel, styles.bold]}>
+                    Total Due Now
+                  </Text>
+                  <Text style={[styles.totalValue, styles.bold]}>
+                    {withCode(totalDueNow)}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <View style={styles.balanceBox}>
+                <Text style={[styles.totalLabel, styles.bold]}>
+                  Balance Due
+                </Text>
+                <Text style={[styles.totalValue, styles.bold]}>
+                  {withCode(balance)}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
