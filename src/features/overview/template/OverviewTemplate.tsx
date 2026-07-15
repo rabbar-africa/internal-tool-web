@@ -13,6 +13,7 @@ import {
   getPresetFilter,
 } from "@/features/overview/components/dashboard/DashboardFilters";
 import { UpcomingRemindersPanel } from "@/features/reminders/components/UpcomingRemindersPanel";
+import { REMINDER_TYPES } from "@/shared/interface/reminder";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
 import { useGetDashboardAnalyticsQuery } from "@/features/overview/api";
 import type { DashboardAnalyticsFilter } from "@/features/overview/interface";
@@ -94,14 +95,17 @@ export function OverviewTemplate() {
               showViewAll
               emptyText="No paperwork due soon"
             />
+            {/* Every other reminder type — service, follow-ups, insurance and
+                any custom ones. Paperwork is excluded: it has its own panel. */}
             <UpcomingRemindersPanel
-              title="Service due"
-              subtitle="Next 5 vehicles due for service"
-              type="SERVICE"
+              title="Reminders due"
+              subtitle="Next 5 services, follow-ups and other reminders"
+              excludeTypes={[REMINDER_TYPES.PAPERWORK]}
               withinDays={30}
               limit={5}
               showViewAll
-              emptyText="No services due soon"
+              showType
+              emptyText="No reminders due soon"
             />
           </Grid>
           {/* /revenue */}

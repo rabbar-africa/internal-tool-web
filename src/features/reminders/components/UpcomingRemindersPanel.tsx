@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Center, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { DashboardCard } from "@/features/overview/components/dashboard/DashboardCard";
@@ -7,10 +8,24 @@ import { useGetUpcomingRemindersQuery } from "../api/query";
 import { ReminderRow } from "./reminder-shared/ReminderRow";
 import type { ReminderActionHandlers } from "./reminder-shared/useReminderActions";
 
+/**
+ * How many reminders an excluding panel asks for before narrowing client-side.
+ * The request is already bounded by `withinDays`, so this is a generous ceiling
+ * on "everything due in the horizon" rather than a page size.
+ */
+const EXCLUDE_FETCH_LIMIT = 50;
+
 interface UpcomingRemindersPanelProps {
   title: string;
   subtitle?: string;
+  /** Restrict to a single reminder type. Omit to include every type. */
   type?: string;
+  /**
+   * Types to leave out of an all-types panel — e.g. one covered by its own
+   * panel elsewhere. `/reminders/upcoming` filters by a single type and has no
+   * exclude option, so this is applied client-side. Ignored when `type` is set.
+   */
+  excludeTypes?: string[];
   withinDays?: number;
   limit?: number;
   includeOverdue?: boolean;
@@ -31,6 +46,7 @@ export function UpcomingRemindersPanel({
   title,
   subtitle,
   type,
+  excludeTypes,
   withinDays = 30,
   limit = 5,
   includeOverdue = true,
@@ -40,13 +56,30 @@ export function UpcomingRemindersPanel({
   showType,
 }: UpcomingRemindersPanelProps) {
   const navigate = useNavigate();
+  const isExcluding = !type && Boolean(excludeTypes?.length);
+
   const { data, isLoading } = useGetUpcomingRemindersQuery({
     type,
     withinDays,
-    limit,
+    // Excluded rows are dropped after they arrive, so ask for the horizon
+    // rather than `limit` — otherwise the panel could come back short.
+    limit: isExcluding ? EXCLUDE_FETCH_LIMIT : limit,
     includeOverdue,
   });
-  const reminders = (data?.data ?? []) as Reminder[];
+
+  // Depend on the contents, not the array identity, so an inline
+  // `excludeTypes={[...]}` doesn't recompute every render.
+  const excludeKey = excludeTypes?.join(",") ?? "";
+  const reminders = useMemo(() => {
+    const all = (data?.data ?? []) as Reminder[];
+    if (!isExcluding) return all;
+    const skip = new Set(
+      excludeKey.split(",").map((t) => t.trim().toUpperCase()),
+    );
+    return all
+      .filter((r) => !skip.has(String(r.type).toUpperCase()))
+      .slice(0, limit);
+  }, [data?.data, isExcluding, excludeKey, limit]);
 
   const viewAll = showViewAll ? (
     <Text

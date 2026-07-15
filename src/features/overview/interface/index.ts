@@ -57,6 +57,10 @@ export interface TopDebtor {
   customerId: string;
   customerName: string;
   amountOwed: number;
+  /** Due date of their oldest unpaid invoice. Null if it has no due date. */
+  oldestDueDate: string | null;
+  /** Days past `oldestDueDate`, server-computed. Zero or less = not yet due. */
+  daysOverdue: number;
 }
 
 /** Chart-ready monthly bucket — fixed buckets, zero-filled by the API. */
