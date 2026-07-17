@@ -1,41 +1,42 @@
-import { Box, Button, Flex, Heading, Text, VStack } from "@chakra-ui/react";
-import { useEffect } from "react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Spinner,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { Link, useRouteError } from "react-router-dom";
+import { isChunkLoadError, reloadForNewDeploy } from "../../utils/chunk-reload";
 
 export const RouteError = () => {
   const error: any = useRouteError();
 
+  // Decide during render, not in an effect: an effect runs after paint, so the
+  // error UI would flash before the reload could replace it.
+  const [isStale] = useState(
+    () =>
+      isChunkLoadError(error?.statusText) || isChunkLoadError(error?.message),
+  );
+  const [showError, setShowError] = useState(false);
+
   useEffect(() => {
-    if (!error) return;
-
-    const errorMessage =
-      error.statusText?.toLowerCase() || error.message?.toLowerCase() || "";
-
-    // Both signal a stale deploy: the browser is holding old chunk URLs that the
-    // server no longer serves (it returns the index.html fallback instead).
-    // A one-time reload fetches the fresh build.
-    const reloadMessages = [
-      "failed to fetch dynamically imported module",
-      "is not a valid javascript mime type",
-    ];
-
-    const shouldReload = reloadMessages.some((message) =>
-      errorMessage.includes(message),
-    );
-
-    // Guard against an infinite reload loop: skip if we already reloaded within
-    // the last 10s (the error persisted), but still allow a fresh reload later
-    // in the session if a new deploy goes out.
-    const lastReload = Number(
-      sessionStorage.getItem("route-error-reloaded-at"),
-    );
-    const reloadedRecently = Date.now() - lastReload < 10_000;
-
-    if (shouldReload && !reloadedRecently) {
-      sessionStorage.setItem("route-error-reloaded-at", String(Date.now()));
-      window.location.reload();
+    if (isStale && !reloadForNewDeploy()) {
+      // Reload already attempted and it did not help, so fall through to the
+      // real error UI rather than looping.
+      setShowError(true);
     }
-  }, [error]);
+  }, [isStale]);
+
+  if (isStale && !showError) {
+    return (
+      <Flex h="100vh" w="full" justifyContent="center" alignItems="center">
+        <Spinner size="xl" color="primary" />
+      </Flex>
+    );
+  }
 
   return (
     <Box h="100vh" w="full" overflow="hidden" position="relative" bg={"white"}>
