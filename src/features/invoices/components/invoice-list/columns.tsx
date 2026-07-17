@@ -5,18 +5,24 @@ import moment from "moment";
 import Status from "@/components/ui/Status";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { Invoice, InvoiceStatus } from "@/shared/interface/invoice";
+import { InvoiceStatusDto } from "@/shared/interface/invoice";
 
 const toNum = (v: unknown) => Number(v ?? 0) || 0;
 
-export const STATUS_OPTIONS: { label: string; value: InvoiceStatus | "" }[] = [
-  { label: "All", value: "" },
-  { label: "Draft", value: "draft" },
-  { label: "Sent", value: "sent" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
-  { label: "Partial", value: "partial" },
-  { label: "Cancelled", value: "cancelled" },
-];
+// Values are sent verbatim to the API, so they must be the backend enum names.
+// DELETED is omitted — soft-deleted invoices aren't part of the browsable list.
+export const STATUS_OPTIONS: { label: string; value: InvoiceStatusDto | "" }[] =
+  [
+    { label: "All", value: "" },
+    { label: "Draft", value: InvoiceStatusDto.DRAFT },
+    { label: "Sent", value: InvoiceStatusDto.SENT },
+    { label: "Partially Paid", value: InvoiceStatusDto.PARTIALLY_PAID },
+    { label: "Paid", value: InvoiceStatusDto.PAID },
+    { label: "Overdue", value: InvoiceStatusDto.OVERDUE },
+    { label: "Void", value: InvoiceStatusDto.VOID },
+    { label: "Written Off", value: InvoiceStatusDto.WRITTEN_OFF },
+    { label: "Closed", value: InvoiceStatusDto.CLOSED },
+  ];
 
 export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
   const { formatMoney } = useFormatMoney();

@@ -1,11 +1,13 @@
 import { axios } from "@/lib/axios";
 import { QUERY_PATH } from "@/shared/constants/query-paths";
 import type {
+  ForgotPasswordPayload,
   LoginCredentials,
   LoginResponse,
   RefreshTokenResponse,
   RegisterPayload,
   RegisterResponse,
+  ResetPasswordPayload,
   Subscription,
 } from "./types";
 import { type ApiResponse } from "@/shared/interface/api";
@@ -41,6 +43,22 @@ export const authService = {
 
   resendVerification: async (): Promise<void> => {
     await axios.post(QUERY_PATH.auth.resendVerification);
+  },
+
+  /** Emails a 6-digit reset OTP to the account with this email. */
+  forgotPassword: async (payload: ForgotPasswordPayload): Promise<void> => {
+    await axios.post(QUERY_PATH.auth.forgotPassword, {
+      email: payload.email.trim().toLowerCase(),
+    });
+  },
+
+  /** Confirms the emailed OTP and sets the new password. */
+  resetPassword: async (payload: ResetPasswordPayload): Promise<void> => {
+    await axios.post(QUERY_PATH.auth.resetPassword, {
+      email: payload.email.trim().toLowerCase(),
+      otp: payload.otp.trim(),
+      password: payload.password,
+    });
   },
 
   refreshToken: async (refreshToken: string): Promise<RefreshTokenResponse> => {

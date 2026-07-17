@@ -237,6 +237,8 @@ export interface CreateInvoiceFormValues {
   lineItems: LineItemFormRow[];
   status: InvoiceStatusDto;
 }
+// Mirrors the backend InvoiceStatus enum exactly (values are sent/received
+// verbatim). Keep in sync with it.
 export enum InvoiceStatusDto {
   DRAFT = "DRAFT",
   SENT = "SENT",
@@ -245,4 +247,6 @@ export enum InvoiceStatusDto {
   OVERDUE = "OVERDUE",
   CLOSED = "CLOSED",
   PARTIALLY_PAID = "PARTIALLY_PAID",
+  WRITTEN_OFF = "WRITTEN_OFF",
+  DELETED = "DELETED",
 }
