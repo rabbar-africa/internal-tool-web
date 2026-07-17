@@ -132,8 +132,20 @@ export function Login() {
               />
             </Box>
 
+            <Text
+              textStyle="small-regular"
+              textAlign="right"
+              mt="0.75rem"
+              color="primary.400"
+              fontWeight="600"
+            >
+              <Link to={RouteConstants.auth.resetPassword.path}>
+                Forgot password?
+              </Link>
+            </Text>
+
             <Button
-              mt={"2.5rem"}
+              mt={"1.5rem"}
               width="full"
               type="submit"
               loading={loginMutation.isPending}

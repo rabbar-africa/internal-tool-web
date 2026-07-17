@@ -3,6 +3,17 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  /** The 6-digit OTP emailed to the user. */
+  otp: string;
+  password: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string;

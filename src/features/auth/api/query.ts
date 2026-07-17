@@ -1,6 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authService } from "./service";
-import type { LoginCredentials, RegisterPayload } from "./types";
+import type {
+  ForgotPasswordPayload,
+  LoginCredentials,
+  RegisterPayload,
+  ResetPasswordPayload,
+} from "./types";
 import {
   setAccessToken,
   setRefreshToken,
@@ -48,6 +53,32 @@ export function useResendVerificationMutation() {
       toaster.create({
         type: "success",
         description: "A new verification code has been sent to your email",
+      });
+    },
+  });
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: (payload: ForgotPasswordPayload) =>
+      authService.forgotPassword(payload),
+    onSuccess: () => {
+      toaster.create({
+        type: "success",
+        description: "If that email is registered, a reset code is on its way",
+      });
+    },
+  });
+}
+
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: (payload: ResetPasswordPayload) =>
+      authService.resetPassword(payload),
+    onSuccess: () => {
+      toaster.create({
+        type: "success",
+        description: "Password reset. You can now sign in.",
       });
     },
   });

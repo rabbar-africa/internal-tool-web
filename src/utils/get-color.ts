@@ -124,6 +124,8 @@ export const getStatusColor = (status: string) => {
         text: "secondary.500",
       };
     case "decision made":
+    case "void":
+    case "deleted":
       return {
         bg: "gray.50",
         text: "gray.300",
