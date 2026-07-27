@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useParams } from "react-router-dom";
@@ -118,9 +118,16 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
       search: componentSearch || undefined,
     });
 
+  // Built once per mode — rebuilding the Yup schema on every render makes each
+  // keystroke's validation pass needlessly expensive.
+  const validationSchema = useMemo(
+    () => buildValidationSchema(isEdit),
+    [isEdit],
+  );
+
   const formik = useFormik<InspectionFormValues>({
     initialValues,
-    validationSchema: buildValidationSchema(isEdit),
+    validationSchema,
     onSubmit: async (values) => {
       const payload: InspectionPayload = {
         vehicleId: values.vehicleId,
@@ -265,13 +272,24 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
   // Findings store the component name (a free-text string), so the option value
   // is the item name itself — selecting fills the name, and any typed value that
   // isn't in the catalog is kept as-is (users can't create catalog items here).
+  // The catalog can contain duplicate names ("Alternator" twice) and the name
+  // is both the option value and its React key, so dedupe case-insensitively,
+  // keeping the first occurrence.
   const componentOptions = useMemo<SearchComboboxOption[]>(() => {
     const items: Item[] = itemsData?.data ?? [];
-    return items.map((item) => ({
-      label: item.name,
-      value: item.name,
-      subLabel: item.code || undefined,
-    }));
+    const seen = new Set<string>();
+    const opts: SearchComboboxOption[] = [];
+    for (const item of items) {
+      const key = item.name.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      opts.push({
+        label: item.name,
+        value: item.name,
+        subLabel: item.code || undefined,
+      });
+    }
+    return opts;
   }, [itemsData]);
 
   const selectedVehicle = useMemo(
@@ -285,14 +303,15 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
     debounceRef.current = setTimeout(() => setDebouncedSearch(query), 400);
   };
 
-  const handleComponentSearch = (query: string) => {
+  // Stable identity — passed into memoized finding rows.
+  const handleComponentSearch = useCallback((query: string) => {
     if (componentDebounceRef.current)
       clearTimeout(componentDebounceRef.current);
     componentDebounceRef.current = setTimeout(
       () => setComponentSearch(query),
       800,
     );
-  };
+  }, []);
 
   const clearVehicleFields = () => {
     void formik.setFieldValue("vehicleId", "");
@@ -342,8 +361,14 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
   };
 
   // ── Findings ─────────────────────────────────────────────────────────────
-  const addFinding = () => {
-    const findings = formik.values.findings;
+  // These are passed into memoized finding rows, so they must be identity-
+  // stable AND always act on the latest values — a ref bridges the two
+  // (Formik's setFieldValue is already stable).
+  const valuesRef = useRef(formik.values);
+  valuesRef.current = formik.values;
+
+  const addFinding = useCallback(() => {
+    const findings = valuesRef.current.findings;
     const last = findings[findings.length - 1];
     if (!last?.component || !last?.status) {
       toaster.create({
@@ -354,14 +379,19 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
       return;
     }
     void formik.setFieldValue("findings", [...findings, { ...EMPTY_FINDING }]);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.setFieldValue]);
 
-  const removeFinding = (index: number) => {
-    void formik.setFieldValue(
-      "findings",
-      formik.values.findings.filter((_, i) => i !== index),
-    );
-  };
+  const removeFinding = useCallback(
+    (index: number) => {
+      void formik.setFieldValue(
+        "findings",
+        valuesRef.current.findings.filter((_, i) => i !== index),
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [formik.setFieldValue],
+  );
 
   return {
     formik,

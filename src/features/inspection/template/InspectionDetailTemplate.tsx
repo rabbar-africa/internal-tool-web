@@ -187,7 +187,10 @@ export function InspectionDetailTemplate() {
                 justify="center"
                 flexShrink={0}
               >
-                <PoliceCarIcon color="var(--chakra-colors-primary-300)" />
+                <PoliceCarIcon
+                  w={"1.5rem"}
+                  color="var(--chakra-colors-primary-300)"
+                />
               </Flex>
 
               <Box>
@@ -296,8 +299,7 @@ export function InspectionDetailTemplate() {
             icon={
               <PoliceCarIcon
                 color="var(--chakra-colors-primary-300)"
-                width={14}
-                height={14}
+                w={"1.5rem"}
               />
             }
             title="Vehicle"
