@@ -21,6 +21,7 @@ export interface IInspection {
   id: string;
   organizationId: string;
   vehicleId: string;
+  customerId?: string | null;
   jobCode: string;
   technicianName: string;
   customerName: string;

@@ -23,6 +23,14 @@ export const getInspections = async (filters: InspectionFilter = {}) => {
   return res.data;
 };
 
+export const updateInspection = async (
+  id: string,
+  data: Partial<InspectionPayload>,
+) => {
+  const res = await axios.put(`/inspections/${id}`, data);
+  return res.data;
+};
+
 export const getInspectionById = async (id: string) => {
   const res = await axios.get(`/inspections/${id}`);
   return res.data;
