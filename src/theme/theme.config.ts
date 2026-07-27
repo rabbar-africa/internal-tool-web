@@ -1,7 +1,7 @@
 import { createSystem, defaultConfig } from "@chakra-ui/react";
 import { fonts, textStyles } from "./custom/font";
 import { colors } from "./custom/color";
-import { buttonRecipe, inputRecipe } from "./recipe";
+import { buttonRecipe, inputRecipe, textareaRecipe } from "./recipe";
 
 export const system = createSystem(defaultConfig, {
   cssVarsPrefix: "hanypay",
@@ -13,6 +13,7 @@ export const system = createSystem(defaultConfig, {
       fontFamily: "body",
       background: "rgba(255, 255, 255, 1)",
       scrollBehavior: "smooth",
+      overscrollBehaviorY: "none",
     },
   },
   theme: {
@@ -24,6 +25,7 @@ export const system = createSystem(defaultConfig, {
     recipes: {
       button: buttonRecipe,
       input: inputRecipe,
+      textarea: textareaRecipe,
     },
     keyframes: {
       scaleUp: {

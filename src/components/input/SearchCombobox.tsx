@@ -205,6 +205,8 @@ export function SearchCombobox({
             placeholder={placeholder}
             px="16px"
             h="2.5rem"
+            // ≥16px on mobile or iOS Safari zooms the page on focus
+            fontSize={{ base: "1rem", lg: "0.875rem" }}
             color="gray.500"
             borderColor={error ? "error.300" : "gray.100"}
             _placeholder={{ textStyle: "tiny-regular", color: "gray.100" }}
@@ -222,6 +224,12 @@ export function SearchCombobox({
               // Modal dialogs (ark/Radix) set body { pointer-events: none } while
               // open; ensure the popup stays interactive from inside a Dialog.
               pointerEvents="auto"
+              // Chakra's combobox recipe sets opacity 0 on the content when the
+              // collection is empty unless a Combobox.Empty child is present.
+              // Our loading row replaces Combobox.Empty while fetching (when the
+              // collection IS empty), so undo that rule or "Searching..." is
+              // rendered invisible.
+              css={{ "&[data-empty]": { opacity: 1 } }}
             >
               {isLoading ? (
                 <Flex px="3" py="4" align="center" gap="2">

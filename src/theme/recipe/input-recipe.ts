@@ -9,13 +9,14 @@ export const inputRecipe = defineRecipe({
     px: "1rem",
     bg: "field.bg",
     color: "gray.300",
-    fontSize: ".875rem",
+    // ≥16px on mobile or iOS Safari zooms the page when the input is focused
+    fontSize: { base: "1rem", lg: ".875rem" },
     transition: "all 0.2s",
     outline: "none",
     _placeholder: {
       color: "gray.100",
       fontWeight: "400",
-      fontSize: ".875rem",
+      fontSize: { base: "1rem", lg: ".875rem" },
     },
     _focus: {
       // borderColor: 'field.borderFocus',
@@ -33,6 +34,18 @@ export const inputRecipe = defineRecipe({
     },
   },
   variants: {
+    // Chakra's default size variants set fontSize via textStyle, which wins
+    // over any base fontSize — re-declare each size with a responsive
+    // textStyle so mobile gets a 1rem floor and lg+ keeps the original size.
+    size: {
+      "2xs": { textStyle: { base: "md", lg: "xs" } },
+      xs: { textStyle: { base: "md", lg: "xs" } },
+      sm: { textStyle: { base: "md", lg: "sm" } },
+      md: { textStyle: { base: "md", lg: "sm" } },
+      lg: { textStyle: "md" },
+      xl: { textStyle: "md" },
+      "2xl": { textStyle: { base: "md", lg: "lg" } },
+    },
     variant: {
       outline: {
         borderWidth: "1px",

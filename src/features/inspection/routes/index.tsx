@@ -17,6 +17,11 @@ const { InspectionDetailPage } = lazyImport(
   "InspectionDetailPage",
 );
 
+const { EditInspectionPage } = lazyImport(
+  () => import("../pages/EditInspectionPage"),
+  "EditInspectionPage",
+);
+
 export const InspectionRoutes: RouteObject[] = [
   {
     path: RouteConstants.inspection.base.path,
@@ -29,5 +34,9 @@ export const InspectionRoutes: RouteObject[] = [
   {
     path: RouteConstants.inspection.inspectionDetails.path,
     element: <InspectionDetailPage />,
+  },
+  {
+    path: RouteConstants.inspection.edit.path,
+    element: <EditInspectionPage />,
   },
 ];

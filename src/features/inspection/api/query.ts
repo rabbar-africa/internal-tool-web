@@ -1,6 +1,7 @@
 import { useMutation, useQuery, type QueryConfigType } from "@/lib/react-query";
 import {
   createInspection,
+  updateInspection,
   summarizeInspectionNotes,
   getInspections,
   getInspectionById,
@@ -29,6 +30,24 @@ export const useCreateInspectionMutation = () =>
     meta: {
       successMessage: "Inspection created successfully",
       invalidatesQueryKeys: [[customQueryKey.inspections.getAll]],
+    },
+  });
+
+export const useUpdateInspectionMutation = () =>
+  useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<InspectionPayload>;
+    }) => updateInspection(id, data),
+    meta: {
+      successMessage: "Inspection updated successfully",
+      invalidatesQueryKeys: [
+        [customQueryKey.inspections.getAll],
+        [customQueryKey.inspections.getById],
+      ],
     },
   });
 

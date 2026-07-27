@@ -4,6 +4,9 @@ import {
   Flex,
   Grid,
   HStack,
+  IconButton,
+  Menu,
+  Portal,
   Separator,
   Stack,
   Text,
@@ -25,9 +28,8 @@ import type {
 } from "@/shared/interface/inspection";
 import {
   ArrowLeft,
-  DownloadSimple,
   PoliceCarIcon,
-  TrashIcon,
+  ThreeDotsIcon,
   FileTextIcon,
   NoteIcon,
 } from "@/assets/custom";
@@ -185,7 +187,10 @@ export function InspectionDetailTemplate() {
                 justify="center"
                 flexShrink={0}
               >
-                <PoliceCarIcon color="var(--chakra-colors-primary-300)" />
+                <PoliceCarIcon
+                  w={"1.5rem"}
+                  color="var(--chakra-colors-primary-300)"
+                />
               </Flex>
 
               <Box>
@@ -202,46 +207,66 @@ export function InspectionDetailTemplate() {
               </Box>
             </HStack>
 
-            <HStack gap="2" flexWrap="wrap">
-              <Button
-                size="sm"
-                variant="outline"
-                borderColor="error.200"
-                color="error.300"
-                _hover={{ bg: "error.50" }}
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <TrashIcon />
-                Delete
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                borderColor="gray.100"
-                color="gray.500"
-                _hover={{ bg: "gray.50" }}
-                loading={isGenerating && !isSharing}
-                loadingText="Preparing..."
-                onClick={handleDownload}
-              >
-                <DownloadSimple />
-                Save PDF
-              </Button>
-              {canShareFiles && (
-                <Button
+            <Menu.Root>
+              <Menu.Trigger asChild>
+                <IconButton
+                  variant="ghost"
                   size="sm"
-                  bg="primary.300"
-                  color="white"
-                  _hover={{ bg: "primary.400" }}
-                  loading={isSharing}
-                  loadingText="Preparing..."
-                  onClick={handleSend}
+                  aria-label="Inspection actions"
+                  bg="white"
+                  border="1px solid"
+                  borderColor="gray.75"
+                  _hover={{ bg: "gray.50" }}
+                  loading={isGenerating || isSharing || isDeleting}
                 >
-                  <DownloadSimple />
-                  Send
-                </Button>
-              )}
-            </HStack>
+                  <ThreeDotsIcon color="gray.400" />
+                </IconButton>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content minW="190px">
+                    <Menu.Item
+                      value="edit"
+                      onClick={() =>
+                        navigate(
+                          RouteConstants.inspection.edit.generate({
+                            id: inspection.id,
+                          }),
+                        )
+                      }
+                      _hover={{ bg: "gray.50" }}
+                    >
+                      Edit inspection
+                    </Menu.Item>
+                    <Menu.Item
+                      value="save-pdf"
+                      onClick={handleDownload}
+                      _hover={{ bg: "gray.50" }}
+                    >
+                      Save PDF
+                    </Menu.Item>
+                    {canShareFiles && (
+                      <Menu.Item
+                        value="send"
+                        onClick={handleSend}
+                        _hover={{ bg: "gray.50" }}
+                      >
+                        Send report
+                      </Menu.Item>
+                    )}
+                    <Menu.Separator borderColor="gray.50" />
+                    <Menu.Item
+                      value="delete"
+                      color="error.300"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      _hover={{ bg: "error.50" }}
+                    >
+                      Delete inspection
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
           </Flex>
         </Box>
 
@@ -274,8 +299,7 @@ export function InspectionDetailTemplate() {
             icon={
               <PoliceCarIcon
                 color="var(--chakra-colors-primary-300)"
-                width={14}
-                height={14}
+                w={"1.5rem"}
               />
             }
             title="Vehicle"

@@ -16,6 +16,7 @@ import { useInspectionPdf } from "@/features/inspection/hooks/useInspectionPdf";
 import type { IInspection } from "@/shared/interface/inspection";
 import moment from "moment";
 import { TableActionItem } from "@/components/common/TableActionItem";
+import ConsentDialog from "@/components/common/ConsentDialog";
 import { EyeIcon } from "@/assets/custom/EyeIcon";
 import { TrashIcon } from "@/assets/custom/TrashIcon";
 import { DownloadSimple } from "@/assets/custom/DownloadSimple";
@@ -93,8 +94,18 @@ export function ViewAllReportsTemplate() {
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
 
-  const { mutateAsync: deleteInspection } = useDeleteInspectionMutation();
+  const { mutateAsync: deleteInspection, isPending: isDeleting } =
+    useDeleteInspectionMutation();
   const { download: downloadReport } = useInspectionPdf();
+
+  // Row pending delete confirmation — the dialog is open while this is set.
+  const [pendingDelete, setPendingDelete] = useState<IInspection | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    await deleteInspection(pendingDelete.id);
+    setPendingDelete(null);
+  };
 
   const tableActions = useMemo<TableAction<IInspection>[]>(
     () => [
@@ -118,10 +129,10 @@ export function ViewAllReportsTemplate() {
         label: <TableActionItem label={"Delete"} Icon={TrashIcon} />,
         value: "delete",
         variant: "destructive",
-        onClick: (row) => deleteInspection(row.id),
+        onClick: (row) => setPendingDelete(row),
       },
     ],
-    [navigate, deleteInspection, downloadReport],
+    [navigate, downloadReport],
   );
 
   const { data, isLoading } = useGetAllInspectionsQuery({
@@ -135,92 +146,109 @@ export function ViewAllReportsTemplate() {
   const meta = data?.meta;
 
   return (
-    <Stack gap="6">
-      <Flex
-        justify="space-between"
-        align={{ base: "start", sm: "center" }}
-        direction={{ base: "column", sm: "row" }}
-        gap="3"
-      >
-        <Box>
-          <Text textStyle="h3-bold" color="gray.500">
-            All Inspection Reports
-          </Text>
-          <Text textStyle="small-regular" color="gray.300" mt="1">
-            View and track all generated inspection reports.
-          </Text>
-        </Box>
-
-        <Button
-          type="button"
-          onClick={() =>
-            navigate(RouteConstants.inspection.createInspection.path)
-          }
-        >
-          Add Report
-        </Button>
-      </Flex>
-
-      <Box
-        pt="2rem"
-        pb="2rem"
-        bg="white"
-        px="1rem"
-        rounded=".625rem"
-        shadow="sm"
-        borderWidth="1px"
-        borderColor="gray.75"
-      >
+    <>
+      <Stack gap="6">
         <Flex
-          justifyContent="flex-start"
-          alignItems="center"
-          mb="1.5rem"
+          justify="space-between"
+          align={{ base: "start", sm: "center" }}
+          direction={{ base: "column", sm: "row" }}
           gap="3"
-          direction={{ base: "column", md: "row" }}
         >
-          <CustomSelect
-            placeholder="All Status"
-            options={STATUS_OPTIONS}
-            value={filters.status ? [filters.status] : undefined}
-            onChange={(opt: { value: string[] }) => {
-              setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
-            }}
-            rootProps={{ size: "sm" }}
-            controlProps={{ w: "140px" }}
-          />
+          <Box>
+            <Text textStyle="h3-bold" color="gray.500">
+              All Inspection Reports
+            </Text>
+            <Text textStyle="small-regular" color="gray.300" mt="1">
+              View and track all generated inspection reports.
+            </Text>
+          </Box>
 
-          <SearchInput
-            placeholder="Search by customer or job code"
-            value={searchInput}
-            onChange={setSearchInput}
-            onSearch={(val) => setFilters({ search: val, page: 1 })}
-            debounceMs={500}
-            loading={isLoading}
-          />
+          <Button
+            type="button"
+            onClick={() =>
+              navigate(RouteConstants.inspection.createInspection.path)
+            }
+          >
+            Add Report
+          </Button>
         </Flex>
 
-        <Box overflowX="auto" maxW="calc(100vw - 380px)">
-          <CustomTable
-            data={inspections}
-            columns={columns}
-            loading={isLoading}
-            enableActions
-            actions={tableActions}
-            tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
-            pagination={{
-              pageIndex: filters.page - 1,
-              pageSize: filters.limit,
-            }}
-            setPagination={({ pageIndex }) =>
-              setFilters({ page: pageIndex + 1 })
-            }
-            pageCount={meta?.totalPages ?? 1}
-            totalItems={meta?.total}
-            hasNextPage={filters.page < (meta?.totalPages ?? 1)}
-            hasPrevPage={filters.page > 1}
-          />
+        <Box
+          pt="2rem"
+          pb="2rem"
+          bg="white"
+          px="1rem"
+          rounded=".625rem"
+          shadow="sm"
+          borderWidth="1px"
+          borderColor="gray.75"
+        >
+          <Flex
+            justifyContent="flex-start"
+            alignItems="center"
+            mb="1.5rem"
+            gap="3"
+            direction={{ base: "column", md: "row" }}
+          >
+            <CustomSelect
+              placeholder="All Status"
+              options={STATUS_OPTIONS}
+              value={filters.status ? [filters.status] : undefined}
+              onChange={(opt: { value: string[] }) => {
+                setFilters({ status: opt?.value?.[0] ?? "", page: 1 });
+              }}
+              rootProps={{ size: "sm" }}
+              controlProps={{ w: "140px" }}
+            />
+
+            <SearchInput
+              placeholder="Search by customer or job code"
+              value={searchInput}
+              onChange={setSearchInput}
+              onSearch={(val) => setFilters({ search: val, page: 1 })}
+              debounceMs={500}
+              loading={isLoading}
+            />
+          </Flex>
+
+          <Box overflowX="auto" maxW="calc(100vw - 380px)">
+            <CustomTable
+              data={inspections}
+              columns={columns}
+              loading={isLoading}
+              enableActions
+              actions={tableActions}
+              tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+              pagination={{
+                pageIndex: filters.page - 1,
+                pageSize: filters.limit,
+              }}
+              setPagination={({ pageIndex }) =>
+                setFilters({ page: pageIndex + 1 })
+              }
+              pageCount={meta?.totalPages ?? 1}
+              totalItems={meta?.total}
+              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+              hasPrevPage={filters.page > 1}
+            />
+          </Box>
         </Box>
-      </Box>
-    </Stack>
+      </Stack>
+
+      <ConsentDialog
+        open={!!pendingDelete}
+        onOpenChange={({ open }) => {
+          if (!open) setPendingDelete(null);
+        }}
+        heading="Delete this inspection?"
+        note={`This action cannot be undone. The inspection report${
+          pendingDelete?.jobCode ? ` (${pendingDelete.jobCode})` : ""
+        } will be permanently removed.`}
+        confirmText="Yes, Delete"
+        handleSubmit={handleConfirmDelete}
+        isLoading={isDeleting}
+        variant="danger"
+      />
+    </>
   );
 }
