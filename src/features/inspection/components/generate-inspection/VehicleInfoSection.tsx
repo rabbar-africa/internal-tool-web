@@ -109,7 +109,6 @@ export function VehicleInfoSection({ form }: { form: InspectionFormApi }) {
             <CustomInput
               label="Technician Name"
               placeholder="e.g. John Doe"
-              required
               name="technicianName"
               value={values.technicianName}
               onChange={handleChange}

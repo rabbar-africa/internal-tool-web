@@ -23,12 +23,12 @@ export interface InspectionFormValues {
 
 /**
  * Create/update payload. Mirrors the backend CreateInspectionDto:
- * `vehicleId`, `technicianName` and `customerName` are required; the rest are
- * optional. Findings are free-text (checklist entries are not used).
+ * `vehicleId` and `customerName` are required; the rest are optional.
+ * Findings are free-text (checklist entries are not used).
  */
 export interface InspectionPayload {
   vehicleId: string;
-  technicianName: string;
+  technicianName?: string;
   customerName: string;
   customerId?: string;
   customerEmail?: string;

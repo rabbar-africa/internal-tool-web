@@ -10,7 +10,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setCollapsed] = useState(false);
 
   return (
-    <Box height="100vh" display="flex" flexDirection="column" bg="#F7F7F7">
+    <Box height="100dvh" display="flex" flexDirection="column" bg="#F7F7F7">
       <Flex flex="1" overflow="hidden">
         {/* Desktop sidebar — hidden on mobile */}
         <Box display={{ base: "none", lg: "block" }}>
@@ -22,7 +22,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <Stack gap={0} flex="1" minHeight={0} minWidth={0} position="relative">
           <NavBar onMenuToggle={() => setMobileNavOpen(true)} />
-          <Box flex="1" overflow="auto">
+          <Box flex="1" overflow="auto" overscrollBehavior="contain">
             <UserDashboardContainer pt={"1.75rem"}>
               <Suspense fallback={<SectionLoader />}>{children}</Suspense>
             </UserDashboardContainer>

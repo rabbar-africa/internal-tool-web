@@ -383,6 +383,32 @@ export function InspectionPdfDocument({
   const notes = htmlToText(inspection.generalNotes);
   const formattedDate = formatDate(inspection.inspectionDate);
 
+  // Summary cards are shown dynamically: zero-count buckets are dropped, and
+  // the whole row only renders when at least two buckets have counts (a single
+  // populated bucket carries no comparative information).
+  const allStatCards: {
+    label: string;
+    value: number;
+    sub: string;
+    bucket: Bucket;
+  }[] = [
+    {
+      label: "Immediate Attention",
+      value: failCount,
+      sub: failCount === 1 ? "item" : "items",
+      bucket: "fail",
+    },
+    {
+      label: "Monitor",
+      value: warnCount,
+      sub: warnCount === 1 ? "item" : "items",
+      bucket: "warning",
+    },
+    { label: "Passed", value: passCount, sub: "checks", bucket: "pass" },
+  ];
+  const statCards = allStatCards.filter((s) => s.value > 0);
+  const showSummary = statCards.length >= 2;
+
   // Two-column split for the checks grid.
   const left = findings.filter((_, i) => i % 2 === 0);
   const right = findings.filter((_, i) => i % 2 !== 0);
@@ -470,30 +496,23 @@ export function InspectionPdfDocument({
           </View>
         </View>
 
-        {/* Inspection Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Inspection Summary</Text>
-          <View style={styles.statRow}>
-            <StatCard
-              label="Immediate Attention"
-              value={failCount}
-              sub={failCount === 1 ? "item" : "items"}
-              bucket="fail"
-            />
-            <StatCard
-              label="Monitor"
-              value={warnCount}
-              sub={warnCount === 1 ? "item" : "items"}
-              bucket="warning"
-            />
-            <StatCard
-              label="Passed"
-              value={passCount}
-              sub="checks"
-              bucket="pass"
-            />
+        {/* Inspection Summary — only when ≥2 buckets have counts */}
+        {showSummary ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeading}>Inspection Summary</Text>
+            <View style={styles.statRow}>
+              {statCards.map((s) => (
+                <StatCard
+                  key={s.bucket}
+                  label={s.label}
+                  value={s.value}
+                  sub={s.sub}
+                  bucket={s.bucket}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {/* System Checks */}
         <View style={[styles.section, { paddingBottom: 8 }]}>
@@ -621,6 +640,7 @@ export function InspectionPdfDocument({
   );
 }
 
+/** Renders nothing when the value is missing — no "Key —" placeholder rows. */
 function InfoLine({
   label,
   value,
@@ -628,12 +648,13 @@ function InfoLine({
   label: string;
   value?: string | number | null;
 }) {
-  const display =
-    value === null || value === undefined || value === "" ? "—" : String(value);
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return null;
+  }
   return (
     <View style={styles.infoLine}>
       <Text style={styles.infoKey}>{label}</Text>
-      <Text style={styles.infoVal}>{display}</Text>
+      <Text style={styles.infoVal}>{String(value)}</Text>
     </View>
   );
 }
