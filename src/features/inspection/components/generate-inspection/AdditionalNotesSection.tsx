@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Box, Button, Card, Field, Flex, Text } from "@chakra-ui/react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -15,10 +16,73 @@ const QUILL_MODULES = {
 
 const QUILL_FORMATS = ["header", "bold", "italic", "underline", "list"];
 
+/**
+ * The Quill editor is the most expensive child in the form, and Formik
+ * re-renders the whole tree on every keystroke anywhere (e.g. while typing a
+ * finding observation). Memoizing the editor on (value, onChange) keeps those
+ * keystrokes from re-rendering Quill — `onChange` must be identity-stable for
+ * this to work (it is: a useCallback over Formik's stable setFieldValue).
+ */
+const NotesEditor = memo(function NotesEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (content: string) => void;
+}) {
+  return (
+    <Box
+      borderWidth="1px"
+      borderColor="gray.100"
+      rounded="md"
+      overflow="hidden"
+      css={{
+        "& .ql-toolbar": {
+          borderBottom: "1px solid var(--chakra-colors-gray-100)",
+          borderTop: "none",
+          borderLeft: "none",
+          borderRight: "none",
+        },
+        "& .ql-container": {
+          border: "none",
+          minHeight: "120px",
+          fontSize: "14px",
+          fontFamily: "inherit",
+        },
+        "& .ql-editor": {
+          minHeight: "120px",
+          color: "var(--chakra-colors-gray-500)",
+        },
+        "& .ql-editor.ql-blank::before": {
+          color: "var(--chakra-colors-gray-100)",
+          fontStyle: "normal",
+        },
+      }}
+    >
+      <ReactQuill
+        theme="snow"
+        value={value}
+        onChange={onChange}
+        modules={QUILL_MODULES}
+        formats={QUILL_FORMATS}
+        placeholder="Type any extra notes or message to the vehicle owner..."
+      />
+    </Box>
+  );
+});
+
 export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
   const { values, setFieldValue } = form.formik;
   const { mutateAsync: summarize, isPending } =
     useSummarizeInspectionNotesMutation();
+
+  // Stable identity (Formik's setFieldValue is stable) so NotesEditor's memo holds.
+  const handleNotesChange = useCallback(
+    (content: string) => {
+      void setFieldValue("additionalNotes", content);
+    },
+    [setFieldValue],
+  );
 
   const handleAiGenerate = async () => {
     const response = await summarize({
@@ -73,45 +137,10 @@ export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
           <Field.Label mb=".625rem" textStyle="tiny-semibold" color="gray.300">
             Notes / Message to Vehicle Owner
           </Field.Label>
-          <Box
-            borderWidth="1px"
-            borderColor="gray.100"
-            rounded="md"
-            overflow="hidden"
-            css={{
-              "& .ql-toolbar": {
-                borderBottom: "1px solid var(--chakra-colors-gray-100)",
-                borderTop: "none",
-                borderLeft: "none",
-                borderRight: "none",
-              },
-              "& .ql-container": {
-                border: "none",
-                minHeight: "120px",
-                fontSize: "14px",
-                fontFamily: "inherit",
-              },
-              "& .ql-editor": {
-                minHeight: "120px",
-                color: "var(--chakra-colors-gray-500)",
-              },
-              "& .ql-editor.ql-blank::before": {
-                color: "var(--chakra-colors-gray-100)",
-                fontStyle: "normal",
-              },
-            }}
-          >
-            <ReactQuill
-              theme="snow"
-              value={values.additionalNotes}
-              onChange={(content) => {
-                void setFieldValue("additionalNotes", content);
-              }}
-              modules={QUILL_MODULES}
-              formats={QUILL_FORMATS}
-              placeholder="Type any extra notes or message to the vehicle owner..."
-            />
-          </Box>
+          <NotesEditor
+            value={values.additionalNotes}
+            onChange={handleNotesChange}
+          />
           <Text mt="1" textStyle="xs" color="gray.200">
             Formatting (bold, lists, etc.) will appear in the PDF report.
           </Text>

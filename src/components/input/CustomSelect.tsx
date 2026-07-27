@@ -82,8 +82,13 @@ export function CustomSelect({
             rounded={".625rem"}
             border="1px solid #E9E7E6"
             borderColor={"gray.100"}
+            // ≥16px on mobile or iOS Safari zooms the page on focus
+            fontSize={{ base: "1rem", lg: "0.875rem" }}
           >
-            <Select.ValueText placeholder={placeholder || emptyText} />
+            <Select.ValueText
+              fontSize={{ base: "1rem", lg: "0.875rem" }}
+              placeholder={placeholder || emptyText}
+            />
           </Select.Trigger>
 
           <Select.IndicatorGroup pr={".85rem"}>
