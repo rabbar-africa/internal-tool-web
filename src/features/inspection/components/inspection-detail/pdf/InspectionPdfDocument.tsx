@@ -452,7 +452,7 @@ export function InspectionPdfDocument({
               value={inspection.vehicleRegistrationNumber}
             />
             <InfoLine label="Color" value={inspection.vehicleColor} />
-            <InfoLine label="VIN" value={inspection.vehicleVin} />
+            {/* <InfoLine label="VIN" value={inspection.vehicleVin} /> */}
           </View>
           <View style={styles.infoCol}>
             <Text style={styles.sectionTitle}>Owner</Text>
