@@ -1,5 +1,5 @@
 // Paperwork — a flexible document-expiry tracker for client/vehicle paperwork
-// (road worthiness, insurance, vehicle registration, or any custom document).
+// (road worthiness, insurance, full paperwork bundles, or any custom document).
 // The backend derives status/daysUntilExpiry, so the frontend never does date math.
 
 export type PaperworkStatus =
@@ -25,40 +25,60 @@ export interface PaperworkVehicleRef {
   registrationNumber?: string | null;
 }
 
-/** A superseded version, snapshotted when a document is renewed. */
+/** A scan to attach — the shape POST /files/upload returns. */
+export interface PaperworkFileInput {
+  fileUrl: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+}
+
+/** A scan already stored against a paperwork record. */
+export interface IPaperworkFile {
+  id: string;
+  paperworkId?: string;
+  fileUrl: string;
+  fileName?: string | null;
+  fileType?: string | null;
+  fileSize?: number | null;
+  createdAt?: string;
+}
+
+/**
+ * A superseded version, snapshotted when a document is renewed. Its files are a
+ * JSON snapshot rather than rows, so they carry no id. The singular `file*`
+ * fields belong to renewals recorded before multi-file support.
+ */
 export interface IPaperworkRenewal {
   id: string;
   paperworkId: string;
-  documentType?: string;
   issueDate?: string | null;
   expiryDate?: string | null;
-  issuer?: string | null;
   referenceNumber?: string | null;
   notes?: string | null;
+  files?: PaperworkFileInput[] | null;
   fileUrl?: string | null;
   fileName?: string | null;
   fileType?: string | null;
   fileSize?: number | null;
-  createdAt: string;
+  renewedAt: string;
 }
 
 export interface IPaperwork {
   id: string;
   clientId: string;
   vehicleId?: string | null;
-  /** Free-form: ROAD_WORTHINESS, INSURANCE, VEHICLE_REGISTRATION, or anything custom. */
+  /** Free-form: ROAD_WORTHINESS, INSURANCE, FULL_PAPERWORK, or anything custom. */
   documentType: string;
+  title?: string | null;
   issueDate?: string | null;
   expiryDate?: string | null;
   issuer?: string | null;
   referenceNumber?: string | null;
   notes?: string | null;
 
-  // Digital copy (optional)
-  fileUrl?: string | null;
-  fileName?: string | null;
-  fileType?: string | null;
-  fileSize?: number | null;
+  /** Digital copies — a document can carry several scans. */
+  files?: IPaperworkFile[];
 
   organizationId: string;
   createdAt: string;
@@ -80,28 +100,44 @@ export interface CreatePaperworkPayload {
   clientId: string;
   vehicleId?: string;
   documentType: string;
+  title?: string;
   issueDate?: string;
   expiryDate?: string;
   issuer?: string;
   referenceNumber?: string;
   notes?: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileType?: string;
-  fileSize?: number;
+  files?: PaperworkFileInput[];
 }
 
-export type UpdatePaperworkPayload = Partial<CreatePaperworkPayload>;
-
-/** Renew snapshots the current version to history, then applies these new fields. */
-export interface RenewPaperworkPayload {
+/**
+ * The update endpoint rejects any field it doesn't declare, so this mirrors
+ * UpdatePaperworkDto exactly: the owner is fixed after creation, and
+ * attachments are managed through the add/remove file endpoints.
+ *
+ * Note: empty strings clear text fields, but `issueDate`, `expiryDate` and
+ * `vehicleId` are validated as date/uuid and so cannot be blanked — omit them
+ * to leave them untouched.
+ */
+export interface UpdatePaperworkPayload {
+  vehicleId?: string;
+  documentType?: string;
+  title?: string;
+  issuer?: string;
+  referenceNumber?: string;
+  issueDate?: string;
   expiryDate?: string;
+  notes?: string;
+}
+
+/**
+ * Renew snapshots the current version to history, then applies these fields.
+ * The supplied files become the renewed document's live files — anything not
+ * re-uploaded stays only in the snapshot. `issuer` is not renewable.
+ */
+export interface RenewPaperworkPayload {
+  expiryDate: string;
   issueDate?: string;
   referenceNumber?: string;
-  issuer?: string;
   notes?: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileType?: string;
-  fileSize?: number;
+  files?: PaperworkFileInput[];
 }

@@ -1,6 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
 import {
   Button,
   CloseButton,
@@ -17,15 +14,8 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { AddNewCustomerModal } from "@/features/invoices/components/create-invoice/AddNewCustomerModal";
-import { useGetAllCustomersQuery } from "@/features/customers/api/query";
-import { useGetVehiclesByClientQuery } from "@/features/customers/api/query";
-import type { Vehicle } from "@/features/customers/api/service";
-import type { ICustomer } from "@/shared/interface/customer";
 import type { IPaperwork } from "@/shared/interface/paperwork";
-import {
-  useCreatePaperworkMutation,
-  useUpdatePaperworkMutation,
-} from "../api/query";
+import { usePaperworkForm } from "../hooks";
 import {
   CUSTOM_DOCUMENT_TYPE,
   DOCUMENT_TYPE_OPTIONS,
@@ -41,33 +31,10 @@ interface PaperworkFormModalProps {
   lockedClientId?: string;
 }
 
-const validationSchema = Yup.object({
-  clientId: Yup.string().required("Customer is required"),
-  documentTypeSelect: Yup.string().required("Document type is required"),
-  documentTypeCustom: Yup.string().when("documentTypeSelect", {
-    is: CUSTOM_DOCUMENT_TYPE,
-    then: (s) => s.required("Enter a document type"),
-    otherwise: (s) => s.optional(),
-  }),
-});
-
-const SELECT_VALUES = DOCUMENT_TYPE_OPTIONS.map((o) => o.value);
-
-/** Minimal customer shape the combobox needs to render a selected label. */
-type CustomerRef = {
-  id: string;
-  displayName: string;
-  phone?: string | null;
-  email?: string | null;
-};
-
-function initialDocType(paperwork?: IPaperwork | null) {
-  if (!paperwork?.documentType) return { select: "", custom: "" };
-  if (SELECT_VALUES.includes(paperwork.documentType)) {
-    return { select: paperwork.documentType, custom: "" };
-  }
-  return { select: CUSTOM_DOCUMENT_TYPE, custom: paperwork.documentType };
-}
+const DOCUMENT_TYPE_SELECT_OPTIONS = [
+  ...DOCUMENT_TYPE_OPTIONS,
+  { label: "Other (custom)", value: CUSTOM_DOCUMENT_TYPE },
+];
 
 export function PaperworkFormModal({
   open,
@@ -75,159 +42,24 @@ export function PaperworkFormModal({
   paperwork,
   lockedClientId,
 }: PaperworkFormModalProps) {
-  const isEdit = Boolean(paperwork);
-  const docType = initialDocType(paperwork);
-
-  const { mutateAsync: createPaperwork, isPending: creating } =
-    useCreatePaperworkMutation();
-  const { mutateAsync: updatePaperwork, isPending: updating } =
-    useUpdatePaperworkMutation(paperwork?.id ?? "");
-
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
-  const [customerCache, setCustomerCache] = useState<
-    Record<string, CustomerRef>
-  >({});
-
-  const customersQuery = useGetAllCustomersQuery({
-    page: 1,
-    limit: 30,
-    ...(customerSearch ? { search: customerSearch } : {}),
-  });
-  const customerArray: ICustomer[] = useMemo(
-    () => customersQuery.data?.data ?? [],
-    [customersQuery.data?.data],
-  );
-
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      clientId: paperwork?.clientId ?? lockedClientId ?? "",
-      vehicleId: paperwork?.vehicleId ?? "",
-      documentTypeSelect: docType.select,
-      documentTypeCustom: docType.custom,
-      issueDate: paperwork?.issueDate?.slice(0, 10) ?? "",
-      expiryDate: paperwork?.expiryDate?.slice(0, 10) ?? "",
-      issuer: paperwork?.issuer ?? "",
-      referenceNumber: paperwork?.referenceNumber ?? "",
-      notes: paperwork?.notes ?? "",
-      fileUrl: paperwork?.fileUrl ?? "",
-      fileName: paperwork?.fileName ?? "",
-      fileType: paperwork?.fileType ?? "",
-      fileSize: paperwork?.fileSize ?? undefined,
-    },
-    validationSchema,
-    onSubmit: async (values) => {
-      const documentType =
-        values.documentTypeSelect === CUSTOM_DOCUMENT_TYPE
-          ? values.documentTypeCustom.trim()
-          : values.documentTypeSelect;
-
-      const payload = {
-        clientId: values.clientId,
-        documentType,
-        ...(values.vehicleId ? { vehicleId: values.vehicleId } : {}),
-        ...(values.issueDate ? { issueDate: values.issueDate } : {}),
-        ...(values.expiryDate ? { expiryDate: values.expiryDate } : {}),
-        ...(values.issuer ? { issuer: values.issuer } : {}),
-        ...(values.referenceNumber
-          ? { referenceNumber: values.referenceNumber }
-          : {}),
-        ...(values.notes ? { notes: values.notes } : {}),
-        ...(values.fileUrl
-          ? {
-              fileUrl: values.fileUrl,
-              fileName: values.fileName || undefined,
-              fileType: values.fileType || undefined,
-              fileSize: values.fileSize,
-            }
-          : {}),
-      };
-
-      if (isEdit) {
-        await updatePaperwork(payload);
-      } else {
-        await createPaperwork(payload);
-      }
-      onClose();
-    },
-  });
-
-  // Cache customers by id so the selected one keeps its label when the search
-  // result set changes (server-side search) or on edit.
-  useEffect(() => {
-    if (!customerArray.length) return;
-    setCustomerCache((prev) => {
-      const next = { ...prev };
-      customerArray.forEach((c) => {
-        next[c.id] = {
-          id: c.id,
-          displayName: c.displayName,
-          phone: c.phone,
-          email: c.email,
-        };
-      });
-      return next;
-    });
-  }, [customerArray]);
-
-  // Seed the current owner (edit mode) so its label shows before any search.
-  useEffect(() => {
-    const c = paperwork?.client;
-    if (!c) return;
-    setCustomerCache((prev) => ({
-      ...prev,
-      [c.id]: {
-        id: c.id,
-        displayName: c.displayName ?? "Selected customer",
-        phone: c.phone,
-        email: c.email,
-      },
-    }));
-  }, [paperwork]);
-
-  const selectedCustomer = customerCache[formik.values.clientId] ?? null;
-
-  const customerOptions = useMemo(() => {
-    const opts: { label: string; value: string; subLabel?: string }[] =
-      customerArray.map((c) => ({
-        label: c.displayName,
-        value: c.id,
-        subLabel: c.phone ?? c.email ?? undefined,
-      }));
-    // Keep the selected owner selectable even when it's outside the result set.
-    if (
-      selectedCustomer &&
-      !opts.some((o) => o.value === selectedCustomer.id)
-    ) {
-      opts.unshift({
-        label: selectedCustomer.displayName,
-        value: selectedCustomer.id,
-        subLabel: selectedCustomer.phone ?? selectedCustomer.email ?? undefined,
-      });
-    }
-    return opts;
-  }, [customerArray, selectedCustomer]);
-
-  const { data: vehiclesData, isLoading: vehiclesLoading } =
-    useGetVehiclesByClientQuery(formik.values.clientId);
-  const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
-  const vehicleOptions = vehicles.map((v) => ({
-    label: `${v.make} ${v.model}${
-      v.registrationNumber ? ` · ${v.registrationNumber}` : ""
-    }`,
-    value: v.id,
-  }));
-
-  const handleClose = () => {
-    formik.resetForm();
-    onClose();
-  };
-
-  const err = (field: keyof typeof formik.values) =>
-    formik.touched[field] && formik.errors[field]
-      ? (formik.errors[field] as string)
-      : undefined;
+  const {
+    formik,
+    isEdit,
+    saving,
+    uploading,
+    submitError,
+    err,
+    handleClose,
+    customerOptions,
+    customersLoading,
+    setCustomerSearch,
+    selectCustomer,
+    addCustomerOpen,
+    setAddCustomerOpen,
+    handleCustomerCreated,
+    vehicleOptions,
+    vehiclesLoading,
+  } = usePaperworkForm({ paperwork, lockedClientId, onClose });
 
   return (
     <>
@@ -274,11 +106,8 @@ export function PaperworkFormModal({
                       serverSearch
                       onSearchChange={setCustomerSearch}
                       searchDebounceMs={400}
-                      isLoading={customersQuery.isFetching}
-                      onChange={(val) => {
-                        formik.setFieldValue("clientId", val);
-                        formik.setFieldValue("vehicleId", ""); // reset vehicle
-                      }}
+                      isLoading={customersLoading}
+                      onChange={selectCustomer}
                       footerAction={
                         lockedClientId
                           ? undefined
@@ -316,13 +145,7 @@ export function PaperworkFormModal({
                       label="Document Type"
                       required
                       placeholder="Select document type..."
-                      options={[
-                        ...DOCUMENT_TYPE_OPTIONS,
-                        {
-                          label: "Other (custom)",
-                          value: CUSTOM_DOCUMENT_TYPE,
-                        },
-                      ]}
+                      options={DOCUMENT_TYPE_SELECT_OPTIONS}
                       value={
                         formik.values.documentTypeSelect
                           ? [formik.values.documentTypeSelect]
@@ -403,34 +226,34 @@ export function PaperworkFormModal({
                       placeholder="Anything worth remembering about this document..."
                     />
 
-                    {/* Digital copy */}
+                    {/* Digital copies */}
                     <FileUploadField
-                      value={{
-                        fileUrl: formik.values.fileUrl,
-                        fileName: formik.values.fileName,
-                        fileSize: formik.values.fileSize,
-                      }}
-                      onChange={(meta) => {
-                        formik.setFieldValue("fileUrl", meta?.fileUrl ?? "");
-                        formik.setFieldValue("fileName", meta?.fileName ?? "");
-                        formik.setFieldValue("fileType", meta?.fileType ?? "");
-                        formik.setFieldValue("fileSize", meta?.fileSize);
-                      }}
+                      value={formik.values.attachments}
+                      uploading={uploading}
+                      onChange={(attachments) =>
+                        formik.setFieldValue("attachments", attachments)
+                      }
                     />
+
+                    {submitError && (
+                      <Text fontSize="12px" color="error.400">
+                        {submitError}
+                      </Text>
+                    )}
 
                     <Flex gap="3" justify="flex-end" pt="2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleClose}
-                        disabled={creating || updating}
+                        disabled={saving}
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
-                        loading={creating || updating}
-                        loadingText="Saving..."
+                        loading={saving}
+                        loadingText={uploading ? "Uploading..." : "Saving..."}
                       >
                         {isEdit ? "Save Changes" : "Add Document"}
                       </Button>
@@ -446,20 +269,7 @@ export function PaperworkFormModal({
       <AddNewCustomerModal
         open={addCustomerOpen}
         onClose={() => setAddCustomerOpen(false)}
-        onSave={(customer) => {
-          setCustomerCache((prev) => ({
-            ...prev,
-            [customer.id]: {
-              id: customer.id,
-              displayName: customer.displayName,
-              phone: customer.phone,
-              email: customer.email,
-            },
-          }));
-          formik.setFieldValue("clientId", customer.id);
-          formik.setFieldValue("vehicleId", "");
-          setAddCustomerOpen(false);
-        }}
+        onSave={handleCustomerCreated}
       />
     </>
   );
