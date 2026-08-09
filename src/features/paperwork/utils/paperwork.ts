@@ -2,6 +2,7 @@ import type { PaperworkStatus } from "@/shared/interface/paperwork";
 
 /** Common Nigerian vehicle document types — presets, not a closed list. */
 export const DOCUMENT_TYPE_OPTIONS = [
+  { label: "Full Paperwork", value: "FULL_PAPERWORK" },
   { label: "Road Worthiness", value: "ROAD_WORTHINESS" },
   { label: "Insurance", value: "INSURANCE" },
   { label: "Vehicle Registration", value: "VEHICLE_REGISTRATION" },
