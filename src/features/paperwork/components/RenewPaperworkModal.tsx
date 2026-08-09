@@ -1,5 +1,3 @@
-import { useFormik } from "formik";
-import * as Yup from "yup";
 import {
   Box,
   Button,
@@ -15,7 +13,7 @@ import { chakraScrollbarStyle } from "@/shared/constants/styles";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import type { IPaperwork } from "@/shared/interface/paperwork";
-import { useRenewPaperworkMutation } from "../api/query";
+import { useRenewPaperworkForm } from "../hooks";
 import { formatDate, formatDocumentType } from "../utils/paperwork";
 import { FileUploadField } from "./FileUploadField";
 
@@ -25,59 +23,16 @@ interface RenewPaperworkModalProps {
   paperwork: IPaperwork;
 }
 
-const validationSchema = Yup.object({
-  expiryDate: Yup.string().required("New expiry date is required"),
-});
-
 export function RenewPaperworkModal({
   open,
   onClose,
   paperwork,
 }: RenewPaperworkModalProps) {
-  const { mutateAsync: renew, isPending } = useRenewPaperworkMutation(
-    paperwork.id,
-  );
+  const { formik, saving, uploading, submitError, err, handleClose } =
+    useRenewPaperworkForm({ paperwork, onClose });
 
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      issueDate: "",
-      expiryDate: "",
-      referenceNumber: paperwork.referenceNumber ?? "",
-      issuer: paperwork.issuer ?? "",
-      notes: "",
-      fileUrl: "",
-      fileName: "",
-      fileType: "",
-      fileSize: undefined as number | undefined,
-    },
-    validationSchema,
-    onSubmit: async (values) => {
-      await renew({
-        expiryDate: values.expiryDate,
-        ...(values.issueDate ? { issueDate: values.issueDate } : {}),
-        ...(values.referenceNumber
-          ? { referenceNumber: values.referenceNumber }
-          : {}),
-        ...(values.issuer ? { issuer: values.issuer } : {}),
-        ...(values.notes ? { notes: values.notes } : {}),
-        ...(values.fileUrl
-          ? {
-              fileUrl: values.fileUrl,
-              fileName: values.fileName || undefined,
-              fileType: values.fileType || undefined,
-              fileSize: values.fileSize,
-            }
-          : {}),
-      });
-      onClose();
-    },
-  });
-
-  const handleClose = () => {
-    formik.resetForm();
-    onClose();
-  };
+  // Renewing replaces the live scans, so say what's about to be archived.
+  const currentFileCount = paperwork.files?.length ?? 0;
 
   return (
     <Dialog.Root
@@ -128,6 +83,10 @@ export function RenewPaperworkModal({
                     <Text fontSize="11px" color="gray.300" mt="0.5">
                       The current version is archived to history before the new
                       details are applied.
+                      {currentFileCount > 0 &&
+                        ` Its ${currentFileCount} scan${
+                          currentFileCount === 1 ? "" : "s"
+                        } move to history too — upload the renewed ones below.`}
                     </Text>
                   </Box>
 
@@ -148,31 +107,18 @@ export function RenewPaperworkModal({
                       value={formik.values.expiryDate}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      error={
-                        formik.touched.expiryDate && formik.errors.expiryDate
-                          ? formik.errors.expiryDate
-                          : undefined
-                      }
+                      error={err("expiryDate")}
                     />
                   </Grid>
 
-                  <Grid templateColumns="1fr 1fr" gap="4">
-                    <CustomInput
-                      label="Reference Number"
-                      name="referenceNumber"
-                      value={formik.values.referenceNumber}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="New policy / certificate no."
-                    />
-                    <CustomInput
-                      label="Issuer"
-                      name="issuer"
-                      value={formik.values.issuer}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                    />
-                  </Grid>
+                  <CustomInput
+                    label="Reference Number"
+                    name="referenceNumber"
+                    value={formik.values.referenceNumber}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="New policy / certificate no."
+                  />
 
                   <CustomTextArea
                     label="Notes"
@@ -185,34 +131,34 @@ export function RenewPaperworkModal({
                   />
 
                   <FileUploadField
-                    label="New digital copy"
-                    value={{
-                      fileUrl: formik.values.fileUrl,
-                      fileName: formik.values.fileName,
-                      fileSize: formik.values.fileSize,
-                    }}
-                    onChange={(meta) => {
-                      formik.setFieldValue("fileUrl", meta?.fileUrl ?? "");
-                      formik.setFieldValue("fileName", meta?.fileName ?? "");
-                      formik.setFieldValue("fileType", meta?.fileType ?? "");
-                      formik.setFieldValue("fileSize", meta?.fileSize);
-                    }}
-                    helperText="Upload the renewed document (optional)."
+                    label="New digital copies"
+                    value={formik.values.attachments}
+                    uploading={uploading}
+                    onChange={(attachments) =>
+                      formik.setFieldValue("attachments", attachments)
+                    }
+                    helperText="Scans of the renewed document (optional). They upload when you renew."
                   />
+
+                  {submitError && (
+                    <Text fontSize="12px" color="error.400">
+                      {submitError}
+                    </Text>
+                  )}
 
                   <Flex gap="3" justify="flex-end" pt="2">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleClose}
-                      disabled={isPending}
+                      disabled={saving}
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
-                      loading={isPending}
-                      loadingText="Renewing..."
+                      loading={saving}
+                      loadingText={uploading ? "Uploading..." : "Renewing..."}
                     >
                       Renew Document
                     </Button>
