@@ -2,12 +2,15 @@ import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import type {
   CreatePaperworkPayload,
+  PaperworkFileInput,
   RenewPaperworkPayload,
   UpdatePaperworkPayload,
 } from "@/shared/interface/paperwork";
 import {
+  addPaperworkFiles,
   createPaperwork,
   deletePaperwork,
+  deletePaperworkFile,
   getExpiringPaperwork,
   getPaperworkById,
   getPaperworkList,
@@ -76,6 +79,29 @@ export const useRenewPaperworkMutation = (id: string) =>
     mutationFn: (payload: RenewPaperworkPayload) => renewPaperwork(id, payload),
     meta: {
       successMessage: "Document renewed successfully",
+      invalidatesQueryKeys: [
+        ...invalidateAll,
+        [customQueryKey.paperwork.getById, id],
+      ],
+    },
+  });
+
+// Attachment mutations stay quiet — the surrounding save action owns the toast.
+export const useAddPaperworkFilesMutation = (id: string) =>
+  useMutation({
+    mutationFn: (files: PaperworkFileInput[]) => addPaperworkFiles(id, files),
+    meta: {
+      invalidatesQueryKeys: [
+        ...invalidateAll,
+        [customQueryKey.paperwork.getById, id],
+      ],
+    },
+  });
+
+export const useDeletePaperworkFileMutation = (id: string) =>
+  useMutation({
+    mutationFn: (fileId: string) => deletePaperworkFile(id, fileId),
+    meta: {
       invalidatesQueryKeys: [
         ...invalidateAll,
         [customQueryKey.paperwork.getById, id],

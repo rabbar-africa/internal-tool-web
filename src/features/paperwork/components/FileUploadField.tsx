@@ -1,63 +1,63 @@
 import { useRef, useState } from "react";
 import {
   Box,
-  Button,
   Field,
   Flex,
   IconButton,
   Link,
   Spinner,
+  Stack,
   Text,
 } from "@chakra-ui/react";
 import { FileTextIcon } from "@/assets/custom/FileTextIcon";
 import { UploadSimple } from "@/assets/custom/UploadSimple";
-import { uploadFile, type UploadedFileMeta } from "../api/service";
+import {
+  ACCEPTED_FILE_TYPES,
+  attachmentKey,
+  attachmentName,
+  attachmentSize,
+  attachmentUrl,
+  MAX_FILE_SIZE,
+  pendingAttachment,
+  type PaperworkAttachment,
+} from "../utils/attachments";
 import { formatFileSize } from "../utils/paperwork";
 
 interface FileUploadFieldProps {
   label?: string;
-  /** Current file, if any (create leaves this empty; edit/renew may prefill). */
-  value?: {
-    fileUrl?: string | null;
-    fileName?: string | null;
-    fileSize?: number | null;
-  };
-  onChange: (meta: UploadedFileMeta | null) => void;
+  /** Every scan attached to the form — saved ones and newly picked ones. */
+  value: PaperworkAttachment[];
+  onChange: (attachments: PaperworkAttachment[]) => void;
+  /** True while the form is uploading these on submit. */
+  uploading?: boolean;
   helperText?: string;
-  /** Cloudinary destination folder. */
-  folder?: string;
 }
 
-// Matches the backend's allowed MIME types (images + PDF, ≤10MB).
-const ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.gif";
-
 export function FileUploadField({
-  label = "Digital copy",
+  label = "Digital copies",
   value,
   onChange,
-  helperText = "PDF or image of the scanned document (optional).",
-  folder = "paperwork",
+  uploading = false,
+  helperText = "PDFs or images of the scanned documents (optional). You can add several — they upload when you save.",
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hasFile = Boolean(value?.fileUrl);
+  const handleSelect = (selected: File[]) => {
+    const tooBig = selected.filter((f) => f.size > MAX_FILE_SIZE);
+    const accepted = selected.filter((f) => f.size <= MAX_FILE_SIZE);
 
-  const handleSelect = async (file: File) => {
-    setError(null);
-    setUploading(true);
-    try {
-      const meta = await uploadFile(file, folder);
-      if (!meta.fileUrl) throw new Error("Upload did not return a file URL");
-      onChange(meta);
-    } catch {
-      setError("Upload failed. Please try again.");
-    } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
-    }
+    setError(
+      tooBig.length
+        ? `${tooBig.map((f) => f.name).join(", ")} exceeded the 10MB limit.`
+        : null,
+    );
+    if (accepted.length)
+      onChange([...value, ...accepted.map(pendingAttachment)]);
   };
+
+  const removeAt = (index: number) =>
+    onChange(value.filter((_, i) => i !== index));
 
   return (
     <Field.Root gap={0}>
@@ -70,71 +70,82 @@ export function FileUploadField({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT}
+        accept={ACCEPTED_FILE_TYPES}
+        multiple
         style={{ display: "none" }}
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleSelect(file);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) handleSelect(files);
+          e.target.value = ""; // let the same file be re-picked after removal
         }}
       />
 
-      {hasFile ? (
-        <Flex
-          align="center"
-          justify="space-between"
-          gap="3"
-          borderWidth="1px"
-          borderColor="gray.100"
-          rounded="md"
-          px="3"
-          py="2.5"
-        >
-          <Flex align="center" gap="2.5" minW="0">
-            <FileTextIcon width="20px" height="20px" color="primary.400" />
-            <Box minW="0">
-              <Link
-                href={value?.fileUrl ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                fontSize="13px"
-                color="primary.500"
-                fontWeight="500"
-                truncate
-                display="block"
+      <Stack gap="2" w="100%">
+        {value.map((attachment, index) => {
+          const url = attachmentUrl(attachment);
+          const name = attachmentName(attachment);
+          const size = formatFileSize(attachmentSize(attachment));
+
+          return (
+            <Flex
+              key={attachmentKey(attachment)}
+              align="center"
+              justify="space-between"
+              gap="3"
+              borderWidth="1px"
+              borderColor="gray.100"
+              rounded="md"
+              px="3"
+              py="2.5"
+            >
+              <Flex align="center" gap="2.5" minW="0">
+                <FileTextIcon width="20px" height="20px" color="primary.400" />
+                <Box minW="0">
+                  {url ? (
+                    <Link
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      fontSize="13px"
+                      color="primary.500"
+                      fontWeight="500"
+                      truncate
+                      display="block"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    <Text
+                      fontSize="13px"
+                      color="gray.500"
+                      fontWeight="500"
+                      truncate
+                    >
+                      {name}
+                    </Text>
+                  )}
+                  <Text fontSize="11px" color="gray.300">
+                    {[size, url ? null : "Uploads when you save"]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Text>
+                </Box>
+              </Flex>
+              <IconButton
+                aria-label={`Remove ${name}`}
+                size="xs"
+                variant="ghost"
+                color="gray.400"
+                flexShrink={0}
+                disabled={uploading}
+                onClick={() => removeAt(index)}
               >
-                {value?.fileName || "View document"}
-              </Link>
-              {formatFileSize(value?.fileSize) && (
-                <Text fontSize="11px" color="gray.300">
-                  {formatFileSize(value?.fileSize)}
-                </Text>
-              )}
-            </Box>
-          </Flex>
-          <Flex align="center" gap="1" flexShrink={0}>
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              color="gray.400"
-              fontWeight="500"
-              onClick={() => inputRef.current?.click()}
-              _hover={{ color: "primary.500" }}
-            >
-              Replace
-            </Button>
-            <IconButton
-              aria-label="Remove file"
-              size="xs"
-              variant="ghost"
-              color="gray.400"
-              onClick={() => onChange(null)}
-            >
-              ✕
-            </IconButton>
-          </Flex>
-        </Flex>
-      ) : (
+                ✕
+              </IconButton>
+            </Flex>
+          );
+        })}
+
         <Flex
           role="button"
           align="center"
@@ -162,12 +173,12 @@ export function FileUploadField({
             <>
               <UploadSimple width="18px" height="18px" color="gray.400" />
               <Text fontSize="13px" color="gray.400">
-                Click to upload a scan
+                {value.length ? "Add another scan" : "Click to select scans"}
               </Text>
             </>
           )}
         </Flex>
-      )}
+      </Stack>
 
       {error ? (
         <Text mt=".375rem" fontSize=".625rem" color="error.400">

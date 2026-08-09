@@ -11,7 +11,10 @@ import {
 } from "@chakra-ui/react";
 import SectionLoader from "@/components/common/SectionLoader";
 import { FileTextIcon } from "@/assets/custom/FileTextIcon";
-import type { IPaperwork } from "@/shared/interface/paperwork";
+import type {
+  IPaperwork,
+  IPaperworkRenewal,
+} from "@/shared/interface/paperwork";
 import { useGetPaperworkByIdQuery } from "../api/query";
 import {
   formatDate,
@@ -47,47 +50,61 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function FileRow({
-  fileUrl,
-  fileName,
-  fileSize,
-}: {
-  fileUrl?: string | null;
+interface DisplayFile {
+  id?: string;
+  fileUrl: string;
   fileName?: string | null;
   fileSize?: number | null;
-}) {
-  if (!fileUrl) return null;
+}
+
+/** Every scan a renewal preserved, across the snapshot and legacy formats. */
+function renewalFiles(renewal: IPaperworkRenewal): DisplayFile[] {
+  if (renewal.files?.length) return renewal.files;
+  return renewal.fileUrl ? [{ ...renewal, fileUrl: renewal.fileUrl }] : [];
+}
+
+/**
+ * Live scans are rows with ids; renewal snapshots are plain JSON without them,
+ * so this renders either and falls back to the url for its key.
+ */
+function FileList({ files }: { files?: DisplayFile[] | null }) {
+  if (!files?.length) return null;
   return (
-    <Flex
-      align="center"
-      gap="2.5"
-      borderWidth="1px"
-      borderColor="gray.100"
-      rounded="md"
-      px="3"
-      py="2.5"
-    >
-      <FileTextIcon width="20px" height="20px" color="primary.400" />
-      <Box minW="0">
-        <Link
-          href={fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          fontSize="13px"
-          color="primary.500"
-          fontWeight="500"
-          truncate
-          display="block"
+    <Stack gap="2">
+      {files.map((file, index) => (
+        <Flex
+          key={file.id ?? `${file.fileUrl}-${index}`}
+          align="center"
+          gap="2.5"
+          borderWidth="1px"
+          borderColor="gray.100"
+          rounded="md"
+          px="3"
+          py="2.5"
         >
-          {fileName || "View document"}
-        </Link>
-        {formatFileSize(fileSize) && (
-          <Text fontSize="11px" color="gray.300">
-            {formatFileSize(fileSize)}
-          </Text>
-        )}
-      </Box>
-    </Flex>
+          <FileTextIcon width="20px" height="20px" color="primary.400" />
+          <Box minW="0">
+            <Link
+              href={file.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              fontSize="13px"
+              color="primary.500"
+              fontWeight="500"
+              truncate
+              display="block"
+            >
+              {file.fileName || "View document"}
+            </Link>
+            {formatFileSize(file.fileSize) && (
+              <Text fontSize="11px" color="gray.300">
+                {formatFileSize(file.fileSize)}
+              </Text>
+            )}
+          </Box>
+        </Flex>
+      ))}
+    </Stack>
   );
 }
 
@@ -165,7 +182,7 @@ export function PaperworkDetailModal({
 
                   {doc.notes && <Field label="Notes" value={doc.notes} />}
 
-                  {doc.fileUrl && (
+                  {doc.files && doc.files.length > 0 && (
                     <Box>
                       <Text
                         fontSize="11px"
@@ -174,13 +191,9 @@ export function PaperworkDetailModal({
                         letterSpacing="0.03em"
                         mb="2"
                       >
-                        Digital Copy
+                        Digital Copies ({doc.files.length})
                       </Text>
-                      <FileRow
-                        fileUrl={doc.fileUrl}
-                        fileName={doc.fileName}
-                        fileSize={doc.fileSize}
-                      />
+                      <FileList files={doc.files} />
                     </Box>
                   )}
 
@@ -218,7 +231,7 @@ export function PaperworkDetailModal({
                                 </Text>
                               </Text>
                               <Text fontSize="11px" color="gray.300">
-                                Archived {formatDate(r.createdAt)}
+                                Archived {formatDate(r.renewedAt)}
                               </Text>
                             </Flex>
                             {r.referenceNumber && (
@@ -226,13 +239,11 @@ export function PaperworkDetailModal({
                                 Ref: {r.referenceNumber}
                               </Text>
                             )}
-                            <Box mt={r.fileUrl ? "2" : "0"}>
-                              <FileRow
-                                fileUrl={r.fileUrl}
-                                fileName={r.fileName}
-                                fileSize={r.fileSize}
-                              />
-                            </Box>
+                            {renewalFiles(r).length > 0 && (
+                              <Box mt="2">
+                                <FileList files={renewalFiles(r)} />
+                              </Box>
+                            )}
                           </Box>
                         ))}
                       </Stack>

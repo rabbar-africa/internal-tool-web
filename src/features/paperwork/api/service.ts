@@ -4,6 +4,7 @@ import { type ApiResponse } from "@/shared/interface/api";
 import type {
   CreatePaperworkPayload,
   IPaperwork,
+  PaperworkFileInput,
   RenewPaperworkPayload,
   UpdatePaperworkPayload,
 } from "@/shared/interface/paperwork";
@@ -42,18 +43,11 @@ export interface FileUploadResponse {
   height?: number;
 }
 
-/** Normalized shape the paperwork forms feed into fileUrl/fileName/fileType/fileSize. */
-export interface UploadedFileMeta {
-  fileUrl: string;
-  fileName?: string;
-  fileType?: string;
-  fileSize?: number;
-}
-
+/** Uploads one scan and returns it in the shape the `files` payloads expect. */
 export const uploadFile = async (
   file: File,
   folder?: string,
-): Promise<UploadedFileMeta> => {
+): Promise<PaperworkFileInput> => {
   const formData = new FormData();
   formData.append("file", file);
   if (folder) formData.append("folder", folder);
@@ -122,6 +116,23 @@ export const renewPaperwork = async (
     `/paperwork/${id}/renew`,
     payload,
   );
+  return response.data;
+};
+
+/** Attach one or more scans to an existing document. */
+export const addPaperworkFiles = async (
+  id: string,
+  files: PaperworkFileInput[],
+) => {
+  const response = await axios.post<ApiResponse<IPaperwork>>(
+    `/paperwork/${id}/files`,
+    { files },
+  );
+  return response.data;
+};
+
+export const deletePaperworkFile = async (id: string, fileId: string) => {
+  const response = await axios.delete(`/paperwork/${id}/files/${fileId}`);
   return response.data;
 };
 
