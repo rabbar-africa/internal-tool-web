@@ -20,8 +20,13 @@ import Status from "@/components/common/Status";
 import {
   useGetInspectionByIdQuery,
   useDeleteInspectionMutation,
+  useCompleteInspectionMutation,
 } from "@/features/inspection/api/query";
-import { useInspectionPdf } from "@/features/inspection/hooks/useInspectionPdf";
+import {
+  useInspectionPdf,
+  INSPECTION_PDF_VARIANTS,
+  type InspectionPdfVariant,
+} from "@/features/inspection/hooks/useInspectionPdf";
 import type {
   IInspection,
   IInspectionFinding,
@@ -35,6 +40,8 @@ import {
 } from "@/assets/custom";
 import { SectionCard } from "@/features/inspection/components/inspection-detail/SectionCard";
 import { InfoField } from "@/features/inspection/components/inspection-detail/InfoField";
+import { AdvisoryPanel } from "@/features/inspection/components/inspection-detail/AdvisoryPanel";
+import { ChecklistPanel } from "@/features/inspection/components/inspection-detail/ChecklistPanel";
 import ConsentDialog from "@/components/common/ConsentDialog";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,6 +96,8 @@ export function InspectionDetailTemplate() {
   const { data: queryData, isLoading } = useGetInspectionByIdQuery(id ?? "");
   const { mutateAsync: deleteInspection, isPending: isDeleting } =
     useDeleteInspectionMutation();
+  const { mutateAsync: completeInspection, isPending: isCompleting } =
+    useCompleteInspectionMutation();
   const {
     download: downloadReport,
     share: shareReport,
@@ -105,15 +114,15 @@ export function InspectionDetailTemplate() {
     navigate(RouteConstants.inspection.base.path);
   };
 
-  const handleDownload = async () => {
-    if (inspection) await downloadReport(inspection);
+  const handleDownload = async (variant: InspectionPdfVariant) => {
+    if (inspection) await downloadReport(inspection, variant);
   };
 
-  const handleSend = async () => {
+  const handleSend = async (variant: InspectionPdfVariant) => {
     if (!inspection) return;
     setIsSharing(true);
     try {
-      await shareReport(inspection);
+      await shareReport(inspection, variant);
     } finally {
       setIsSharing(false);
     }
@@ -217,7 +226,9 @@ export function InspectionDetailTemplate() {
                   border="1px solid"
                   borderColor="gray.75"
                   _hover={{ bg: "gray.50" }}
-                  loading={isGenerating || isSharing || isDeleting}
+                  loading={
+                    isGenerating || isSharing || isDeleting || isCompleting
+                  }
                 >
                   <ThreeDotsIcon color="gray.400" />
                 </IconButton>
@@ -238,22 +249,37 @@ export function InspectionDetailTemplate() {
                     >
                       Edit inspection
                     </Menu.Item>
-                    <Menu.Item
-                      value="save-pdf"
-                      onClick={handleDownload}
-                      _hover={{ bg: "gray.50" }}
-                    >
-                      Save PDF
-                    </Menu.Item>
-                    {canShareFiles && (
+                    {inspection.status !== "COMPLETED" && (
                       <Menu.Item
-                        value="send"
-                        onClick={handleSend}
+                        value="complete"
+                        onClick={() => void completeInspection(inspection.id)}
                         _hover={{ bg: "gray.50" }}
                       >
-                        Send report
+                        Mark as completed
                       </Menu.Item>
                     )}
+                    <Menu.Separator borderColor="gray.50" />
+                    {INSPECTION_PDF_VARIANTS.map((variant) => (
+                      <Menu.Item
+                        key={variant.value}
+                        value={`save-${variant.value}`}
+                        onClick={() => void handleDownload(variant.value)}
+                        _hover={{ bg: "gray.50" }}
+                      >
+                        Save {variant.label}
+                      </Menu.Item>
+                    ))}
+                    {canShareFiles &&
+                      INSPECTION_PDF_VARIANTS.map((variant) => (
+                        <Menu.Item
+                          key={`send-${variant.value}`}
+                          value={`send-${variant.value}`}
+                          onClick={() => void handleSend(variant.value)}
+                          _hover={{ bg: "gray.50" }}
+                        >
+                          Send {variant.label}
+                        </Menu.Item>
+                      ))}
                     <Menu.Separator borderColor="gray.50" />
                     <Menu.Item
                       value="delete"
@@ -402,6 +428,30 @@ export function InspectionDetailTemplate() {
             )}
           </Stack>
         </SectionCard>
+
+        {/* Advisory — what the customer should do, and by when */}
+        {inspection.advisory?.verdict ? (
+          <SectionCard
+            icon={
+              <NoteIcon color="var(--chakra-colors-primary-300)" w={"1rem"} />
+            }
+            title="Advisory"
+          >
+            <AdvisoryPanel advisory={inspection.advisory} />
+          </SectionCard>
+        ) : null}
+
+        {/* Checklist */}
+        {inspection.inspectionChecklists?.length ? (
+          <SectionCard
+            icon={
+              <NoteIcon color="var(--chakra-colors-primary-300)" w={"1rem"} />
+            }
+            title="Checklist"
+          >
+            <ChecklistPanel checklists={inspection.inspectionChecklists} />
+          </SectionCard>
+        ) : null}
 
         {/* Additional notes */}
         {inspection.generalNotes && (

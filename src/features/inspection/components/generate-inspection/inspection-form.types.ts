@@ -1,8 +1,22 @@
+import type {
+  ChecklistEntryPayload,
+  ChecklistItemStatus,
+  IAdvisory,
+} from "@/shared/interface/inspection";
+
 export interface Finding {
   component: string;
   observation: string;
   status: string;
+  /** Up to 2 photo URLs. */
+  images?: string[];
 }
+
+/** A catalog item's answer while the form is open, keyed by checklistItemId. */
+export type ChecklistAnswers = Record<
+  string,
+  { status: ChecklistItemStatus; notes: string }
+>;
 
 export interface InspectionFormValues {
   // Selection state
@@ -19,12 +33,16 @@ export interface InspectionFormValues {
   findings: Finding[];
   additionalNotes: string;
   inspectionDate: string;
+  /** Answers to the org's checklist catalog. Absent items mean NOT_APPLICABLE. */
+  checklistAnswers: ChecklistAnswers;
+  /** AI-drafted then technician-edited. Null until one is drafted or loaded. */
+  advisory: IAdvisory | null;
 }
 
 /**
- * Create/update payload. Mirrors the backend CreateInspectionDto:
- * `vehicleId` and `customerName` are required; the rest are optional.
- * Findings are free-text (checklist entries are not used).
+ * Create/update payload, mirroring the backend Create/UpdateInspectionDto.
+ * `vehicleId` and `customerName` are required; the rest are optional. Findings
+ * are free-text; `checklistEntries` answers the org's catalog alongside them.
  */
 export interface InspectionPayload {
   vehicleId: string;
@@ -36,22 +54,8 @@ export interface InspectionPayload {
   generalNotes?: string;
   inspectionDate: string;
   findings: Finding[];
-}
-
-export type AiTone = "professional" | "friendly" | "technical";
-
-export interface SummarizeNotesPayload {
-  findings: Finding[];
-  vehicleInfo?: {
-    name?: string;
-    registrationNumber?: string;
-    color?: string;
-  };
-  customerName?: string;
-  inspectionDate?: string;
-  tone?: AiTone;
-  includeActionPlan?: boolean;
-  includeUrgency?: boolean;
+  checklistEntries?: ChecklistEntryPayload[];
+  advisory?: IAdvisory;
 }
 
 export const TITLE_OPTIONS = [

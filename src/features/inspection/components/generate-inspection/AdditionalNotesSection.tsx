@@ -71,6 +71,11 @@ const NotesEditor = memo(function NotesEditor({
   );
 });
 
+/**
+ * Free-text notes for anything the structured sections don't cover. These are
+ * what the classic PDF renders as "Technician Notes & Recommendations", so the
+ * AI summary still lives here alongside the newer advisory.
+ */
 export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
   const { values, setFieldValue } = form.formik;
   const { mutateAsync: summarize, isPending } =
@@ -86,17 +91,20 @@ export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
 
   const handleAiGenerate = async () => {
     const response = await summarize({
-      findings: values.findings,
+      findings: values.findings.filter((finding) => finding.component),
+      // `number`, not `registrationNumber` — the DTO rejects unknown fields.
       vehicleInfo: {
         name: values.vehicleName,
-        // registrationNumber: values.vehicleNumber,
-        // color: values.vehicleColor,
+        number: values.vehicleNumber,
+        color: values.vehicleColor,
       },
       customerName: values.customerName,
+      technicianName: values.technicianName,
       inspectionDate: values.inspectionDate,
       includeActionPlan: true,
       includeUrgency: true,
     });
+
     const raw: string =
       response?.data?.html ?? response?.html ?? response ?? "";
     // Strip markdown code fences: ```html\n...\n``` or ```\n...\n```
@@ -105,28 +113,34 @@ export function AdditionalNotesSection({ form }: { form: InspectionFormApi }) {
       .replace(/\s*```\s*$/, "")
       .trim();
 
-    void setFieldValue("additionalNotes", html);
+    if (html) void setFieldValue("additionalNotes", html);
   };
+
+  const canGenerate = values.findings.some((finding) => finding.component);
 
   return (
     <Card.Root borderColor="gray.75" shadow="none" borderWidth="1px">
       <Card.Header pb="0">
-        <Flex justify="space-between" align="center">
-          <Text fontWeight="600" color="gray.500" fontSize=".875rem">
-            Additional Notes{" "}
-            <Text as="span" color="gray.200" fontWeight="400">
-              (Optional)
+        <Flex justify="space-between" align="center" gap="3" wrap="wrap">
+          <Box>
+            <Text fontWeight="600" color="gray.500" fontSize=".875rem">
+              Additional Notes{" "}
+              <Text as="span" color="gray.200" fontWeight="400">
+                (Optional)
+              </Text>
             </Text>
-          </Text>
+            <Text fontSize="11px" color="gray.300" mt="0.5">
+              Shown on the classic report as technician notes.
+            </Text>
+          </Box>
           <Button
+            type="button"
             size="xs"
             variant="outline"
             onClick={handleAiGenerate}
             loading={isPending}
             loadingText="Generating..."
-            disabled={
-              values.findings.length === 0 || !values.findings[0].component
-            }
+            disabled={!canGenerate}
           >
             Generate with AI
           </Button>

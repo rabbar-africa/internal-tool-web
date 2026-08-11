@@ -58,6 +58,12 @@ export const customQueryKey = {
   inspections: {
     getAll: "get-all-inspections",
     getById: "get-inspection-by-id",
+    vehicleHistory: "get-vehicle-inspection-history",
+  },
+  checklists: {
+    getAll: "get-all-checklist-items",
+    grouped: "get-grouped-checklist-items",
+    categories: "get-checklist-categories",
   },
   jobCards: {
     getAll: "get-all-job-cards",
