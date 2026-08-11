@@ -9,8 +9,33 @@ import type { IInspection } from "@/shared/interface/inspection";
  * lazy-loaded so the bundle is only fetched when a PDF action is triggered.
  */
 
-const fileNameFor = (inspection: IInspection) =>
-  `${inspection.jobCode || `inspection-${inspection.id}`}.pdf`;
+/**
+ * The report comes in two layouts. `checklist` is the current one — organised
+ * by urgency, with the advisory and the checklist scope. `classic` is the
+ * earlier summary layout, kept because some customers prefer it.
+ */
+export type InspectionPdfVariant = "checklist" | "classic";
+
+export const INSPECTION_PDF_VARIANTS: {
+  value: InspectionPdfVariant;
+  label: string;
+}[] = [
+  { value: "checklist", label: "PDF 1 (Checklist)" },
+  { value: "classic", label: "PDF 2" },
+];
+
+const loadDocument = (variant: InspectionPdfVariant) =>
+  variant === "classic"
+    ? import("../components/inspection-detail/pdf/classic/InspectionPdfDocument")
+    : import("../components/inspection-detail/pdf/checklist/InspectionPdfDocument");
+
+const fileNameFor = (
+  inspection: IInspection,
+  variant: InspectionPdfVariant,
+) => {
+  const base = inspection.jobCode || `inspection-${inspection.id}`;
+  return `${base}${variant === "classic" ? "" : "-checklist"}.pdf`;
+};
 
 export function useInspectionPdf() {
   const { userOrganization } = useCurrentUser();
@@ -26,12 +51,15 @@ export function useInspectionPdf() {
   }, []);
 
   const getBlob = useCallback(
-    async (inspection: IInspection): Promise<Blob> => {
+    async (
+      inspection: IInspection,
+      variant: InspectionPdfVariant = "checklist",
+    ): Promise<Blob> => {
       setIsGenerating(true);
       try {
         const [{ pdf }, { InspectionPdfDocument }] = await Promise.all([
           import("@react-pdf/renderer"),
-          import("../components/inspection-detail/pdf/InspectionPdfDocument"),
+          loadDocument(variant),
         ]);
         // The document renders a <Document>, but its prop type doesn't
         // structurally match react-pdf's DocumentProps — cast to pdf()'s arg.
@@ -49,9 +77,12 @@ export function useInspectionPdf() {
 
   /** Render the report to a File (named after the inspection). */
   const getFile = useCallback(
-    async (inspection: IInspection): Promise<File> => {
-      const blob = await getBlob(inspection);
-      return new File([blob], fileNameFor(inspection), {
+    async (
+      inspection: IInspection,
+      variant: InspectionPdfVariant = "checklist",
+    ): Promise<File> => {
+      const blob = await getBlob(inspection, variant);
+      return new File([blob], fileNameFor(inspection, variant), {
         type: "application/pdf",
       });
     },
@@ -60,9 +91,12 @@ export function useInspectionPdf() {
 
   /** Generate and trigger a browser download. */
   const download = useCallback(
-    async (inspection: IInspection): Promise<void> => {
-      const blob = await getBlob(inspection);
-      createDownloadLink(blob, fileNameFor(inspection));
+    async (
+      inspection: IInspection,
+      variant: InspectionPdfVariant = "checklist",
+    ): Promise<void> => {
+      const blob = await getBlob(inspection, variant);
+      createDownloadLink(blob, fileNameFor(inspection, variant));
     },
     [getBlob],
   );
@@ -75,7 +109,10 @@ export function useInspectionPdf() {
    * opened synchronously (before awaiting the PDF) or iOS pop-up-blocks it.
    */
   const share = useCallback(
-    async (inspection: IInspection): Promise<void> => {
+    async (
+      inspection: IInspection,
+      variant: InspectionPdfVariant = "checklist",
+    ): Promise<void> => {
       const nav = navigator as Navigator & {
         canShare?: (data?: ShareData) => boolean;
       };
@@ -84,7 +121,7 @@ export function useInspectionPdf() {
 
       let file: File;
       try {
-        file = await getFile(inspection);
+        file = await getFile(inspection, variant);
       } catch {
         fallbackWin?.close();
         return;
