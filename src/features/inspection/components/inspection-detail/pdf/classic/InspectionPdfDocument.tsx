@@ -1,10 +1,10 @@
 import { Document, Page } from "@react-pdf/renderer";
 import type { IOrganization } from "@/shared/interface/common";
 import type { IInspection } from "@/shared/interface/inspection";
-import { registerInspectionPdfFonts } from "./registerFonts";
+import { registerInspectionPdfFonts } from "../shared/registerFonts";
 import { sharedStyles } from "./styles";
 import { groupFindings } from "./utils/findings";
-import { parseNotes } from "./utils/notes";
+import { parseNotes } from "../shared/notes";
 import { ReportHeader } from "./components/ReportHeader";
 import { VehicleInfo } from "./components/VehicleInfo";
 import { InspectionSummary } from "./components/InspectionSummary";

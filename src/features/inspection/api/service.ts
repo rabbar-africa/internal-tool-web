@@ -1,9 +1,10 @@
 import { axios } from "@/lib/axios";
+import type { InspectionPayload } from "../components/generate-inspection/inspection-form.types";
 import type {
-  InspectionPayload,
+  DraftAdvisoryPayload,
+  InspectionFilter,
   SummarizeNotesPayload,
-} from "../components/generate-inspection/inspection-form.types";
-import type { InspectionFilter } from "@/shared/interface/inspection";
+} from "@/shared/interface/inspection";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 
 /**
@@ -41,7 +42,38 @@ export const deleteInspection = async (id: string) => {
   return res.data;
 };
 
+/**
+ * Ask the AI to draft an advisory from the findings. Stateless — nothing is
+ * saved. The technician reviews and edits the draft, and it is persisted only
+ * when the inspection itself is saved.
+ */
+export const draftInspectionAdvisory = async (data: DraftAdvisoryPayload) => {
+  const res = await axios.post("/inspections/ai/advisory", data);
+  return res.data;
+};
+
+/**
+ * Draft the free-text notes summary as HTML. Superseded by the advisory for the
+ * checklist report, but the classic PDF still renders `generalNotes`, so this
+ * stays available. Stateless — the result lands in the editor for review.
+ */
 export const summarizeInspectionNotes = async (data: SummarizeNotesPayload) => {
   const res = await axios.post("/inspections/ai/summarize-notes", data);
+  return res.data;
+};
+
+/** Marks an inspection COMPLETED. Rejected while required checks are unanswered. */
+export const completeInspection = async (id: string) => {
+  const res = await axios.patch(`/inspections/${id}/complete`);
+  return res.data;
+};
+
+export const addInspectionPhotos = async (id: string, photos: string[]) => {
+  const res = await axios.patch(`/inspections/${id}/photos`, { photos });
+  return res.data;
+};
+
+export const getVehicleInspectionHistory = async (vehicleId: string) => {
+  const res = await axios.get(`/inspections/vehicle/${vehicleId}/history`);
   return res.data;
 };

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "@react-pdf/renderer";
 import { inspectionColors as c, px } from "../colors";
 import { sharedStyles } from "../styles";
-import type { NoteBlock, Segment } from "../utils/notes";
+import type { NoteBlock, Segment } from "../../shared/notes";
 
 const styles = StyleSheet.create({
   section: { paddingVertical: px(18), paddingHorizontal: px(24) },

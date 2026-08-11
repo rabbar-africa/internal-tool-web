@@ -24,6 +24,7 @@ import type {
   InspectionFormValues,
   InspectionPayload,
 } from "./inspection-form.types";
+import { answersFromChecklists, answersToEntries } from "../../util/inspection";
 
 const EMPTY_FINDING: Finding = { component: "", observation: "", status: "" };
 
@@ -40,6 +41,8 @@ const initialValues: InspectionFormValues = {
   findings: [{ ...EMPTY_FINDING }],
   additionalNotes: "",
   inspectionDate: new Date().toISOString().split("T")[0],
+  checklistAnswers: {},
+  advisory: null,
 };
 
 const findingSchema = Yup.object().shape({
@@ -141,6 +144,10 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
           : values.additionalNotes,
         inspectionDate: values.inspectionDate,
         findings: values.findings,
+        // Untouched catalog items are left out — the backend defaults the rest
+        // of the checklist to NOT_APPLICABLE.
+        checklistEntries: answersToEntries(values.checklistAnswers),
+        ...(values.advisory ? { advisory: values.advisory } : {}),
       };
 
       if (isEdit) {
@@ -198,6 +205,8 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
       inspectionDate: inspection.inspectionDate
         ? inspection.inspectionDate.split("T")[0]
         : initialValues.inspectionDate,
+      checklistAnswers: answersFromChecklists(inspection.inspectionChecklists),
+      advisory: inspection.advisory ?? null,
     });
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
