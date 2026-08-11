@@ -11,6 +11,8 @@ import {
   CustomerInfoSection,
   VehicleInfoSection,
   FindingsSection,
+  ChecklistSection,
+  AdvisorySection,
   AdditionalNotesSection,
 } from "@/features/inspection/components/generate-inspection";
 import { useInspectionForm } from "@/features/inspection/components/generate-inspection/useInspectionForm";
@@ -54,6 +56,8 @@ export function GenerateInspectionTemplate({
           <CustomerInfoSection form={form} />
           <VehicleInfoSection form={form} />
           <FindingsSection form={form} />
+          <ChecklistSection form={form} />
+          <AdvisorySection form={form} />
           <AdditionalNotesSection form={form} />
 
           <Separator borderColor="gray.75" />
