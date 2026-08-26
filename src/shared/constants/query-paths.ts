@@ -14,6 +14,8 @@ export const QUERY_PATH = {
     register: "organizations/register",
     verifyEmail: "auth/verify-email",
     resendVerification: "auth/resend-verification",
+    validateInvite: "auth/invites",
+    acceptInvite: "auth/accept-invite",
     getCurrentSubscription: "/subscriptions/me",
   },
   users: {

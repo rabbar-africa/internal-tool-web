@@ -28,6 +28,7 @@ const auth = {
   signup: defineRoute("/auth/signup" as const),
   forgotPassword: defineRoute("/auth/forgot-password" as const),
   resetPassword: defineRoute("/auth/reset-password" as const),
+  acceptInvite: defineRoute("/auth/accept-invite" as const),
 } as const;
 
 const overview = {
@@ -164,6 +165,7 @@ const settings = {
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),
   teamManagement: defineRoute("/settings/team-management" as const),
+  roles: defineRoute("/settings/roles" as const),
   createTeamMember: defineRoute("/settings/team-management/create" as const),
   editTeamMember: defineRoute("/settings/team-management/:id/edit" as const),
 } as const;
