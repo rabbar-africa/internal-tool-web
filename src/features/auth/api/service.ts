@@ -1,7 +1,9 @@
 import { axios } from "@/lib/axios";
 import { QUERY_PATH } from "@/shared/constants/query-paths";
 import type {
+  AcceptInvitePayload,
   ForgotPasswordPayload,
+  InviteDetails,
   LoginCredentials,
   LoginResponse,
   RefreshTokenResponse,
@@ -28,6 +30,28 @@ export const authService = {
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
     const response = await axios.post<{ data: RegisterResponse }>(
       QUERY_PATH.auth.register,
+      payload,
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Public: check an invite token before showing the form. The API rejects
+   * tokens that are unknown, already used, cancelled, or expired.
+   */
+  validateInvite: async (token: string): Promise<InviteDetails> => {
+    const response = await axios.get<{ data: InviteDetails }>(
+      `${QUERY_PATH.auth.validateInvite}/${token}`,
+    );
+    return response.data.data;
+  },
+
+  /** Public: create the account from an invite. Returns a logged-in session. */
+  acceptInvite: async (
+    payload: AcceptInvitePayload,
+  ): Promise<LoginResponse> => {
+    const response = await axios.post<{ data: LoginResponse }>(
+      QUERY_PATH.auth.acceptInvite,
       payload,
     );
     return response.data.data;

@@ -6,6 +6,7 @@ export const customQueryKey = {
     getMyTeams: "get-my-teams",
     getAllMyTeams: "get-all-my-teams",
     getCurrentSubscription: "get-current-subscription",
+    validateInvite: "validate-invite-token",
   },
 
   roles: {
@@ -15,6 +16,7 @@ export const customQueryKey = {
   },
   permissions: {
     getAll: "get-all-permissions",
+    grouped: "get-grouped-permissions",
   },
   teams: {
     getAll: "get-all-teams",
@@ -91,6 +93,11 @@ export const customQueryKey = {
   business: { getAll: "get-all-businesses", getById: "get-business-by-id" },
   analytics: {
     dashboard: "get-dashboard-analytics",
+  },
+  team: {
+    members: "get-team-members",
+    member: "get-team-member",
+    invites: "get-user-invites",
   },
   organizations: {
     details: "get-organization-details",

@@ -19,8 +19,6 @@ export interface CookieOptions {
   domain?: string;
 }
 
-const DEFAULT_EXPIRY_DURATION: DurationType = { unit: "DAY", value: 1 };
-
 function getExpiresTime(payload: DurationType): Date {
   const now = new Date();
   switch (payload.unit) {
@@ -49,7 +47,7 @@ function serializeCookie(
   options: CookieOptions = {},
 ): string {
   const {
-    duration = DEFAULT_EXPIRY_DURATION,
+    duration,
     // Secure cookies are dropped by browsers over plain http (e.g. localhost),
     // so only flag them as secure when actually served over https.
     secure = typeof window !== "undefined" &&
@@ -61,8 +59,11 @@ function serializeCookie(
 
   let cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 
-  const expires = getExpiresTime(duration);
-  cookie += `; expires=${expires.toUTCString()}`;
+  // No duration means no `expires` attribute, which makes it a session cookie:
+  // it lives until the browser is closed rather than for an arbitrary default.
+  if (duration) {
+    cookie += `; expires=${getExpiresTime(duration).toUTCString()}`;
+  }
 
   cookie += `; path=${path}`;
 

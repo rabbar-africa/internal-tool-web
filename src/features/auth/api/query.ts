@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authService } from "./service";
 import type {
+  AcceptInvitePayload,
   ForgotPasswordPayload,
   LoginCredentials,
   RegisterPayload,
@@ -36,6 +37,32 @@ export function useRegisterMutation() {
       // authenticated /organizations/me/* endpoints.
       setAccessToken(data.accessToken);
       setRefreshToken(data.refreshToken);
+    },
+  });
+}
+
+/** Validates the invite token behind the accept page. */
+export function useValidateInviteQuery(token: string) {
+  return useQuery({
+    queryKey: [customQueryKey.user.validateInvite, token],
+    queryFn: () => authService.validateInvite(token),
+    enabled: !!token,
+    retry: false,
+  });
+}
+
+/**
+ * Accepting an invite creates the account and returns a session, so the tokens
+ * are persisted here and the user lands inside the app already signed in.
+ */
+export function useAcceptInviteMutation() {
+  return useMutation({
+    mutationFn: (payload: AcceptInvitePayload) =>
+      authService.acceptInvite(payload),
+    onSuccess: (data) => {
+      setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
+      window.location.replace(RouteConstants.overview.base.path);
     },
   });
 }

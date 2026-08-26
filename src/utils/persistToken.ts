@@ -12,17 +12,13 @@ export function getToken() {
   };
 }
 
-export function setAccessToken(
-  token: string,
-  duration: DurationType = { unit: "DAY", value: 30 },
-) {
+/** Without a `duration` the cookie is a session cookie — no expiry is set. */
+export function setAccessToken(token: string, duration?: DurationType) {
   cookie.setValue(access_token, token, { duration });
 }
 
-export function setRefreshToken(
-  token: string,
-  duration: DurationType = { unit: "DAY", value: 30 },
-) {
+/** Without a `duration` the cookie is a session cookie — no expiry is set. */
+export function setRefreshToken(token: string, duration?: DurationType) {
   cookie.setValue(refresh_token, token, { duration });
 }
 

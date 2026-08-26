@@ -10,6 +10,10 @@ const { ResetPassword } = lazyImport(
   () => import("../components/ResetPassword"),
   "ResetPassword",
 );
+const { AcceptInvite } = lazyImport(
+  () => import("../components/AcceptInvite"),
+  "AcceptInvite",
+);
 
 export const AuthRouteList: RouteObject[] = [
   {
@@ -42,6 +46,15 @@ export const AuthRouteList: RouteObject[] = [
     element: (
       <PublicOnlyRoute>
         <ResetPassword />
+      </PublicOnlyRoute>
+    ),
+  },
+  // Linked from the invitation email as /auth/accept-invite?token=…
+  {
+    path: "accept-invite",
+    element: (
+      <PublicOnlyRoute>
+        <AcceptInvite />
       </PublicOnlyRoute>
     ),
   },

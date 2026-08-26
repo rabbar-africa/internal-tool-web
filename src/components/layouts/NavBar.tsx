@@ -21,11 +21,18 @@ interface NavBarProps {
 }
 
 export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
-  const { userData: currentUser, userOrganization } = useCurrentUser();
+  const {
+    userData: currentUser,
+    userOrganization,
+    userRoles,
+  } = useCurrentUser();
   const handleLogout = () => {
     removeToken();
     window.location.replace(RouteConstants.auth.login.path);
   };
+  const formattedRoles = userRoles?.map((role) =>
+    role.toLowerCase().replace(/_/g, " "),
+  );
 
   return (
     <Flex
@@ -129,7 +136,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
                       color="gray.200"
                       textTransform={"capitalize"}
                     >
-                      Admin
+                      {formattedRoles?.join(", ") || "No role assigned"}
                     </Text>
                   </Flex>
                 </Flex>

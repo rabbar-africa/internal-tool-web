@@ -9,6 +9,8 @@ export interface TableAction<T = any> {
   value?: any;
   onClick: (row: T, event?: MouseEvent) => void;
   disabled?: (row: T) => boolean;
+  /** Drop the item entirely for this row — for actions that don't apply. */
+  hidden?: (row: T) => boolean;
   variant?: "default" | "destructive";
   separator?: boolean;
 }
@@ -19,6 +21,10 @@ interface ActionMenuProps<T> {
 }
 
 export function ActionMenu<T>({ row, actions }: ActionMenuProps<T>) {
+  const visibleActions = actions.filter(
+    (action) => !action.hidden?.(row.original),
+  );
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleActionClick = useCallback(
@@ -29,6 +35,9 @@ export function ActionMenu<T>({ row, actions }: ActionMenuProps<T>) {
     },
     [row.original],
   );
+
+  // Nothing this row can do — show no trigger rather than an empty menu.
+  if (visibleActions.length === 0) return null;
 
   return (
     <Menu.Root open={isOpen} onOpenChange={({ open }) => setIsOpen(open)}>
@@ -48,7 +57,7 @@ export function ActionMenu<T>({ row, actions }: ActionMenuProps<T>) {
       <Portal>
         <Menu.Positioner boxShadow={"none"}>
           <Menu.Content>
-            {actions.map((action, index) => {
+            {visibleActions.map((action, index) => {
               const isDisabled = action.disabled?.(row.original) || false;
 
               return (

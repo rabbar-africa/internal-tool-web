@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
+import RequirePermission from "@/routes/RequirePermission";
 
 const { Settings } = lazyImport(() => import("../pages/Settings"), "Settings");
 const { GeneralConfigPage } = lazyImport(
@@ -31,6 +32,14 @@ const { TaxesPage } = lazyImport(
 const { TransactionSeriesPage } = lazyImport(
   () => import("../pages/TransactionSeriesPage"),
   "TransactionSeriesPage",
+);
+const { TeamManagementPage } = lazyImport(
+  () => import("../pages/TeamManagementPage"),
+  "TeamManagementPage",
+);
+const { RolesPage } = lazyImport(
+  () => import("../pages/RolesPage"),
+  "RolesPage",
 );
 
 const { settings } = RouteConstants;
@@ -71,5 +80,25 @@ export const SettingsRoutes: RouteObject[] = [
   {
     path: settings.transactionSeries.path,
     element: <TransactionSeriesPage />,
+  },
+  // Team and role screens are gated: only users who can read the underlying
+  // module get past the route, mirroring the API's own permission guard.
+  {
+    element: <RequirePermission permissions={["read:users"]} />,
+    children: [
+      {
+        path: settings.teamManagement.path,
+        element: <TeamManagementPage />,
+      },
+    ],
+  },
+  {
+    element: <RequirePermission permissions={["read:roles"]} />,
+    children: [
+      {
+        path: settings.roles.path,
+        element: <RolesPage />,
+      },
+    ],
   },
 ];
