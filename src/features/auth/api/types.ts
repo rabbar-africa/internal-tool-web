@@ -77,3 +77,20 @@ export interface Subscription {
   isExpiringSoon: boolean;
   isExpired: boolean;
 }
+
+/** What `GET /auth/invites/:token` returns for the accept page to render. */
+export interface InviteDetails {
+  email: string;
+  organizationName: string;
+  /** Role names the invitee will hold once they accept. */
+  roles: string[];
+  expiresAt: string;
+}
+
+export interface AcceptInvitePayload {
+  token: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  phoneNumber?: string;
+}
