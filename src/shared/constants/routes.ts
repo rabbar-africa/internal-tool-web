@@ -28,6 +28,7 @@ const auth = {
   signup: defineRoute("/auth/signup" as const),
   forgotPassword: defineRoute("/auth/forgot-password" as const),
   resetPassword: defineRoute("/auth/reset-password" as const),
+  acceptInvite: defineRoute("/auth/accept-invite" as const),
 } as const;
 
 const overview = {

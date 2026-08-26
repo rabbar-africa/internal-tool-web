@@ -6,6 +6,7 @@ export const customQueryKey = {
     getMyTeams: "get-my-teams",
     getAllMyTeams: "get-all-my-teams",
     getCurrentSubscription: "get-current-subscription",
+    validateInvite: "validate-invite-token",
   },
 
   roles: {
