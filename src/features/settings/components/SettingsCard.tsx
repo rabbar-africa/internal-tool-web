@@ -1,12 +1,18 @@
 import type { ComponentType } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import type { PermissionInput } from "@/utils/permissions";
 
 export interface SettingsCardItem {
   title: string;
   description: string;
   icon: ComponentType<any>;
   href: string;
+  /**
+   * Hides the card unless the user holds one of these. Omit for cards
+   * everyone in the organization may open.
+   */
+  anyOf?: PermissionInput[];
 }
 
 export function SettingsCard({

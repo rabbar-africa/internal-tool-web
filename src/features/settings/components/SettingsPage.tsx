@@ -8,6 +8,9 @@ import { BooksIcon } from "@/assets/custom/BooksIcon";
 import { ScalesIcon } from "@/assets/custom/ScalesIcon";
 import { ListBullets } from "@/assets/custom/ListBullets";
 import { GearIcon } from "@/assets/custom/GearIcon";
+import { UserCirclePlus } from "@/assets/custom/UserCirclePlus";
+import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
+import { usePermissions } from "@/hooks/usePermissions";
 import { SettingsCard, type SettingsCardItem } from "./SettingsCard";
 
 const { settings } = RouteConstants;
@@ -74,6 +77,27 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
     ],
   },
   {
+    title: "People & access",
+    items: [
+      {
+        title: "Team Management",
+        description:
+          "Invite people, manage members, and control who is still active.",
+        icon: UserCirclePlus,
+        href: settings.teamManagement.path,
+        anyOf: ["read:users"],
+      },
+      {
+        title: "Roles & Permissions",
+        description:
+          "Create roles and choose exactly what each one is allowed to do.",
+        icon: ShieldCheckIcon,
+        href: settings.roles.path,
+        anyOf: ["read:roles"],
+      },
+    ],
+  },
+  {
     title: "Transaction settings",
     items: [
       {
@@ -88,6 +112,15 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
 ];
 
 export function SettingsPage() {
+  const { hasAny } = usePermissions();
+
+  // A card the user can't act on is noise — and the route would bounce them
+  // straight back anyway.
+  const groups = SETTINGS_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.anyOf || hasAny(item.anyOf)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <Stack gap="8">
       <Box>
@@ -99,7 +132,7 @@ export function SettingsPage() {
         </Text>
       </Box>
 
-      {SETTINGS_GROUPS.map((group) => (
+      {groups.map((group) => (
         <Box key={group.title}>
           <Text fontSize="13px" fontWeight="700" color="gray.400" mb="3">
             {group.title}
