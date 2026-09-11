@@ -28,30 +28,20 @@ export function Signup() {
     <>
       <Head title="Sign Up" description="Create your organization account" />
 
-      <Box
-        w={{ base: "100%", md: "45.5625rem" }}
-        bg="white"
-        p={{ base: "1.5rem", md: "3rem" }}
-        borderRadius="lg"
-        boxShadow="lg"
-        maxH="92vh"
-        overflowY="auto"
-      >
-        <Box w={{ base: "100%", md: "34rem" }} mx="auto">
+      <Box w="100%" maxW="32rem">
+        <Box>
           <Text
-            textStyle={{ base: "h4-semibold", lg: "h3-bold" }}
-            color="gray.900"
-            mb=".5rem"
-            textAlign={{ base: "center", lg: "left" }}
+            fontSize="1.75rem"
+            lineHeight="1.2"
+            fontWeight="700"
+            letterSpacing="-0.02em"
+            color="primary.500"
           >
-            Create your account
+            Set up your workshop
           </Text>
-          <Text
-            textStyle="small-regular"
-            textAlign={{ base: "center", lg: "left" }}
-          >
-            Set up your organization to get started. Bank and address details
-            are optional and can be added later.
+          <Text mt="0.625rem" fontSize="0.9375rem" color="gray.300">
+            Two minutes to get going. Bank and address details are optional and
+            can be added later.
           </Text>
 
           <Box mt="2rem">
@@ -84,14 +74,13 @@ export function Signup() {
 
           {step === 1 && (
             <Text
-              textStyle="small-regular"
+              fontSize="0.875rem"
               textAlign="center"
-              mt="1.5rem"
-              color="gray.400"
+              mt="1.75rem"
+              color="gray.300"
             >
               Already have an account?{" "}
-              <Text color="primary.400" fontWeight="600" asChild>
-                {" "}
+              <Text color="primary.300" fontWeight="600" asChild>
                 <Link to={RouteConstants.auth.login.path}>Sign in</Link>
               </Text>
             </Text>

@@ -360,6 +360,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
 
         <Button
           type="submit"
+          variant="accent"
           width="full"
           loading={isPending || formik.isSubmitting}
           loadingText="Creating account..."

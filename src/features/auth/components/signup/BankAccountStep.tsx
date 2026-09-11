@@ -117,6 +117,7 @@ export function BankAccountStep({ onCompleted, onSkip }: BankAccountStepProps) {
           </Button>
           <Button
             type="submit"
+            variant="accent"
             flex="1"
             loading={isPending}
             loadingText="Saving..."

@@ -97,6 +97,7 @@ export function VerifyEmailStep({ email, onCompleted }: VerifyEmailStepProps) {
 
       <Button
         width="full"
+        variant="accent"
         onClick={handleVerify}
         loading={isVerifying}
         loadingText="Verifying..."
