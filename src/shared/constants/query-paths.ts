@@ -18,6 +18,20 @@ export const QUERY_PATH = {
     acceptInvite: "auth/accept-invite",
     getCurrentSubscription: "/subscriptions/me",
   },
+  billing: {
+    overview: "/subscriptions/me",
+    plans: "/subscriptions/plans",
+    checkoutPreview: "/subscriptions/me/checkout/preview",
+    checkout: "/subscriptions/me/checkout",
+    card: "/subscriptions/me/card",
+    autoRenew: "/subscriptions/me/auto-renew",
+    changePlan: "/subscriptions/me/change-plan",
+    cancel: "/subscriptions/me/cancel",
+    resume: "/subscriptions/me/resume",
+    // Public — reachable without a login.
+    payLink: "/billing/pay",
+    checkoutStatus: "/billing/checkout",
+  },
   users: {
     getAccountUsers: "accounts/users",
     getAdminUsers: "admin/users",

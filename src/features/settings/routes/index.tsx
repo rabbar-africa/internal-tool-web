@@ -2,6 +2,7 @@ import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 import RequirePermission from "@/routes/RequirePermission";
+import { BillingSettingsRoutes } from "@/features/billing/routes";
 
 const { Settings } = lazyImport(() => import("../pages/Settings"), "Settings");
 const { GeneralConfigPage } = lazyImport(
@@ -81,6 +82,8 @@ export const SettingsRoutes: RouteObject[] = [
     path: settings.transactionSeries.path,
     element: <TransactionSeriesPage />,
   },
+  // Everyone can see the plan; paying and changing it is gated per control.
+  ...BillingSettingsRoutes,
   // Team and role screens are gated: only users who can read the underlying
   // module get past the route, mirroring the API's own permission guard.
   {

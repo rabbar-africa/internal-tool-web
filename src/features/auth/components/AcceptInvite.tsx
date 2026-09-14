@@ -28,16 +28,8 @@ const prettyRole = (name: string) =>
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <Box
-      w={{ base: "100%", md: "45.5625rem" }}
-      bg="white"
-      p={{ base: "2rem", md: "3rem" }}
-      borderRadius="lg"
-      boxShadow="lg"
-    >
-      <Box w={{ base: "100%", md: "31.5625rem" }} mx="auto">
-        {children}
-      </Box>
+    <Box w="100%" maxW="26rem">
+      {children}
     </Box>
   );
 }
@@ -311,6 +303,7 @@ export function AcceptInvite() {
 
         <Button
           type="submit"
+          variant="accent"
           w="100%"
           mt="2rem"
           size="lg"

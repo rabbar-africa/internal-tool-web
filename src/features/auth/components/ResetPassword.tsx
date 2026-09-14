@@ -65,14 +65,8 @@ export function ResetPassword() {
     <>
       <Head title="Reset Password" description="Reset your account password" />
 
-      <Box
-        w={{ base: "100%", md: "45.5625rem" }}
-        bg="white"
-        p={{ base: "2rem", md: "3rem" }}
-        borderRadius="lg"
-        boxShadow="lg"
-      >
-        <Box w={{ base: "100%", md: "31.5625rem" }} mx="auto">
+      <Box w="100%" maxW="26rem">
+        <Box>
           {phase === "request" ? (
             <>
               <Text
@@ -120,6 +114,7 @@ export function ResetPassword() {
                   mt="2.5rem"
                   width="full"
                   type="submit"
+                  variant="accent"
                   loading={forgotMutation.isPending}
                   loadingText="Sending code..."
                   disabled={forgotMutation.isPending}
@@ -314,6 +309,7 @@ function ResetForm({
           mt="2.5rem"
           width="full"
           type="submit"
+          variant="accent"
           loading={resetMutation.isPending}
           loadingText="Resetting..."
           disabled={resetMutation.isPending}

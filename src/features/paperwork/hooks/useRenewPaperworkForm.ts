@@ -44,7 +44,7 @@ export function useRenewPaperworkForm({
       // Upload first — a failed upload should leave the document unrenewed.
       let uploaded: PaperworkFileInput[] = [];
       try {
-        uploaded = await uploadPending(values.attachments);
+        uploaded = await uploadPending(values.attachments, paperwork.clientId);
       } catch {
         setSubmitError("Some files failed to upload. Please try again.");
         return;

@@ -31,6 +31,27 @@ export const buttonRecipe = defineRecipe({
           color: "gray.75",
         },
       },
+      /**
+       * The brand CTA from the marketing site — acid on navy. Overrides the
+       * base `_loading` background so a pending button keeps the accent
+       * instead of flipping to primary.
+       */
+      accent: {
+        bg: "secondary.300",
+        color: "primary.500",
+        border: "none",
+        fontWeight: "600",
+        transition: "background .15s ease, transform .1s ease",
+        _hover: { bg: "#E8F34F" },
+        _focus: { bg: "#E8F34F" },
+        // Touch screens never fire hover, so a press needs its own feedback.
+        _active: { bg: "#E8F34F", transform: "scale(0.98)" },
+        _loading: { bg: "secondary.300", opacity: 0.6, cursor: "not-allowed" },
+        _disabled: {
+          bg: "gray.50",
+          color: "gray.100",
+        },
+      },
       secondary: {
         bg: "secondary.300",
         color: "white",

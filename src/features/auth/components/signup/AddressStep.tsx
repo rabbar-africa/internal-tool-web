@@ -189,6 +189,7 @@ export function AddressStep({ onCompleted, onSkip }: AddressStepProps) {
           </Button>
           <Button
             type="submit"
+            variant="accent"
             flex="1"
             loading={isPending}
             loadingText="Saving..."

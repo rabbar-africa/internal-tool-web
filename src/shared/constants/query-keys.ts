@@ -94,6 +94,12 @@ export const customQueryKey = {
   analytics: {
     dashboard: "get-dashboard-analytics",
   },
+  billing: {
+    plans: "get-billing-plans",
+    checkoutPreview: "get-billing-checkout-preview",
+    payLink: "get-billing-pay-link",
+    checkoutStatus: "get-billing-checkout-status",
+  },
   team: {
     members: "get-team-members",
     member: "get-team-member",

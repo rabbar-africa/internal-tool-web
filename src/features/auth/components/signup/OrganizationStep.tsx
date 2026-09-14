@@ -7,6 +7,7 @@ import { EyeIcon, EyeOff } from "@/assets/custom";
 import { useRegisterMutation } from "../../api";
 import { useUploadOrganizationLogo } from "@/features/settings/api";
 import type { RegisterPayload } from "../../api/types";
+import { getErrorMessage } from "@/utils/handle-error";
 
 // const CURRENCY_OPTIONS = [
 //   { label: "Nigerian Naira (NGN)", value: "NGN" },
@@ -29,6 +30,9 @@ const validationSchema = Yup.object({
   ownerPassword: Yup.string()
     .min(8, "At least 8 characters")
     .required("Password is required"),
+  promoCode: Yup.string()
+    .trim()
+    .max(32, "Promo codes are at most 32 characters"),
 });
 
 // Derive a URL-safe slug from the org name, with a random fallback.
@@ -46,6 +50,8 @@ interface OrganizationStepProps {
 
 export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
   const [showPassword, setShowPassword] = useState(false);
+  // Collapsed by default so the promo field adds nothing to a normal signup.
+  const [showPromo, setShowPromo] = useState(false);
   const { mutateAsync, isPending } = useRegisterMutation();
   const { mutateAsync: uploadLogo } = useUploadOrganizationLogo();
 
@@ -78,10 +84,11 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
       ownerFirstName: "",
       ownerLastName: "",
       ownerPassword: "",
+      promoCode: "",
     },
     validationSchema,
     validateOnChange: false,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setFieldError }) => {
       const payload: RegisterPayload = {
         name: values.name.trim(),
         slug: slugify(values.name),
@@ -97,8 +104,21 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         ownerEmail: values.email.trim().toLowerCase(),
         ownerPassword: values.ownerPassword,
         ownerPhone: values.phone.trim(),
+        promoCode: values.promoCode.trim().toUpperCase() || undefined,
       };
-      await mutateAsync(payload);
+
+      try {
+        await mutateAsync(payload);
+      } catch (error) {
+        // A bad promo code is the one failure the user can fix right here, so
+        // also show it under the field (the global toast covers the rest).
+        const message = getErrorMessage(error);
+        if (payload.promoCode && /promo|code/i.test(message ?? "")) {
+          setShowPromo(true);
+          setFieldError("promoCode", message);
+        }
+        return;
+      }
 
       // Register persists the auth token, so the org now exists and we're
       // authenticated — upload the logo if one was picked. Non-blocking: a
@@ -358,8 +378,48 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
           </Stack>
         </Box>
 
+        <Box>
+          {showPromo ? (
+            <CustomInput
+              label="Promo code"
+              name="promoCode"
+              value={formik.values.promoCode}
+              onChange={(e) =>
+                formik.setFieldValue("promoCode", e.target.value.toUpperCase())
+              }
+              onBlur={formik.handleBlur}
+              placeholder="e.g. WELCOME3"
+              helperText="Leave this empty if you don't have one."
+              error={
+                formik.touched.promoCode && formik.errors.promoCode
+                  ? formik.errors.promoCode
+                  : undefined
+              }
+              inputProps={{
+                maxLength: 32,
+                autoComplete: "off",
+                autoCapitalize: "characters",
+              }}
+            />
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              px="0"
+              py="1"
+              h="auto"
+              fontWeight="600"
+              onClick={() => setShowPromo(true)}
+            >
+              Have a promo code?
+            </Button>
+          )}
+        </Box>
+
         <Button
           type="submit"
+          variant="accent"
           width="full"
           loading={isPending || formik.isSubmitting}
           loadingText="Creating account..."
