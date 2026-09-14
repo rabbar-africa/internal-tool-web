@@ -10,6 +10,7 @@ import { ListBullets } from "@/assets/custom/ListBullets";
 import { GearIcon } from "@/assets/custom/GearIcon";
 import { UserCirclePlus } from "@/assets/custom/UserCirclePlus";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
+import { CheckCircle } from "@/assets/custom/CheckCircle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { SettingsCard, type SettingsCardItem } from "./SettingsCard";
 
@@ -36,6 +37,12 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
         description: "Business name, contact details, and registration info.",
         icon: BuildingIcon,
         href: settings.profile.path,
+      },
+      {
+        title: "Plan & Billing",
+        description: "Your plan, how you pay, and your payment history.",
+        icon: CheckCircle,
+        href: settings.billing.path,
       },
       {
         title: "Logo & Branding",

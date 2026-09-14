@@ -129,7 +129,7 @@ export function usePaperworkForm({
       // Upload first — a failed upload should leave the record untouched.
       let uploaded: PaperworkFileInput[] = [];
       try {
-        uploaded = await uploadPending(values.attachments);
+        uploaded = await uploadPending(values.attachments, values.clientId);
       } catch {
         setSubmitError("Some files failed to upload. Please try again.");
         return;

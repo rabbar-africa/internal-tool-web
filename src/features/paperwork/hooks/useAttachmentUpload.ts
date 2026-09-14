@@ -14,6 +14,7 @@ export function useAttachmentUpload(folder = "paperwork") {
   const uploadPending = useCallback(
     async (
       attachments: PaperworkAttachment[],
+      clientId?: string,
     ): Promise<PaperworkFileInput[]> => {
       const pending = attachments.filter(isPending);
       if (!pending.length) return [];
@@ -22,7 +23,7 @@ export function useAttachmentUpload(folder = "paperwork") {
       try {
         // All-or-nothing: a partial upload would attach an incomplete bundle.
         return await Promise.all(
-          pending.map((a) => uploadFile(a.file, folder)),
+          pending.map((a) => uploadFile(a.file, folder, clientId)),
         );
       } finally {
         setUploading(false);

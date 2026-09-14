@@ -4,6 +4,7 @@ import { UserDashboardContainer } from "../hoc";
 import { Sidebar } from "./SideBar";
 import { NavBar } from "./NavBar";
 import SectionLoader from "../common/SectionLoader";
+import { BillingBanner } from "@/features/billing/components/BillingBanner";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
@@ -22,6 +23,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <Stack gap={0} flex="1" minHeight={0} minWidth={0} position="relative">
           <NavBar onMenuToggle={() => setMobileNavOpen(true)} />
+          <BillingBanner />
           <Box flex="1" overflow="auto" overscrollBehavior="contain">
             <UserDashboardContainer pt={"1.75rem"}>
               <Suspense fallback={<SectionLoader />}>{children}</Suspense>

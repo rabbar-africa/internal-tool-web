@@ -165,13 +165,22 @@ const settings = {
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),
   teamManagement: defineRoute("/settings/team-management" as const),
+  billing: defineRoute("/settings/billing" as const),
   roles: defineRoute("/settings/roles" as const),
   createTeamMember: defineRoute("/settings/team-management/create" as const),
   editTeamMember: defineRoute("/settings/team-management/:id/edit" as const),
 } as const;
 
+// Public billing pages — linked from emails and from Paystack's redirect, so
+// they must work without a login.
+const billing = {
+  pay: defineRoute("/billing/pay/:token" as const),
+  callback: defineRoute("/billing/callback" as const),
+} as const;
+
 export const RouteConstants = {
   auth,
+  billing,
   overview,
   inspection,
   invoices,
