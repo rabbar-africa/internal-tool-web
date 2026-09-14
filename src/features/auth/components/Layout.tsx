@@ -199,6 +199,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         roundedTop={{ base: "1.5rem", lg: "0" }}
         mt={{ base: "-1.5rem", lg: "0" }}
         position="relative"
+        // Steps slide in horizontally; clip so a mid-animation step can't
+        // widen the page and make it wobble sideways on phones. `clip`, not
+        // `hidden`, so this doesn't become a scroll container.
+        overflowX="clip"
         px={{ base: "1.25rem", md: "2.5rem" }}
         pt={{ base: "2.5rem", lg: "3rem" }}
         pb={{ base: "3rem", lg: "3rem" }}

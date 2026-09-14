@@ -50,12 +50,15 @@ export interface RegisterPayload {
   ownerEmail: string;
   ownerPassword: string;
   ownerPhone?: string;
+  /** Optional — without one, the back office's auto-apply code (if any) is used. */
+  promoCode?: string;
 }
 
 export type RegisterResponse = LoginResponse;
 
 export type SubscriptionStatus =
   | "ACTIVE"
+  | "PAST_DUE"
   | "CANCELLED"
   | "EXPIRED"
   | "INACTIVE";
@@ -66,16 +69,16 @@ export interface SubscriptionPlan {
   name: string;
 }
 
+/**
+ * The fields the route gate reads from `GET /subscriptions/me`. The full
+ * billing overview is typed as `BillingOverview` in features/billing.
+ */
 export interface Subscription {
   id: string;
   status: SubscriptionStatus;
   plan: SubscriptionPlan;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  expiresAt: string;
-  daysUntilExpiry: number;
-  isExpiringSoon: boolean;
-  isExpired: boolean;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
 }
 
 /** What `GET /auth/invites/:token` returns for the accept page to render. */

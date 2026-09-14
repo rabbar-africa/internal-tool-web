@@ -7,9 +7,15 @@ import {
 } from "@/features/auth/api";
 import { EmailVerifyGate } from "@/features/auth/components/EmailVerifyGate";
 import { SubscriptionGate } from "@/features/auth/components/SubscriptionGate";
+import type { SubscriptionStatus } from "@/features/auth/api/types";
 import { RouteConstants } from "@/shared/constants/routes";
 import { getToken, removeToken } from "@/utils/persistToken";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+
+const BLOCKED_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
+  "CANCELLED",
+  "INACTIVE",
+];
 
 export default function ProtectedRoutes() {
   const location = useLocation();
@@ -72,13 +78,14 @@ export default function ProtectedRoutes() {
       return <SectionLoader h={"100vh"} />;
     }
 
-    // Gate users without an active subscription (none on file or expired).
-    // TEMPORARY — remove once the real subscription flow is finalized.
+    // Past-due orgs keep working through the grace period and expired ones
+    // fall back to the free Starter plan — both get a "Pay now" banner
+    // instead of being locked out. Only a subscription the back office has
+    // switched off (cancelled / inactive) still blocks the app.
     const hasActiveSubscription =
       isSubscriptionSuccess &&
       subscription != null &&
-      subscription.status === "ACTIVE" &&
-      !subscription.isExpired;
+      !BLOCKED_SUBSCRIPTION_STATUSES.includes(subscription.status);
 
     if (!hasActiveSubscription) {
       return <SubscriptionGate />;

@@ -24,6 +24,18 @@ export function VerifyEmailStep({ email, onCompleted }: VerifyEmailStepProps) {
   const [code, setCode] = useState("");
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus once the step has eased in, and without scrolling. A bare
+  // `autoFocus` fires on mount, mid-transition, and makes mobile browsers
+  // jump the page to the field while the step is still sliding in.
+  useEffect(() => {
+    const id = setTimeout(
+      () => codeInputRef.current?.focus({ preventScroll: true }),
+      360,
+    );
+    return () => clearTimeout(id);
+  }, []);
 
   const { mutateAsync: verify, isPending: isVerifying } =
     useVerifyEmailMutation();
@@ -91,7 +103,7 @@ export function VerifyEmailStep({ email, onCompleted }: VerifyEmailStepProps) {
           fontWeight="600"
           letterSpacing="0.5rem"
           borderColor="gray.100"
-          autoFocus
+          ref={codeInputRef}
         />
       </Box>
 

@@ -41,8 +41,11 @@ export const buttonRecipe = defineRecipe({
         color: "primary.500",
         border: "none",
         fontWeight: "600",
+        transition: "background .15s ease, transform .1s ease",
         _hover: { bg: "#E8F34F" },
         _focus: { bg: "#E8F34F" },
+        // Touch screens never fire hover, so a press needs its own feedback.
+        _active: { bg: "#E8F34F", transform: "scale(0.98)" },
         _loading: { bg: "secondary.300", opacity: 0.6, cursor: "not-allowed" },
         _disabled: {
           bg: "gray.50",
