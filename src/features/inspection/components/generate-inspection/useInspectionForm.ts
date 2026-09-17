@@ -258,9 +258,9 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
   // vehicles resolve, or when the customer link is missing on older records).
   const vehicleOptions = useMemo<SearchComboboxOption[]>(() => {
     const opts: SearchComboboxOption[] = vehicles.map((v) => ({
-      label: `${v.year} ${v.make} ${v.model}`,
+      label: [v.year, v.make, v.model].filter(Boolean).join(" "),
       value: v.id,
-      subLabel: v.registrationNumber,
+      subLabel: v.registrationNumber ?? undefined,
     }));
     const selectedId = formik.values.vehicleId;
     if (selectedId && !opts.some((o) => o.value === selectedId)) {
