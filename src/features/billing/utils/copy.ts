@@ -83,23 +83,25 @@ export function describeDue(
   const plan = renewalPlanName(overview);
   const amount = formatPrice(billing.amountDue, billing.currency);
 
-  if (overview.status === "PAST_DUE") {
-    const ended = billing.dueDate
-      ? ` ended on ${formatShortDate(billing.dueDate)}`
-      : " has ended";
+  // Checked before the overdue date test: an expired plan's due date is also
+  // in the past, but it needs the "you're on Starter now" message instead.
+  if (overview.status === "EXPIRED") {
+    return {
+      tone: "error",
+      message: `Your ${plan} plan has ended, so you're now on the free Starter plan. Pay ${amount} to get ${plan} back.`,
+    };
+  }
+
+  // Overdue is decided by the date, not the status, so the message is right
+  // even if the status hasn't caught up yet.
+  const dueDate = billing.dueDate ?? overview.currentPeriodEnd;
+  if (dueDate && new Date(dueDate).getTime() <= Date.now()) {
     const by = billing.graceEndsAt
       ? ` by ${formatShortDate(billing.graceEndsAt)}`
       : "";
     return {
       tone: "error",
-      message: `Your ${plan} plan${ended}. Pay ${amount}${by} to keep using it.`,
-    };
-  }
-
-  if (overview.status === "EXPIRED") {
-    return {
-      tone: "error",
-      message: `Your ${plan} plan has ended, so you're now on the free Starter plan. Pay ${amount} to get ${plan} back.`,
+      message: `Your ${plan} plan ended on ${formatShortDate(dueDate)}. Pay ${amount}${by} to keep using it.`,
     };
   }
 
