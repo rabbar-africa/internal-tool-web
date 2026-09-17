@@ -42,132 +42,120 @@ export function Login() {
     <>
       <Head title="Login" description="Login to your account" />
 
-      <Box
-        w={{
-          base: "100%",
-          md: "45.5625rem",
-        }}
-        bg={"white"}
-        p={{ base: "2rem", md: "3rem" }}
-        borderRadius={"lg"}
-        boxShadow={"lg"}
-      >
-        <Box
-          w={{
-            base: "100%",
-            md: "31.5625rem",
-          }}
-          mx={"auto"}
+      <Box w="100%" maxW="26rem">
+        <Text
+          fontSize="1.75rem"
+          lineHeight="1.2"
+          fontWeight="700"
+          letterSpacing="-0.02em"
+          color="primary.500"
         >
-          <Text
-            textStyle={{ base: "h4-semibold", lg: "h3-bold" }}
-            color={"gray.900"}
-            mb={".625rem"}
-            textAlign={{ base: "center", lg: "left" }}
-          >
-            Sign In to Your Account
-          </Text>
-          <Text
-            textStyle={"small-regular"}
-            textAlign={{ base: "center", lg: "left" }}
-          >
-            Please enter your registered email address and password to access
-            your workspace.
-          </Text>
+          Welcome back
+        </Text>
+        <Text mt="0.625rem" fontSize="0.9375rem" color="gray.300">
+          Sign in to pick up where your workshop left off.
+        </Text>
 
-          <chakra.form
-            position={"relative"}
-            mt={"2.5rem"}
-            onSubmit={formik.handleSubmit}
-          >
+        <chakra.form mt="2.25rem" onSubmit={formik.handleSubmit}>
+          <CustomInput
+            label="Email"
+            placeholder="you@workshop.com"
+            required={true}
+            disabled={loginMutation.isPending}
+            error={formik.touched.email ? formik.errors.email : undefined}
+            inputProps={{
+              name: "email",
+              type: "email",
+              autoComplete: "email",
+              value: formik.values.email,
+              onChange: formik.handleChange,
+              onBlur: formik.handleBlur,
+            }}
+            leftElement={<Mail w={".875rem"} color={"gray.300"} />}
+          />
+
+          <Box mt="1.25rem">
             <CustomInput
-              label="Email"
-              placeholder="Enter your email"
+              label="Password"
+              placeholder="Enter your password"
+              type={showPassword ? "text" : "password"}
               required={true}
               disabled={loginMutation.isPending}
-              error={formik.touched.email ? formik.errors.email : undefined}
+              error={
+                formik.touched.password ? formik.errors.password : undefined
+              }
               inputProps={{
-                name: "email",
-                value: formik.values.email,
+                name: "password",
+                autoComplete: "current-password",
+                value: formik.values.password,
                 onChange: formik.handleChange,
                 onBlur: formik.handleBlur,
               }}
-              leftElement={<Mail w={".875rem"} color={"gray.300"} />}
+              leftElement={<Lock w={".75rem"} color={"gray.300"} />}
+              rightElement={
+                <chakra.button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  display="flex"
+                >
+                  {showPassword ? (
+                    <EyeIcon
+                      cursor={"pointer"}
+                      w={".875rem"}
+                      color={"gray.300"}
+                    />
+                  ) : (
+                    <EyeOff
+                      cursor={"pointer"}
+                      w={".875rem"}
+                      color={"gray.300"}
+                    />
+                  )}
+                </chakra.button>
+              }
             />
+          </Box>
 
-            <Box mt={"1.5rem"}>
-              <CustomInput
-                label="Password"
-                placeholder="Enter your password"
-                type={showPassword ? "text" : "password"}
-                required={true}
-                disabled={loginMutation.isPending}
-                error={
-                  formik.touched.password ? formik.errors.password : undefined
-                }
-                inputProps={{
-                  name: "password",
-                  value: formik.values.password,
-                  onChange: formik.handleChange,
-                  onBlur: formik.handleBlur,
-                }}
-                leftElement={<Lock w={".75rem"} color={"gray.700"} />}
-                rightElement={
-                  <Box onClick={() => setShowPassword((prev) => !prev)}>
-                    {showPassword ? (
-                      <EyeIcon
-                        cursor={"pointer"}
-                        w={".875rem"}
-                        color={"gray.700"}
-                      />
-                    ) : (
-                      <EyeOff
-                        cursor={"pointer"}
-                        w={".875rem"}
-                        color={"gray.700"}
-                      />
-                    )}
-                  </Box>
-                }
-              />
-            </Box>
+          <Text
+            fontSize="0.8125rem"
+            textAlign="right"
+            mt="0.75rem"
+            color="primary.300"
+            fontWeight="600"
+            asChild
+          >
+            <Link to={RouteConstants.auth.resetPassword.path}>
+              Forgot password?
+            </Link>
+          </Text>
 
-            <Text
-              textStyle="small-regular"
-              textAlign="right"
-              mt="0.75rem"
-              color="primary.400"
-              fontWeight="600"
-            >
-              <Link to={RouteConstants.auth.resetPassword.path}>
-                Forgot password?
+          <Button
+            mt="1.75rem"
+            width="full"
+            type="submit"
+            variant="accent"
+            loading={loginMutation.isPending}
+            loadingText="Signing in..."
+            disabled={loginMutation.isPending}
+          >
+            Sign in
+          </Button>
+
+          <Text
+            fontSize="0.875rem"
+            textAlign="center"
+            mt="1.75rem"
+            color="gray.300"
+          >
+            New to Jobcard?{" "}
+            <Text asChild color="primary.300" fontWeight="600">
+              <Link to={RouteConstants.auth.signup.path}>
+                Create a workshop
               </Link>
             </Text>
-
-            <Button
-              mt={"1.5rem"}
-              width="full"
-              type="submit"
-              loading={loginMutation.isPending}
-              loadingText="Signing in..."
-              disabled={loginMutation.isPending}
-            >
-              Sign In
-            </Button>
-
-            <Text
-              textStyle="small-regular"
-              textAlign="center"
-              mt="1.5rem"
-              color="gray.400"
-            >
-              Don't have an account?{" "}
-              <Text asChild color="primary.400" fontWeight="600">
-                <Link to={RouteConstants.auth.signup.path}>Sign up</Link>
-              </Text>
-            </Text>
-          </chakra.form>
-        </Box>
+          </Text>
+        </chakra.form>
       </Box>
     </>
   );

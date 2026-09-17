@@ -43,14 +43,19 @@ export interface FileUploadResponse {
   height?: number;
 }
 
-/** Uploads one scan and returns it in the shape the `files` payloads expect. */
+/**
+ * Uploads one scan and returns it in the shape the `files` payloads expect.
+ * `clientId` files it under the customer's own folder in Cloudinary.
+ */
 export const uploadFile = async (
   file: File,
   folder?: string,
+  clientId?: string,
 ): Promise<PaperworkFileInput> => {
   const formData = new FormData();
   formData.append("file", file);
   if (folder) formData.append("folder", folder);
+  if (clientId) formData.append("clientId", clientId);
 
   const response = await axios.post<ApiResponse<FileUploadResponse>>(
     "/files/upload",

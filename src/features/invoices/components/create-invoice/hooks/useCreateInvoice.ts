@@ -19,7 +19,11 @@ import {
   type LineItemFormRow,
 } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
-import { useGetAllCustomersQuery } from "@/features/customers/api";
+import {
+  useGetAllCustomersQuery,
+  useGetVehiclesByClientQuery,
+} from "@/features/customers/api";
+import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
 import {
   useGetOrganizationTransactionSeries,
@@ -51,6 +55,7 @@ export const EMPTY_LINE_ITEM: LineItemFormRow = {
 const defaultValues: CreateInvoiceFormValues = {
   invoiceNumber: `${DEFAULT_INVOICE_PREFIX}${DEFAULT_INVOICE_NEXT}`,
   customerId: "",
+  vehicleId: "",
   customer: { name: "", email: "" },
   referenceNumber: "",
   date: today,
@@ -76,6 +81,7 @@ export function mapInvoiceToFormValues(
   return {
     invoiceNumber: invoice.invoiceNumber ?? "",
     customerId: invoice.customerId ?? "",
+    vehicleId: invoice.vehicleId ?? "",
     customer: {
       name: invoice.customerName ?? invoice.client?.displayName ?? "",
       email: invoice.client?.email ?? "",
@@ -207,69 +213,6 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     [customersQuery?.data?.data],
   );
 
-  const [items, setItems] = useState<Item[]>(
-    itemsData?.map((item) => ({
-      ...item,
-      unitPrice: Number(item?.rate),
-    })),
-  );
-
-  const addNewItem = useCallback((item: Item) => {
-    setItems((prev) => [...prev, item]);
-  }, []);
-
-  // Cache customers by id so the selected customer persists when search changes
-  const [customerCache, setCustomerCache] = useState<Record<string, ICustomer>>(
-    {},
-  );
-
-  useEffect(() => {
-    if (customerArray.length > 0) {
-      setCustomerCache((prev) => {
-        const next = { ...prev };
-        customerArray.forEach((c) => {
-          next[c.id] = c;
-        });
-        return next;
-      });
-    }
-  }, [customerArray]);
-
-  const addNewCustomer = useCallback((customer: ICustomer) => {
-    setCustomerCache((prev) => ({ ...prev, [customer.id]: customer }));
-  }, []);
-
-  // Default invoice terms come from the organization's general config.
-  const { data: orgDetails } = useGetOrganizationDetails();
-  const defaultTerms = orgDetails?.data?.config?.invoiceTermsDefault ?? "";
-
-  // Derive the next invoice number from the active INVOICE transaction series.
-  const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
-  const seriesInvoiceNumber = useMemo(() => {
-    const invoiceSeries = (txnSeriesData?.data ?? []).find(
-      (s) => s.module === "INVOICE" && s.isActive,
-    );
-    if (!invoiceSeries) return "";
-    return formatTransactionSeries({
-      prefix: invoiceSeries.prefix,
-      suffix: invoiceSeries.suffix,
-      separator: invoiceSeries.separator,
-      padding: invoiceSeries.padding,
-      number: invoiceSeries.nextNumber,
-    });
-  }, [txnSeriesData?.data]);
-
-  // `useInvoiceCarryForward` needs the customer id off `formik.values`, so it
-  // can only run once the form exists — this ref lets `onSubmit` (which fires
-  // long after render) reach back into it.
-  const carryRef = useRef<ReturnType<typeof useInvoiceCarryForward> | null>(
-    null,
-  );
-  // Holds the new invoice's id when it saved but some carry links were
-  // rejected, so retrying the form links onto it instead of creating a second
-  // invoice.
-  const createdInvoiceIdRef = useRef("");
-
   const formik = useFormik<CreateInvoiceFormValues>({
     initialValues: defaultValues,
     validationSchema,
@@ -282,6 +225,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         invoiceNumber: values.invoiceNumber,
         referenceNumber: values.referenceNumber,
         customerId: values.customerId,
+        ...(values.vehicleId
+          ? { vehicleId: values.vehicleId }
+          : { vehicleId: null }),
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,
@@ -344,6 +290,98 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       navigate(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
     },
   });
+  // Vehicle query for the selected customer
+  const { data: vehiclesData, isLoading: vehiclesLoading } =
+    useGetVehiclesByClientQuery(formik?.values?.customerId ?? "");
+
+  const vehicles: Vehicle[] = useMemo(
+    () => vehiclesData?.data ?? vehiclesData ?? [],
+    [vehiclesData],
+  );
+
+  const vehicleOptions = useMemo(() => {
+    return vehicles.map((v) => ({
+      label: `${v.year ? `${v.year} ` : ""}${v.make} ${v.model}`,
+      value: v.id,
+      subLabel: v.registrationNumber
+        ? `Reg: ${v.registrationNumber}`
+        : undefined,
+    }));
+  }, [vehicles]);
+
+  const [addVehicleOpen, setAddVehicleOpen] = useState(false);
+  const openAddVehicle = useCallback(() => setAddVehicleOpen(true), []);
+  const closeAddVehicle = useCallback(() => setAddVehicleOpen(false), []);
+  const handleVehicleSaved = useCallback(
+    (vehicle: Vehicle) => {
+      formik.setFieldValue("vehicleId", vehicle.id);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const [items, setItems] = useState<Item[]>(
+    itemsData?.map((item) => ({
+      ...item,
+      unitPrice: Number(item?.rate),
+    })),
+  );
+
+  const addNewItem = useCallback((item: Item) => {
+    setItems((prev) => [...prev, item]);
+  }, []);
+
+  // Cache customers by id so the selected customer persists when search changes
+  const [customerCache, setCustomerCache] = useState<Record<string, ICustomer>>(
+    {},
+  );
+
+  useEffect(() => {
+    if (customerArray.length > 0) {
+      setCustomerCache((prev) => {
+        const next = { ...prev };
+        customerArray.forEach((c) => {
+          next[c.id] = c;
+        });
+        return next;
+      });
+    }
+  }, [customerArray]);
+
+  const addNewCustomer = useCallback((customer: ICustomer) => {
+    setCustomerCache((prev) => ({ ...prev, [customer.id]: customer }));
+  }, []);
+
+  // Default invoice terms come from the organization's general config.
+  const { data: orgDetails } = useGetOrganizationDetails();
+  const defaultTerms = orgDetails?.data?.config?.invoiceTermsDefault ?? "";
+
+  // Derive the next invoice number from the active INVOICE transaction series.
+  const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
+  const seriesInvoiceNumber = useMemo(() => {
+    const invoiceSeries = (txnSeriesData?.data ?? []).find(
+      (s) => s.module === "INVOICE" && s.isActive,
+    );
+    if (!invoiceSeries) return "";
+    return formatTransactionSeries({
+      prefix: invoiceSeries.prefix,
+      suffix: invoiceSeries.suffix,
+      separator: invoiceSeries.separator,
+      padding: invoiceSeries.padding,
+      number: invoiceSeries.nextNumber,
+    });
+  }, [txnSeriesData?.data]);
+
+  // `useInvoiceCarryForward` needs the customer id off `formik.values`, so it
+  // can only run once the form exists — this ref lets `onSubmit` (which fires
+  // long after render) reach back into it.
+  const carryRef = useRef<ReturnType<typeof useInvoiceCarryForward> | null>(
+    null,
+  );
+  // Holds the new invoice's id when it saved but some carry links were
+  // rejected, so retrying the form links onto it instead of creating a second
+  // invoice.
+  const createdInvoiceIdRef = useRef("");
 
   // In edit mode, hydrate the form once the invoice resolves and seed the
   // customer cache so the billing block + combobox label render immediately.
@@ -532,5 +570,13 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     itemSearch,
     handleItemSearch,
     isSearchingItems: itemsQuery.isFetching,
+
+    // Vehicle properties
+    vehicleOptions,
+    vehiclesLoading,
+    addVehicleOpen,
+    openAddVehicle,
+    closeAddVehicle,
+    handleVehicleSaved,
   };
 }

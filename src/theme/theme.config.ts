@@ -32,6 +32,11 @@ export const system = createSystem(defaultConfig, {
         "0%": { transform: "scale(0.3)", opacity: "0" },
         "100%": { transform: "scale(1)", opacity: 1 },
       },
+      /** Multi-step forms: the incoming step eases in from the right. */
+      stepIn: {
+        "0%": { transform: "translateX(24px)", opacity: "0" },
+        "100%": { transform: "translateX(0)", opacity: 1 },
+      },
     },
     semanticTokens: {
       ...defaultConfig.theme?.semanticTokens,
