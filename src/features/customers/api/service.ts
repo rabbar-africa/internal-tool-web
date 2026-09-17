@@ -57,8 +57,8 @@ export interface Vehicle {
   id: string;
   make: string;
   model: string;
-  year: number;
-  registrationNumber: string;
+  year: number | null;
+  registrationNumber: string | null;
   vin?: string | null;
   color?: string | null;
   clientId: string;
@@ -70,8 +70,10 @@ export interface Vehicle {
 export interface CreateVehiclePayload {
   make: string;
   model: string;
-  year: number;
-  registrationNumber: string;
+  /** Optional. `null` on update clears it. */
+  year?: number | null;
+  /** Optional — a car may be logged before its plate is known. */
+  registrationNumber?: string | null;
   vin?: string;
   color?: string;
   clientId: string;

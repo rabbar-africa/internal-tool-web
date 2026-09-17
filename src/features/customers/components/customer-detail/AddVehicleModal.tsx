@@ -28,8 +28,8 @@ interface AddVehicleModalProps {
 const validationSchema = Yup.object({
   make: Yup.string().required("Make is required"),
   model: Yup.string().required("Model is required"),
-  year: Yup.string().required("Year is required"),
-  registrationNumber: Yup.string().required("Registration number is required"),
+  year: Yup.string(),
+  registrationNumber: Yup.string().trim(),
   vin: Yup.string(),
   color: Yup.string(),
 });
@@ -68,8 +68,9 @@ export function AddVehicleModal({
         await updateVehicle({
           make: values.make,
           model: values.model,
-          year: Number(values.year),
-          registrationNumber: values.registrationNumber,
+          // null, not undefined, so clearing a field on edit actually clears it.
+          year: values.year ? Number(values.year) : null,
+          registrationNumber: values.registrationNumber.trim() || null,
           vin: values.vin || undefined,
           color: values.color || undefined,
         });
@@ -79,8 +80,8 @@ export function AddVehicleModal({
       const created = await createVehicle({
         make: values.make,
         model: values.model,
-        year: Number(values.year),
-        registrationNumber: values.registrationNumber,
+        year: values.year ? Number(values.year) : undefined,
+        registrationNumber: values.registrationNumber.trim() || undefined,
         vin: values.vin || undefined,
         color: values.color || undefined,
         clientId,
@@ -176,8 +177,9 @@ export function AddVehicleModal({
                     {/* Year */}
                     <CustomSelect
                       label="Year"
-                      required
                       placeholder="Select year..."
+                      // Optional, so let a picked year be tapped again to clear it.
+                      rootProps={{ deselectable: true }}
                       options={YEAR_OPTIONS}
                       value={
                         formik.values.year ? [formik.values.year] : undefined
@@ -206,7 +208,6 @@ export function AddVehicleModal({
                   {/* Registration Number */}
                   <CustomInput
                     label="Registration Number"
-                    required
                     name="registrationNumber"
                     value={formik.values.registrationNumber}
                     onChange={formik.handleChange}

@@ -169,7 +169,12 @@ export function ReminderForm({
 
   const vehicles: Vehicle[] = vehiclesData?.data ?? vehiclesData ?? [];
   const vehicleOptions = vehicles.map((vehicle) => ({
-    label: `${vehicle.make} ${vehicle.model} (${vehicle.year}) • ${vehicle.registrationNumber}`,
+    label: [
+      `${vehicle.make} ${vehicle.model}${vehicle.year ? ` (${vehicle.year})` : ""}`,
+      vehicle.registrationNumber,
+    ]
+      .filter(Boolean)
+      .join(" • "),
     value: vehicle.id,
   }));
 

@@ -159,15 +159,15 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
   );
   const vehicleOptions = useMemo<SearchComboboxOption[]>(() => {
     const options: SearchComboboxOption[] = vehicles.map((vehicle) => ({
-      label: `${vehicle.make} ${vehicle.model} (${vehicle.year})`,
+      label: `${vehicle.make} ${vehicle.model}${vehicle.year ? ` (${vehicle.year})` : ""}`,
       value: vehicle.id,
-      subLabel: vehicle.registrationNumber,
+      subLabel: vehicle.registrationNumber ?? undefined,
     }));
     // Keep a just-selected/created vehicle visible before the list refetches.
     const selectedId = formik.values.vehicleId;
     if (selectedId && !options.some((o) => o.value === selectedId)) {
       options.unshift({
-        label: `${formik.values.vehicleMake} ${formik.values.vehicleModel} (${formik.values.vehicleYear})`,
+        label: `${formik.values.vehicleMake} ${formik.values.vehicleModel}${formik.values.vehicleYear ? ` (${formik.values.vehicleYear})` : ""}`,
         value: selectedId,
         subLabel: formik.values.vehicleRegistrationNumber || undefined,
       });
@@ -206,10 +206,13 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
     formik.setFieldValue("vehicleId", vehicle.id);
     formik.setFieldValue("vehicleMake", vehicle.make);
     formik.setFieldValue("vehicleModel", vehicle.model);
-    formik.setFieldValue("vehicleYear", String(vehicle.year));
+    formik.setFieldValue(
+      "vehicleYear",
+      vehicle.year ? String(vehicle.year) : "",
+    );
     formik.setFieldValue(
       "vehicleRegistrationNumber",
-      vehicle.registrationNumber,
+      vehicle.registrationNumber ?? "",
     );
   };
 
