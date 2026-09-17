@@ -1,3 +1,4 @@
+import type { Vehicle } from "@/features/customers/api/service";
 import type { ICustomer } from "./customer";
 import type { IBaseFilter } from "./filter";
 import type { PaymentModeDto } from "./payment";
@@ -51,6 +52,8 @@ export interface IInvoiceResponse {
   referenceNumber: string;
   customerId: string;
   customerName: string;
+  vehicleId?: string | null;
+  vehicle?: Vehicle | null;
   status: string;
   date: string;
   dueDate: string;
@@ -135,6 +138,7 @@ export interface Invoice {
   id: string;
   invoiceNumber: string;
   customerId: string;
+  vehicleId?: string | null;
   customer: {
     id: string;
     name: string;
@@ -175,6 +179,7 @@ export interface CreateInvoicePayload {
   invoiceNumber: string;
   referenceNumber: string;
   customerId: string;
+  vehicleId?: string | null;
   customer: {
     name: string;
     email: string;
@@ -218,6 +223,7 @@ export interface LineItemFormRow {
 export interface CreateInvoiceFormValues {
   invoiceNumber: string;
   customerId: string;
+  vehicleId?: string;
   customer: {
     name: string;
     email: string;
