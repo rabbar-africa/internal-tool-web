@@ -7,8 +7,10 @@ import { CustomInput } from "@/components/input/CustomInput";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
 import { PAYMENT_TERMS_OPTIONS } from "./hooks/useCreateInvoice";
 import type { ICustomer } from "@/shared/interface/customer";
+import type { Vehicle } from "@/features/customers/api/service";
 import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
 import { AddNewCustomerModal } from "./AddNewCustomerModal";
+import { AddVehicleModal } from "@/features/customers/components/customer-detail/AddVehicleModal";
 import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
 
 interface InvoiceFormHeaderProps {
@@ -18,6 +20,12 @@ interface InvoiceFormHeaderProps {
   onAddNewCustomer: (customer: ICustomer) => void;
   onCustomerSearch: (query: string) => void;
   isSearchingCustomers: boolean;
+  vehicleOptions?: { label: string; value: string; subLabel?: string }[];
+  vehiclesLoading?: boolean;
+  addVehicleOpen?: boolean;
+  onOpenAddVehicle?: () => void;
+  onCloseAddVehicle?: () => void;
+  onVehicleSaved?: (vehicle: Vehicle) => void;
 }
 
 export function InvoiceFormHeader({
@@ -27,6 +35,12 @@ export function InvoiceFormHeader({
   onAddNewCustomer,
   onCustomerSearch,
   isSearchingCustomers,
+  vehicleOptions = [],
+  vehiclesLoading = false,
+  addVehicleOpen = false,
+  onOpenAddVehicle,
+  onCloseAddVehicle,
+  onVehicleSaved,
 }: InvoiceFormHeaderProps) {
   const [showConfig, setShowConfig] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
@@ -46,7 +60,7 @@ export function InvoiceFormHeader({
         gap={{ base: "6", md: "10" }}
         p={{ base: "4", md: "6" }}
       >
-        {/* Left: Customer */}
+        {/* Left: Customer & Vehicle */}
         <Stack gap="4">
           <Box maxW={{ base: "15rem", lg: "unset" }}>
             <SearchCombobox
@@ -61,6 +75,7 @@ export function InvoiceFormHeader({
                   name: option.label,
                   email: option.subLabel ?? "",
                 });
+                formik.setFieldValue("vehicleId", "");
               }}
               onSearchChange={onCustomerSearch}
               searchDebounceMs={400}
@@ -75,6 +90,35 @@ export function InvoiceFormHeader({
                 label: "Add Customer",
                 onClick: () => setAddCustomerOpen(true),
               }}
+            />
+          </Box>
+
+          <Box maxW={{ base: "15rem", lg: "unset" }}>
+            <SearchCombobox
+              label="Select Vehicle"
+              options={vehicleOptions}
+              placeholder={
+                !formik.values.customerId
+                  ? "Select a customer first"
+                  : vehiclesLoading
+                    ? "Loading vehicles..."
+                    : vehicleOptions.length > 0
+                      ? "Search vehicle..."
+                      : "No vehicles found — add one"
+              }
+              disabled={!formik.values.customerId || vehiclesLoading}
+              value={formik.values.vehicleId || undefined}
+              onChange={(val) => formik.setFieldValue("vehicleId", val)}
+              isLoading={vehiclesLoading}
+              emptyText="No matching vehicles found."
+              footerAction={
+                formik.values.customerId && onOpenAddVehicle
+                  ? {
+                      label: "Add Vehicle",
+                      onClick: onOpenAddVehicle,
+                    }
+                  : undefined
+              }
             />
           </Box>
 
@@ -269,6 +313,15 @@ export function InvoiceFormHeader({
           setAddCustomerOpen(false);
         }}
       />
+
+      {onCloseAddVehicle && (
+        <AddVehicleModal
+          open={addVehicleOpen}
+          onClose={onCloseAddVehicle}
+          clientId={formik.values.customerId}
+          onVehicleSaved={onVehicleSaved}
+        />
+      )}
     </>
   );
 }

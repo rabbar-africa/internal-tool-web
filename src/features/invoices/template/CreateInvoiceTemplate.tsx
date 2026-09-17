@@ -45,6 +45,13 @@ export function CreateInvoiceTemplate({
     isSearchingCustomers,
     handleItemSearch,
     isSearchingItems,
+
+    vehicleOptions,
+    vehiclesLoading,
+    addVehicleOpen,
+    openAddVehicle,
+    closeAddVehicle,
+    handleVehicleSaved,
   } = useCreateInvoice({ mode });
 
   if (isLoadingInvoice) {
@@ -112,6 +119,12 @@ export function CreateInvoiceTemplate({
             onAddNewCustomer={addNewCustomer}
             onCustomerSearch={handleCustomerSearch}
             isSearchingCustomers={isSearchingCustomers}
+            vehicleOptions={vehicleOptions}
+            vehiclesLoading={vehiclesLoading}
+            addVehicleOpen={addVehicleOpen}
+            onOpenAddVehicle={openAddVehicle}
+            onCloseAddVehicle={closeAddVehicle}
+            onVehicleSaved={handleVehicleSaved}
           />
 
           <Separator borderColor="gray.75" />

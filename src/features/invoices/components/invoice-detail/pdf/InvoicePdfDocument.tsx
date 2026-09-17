@@ -131,6 +131,10 @@ const styles = StyleSheet.create({
   cellMuted: { fontSize: 9, color: c.gray500 },
 
   // Totals
+  vehicleInfo: { width: 240 },
+  vehicleInfoRow: { flexDirection: "row", marginBottom: 3 },
+  vehicleInfoLabel: { fontSize: 8, color: c.gray400, width: 55 },
+  vehicleInfoValue: { fontSize: 8, fontWeight: 500, color: c.gray500, flex: 1 },
   totalsWrap: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -232,6 +236,19 @@ export function InvoicePdfDocument({
     .join(" , ");
 
   const notes = invoice.notes || orgConfig?.invoiceNotesDefault;
+
+  // Vehicle details shown beside the totals. Unrecorded fields are left out.
+  const vehicleRows = invoice.vehicle
+    ? [
+        { label: "Make", value: invoice.vehicle.make },
+        { label: "Model", value: invoice.vehicle.model },
+        {
+          label: "Year",
+          value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
+        },
+        { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
+      ].filter((row) => row.value)
+    : [];
   const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
 
   const plain = (n: number) =>
@@ -351,7 +368,24 @@ export function InvoicePdfDocument({
         </View>
 
         {/* Totals */}
-        <View style={styles.totalsWrap}>
+        <View
+          style={
+            vehicleRows.length > 0
+              ? [styles.totalsWrap, { justifyContent: "space-between" }]
+              : styles.totalsWrap
+          }
+        >
+          {vehicleRows.length > 0 ? (
+            <View style={styles.vehicleInfo}>
+              <Text style={styles.sectionTitle}>Vehicle Information</Text>
+              {vehicleRows.map((row) => (
+                <View key={row.label} style={styles.vehicleInfoRow}>
+                  <Text style={styles.vehicleInfoLabel}>{row.label}</Text>
+                  <Text style={styles.vehicleInfoValue}>{row.value}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           <View style={styles.totals}>
             <TotalRow label="Sub Total" value={plain(subtotal)} />
             {discountAmount > 0 ? (
