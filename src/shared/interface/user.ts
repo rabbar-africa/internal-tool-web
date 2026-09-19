@@ -89,4 +89,9 @@ export interface IUser {
   /** Flattened projection of every permission the user's roles grant. */
   permissions: IPermission[];
   organization: IOrganization;
+  /**
+   * Whether this user has messaged the Rabbar WhatsApp assistant at least
+   * once. From /auth/me; undefined on older API versions.
+   */
+  hasMessagedWhatsappBot?: boolean;
 }
