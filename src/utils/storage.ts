@@ -8,7 +8,8 @@ export type keyType =
   | "access_token"
   | "redirect_path"
   | "current_org"
-  | "user_organizations";
+  | "user_organizations"
+  | "whatsapp_banner_dismissed";
 
 function getExpiresTime(payload: DurationType) {
   switch (payload.unit) {

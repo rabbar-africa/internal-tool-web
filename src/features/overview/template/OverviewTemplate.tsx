@@ -12,6 +12,7 @@ import {
   DEFAULT_PRESET,
   getPresetFilter,
 } from "@/features/overview/components/dashboard/DashboardFilters";
+import { WhatsAppAssistantBanner } from "@/features/overview/components/dashboard/WhatsAppAssistantBanner";
 import { UpcomingRemindersPanel } from "@/features/reminders/components/UpcomingRemindersPanel";
 import { REMINDER_TYPES } from "@/shared/interface/reminder";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
@@ -50,6 +51,8 @@ export function OverviewTemplate() {
         subtitle={formatPeriod(orgName, data?.period?.from, data?.period?.to)}
         action={<DashboardFilters onChange={setFilter} />}
       />
+
+      <WhatsAppAssistantBanner />
 
       {isError ? (
         <Center

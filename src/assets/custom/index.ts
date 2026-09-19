@@ -102,6 +102,7 @@ export * from "./UserPlusIcon";
 export * from "./UsersIcon";
 export * from "./UsersThree";
 export * from "./WarningIcon";
+export * from "./WhatsAppIcon";
 export * from "./XIcon";
 export * from "./Exclamation";
 export * from "./Archive";
