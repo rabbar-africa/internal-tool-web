@@ -5,4 +5,8 @@ export const env = {
   GOOGLE_OAUTH_CLIENT_KEY: import.meta.env.VITE_APP_GOOGLE_OAUTH_CLIENT_KEY,
   ENCRYPTION_KEY: import.meta.env.VITE_APP_ENCRYPTION_KEY,
   ENCRYPTION_IV: import.meta.env.VITE_APP_ENCRYPTION_IV,
+  /** Rabbar WhatsApp assistant. Staging +15556198424, production 2349168878787. */
+  WHATSAPP_BOT_NUMBER: import.meta.env.VITE_WHATSAPP_BOT_NUMBER as
+    | string
+    | undefined,
 };
