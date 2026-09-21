@@ -19,7 +19,7 @@ import { getErrorMessage } from "@/utils/handle-error";
 // ];
 
 const validationSchema = Yup.object({
-  name: Yup.string().trim().required("Organization name is required"),
+  name: Yup.string().trim().required("Company name is required"),
   email: Yup.string()
     .trim()
     .email("Enter a valid email")
@@ -140,11 +140,11 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
       <Stack gap="5">
         <Box>
           <Text fontSize="13px" fontWeight="600" color="gray.500" mb="3">
-            Organization details
+            Company details
           </Text>
           <Stack gap="4">
             <CustomInput
-              label="Oganization Name"
+              label="Company Name"
               required
               name="name"
               value={formik.values.name}
@@ -160,7 +160,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
             />
 
             <CustomInput
-              label="Oganization Email"
+              label="Company Email"
               type="email"
               required
               name="email"
@@ -176,7 +176,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
             />
 
             <CustomInput
-              label="Oganization Phone No"
+              label="Phone No (Whatsapp)"
               required
               name="phone"
               value={formik.values.phone}
