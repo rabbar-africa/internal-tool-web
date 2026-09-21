@@ -4,8 +4,14 @@ import {
   View,
   Text,
   Image,
+  Link,
   StyleSheet,
 } from "@react-pdf/renderer";
+import rabbarLogo from "@/assets/logo.png";
+import {
+  RABBAR_JOBCARD_DISPLAY,
+  RABBAR_JOBCARD_URL,
+} from "@/shared/constants/brand";
 import moment from "moment";
 import { formatMoney } from "@/hooks/useFormatMoney";
 import type { IOrganization } from "@/shared/interface/common";
@@ -175,6 +181,37 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
+  // Starter-plan branding. `pageBranded` reserves room for the footer so
+  // content never runs underneath it.
+  pageBranded: { paddingBottom: 64 },
+  brandFooter: {
+    position: "absolute",
+    bottom: 22,
+    left: 36,
+    right: 36,
+    paddingTop: 7,
+    borderTopWidth: 1,
+    borderTopColor: c.gray75,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brandFooterLeft: { flexDirection: "row", alignItems: "center" },
+  brandPoweredBy: {
+    fontSize: 7,
+    color: c.gray300,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginRight: 7,
+  },
+  brandFooterLogo: { width: 56, height: 11, objectFit: "contain" },
+  brandFooterLink: {
+    fontSize: 7.5,
+    color: c.primary400,
+    textDecoration: "none",
+    fontWeight: 600,
+  },
+
   // Footer blocks
   section: { marginTop: 16 },
   sectionTitle: {
@@ -191,11 +228,14 @@ const styles = StyleSheet.create({
 interface InvoicePdfDocumentProps {
   invoice: IInvoiceResponse;
   organization?: IOrganization;
+  /** Starter (free) plan invoices carry a small Rabbar credit. */
+  showRabbarBranding?: boolean;
 }
 
 export function InvoicePdfDocument({
   invoice,
   organization,
+  showRabbarBranding = false,
 }: InvoicePdfDocumentProps) {
   const client = invoice.client;
   const currencyCode = invoice.currencyCode || organization?.currency;
@@ -258,7 +298,12 @@ export function InvoicePdfDocument({
 
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`}>
-      <Page size="A4" style={styles.page}>
+      <Page
+        size="A4"
+        style={
+          showRabbarBranding ? [styles.page, styles.pageBranded] : styles.page
+        }
+      >
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.brandCol}>
@@ -476,6 +521,17 @@ export function InvoicePdfDocument({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Terms &amp; Conditions</Text>
             <Text style={styles.sectionText}>{terms}</Text>
+          </View>
+        ) : null}
+        {showRabbarBranding ? (
+          <View style={styles.brandFooter} fixed>
+            <View style={styles.brandFooterLeft}>
+              <Text style={styles.brandPoweredBy}>Powered by</Text>
+              <Image src={rabbarLogo} style={styles.brandFooterLogo} />
+            </View>
+            <Link src={RABBAR_JOBCARD_URL} style={styles.brandFooterLink}>
+              {RABBAR_JOBCARD_DISPLAY}
+            </Link>
           </View>
         ) : null}
       </Page>

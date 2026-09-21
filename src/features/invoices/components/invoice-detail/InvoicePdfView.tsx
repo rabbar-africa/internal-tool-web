@@ -6,6 +6,12 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
 import { Link } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
+import { useBillingOverviewQuery } from "@/features/billing/api/query";
+import rabbarLogo from "@/assets/logo.png";
+import {
+  RABBAR_JOBCARD_DISPLAY,
+  RABBAR_JOBCARD_URL,
+} from "@/shared/constants/brand";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v: string) => moment(v).format("DD MMM YYYY");
@@ -17,6 +23,9 @@ interface InvoicePdfViewProps {
 export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const { formatMoney } = useFormatMoney();
   const { userOrganization } = useCurrentUser();
+  const { data: billing } = useBillingOverviewQuery();
+  // Mirrors the PDF: Starter (free) invoices carry a small Rabbar credit.
+  const showRabbarBranding = billing?.effectiveTier === "STARTER";
 
   const client = invoice.client;
   const subtotal = toNum(invoice.subTotal);
@@ -430,6 +439,39 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             {terms}
           </Text>
         </Box>
+      )}
+
+      {showRabbarBranding && (
+        <Flex
+          mt="10"
+          pt="4"
+          borderTopWidth="1px"
+          borderColor="gray.75"
+          align="center"
+          justify="space-between"
+          gap="3"
+        >
+          <Flex align="center" gap="2">
+            <Text
+              fontSize="10px"
+              color="gray.300"
+              letterSpacing="0.1em"
+              textTransform="uppercase"
+            >
+              Powered by
+            </Text>
+            <Image src={rabbarLogo} alt="Rabbar Africa" h="13px" />
+          </Flex>
+          <Text asChild fontSize="11px" color="primary.400" fontWeight="600">
+            <a
+              href={RABBAR_JOBCARD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {RABBAR_JOBCARD_DISPLAY}
+            </a>
+          </Text>
+        </Flex>
       )}
     </Box>
   );
