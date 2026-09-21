@@ -4,6 +4,7 @@ import {
   View,
   Text,
   Image,
+  Link,
   StyleSheet,
 } from "@react-pdf/renderer";
 import moment from "moment";
@@ -12,6 +13,11 @@ import { formatAddress } from "@/utils/string-formatter";
 import type { IOrganization } from "@/shared/interface/common";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import { pdfColors as c } from "./colors";
+import rabbarLogo from "@/assets/logo.png";
+import {
+  RABBAR_JOBCARD_DISPLAY,
+  RABBAR_JOBCARD_URL,
+} from "@/shared/constants/brand";
 // Reuse the Poppins registration from the invoice PDF (same brand font).
 import { registerPdfFonts } from "@/features/invoices/components/invoice-detail/pdf/registerFonts";
 
@@ -43,6 +49,37 @@ const ribbonFor = (status: string) => {
 };
 
 const styles = StyleSheet.create({
+  // Starter-plan credit, fixed to the bottom of every page. `pageBranded`
+  // reserves the room for it so content never runs underneath.
+  pageBranded: { paddingBottom: 64 },
+  brandFooter: {
+    position: "absolute",
+    bottom: 22,
+    left: 40,
+    right: 40,
+    paddingTop: 7,
+    borderTopWidth: 1,
+    borderTopColor: c.gray75,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brandFooterLeft: { flexDirection: "row", alignItems: "center" },
+  brandPoweredBy: {
+    fontSize: 7,
+    color: c.gray300,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginRight: 7,
+  },
+  brandFooterLogo: { width: 56, height: 11, objectFit: "contain" },
+  brandFooterLink: {
+    fontSize: 7.5,
+    // Brand blue; this palette has no primary token.
+    color: "#013064",
+    textDecoration: "none",
+    fontWeight: 600,
+  },
   page: {
     position: "relative",
     paddingHorizontal: 40,
@@ -183,11 +220,14 @@ const styles = StyleSheet.create({
 interface PaymentReceiptDocumentProps {
   payment: IPaymentReceived;
   organization?: IOrganization;
+  /** Starter (free) plan receipts carry a small Rabbar credit. */
+  showRabbarBranding?: boolean;
 }
 
 export function PaymentReceiptDocument({
   payment,
   organization,
+  showRabbarBranding = false,
 }: PaymentReceiptDocumentProps) {
   const currencyCode = payment.currencyCode || organization?.currency;
   // Use the currency code (e.g. "NGN") rather than the ₦ symbol — the bundled
@@ -211,7 +251,12 @@ export function PaymentReceiptDocument({
 
   return (
     <Document title={`Receipt ${payment.paymentNumber || ""}`}>
-      <Page size="A4" style={styles.page}>
+      <Page
+        size="A4"
+        style={
+          showRabbarBranding ? [styles.page, styles.pageBranded] : styles.page
+        }
+      >
         {/* Status ribbon */}
         <Text style={[styles.ribbon, { backgroundColor: ribbon.bg }]}>
           {ribbon.label}
@@ -319,6 +364,18 @@ export function PaymentReceiptDocument({
             </View>
           ) : null}
         </View>
+
+        {showRabbarBranding ? (
+          <View style={styles.brandFooter} fixed>
+            <View style={styles.brandFooterLeft}>
+              <Text style={styles.brandPoweredBy}>Powered by</Text>
+              <Image src={rabbarLogo} style={styles.brandFooterLogo} />
+            </View>
+            <Link src={RABBAR_JOBCARD_URL} style={styles.brandFooterLink}>
+              {RABBAR_JOBCARD_DISPLAY}
+            </Link>
+          </View>
+        ) : null}
       </Page>
     </Document>
   );
