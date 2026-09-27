@@ -13,7 +13,7 @@ import { UserDashboardContainer } from "@/components/hoc";
 import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
 // import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
-import { SearchInput } from "@/components/input/SearchInput";
+// import { SearchInput } from "@/components/input/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface NavBarProps {
@@ -74,7 +74,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
           <Flex alignItems="center" gap="3">
             {/* Global search – hidden on mobile */}
             <Box display={{ base: "none", lg: "block" }} maxW="200px">
-              <SearchInput placeholder="Search..." />
+              {/* <SearchInput placeholder="Search..." /> */}
             </Box>
 
             {/* Notification bell */}

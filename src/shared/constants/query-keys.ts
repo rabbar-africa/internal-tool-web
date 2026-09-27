@@ -105,6 +105,10 @@ export const customQueryKey = {
     member: "get-team-member",
     invites: "get-user-invites",
   },
+  banks: {
+    list: "get-banks",
+    resolve: "resolve-bank-account",
+  },
   organizations: {
     details: "get-organization-details",
     addresses: "get-organization-addresses",

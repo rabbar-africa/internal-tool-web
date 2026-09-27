@@ -318,7 +318,7 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
       clearTimeout(componentDebounceRef.current);
     componentDebounceRef.current = setTimeout(
       () => setComponentSearch(query),
-      800,
+      400,
     );
   }, []);
 

@@ -1,4 +1,5 @@
 import { axios } from "@/lib/axios";
+import { QUERY_PATH } from "@/shared/constants/query-paths";
 import { type ApiResponse } from "@/shared/interface/api";
 import type {
   IOrganization,
@@ -6,6 +7,8 @@ import type {
 } from "@/shared/interface/common";
 import { type GetOrganizationDetailsResponse } from "@/shared/interface/response";
 import type {
+  BankOption,
+  ResolvedBankAccount,
   CreateOrgAddressPayload,
   CreateOrgBankAccountPayload,
   CreateOrgCurrencyPayload,
@@ -254,4 +257,22 @@ export const updateOrganizationTransactionSeries = async (
     body,
   );
   return response.data;
+};
+
+// ─── Bank lookup (Paystack-backed, not org-scoped) ───────────────────────────
+
+export const getBanks = async (): Promise<BankOption[]> => {
+  const response = await axios.get(QUERY_PATH.banks.list);
+  return response.data?.data ?? response.data ?? [];
+};
+
+/** Resolves an account number + bank code to the name on the account. */
+export const resolveBankAccount = async (
+  accountNumber: string,
+  bankCode: string,
+): Promise<ResolvedBankAccount> => {
+  const response = await axios.get(QUERY_PATH.banks.resolve, {
+    params: { accountNumber, bankCode },
+  });
+  return response.data?.data ?? response.data;
 };

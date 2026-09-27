@@ -152,7 +152,10 @@ export function SearchInput({
           }}
           pr={".875rem"}
           pl={"475rem"}
-          disabled={disabled || loading}
+          // Never disabled while loading: typing must stay possible, or slow
+          // typers lose keystrokes and the field loses focus mid-search. The
+          // spinner in the start element is the only loading cue.
+          disabled={disabled}
           _placeholder={{
             color: "gray.200",
             fontSize: "0.75rem",
@@ -223,7 +226,7 @@ export function SearchInput({
     <Field.Root
       required={required}
       invalid={!!error}
-      disabled={disabled || loading}
+      disabled={disabled}
       {...fieldProps}
     >
       {label && (

@@ -4,14 +4,14 @@ import {
   CloseButton,
   Dialog,
   Flex,
-  Grid,
   Portal,
   Stack,
   Text,
 } from "@chakra-ui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { CustomInput, CustomSwitch } from "@/components/input";
+import { CustomSwitch } from "@/components/input";
+import { BankAccountFields } from "./BankAccountFields";
 import { chakraScrollbarStyle } from "@/shared/constants/styles";
 import type {
   CreateOrgBankAccountPayload,
@@ -29,9 +29,11 @@ interface BankAccountModalProps {
 }
 
 const validationSchema = Yup.object({
-  bankName: Yup.string().required("Bank name is required"),
+  bankName: Yup.string().required("Bank is required"),
   accountName: Yup.string().required("Account name is required"),
-  accountNumber: Yup.string().required("Account number is required"),
+  accountNumber: Yup.string()
+    .required("Account number is required")
+    .matches(/^\d{10}$/, "Account number must be exactly 10 digits"),
 });
 
 export function BankAccountModal({
@@ -99,53 +101,29 @@ export function BankAccountModal({
                   <Text fontSize="16px" fontWeight="600" color="gray.500">
                     {isEdit ? "Edit Bank Account" : "Add Bank Account"}
                   </Text>
-                  <CustomInput
-                    label="Bank Name"
-                    required
-                    name="bankName"
-                    value={formik.values.bankName}
-                    onChange={formik.handleChange}
-                    error={
-                      formik.touched.bankName
+                  <BankAccountFields
+                    values={{
+                      bankName: formik.values.bankName,
+                      bankCode: formik.values.bankCode ?? "",
+                      accountNumber: formik.values.accountNumber,
+                      accountName: formik.values.accountName,
+                    }}
+                    disabled={isCreating || isUpdating}
+                    onChange={(patch) =>
+                      formik.setValues((current) => ({ ...current, ...patch }))
+                    }
+                    errors={{
+                      bankName: formik.touched.bankName
                         ? (formik.errors.bankName as string)
-                        : undefined
-                    }
-                  />
-                  <CustomInput
-                    label="Account Name"
-                    required
-                    name="accountName"
-                    value={formik.values.accountName}
-                    onChange={formik.handleChange}
-                    error={
-                      formik.touched.accountName
+                        : undefined,
+                      accountNumber: formik.touched.accountNumber
+                        ? (formik.errors.accountNumber as string)
+                        : undefined,
+                      accountName: formik.touched.accountName
                         ? (formik.errors.accountName as string)
-                        : undefined
-                    }
+                        : undefined,
+                    }}
                   />
-                  <Grid
-                    templateColumns={{ base: "1fr", sm: "1fr 1fr" }}
-                    gap="4"
-                  >
-                    <CustomInput
-                      label="Account Number"
-                      required
-                      name="accountNumber"
-                      value={formik.values.accountNumber}
-                      onChange={formik.handleChange}
-                      error={
-                        formik.touched.accountNumber
-                          ? (formik.errors.accountNumber as string)
-                          : undefined
-                      }
-                    />
-                    <CustomInput
-                      label="Bank / Sort Code"
-                      name="bankCode"
-                      value={formik.values.bankCode ?? ""}
-                      onChange={formik.handleChange}
-                    />
-                  </Grid>
                   <CustomSwitch
                     reversed
                     checked={formik.values.isPrimary}

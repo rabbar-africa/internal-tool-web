@@ -193,7 +193,7 @@ export function TechnicianListTemplate() {
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val: string) => setFilters({ search: val, page: 1 })}
-              debounceMs={500}
+              debounceMs={400}
               loading={isFetching}
               width={{ base: "100%", md: "21rem" }}
             />

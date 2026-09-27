@@ -32,6 +32,10 @@ export const QUERY_PATH = {
     payLink: "/billing/pay",
     checkoutStatus: "/billing/checkout",
   },
+  banks: {
+    list: "/banks",
+    resolve: "/banks/resolve",
+  },
   users: {
     getAccountUsers: "accounts/users",
     getAdminUsers: "admin/users",
