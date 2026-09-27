@@ -141,7 +141,7 @@ export function PaperworkTemplate() {
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val) => setFilters({ search: val, page: 1 })}
-              debounceMs={500}
+              debounceMs={400}
               loading={isLoading}
               width={{ base: "100%", md: "21rem" }}
             />

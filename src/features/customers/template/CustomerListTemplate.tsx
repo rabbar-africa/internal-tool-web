@@ -211,7 +211,7 @@ export function CustomerListTemplate() {
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val) => setFilters({ search: val, page: 1 })}
-              debounceMs={1500}
+              debounceMs={400}
               loading={isLoading}
               width={{ base: "100%", md: "21rem" }}
             />

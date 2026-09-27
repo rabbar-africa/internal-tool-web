@@ -94,7 +94,7 @@ export function SearchCombobox({
   }, [isInputControlled, selectedOption?.label]);
 
   // The current search query drives local filtering / the server-search call.
-  // Reset to "" when the popup opens so reopening shows the full list again.
+  // Cleared when the popup closes, so reopening shows the full list again.
   const [query, setQuery] = useState("");
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -172,7 +172,9 @@ export function SearchCombobox({
         value={selectedOption ? [selectedOption.value] : []}
         inputValue={inputText}
         onOpenChange={(details) => {
-          if (details.open) setQuery("");
+          // Only on close: Ark re-fires `open` as the collection changes while
+          // typing, and clearing the query there wiped the search mid-keystroke.
+          if (!details.open) setQuery("");
         }}
         onInputValueChange={(details) => {
           if (!isInputControlled) setInternalInput(details.inputValue);

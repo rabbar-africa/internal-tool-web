@@ -236,7 +236,7 @@ export function ItemListTemplate() {
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val) => setFilters({ search: val, page: 1 })}
-              debounceMs={500}
+              debounceMs={400}
               loading={isLoading}
             />
           </Flex>
