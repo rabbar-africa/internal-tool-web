@@ -126,11 +126,6 @@ export function AccountDetails() {
               >
                 {account.accountNumber}
               </Text>
-              {account.bankCode && (
-                <Text fontSize="12px" color="gray.300" mt="1">
-                  Code: {account.bankCode}
-                </Text>
-              )}
               <Flex
                 gap="2"
                 mt="3"

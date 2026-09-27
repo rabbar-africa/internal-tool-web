@@ -1,5 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  getBanks,
+  resolveBankAccount,
   createOrganizationAddress,
   createOrganizationBankAccount,
   createOrganizationCurrency,
@@ -341,3 +343,28 @@ export const useUpdateOrganizationTransactionSeries = () => {
     },
   });
 };
+
+// ─── Bank lookup ─────────────────────────────────────────────────────────────
+
+/** Paystack's bank list — static enough to cache for the session. */
+export const useBanksQuery = () =>
+  useQuery({
+    queryKey: [customQueryKey.banks.list],
+    queryFn: getBanks,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+/**
+ * Looks up the name on an account. Only runs once the bank is chosen and the
+ * number is a full 10-digit NUBAN, so a half-typed number never hits the API.
+ */
+export const useResolveBankAccountQuery = (
+  accountNumber: string,
+  bankCode?: string,
+) =>
+  useQuery({
+    queryKey: [customQueryKey.banks.resolve, bankCode, accountNumber],
+    queryFn: () => resolveBankAccount(accountNumber, bankCode as string),
+    enabled: Boolean(bankCode) && /^\d{10}$/.test(accountNumber),
+    staleTime: Infinity,
+  });

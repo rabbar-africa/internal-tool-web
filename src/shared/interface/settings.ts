@@ -64,6 +64,18 @@ export interface CreateOrgBankAccountPayload {
   isPrimary?: boolean;
 }
 
+/** A bank from GET /banks, for the bank picker. */
+export interface BankOption {
+  name: string;
+  code: string;
+}
+
+/** What GET /banks/resolve returns for an account number + bank. */
+export interface ResolvedBankAccount {
+  accountNumber: string;
+  accountName: string;
+}
+
 export interface IOrgCurrency {
   id: string;
   organizationId?: string;
