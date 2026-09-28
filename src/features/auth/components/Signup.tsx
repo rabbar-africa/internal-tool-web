@@ -10,7 +10,7 @@ import { BankAccountStep } from "./signup/BankAccountStep";
 import { AddressStep } from "./signup/AddressStep";
 
 const STEPS = [
-  { id: 1, label: "Organization" },
+  { id: 1, label: "Company" },
   { id: 2, label: "Verify Email" },
   { id: 3, label: "Bank Account" },
   { id: 4, label: "Address" },
@@ -51,7 +51,7 @@ export function Signup() {
 
   return (
     <>
-      <Head title="Sign Up" description="Create your organization account" />
+      <Head title="Sign Up" description="Create your company account" />
 
       <Box w="100%" maxW="32rem">
         <Text

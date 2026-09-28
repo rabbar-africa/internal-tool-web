@@ -75,7 +75,7 @@ export function JobCardFilters({
         value={searchInput}
         onChange={onSearchInputChange}
         onSearch={onSearchCommit}
-        debounceMs={500}
+        debounceMs={400}
         loading={isLoading}
         width={{ base: "100%", md: "23rem" }}
       />
