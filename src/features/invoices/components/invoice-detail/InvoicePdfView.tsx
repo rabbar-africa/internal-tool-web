@@ -31,6 +31,11 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const subtotal = toNum(invoice.subTotal);
   const discountAmount = toNum(invoice.discount);
   const taxAmount = toNum(invoice.taxAmount);
+  // The invoice carries the tax it was issued with; older ones have neither.
+  const taxPercent = Number(invoice.taxPercent ?? 0);
+  const taxLabel = invoice.taxName
+    ? `${invoice.taxName}${taxPercent ? ` (${taxPercent}%)` : ""}`
+    : "VAT";
   const adjustment = toNum(invoice.adjustment);
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
@@ -321,7 +326,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             />
           )}
           {taxAmount > 0 && (
-            <TotalRow label="VAT" value={formatPlain(taxAmount)} />
+            <TotalRow label={taxLabel} value={formatPlain(taxAmount)} />
           )}
           {adjustment !== 0 && (
             <TotalRow

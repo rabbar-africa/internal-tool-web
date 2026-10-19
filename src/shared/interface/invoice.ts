@@ -54,6 +54,10 @@ export interface IInvoiceResponse {
   customerName: string;
   vehicleId?: string | null;
   vehicle?: Vehicle | null;
+  /** Whole-job tax: the orgTaxes id, with a snapshot of its name and rate. */
+  taxId?: string | null;
+  taxName?: string | null;
+  taxPercent?: string | number | null;
   status: string;
   date: string;
   dueDate: string;
@@ -180,6 +184,11 @@ export interface CreateInvoicePayload {
   referenceNumber: string;
   customerId: string;
   vehicleId?: string | null;
+  /**
+   * Whole-job tax — an orgTaxes id, charged once after discounts. `null`
+   * clears it on update. Not allowed alongside per-line taxIds.
+   */
+  taxId?: string | null;
   customer: {
     name: string;
     email: string;
@@ -224,6 +233,8 @@ export interface CreateInvoiceFormValues {
   invoiceNumber: string;
   customerId: string;
   vehicleId?: string;
+  /** Whole-job tax (orgTaxes id); "" means no tax. */
+  taxId: string;
   customer: {
     name: string;
     email: string;

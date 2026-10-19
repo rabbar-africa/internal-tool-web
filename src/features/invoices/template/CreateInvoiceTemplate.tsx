@@ -31,7 +31,7 @@ export function CreateInvoiceTemplate({
     selectedCustomer,
     handleItemSelect,
     totals,
-    applyVat,
+    taxes,
     getLineAmount,
     isPending,
     handleCancel,
@@ -145,11 +145,7 @@ export function CreateInvoiceTemplate({
           <Separator borderColor="gray.75" />
 
           {/* Notes + Totals */}
-          <InvoiceFooter
-            formik={formik}
-            totals={totals}
-            onApplyVat={applyVat}
-          />
+          <InvoiceFooter formik={formik} totals={totals} taxes={taxes} />
 
           <Separator borderColor="gray.75" />
 

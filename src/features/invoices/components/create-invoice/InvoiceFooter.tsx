@@ -3,12 +3,16 @@ import type { FormikProps } from "formik";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
+import { CustomSelect } from "@/components/input/CustomSelect";
+import type { IOrgTax } from "@/shared/interface/settings";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
 
 interface Totals {
   subtotal: number;
   entityDiscount: number;
+  taxVal: number;
+  taxRate: number;
   adjustmentVal: number;
   total: number;
 }
@@ -16,16 +20,21 @@ interface Totals {
 interface InvoiceFooterProps {
   formik: FormikProps<CreateInvoiceFormValues>;
   totals: Totals;
-  onApplyVat: () => void;
+  /** The organization's active taxes, for the whole-job tax picker. */
+  taxes: IOrgTax[];
 }
 
-export function InvoiceFooter({
-  formik,
-  totals,
-  onApplyVat,
-}: InvoiceFooterProps) {
+export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
   const { formatMoney } = useFormatMoney();
-  const { subtotal, entityDiscount, adjustmentVal, total } = totals;
+  const { subtotal, entityDiscount, taxVal, adjustmentVal, total } = totals;
+
+  const taxOptions = [
+    { label: "No tax", value: "" },
+    ...taxes.map((tax) => ({
+      label: `${tax.name} (${Number(tax.rate)}%)`,
+      value: tax.id,
+    })),
+  ];
 
   return (
     <Grid
@@ -110,30 +119,25 @@ export function InvoiceFooter({
             </Flex>
           )}
 
+          {/* Whole-job tax — charged once, after any discount. */}
+          <Flex justify="space-between" align="center" py="2" gap="4">
+            <Box flex="1" maxW="190px">
+              <CustomSelect
+                placeholder="No tax"
+                options={taxOptions}
+                value={formik.values.taxId ? [formik.values.taxId] : [""]}
+                onChange={(opt: { value: string[] }) =>
+                  formik.setFieldValue("taxId", opt?.value?.[0] ?? "")
+                }
+              />
+            </Box>
+            <Text fontSize="13px" color="gray.500">
+              {taxVal > 0 ? `+ ${formatMoney(taxVal)}` : formatMoney(0)}
+            </Text>
+          </Flex>
+
           <Flex justify="space-between" align="center" py="2" gap="4">
             <Box>
-              <Flex align="center" gap="2">
-                {/* <Text fontSize="13px" color="gray.400">
-                  Adjustment
-                </Text> */}
-                <Box
-                  border={"1px solid black"}
-                  padding={"2px 4px"}
-                  rounded={"10px"}
-                  h="auto"
-                  cursor={"pointer"}
-                  onClick={onApplyVat}
-                >
-                  <Text
-                    p="0"
-                    fontSize="11px"
-                    fontWeight="700"
-                    color="primary.500"
-                  >
-                    Apply VAT (7.5%)
-                  </Text>
-                </Box>
-              </Flex>
               <CustomInput
                 placeholder="Label"
                 name="adjustmentDescription"
