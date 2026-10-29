@@ -350,7 +350,7 @@ export function ExpenseForm({
                 }
               />
               <AccountSelect
-                label="Paid Through"
+                label="Paid From"
                 includeCash
                 isCash={formik.values.paymentMode === PaymentModeDto.CASH}
                 value={formik.values.paidThroughAccountId}

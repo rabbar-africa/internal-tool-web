@@ -113,7 +113,7 @@ const columns: ColumnDef<Expense>[] = [
   },
   {
     id: "paidThroughAccount",
-    header: "Paid Through",
+    header: "Paid From",
     cell: ({ row }) => {
       const account = row.original.paidThroughAccount;
       return (
@@ -132,7 +132,7 @@ const CSV_HEADERS = {
   amount: "Amount (₦)",
   date: "Date",
   jobNumber: "Job Card",
-  paidThrough: "Paid Through",
+  paidThrough: "Paid From",
 } as const;
 
 const FILTER_SCHEMA = {

@@ -80,6 +80,10 @@ export const customQueryKey = {
     getAll: "get-all-expenses",
     getById: "get-expense-by-id",
   },
+  accountTransfers: {
+    getAll: "get-all-account-transfers",
+    getById: "get-account-transfer-by-id",
+  },
   paperwork: {
     getAll: "get-all-paperwork",
     getById: "get-paperwork-by-id",

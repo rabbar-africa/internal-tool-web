@@ -12,8 +12,20 @@ import { ChartBar } from "@/assets/custom/ChartBar";
 import { GearIcon } from "@/assets/custom/GearIcon";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
 import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
+import { ArrowLeftRightIcon } from "@/assets/custom/ArrowLeftRightIcon";
+import type { PermissionInput } from "@/utils/permissions";
 
-export const sideBarItems = [
+export interface SideBarItem {
+  name: string;
+  icon: typeof DashboardIcon;
+  href: string;
+  slug: string;
+  paths: string[];
+  /** Hidden unless the user holds it. */
+  permission?: PermissionInput;
+}
+
+export const sideBarItems: SideBarItem[] = [
   {
     name: "Dashboard",
     icon: DashboardIcon,
@@ -92,6 +104,14 @@ export const sideBarItems = [
     href: RouteConstants.expenses.base.path,
     slug: "expenses",
     paths: [RouteConstants.expenses.base.path],
+  },
+  {
+    name: "Banking",
+    icon: ArrowLeftRightIcon,
+    href: RouteConstants.banking.transfers.path,
+    slug: "banking",
+    paths: [RouteConstants.banking.transfers.path],
+    permission: "read:banking",
   },
   {
     name: "Reports",

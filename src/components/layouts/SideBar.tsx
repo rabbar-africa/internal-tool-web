@@ -7,6 +7,7 @@ import storage from "@/utils/storage";
 import { Logo } from "../common/Logo";
 import rabbarIcon from "@/assets/images/logo/rabbar-icon.png";
 import { sideBarItems } from "@/shared/data";
+import { usePermissions } from "@/hooks/usePermissions";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
 import { CaretRight } from "@/assets/custom/CaretRight";
 
@@ -25,6 +26,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const currentRoute = useLocation();
   const navigate = useNavigate();
+  const { has } = usePermissions();
+  const visibleItems = sideBarItems.filter(
+    (item) => !item.permission || has(item.permission),
+  );
 
   const handleLogout = () => {
     removeToken();
@@ -78,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Nav items */}
       <Flex pt={"2rem"} bg={"primary.500"} flexDirection="column" flex="1">
-        {sideBarItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = matchPath(
             currentRoute.pathname,
             item.href,

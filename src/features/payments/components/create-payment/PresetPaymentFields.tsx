@@ -64,7 +64,7 @@ export function PresetPaymentFields({
           error={touched.date && errors.date ? errors.date : undefined}
         />
         <AccountSelect
-          label="Deposit To"
+          label="Paid Into"
           includeCash
           isCash={values.mode === PaymentModeDto.CASH}
           fallbackAccountId={depositFallbackAccountId}

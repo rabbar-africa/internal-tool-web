@@ -102,7 +102,7 @@ const columns: ColumnDef<IPaymentReceived>[] = [
   },
   {
     id: "depositToAccount",
-    header: "Deposited To",
+    header: "Paid Into",
     cell: ({ row }) => {
       const account = row.original.depositToAccount;
       return (
@@ -174,7 +174,7 @@ const CSV_HEADERS = {
   referenceNumber: "Reference #",
   customerName: "Customer",
   mode: "Mode",
-  depositTo: "Deposited To",
+  depositTo: "Paid Into",
   amount: "Amount",
   amountApplied: "Applied",
   unusedAmount: "Unused",
