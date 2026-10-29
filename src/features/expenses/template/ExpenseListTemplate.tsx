@@ -54,6 +54,14 @@ const columns: ColumnDef<Expense>[] = [
         <Text textStyle="small-regular" color="gray.500" fontWeight="500">
           {row.original.name}
         </Text>
+        {row.original.invoice && (
+          <Text fontSize="12px" color="primary.300" lineClamp={1}>
+            for {row.original.invoice.invoiceNumber}
+            {row.original.invoiceLineItem
+              ? ` · ${row.original.invoiceLineItem.name}`
+              : ""}
+          </Text>
+        )}
         {row.original.description && (
           <Text fontSize="12px" color="gray.300" lineClamp={1}>
             {row.original.description}
@@ -132,6 +140,7 @@ const CSV_HEADERS = {
   amount: "Amount (₦)",
   date: "Date",
   jobNumber: "Job Card",
+  invoiceNumber: "Invoice",
   paidThrough: "Paid From",
 } as const;
 
@@ -141,6 +150,8 @@ const FILTER_SCHEMA = {
   search: { defaultValue: "" },
   category: { defaultValue: "" },
   jobCardId: { defaultValue: "" },
+  // Set by an invoice's "View expenses"; cleared from the banner.
+  invoiceId: { defaultValue: "" },
   paidThroughAccountId: { defaultValue: "" },
   dateFrom: { defaultValue: "" },
   dateTo: { defaultValue: "" },
@@ -158,6 +169,7 @@ export function ExpenseListTemplate() {
     ...(filters.search ? { search: filters.search } : {}),
     ...(filters.category ? { category: filters.category } : {}),
     ...(filters.jobCardId ? { jobCardId: filters.jobCardId } : {}),
+    ...(filters.invoiceId ? { invoiceId: filters.invoiceId } : {}),
     ...(filters.paidThroughAccountId
       ? { paidThroughAccountId: filters.paidThroughAccountId }
       : {}),
@@ -178,6 +190,7 @@ export function ExpenseListTemplate() {
     amount: expense.amount,
     date: expense.date,
     jobNumber: expense.jobCard?.jobNumber ?? "",
+    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
     paidThrough: expense.paidThroughAccount
       ? formatAccountLabel(expense.paidThroughAccount)
       : "",
@@ -218,6 +231,12 @@ export function ExpenseListTemplate() {
                 filename="expenses"
                 headers={CSV_HEADERS}
               />
+              <Button
+                variant="outline"
+                onClick={() => navigate(RouteConstants.expenses.bulk.path)}
+              >
+                Add Several
+              </Button>
               <Button
                 onClick={() => navigate(RouteConstants.expenses.create.path)}
               >
@@ -311,6 +330,32 @@ export function ExpenseListTemplate() {
               width={{ base: "100%", md: "21rem" }}
             />
           </Flex>
+
+          {filters.invoiceId && (
+            <Flex
+              align="center"
+              gap="2"
+              mb="3"
+              px="3"
+              py="2"
+              bg="primary.50"
+              rounded="md"
+              flexWrap="wrap"
+            >
+              <Text textStyle="small-regular" color="gray.500">
+                Showing expenses for{" "}
+                {expenses[0]?.invoice?.invoiceNumber ?? "one invoice"}
+              </Text>
+              <Button
+                size="xs"
+                variant="ghost"
+                color="primary.300"
+                onClick={() => setFilters({ invoiceId: "", page: 1 })}
+              >
+                Show all
+              </Button>
+            </Flex>
+          )}
 
           <Box overflowX="auto" minW={0}>
             <CustomTable

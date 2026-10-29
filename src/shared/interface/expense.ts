@@ -40,6 +40,11 @@ export interface Expense {
   updatedAt: string;
   jobCard?: { id: string; jobNumber: string } | null;
   item?: { id: string; name: string } | null;
+  /** What it was spent for; the job card then follows the invoice's. */
+  invoiceId?: string | null;
+  invoiceLineItemId?: string | null;
+  invoice?: { id: string; invoiceNumber: string } | null;
+  invoiceLineItem?: { id: string; name: string } | null;
 }
 
 export interface CreateExpensePayload {
@@ -48,6 +53,13 @@ export interface CreateExpensePayload {
   description?: string;
   category?: ExpenseCategory;
   jobCardId?: string;
+  /**
+   * The invoice it was spent for. The expense takes that invoice's job card
+   * (sending a different one is a 400). `null` on update unlinks it.
+   */
+  invoiceId?: string | null;
+  /** One line of that invoice (implies `invoiceId`). */
+  invoiceLineItemId?: string | null;
   vendorName?: string;
   itemId?: string;
   quantity?: number;
@@ -74,6 +86,7 @@ export interface IGetExpenseFilter extends IBaseFilter {
   jobCardId?: string;
   category?: string;
   paidThroughAccountId?: string;
+  invoiceId?: string;
 }
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
@@ -103,3 +116,64 @@ export const PAYMENT_MODE_LABELS: Record<PaymentModeDto, string> = {
 export const PAYMENT_MODE_OPTIONS = (
   Object.keys(PAYMENT_MODE_LABELS) as PaymentModeDto[]
 ).map((value) => ({ label: PAYMENT_MODE_LABELS[value], value }));
+
+// ─── Invoice costs ───────────────────────────────────────────────────────────
+
+/** An expense as the invoice-costs view lists it (amount already a number). */
+export interface InvoiceCostExpense {
+  id: string;
+  expenseNumber: string;
+  date: string;
+  name: string;
+  category: ExpenseCategory;
+  vendorName: string | null;
+  amount: number;
+  invoiceLineItemId: string | null;
+}
+
+/** What an invoice cost against what it billed, line by line. */
+export interface InvoiceCosts {
+  invoiceId: string;
+  invoiceNumber: string;
+  jobCardId: string | null;
+  invoiceTotal: number;
+  lines: Array<{
+    invoiceLineItemId: string;
+    name: string;
+    /** The line before tax. */
+    billed: number;
+    spent: number;
+    margin: number;
+    expenses: InvoiceCostExpense[];
+  }>;
+  /** Costs not tied to a current line: other costs, or lines since rewritten. */
+  other: { spent: number; expenses: InvoiceCostExpense[] };
+  totals: { billed: number; spent: number; margin: number };
+}
+
+/**
+ * Costs spent on an invoice, recorded together. Additive: each save adds
+ * expenses and never replaces earlier ones. Top-level fields apply to every
+ * expense unless a line overrides them.
+ */
+export interface RecordInvoiceCostsPayload {
+  date: string;
+  paymentMode?: PaymentModeDto;
+  /** Omitted → Cash for cash, else the primary. */
+  paidThroughAccountId?: string;
+  vendorName?: string;
+  notes?: string;
+  /** Blank / 0 lines are skipped server-side. */
+  lines?: Array<{
+    invoiceLineItemId: string;
+    amount: number;
+    category?: ExpenseCategory;
+    vendorName?: string;
+  }>;
+  other?: Array<{ name: string; amount: number; category?: ExpenseCategory }>;
+}
+
+export interface RecordInvoiceCostsResponse {
+  created: Expense[];
+  costs: InvoiceCosts;
+}
