@@ -3,9 +3,6 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import { useGetOrganizationBankAccounts } from "@/features/settings/api";
 import type { IAccountRef, IOrgBankAccount } from "@/shared/interface/settings";
 
-/** Select value for "let the server pick" — never sent to the API. */
-const DEFAULT_ACCOUNT = "__default__";
-
 type AccountLike = Pick<
   IAccountRef,
   "accountName" | "accountNumber" | "bankName"
@@ -23,24 +20,62 @@ export function formatAccountLabel(account: AccountLike): string {
     .join(" — ");
 }
 
-/** The org's accounts as select options, primary marked. */
+/** "Primary" on the primary; "Cash" on the till unless its name says so. */
+function accountBadge(account: IOrgBankAccount): string | undefined {
+  if (account.type === "CASH") {
+    return account.accountName.trim().toLowerCase() === "cash"
+      ? undefined
+      : "Cash";
+  }
+  return account.isPrimary ? "Primary" : undefined;
+}
+
+/**
+ * The org's accounts as select options, each once. Without `includeCash` the
+ * till is left out — invoices must name a real bank account.
+ */
 export function useAccountOptions({ includeCash = false } = {}) {
   const { data, isLoading } = useGetOrganizationBankAccounts({ includeCash });
-  const accounts = useMemo(() => data?.data ?? [], [data?.data]);
+  const accounts = useMemo(
+    () =>
+      (data?.data ?? []).filter(
+        (account) => includeCash || account.type !== "CASH",
+      ),
+    [data?.data, includeCash],
+  );
   const options = useMemo(
     () =>
       accounts.map((account) => ({
-        label: `${formatAccountLabel(account)}${account.isPrimary ? " (Primary)" : ""}`,
+        label: formatAccountLabel(account),
         value: account.id,
+        badge: accountBadge(account),
       })),
     [accounts],
   );
   return { accounts, options, isLoading };
 }
 
+/**
+ * The account the server picks when none is sent, in the backend's
+ * `resolveBankAccountId` order: Cash for cash, then `fallbackAccountId`, then
+ * the primary bank account.
+ */
+function defaultAccountOf(
+  accounts: IOrgBankAccount[],
+  { isCash = false, fallbackAccountId = null as string | null | undefined },
+) {
+  return (
+    (isCash ? accounts.find((a) => a.type === "CASH") : undefined) ??
+    (fallbackAccountId
+      ? accounts.find((a) => a.id === fallbackAccountId)
+      : undefined) ??
+    accounts.find((a) => a.isPrimary && a.type !== "CASH")
+  );
+}
+
 interface AccountSelectProps {
   label: string;
-  /** Chosen account id; "" leaves it to the server's default. */
+  /** Chosen account id; "" shows (and leaves the server to apply) the default. */
   value: string;
   onChange: (id: string) => void;
   /** Payments and expenses can go through the till; invoices cannot. */
@@ -54,10 +89,9 @@ interface AccountSelectProps {
 }
 
 /**
- * Picks the org account money went through. The first option is "Default",
- * which sends nothing and lets the server choose; its label previews that
- * choice using the same order as the backend's `resolveBankAccountId`: Cash
- * for cash, then `fallbackAccountId`, then the primary.
+ * Picks the org account money went through. Each account appears once; while
+ * `value` is "" the default account is shown selected, and the form sends
+ * nothing so the server applies that same default.
  */
 export function AccountSelect({
   label,
@@ -71,48 +105,28 @@ export function AccountSelect({
 }: AccountSelectProps) {
   const { accounts, options, isLoading } = useAccountOptions({ includeCash });
 
-  const defaultAccount = useMemo(() => {
-    const find = (match: (a: IOrgBankAccount) => boolean) =>
-      accounts.find(match);
-    return (
-      (includeCash && isCash ? find((a) => a.type === "CASH") : undefined) ??
-      (fallbackAccountId
-        ? find((a) => a.id === fallbackAccountId)
-        : undefined) ??
-      find((a) => a.isPrimary && a.type !== "CASH")
-    );
-  }, [accounts, includeCash, isCash, fallbackAccountId]);
-
-  // The default account is offered once, as "Default", not again in the list.
-  const allOptions = useMemo(
-    () => [
-      {
-        label: `Default — ${
-          defaultAccount
-            ? formatAccountLabel(defaultAccount)
-            : "primary account"
-        }`,
-        value: DEFAULT_ACCOUNT,
-      },
-      ...options.filter((option) => option.value !== defaultAccount?.id),
-    ],
-    [defaultAccount, options],
+  const defaultAccount = useMemo(
+    () =>
+      defaultAccountOf(accounts, {
+        isCash: includeCash && isCash,
+        fallbackAccountId,
+      }),
+    [accounts, includeCash, isCash, fallbackAccountId],
   );
 
-  // A record already on the default account (e.g. when editing) shows as
-  // "Default"; its id stays in the form, so an untouched save sends nothing.
-  const selected =
-    !value || value === defaultAccount?.id ? DEFAULT_ACCOUNT : value;
+  const selected = value || defaultAccount?.id;
 
   return (
     <CustomSelect
       label={label}
-      options={allOptions}
+      placeholder="Select account..."
+      noOptionsText="No accounts yet"
+      options={options}
       loading={isLoading}
-      value={[selected]}
+      value={selected ? [selected] : undefined}
       onChange={(opt: { value: string[] }) => {
-        const next = opt?.value?.[0] ?? DEFAULT_ACCOUNT;
-        onChange(next === DEFAULT_ACCOUNT ? "" : next);
+        const next = opt?.value?.[0];
+        if (next) onChange(next);
       }}
       helperText={helperText}
       error={error}
@@ -147,9 +161,10 @@ export function AccountFilterSelect({
 }
 
 /**
- * What to send for an account field on save. Create: the id, or nothing for
- * the default. Edit: nothing when unchanged (so a mode change can still
- * re-pick the default server-side), `null` to move back to the default.
+ * What to send for an account field on save. Create: the id, or nothing when
+ * the default was left alone. Edit: nothing when unchanged, `null` when the
+ * form went back to following the default (e.g. after a cash ↔ non-cash mode
+ * change), so the server re-picks it.
  */
 export function accountFieldForSave(
   value: string,

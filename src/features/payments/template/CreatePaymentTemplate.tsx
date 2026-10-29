@@ -32,6 +32,7 @@ export function CreatePaymentTemplate() {
     isSearchingCustomers,
     handleSelectCustomer,
     handleModeChange,
+    handleSelectDepositAccount,
     depositFallbackAccountId,
     isLoadingInvoices,
     setAllocationAmount,
@@ -91,6 +92,7 @@ export function CreatePaymentTemplate() {
             <PresetPaymentFields
               formik={formik}
               onModeChange={handleModeChange}
+              onSelectDepositAccount={handleSelectDepositAccount}
               depositFallbackAccountId={depositFallbackAccountId}
             />
             <SectionCard
@@ -121,6 +123,7 @@ export function CreatePaymentTemplate() {
             <PaymentDetails
               formik={formik}
               onModeChange={handleModeChange}
+              onSelectDepositAccount={handleSelectDepositAccount}
               depositFallbackAccountId={depositFallbackAccountId}
             />
 

@@ -14,12 +14,14 @@ import {
 interface PresetPaymentFieldsProps {
   formik: FormikProps<CreatePaymentFormValues>;
   onModeChange: (mode: PaymentModeDto) => void;
+  onSelectDepositAccount: (id: string) => void;
   depositFallbackAccountId: string | null;
 }
 
 export function PresetPaymentFields({
   formik,
   onModeChange,
+  onSelectDepositAccount,
   depositFallbackAccountId,
 }: PresetPaymentFieldsProps) {
   const { values, errors, touched } = formik;
@@ -67,7 +69,7 @@ export function PresetPaymentFields({
           isCash={values.mode === PaymentModeDto.CASH}
           fallbackAccountId={depositFallbackAccountId}
           value={values.depositToAccountId}
-          onChange={(id) => formik.setFieldValue("depositToAccountId", id)}
+          onChange={onSelectDepositAccount}
         />
       </Grid>
     </SectionCard>

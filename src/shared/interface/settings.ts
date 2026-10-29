@@ -50,12 +50,17 @@ export type OrgAccountType = "BANK" | "CASH";
 export interface IOrgBankAccount {
   id: string;
   organizationId?: string;
-  type?: OrgAccountType;
+  type: OrgAccountType;
   accountName: string;
-  accountNumber: string;
-  bankName: string;
+  /** null only for the Cash account. */
+  accountNumber: string | null;
+  bankName: string | null;
   bankCode?: string | null;
   isPrimary: boolean;
+  /** What the account held on `openingBalanceDate` (a decimal string). */
+  openingBalance?: string | number;
+  /** YYYY-MM-DD; null means "from the start". */
+  openingBalanceDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -80,7 +85,17 @@ export interface CreateOrgBankAccountPayload {
   bankName: string;
   bankCode?: string;
   isPrimary?: boolean;
+  /** May be negative (an overdrawn account). */
+  openingBalance?: number;
+  /** YYYY-MM-DD, or null to clear. */
+  openingBalanceDate?: string | null;
 }
+
+/** The Cash account takes only a name and an opening balance. */
+export type UpdateCashAccountPayload = Pick<
+  CreateOrgBankAccountPayload,
+  "accountName" | "openingBalance" | "openingBalanceDate"
+>;
 
 /** A bank from GET /banks, for the bank picker. */
 export interface BankOption {

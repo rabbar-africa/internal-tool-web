@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import {
@@ -200,12 +200,16 @@ export function ExpenseForm({
   };
 
   // Cash and non-cash default to different accounts, so switching between
-  // them drops a hand-picked account back to the default for the new mode.
+  // them moves the picker to the new default — unless the user chose an
+  // account by hand on this form.
+  const accountPickedRef = useRef(false);
   const handlePaymentModeChange = (mode: string) => {
     const wasCash = formik.values.paymentMode === PaymentModeDto.CASH;
     const isCash = mode === PaymentModeDto.CASH;
     formik.setFieldValue("paymentMode", mode);
-    if (wasCash !== isCash) formik.setFieldValue("paidThroughAccountId", "");
+    if (wasCash !== isCash && !accountPickedRef.current) {
+      formik.setFieldValue("paidThroughAccountId", "");
+    }
   };
 
   const isBusy = isSubmitting || isUploading;
@@ -350,9 +354,10 @@ export function ExpenseForm({
                 includeCash
                 isCash={formik.values.paymentMode === PaymentModeDto.CASH}
                 value={formik.values.paidThroughAccountId}
-                onChange={(id) =>
-                  formik.setFieldValue("paidThroughAccountId", id)
-                }
+                onChange={(id) => {
+                  accountPickedRef.current = true;
+                  formik.setFieldValue("paidThroughAccountId", id);
+                }}
               />
             </Grid>
           </Card.Body>
