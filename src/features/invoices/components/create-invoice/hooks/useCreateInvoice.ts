@@ -31,6 +31,7 @@ import {
   useGetOrganizationDetails,
 } from "@/features/settings/api";
 import { formatTransactionSeries } from "@/utils/string-formatter";
+import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -71,6 +72,7 @@ const defaultValues: CreateInvoiceFormValues = {
   discount: "0",
   discountType: "entityLevel",
   taxId: "",
+  bankAccountId: "",
   adjustment: "",
   adjustmentDescription: "Adjustment",
   isDiscountBeforeTax: true,
@@ -88,6 +90,7 @@ export function mapInvoiceToFormValues(
     customerId: invoice.customerId ?? "",
     vehicleId: invoice.vehicleId ?? "",
     taxId: invoice.taxId ?? "",
+    bankAccountId: invoice.bankAccountId ?? "",
     customer: {
       name: invoice.customerName ?? invoice.client?.displayName ?? "",
       email: invoice.client?.email ?? "",
@@ -237,6 +240,12 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         // null clears the tax on update; the backend rejects a taxId here
         // together with per-line taxIds.
         taxId: values.taxId || null,
+        bankAccountId: accountFieldForSave(
+          values.bankAccountId,
+          isEdit
+            ? { original: invoiceQuery.data?.data?.bankAccountId }
+            : undefined,
+        ),
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,

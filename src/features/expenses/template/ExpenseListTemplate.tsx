@@ -19,6 +19,10 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/shared/interface/expense";
+import {
+  AccountFilterSelect,
+  formatAccountLabel,
+} from "@/features/settings/components/account-details/AccountSelect";
 import { useDeleteExpenseMutation, useGetExpensesQuery } from "../api/query";
 
 const CATEGORY_STYLES: Record<ExpenseCategory, { bg: string; color: string }> =
@@ -107,6 +111,18 @@ const columns: ColumnDef<Expense>[] = [
       </Text>
     ),
   },
+  {
+    id: "paidThroughAccount",
+    header: "Paid Through",
+    cell: ({ row }) => {
+      const account = row.original.paidThroughAccount;
+      return (
+        <Text textStyle="small-regular" color="gray.500">
+          {account ? formatAccountLabel(account) : "—"}
+        </Text>
+      );
+    },
+  },
 ];
 
 const CSV_HEADERS = {
@@ -116,6 +132,7 @@ const CSV_HEADERS = {
   amount: "Amount (₦)",
   date: "Date",
   jobNumber: "Job Card",
+  paidThrough: "Paid Through",
 } as const;
 
 const FILTER_SCHEMA = {
@@ -124,6 +141,7 @@ const FILTER_SCHEMA = {
   search: { defaultValue: "" },
   category: { defaultValue: "" },
   jobCardId: { defaultValue: "" },
+  paidThroughAccountId: { defaultValue: "" },
   dateFrom: { defaultValue: "" },
   dateTo: { defaultValue: "" },
 };
@@ -140,6 +158,9 @@ export function ExpenseListTemplate() {
     ...(filters.search ? { search: filters.search } : {}),
     ...(filters.category ? { category: filters.category } : {}),
     ...(filters.jobCardId ? { jobCardId: filters.jobCardId } : {}),
+    ...(filters.paidThroughAccountId
+      ? { paidThroughAccountId: filters.paidThroughAccountId }
+      : {}),
     ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
     ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
   });
@@ -157,6 +178,9 @@ export function ExpenseListTemplate() {
     amount: expense.amount,
     date: expense.date,
     jobNumber: expense.jobCard?.jobNumber ?? "",
+    paidThrough: expense.paidThroughAccount
+      ? formatAccountLabel(expense.paidThroughAccount)
+      : "",
   }));
 
   const tableActions: TableAction<Expense>[] = [
@@ -249,6 +273,12 @@ export function ExpenseListTemplate() {
               }
               rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
               controlProps={{ w: { base: "100%", md: "160px" } }}
+            />
+            <AccountFilterSelect
+              value={filters.paidThroughAccountId}
+              onChange={(id) =>
+                setFilters({ paidThroughAccountId: id, page: 1 })
+              }
             />
             <Flex
               flexWrap={{ base: "wrap", lg: "unset" }}

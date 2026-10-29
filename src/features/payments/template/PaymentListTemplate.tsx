@@ -14,6 +14,11 @@ import {
   useDeletePaymentMutation,
 } from "@/features/payments/api/query";
 import { useReceiptPdf } from "@/features/payments/hooks/useReceiptPdf";
+import {
+  AccountFilterSelect,
+  formatAccountLabel,
+} from "@/features/settings/components/account-details/AccountSelect";
+import { useUrlState } from "@/hooks/useUrlState";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
 import Status from "@/components/ui/Status";
@@ -96,6 +101,18 @@ const columns: ColumnDef<IPaymentReceived>[] = [
     },
   },
   {
+    id: "depositToAccount",
+    header: "Deposited To",
+    cell: ({ row }) => {
+      const account = row.original.depositToAccount;
+      return (
+        <Text textStyle="small-regular" color="gray.500">
+          {account ? formatAccountLabel(account) : "—"}
+        </Text>
+      );
+    },
+  },
+  {
     accessorKey: "amount",
     header: "Amount",
     cell: ({ row }) => (
@@ -157,6 +174,7 @@ const CSV_HEADERS = {
   referenceNumber: "Reference #",
   customerName: "Customer",
   mode: "Mode",
+  depositTo: "Deposited To",
   amount: "Amount",
   amountApplied: "Applied",
   unusedAmount: "Unused",
@@ -164,9 +182,18 @@ const CSV_HEADERS = {
   status: "Status",
 } as const;
 
+const FILTER_SCHEMA = {
+  depositToAccountId: { defaultValue: "" },
+};
+
 export function PaymentListTemplate() {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetPaymentsQuery();
+  const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
+  const { data, isLoading } = useGetPaymentsQuery(
+    filters.depositToAccountId
+      ? { depositToAccountId: filters.depositToAccountId }
+      : undefined,
+  );
   const { mutateAsync: deletePayment, isPending: isDeleting } =
     useDeletePaymentMutation();
   const { download: downloadReceipt } = useReceiptPdf();
@@ -209,6 +236,7 @@ export function PaymentListTemplate() {
     referenceNumber: p.referenceNumber,
     customerName: p.customerName || p.client?.displayName || "",
     mode: MODE_LABELS[p.mode] ?? p.mode,
+    depositTo: p.depositToAccount ? formatAccountLabel(p.depositToAccount) : "",
     amount: p.amount,
     amountApplied: p.amountApplied,
     unusedAmount: p.unusedAmount,
@@ -262,10 +290,20 @@ export function PaymentListTemplate() {
               Payments received from customers
             </Text>
           </Box>
-          <SearchInput
-            width={{ base: "100%", md: "21rem" }}
-            placeholder="Search by payment # or customer"
-          />
+          <Flex
+            gap="3"
+            direction={{ base: "column", md: "row" }}
+            align={{ base: "stretch", md: "center" }}
+          >
+            <AccountFilterSelect
+              value={filters.depositToAccountId}
+              onChange={(id) => setFilters({ depositToAccountId: id })}
+            />
+            <SearchInput
+              width={{ base: "100%", md: "21rem" }}
+              placeholder="Search by payment # or customer"
+            />
+          </Flex>
         </Flex>
 
         <Box overflowX="auto" minW={0}>

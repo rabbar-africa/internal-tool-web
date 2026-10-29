@@ -12,6 +12,7 @@ import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
 import { AddNewCustomerModal } from "./AddNewCustomerModal";
 import { AddVehicleModal } from "@/features/customers/components/customer-detail/AddVehicleModal";
 import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
+import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
 
 interface InvoiceFormHeaderProps {
   formik: FormikProps<CreateInvoiceFormValues>;
@@ -290,6 +291,13 @@ export function InvoiceFormHeader({
                 : (opt?.value ?? "0");
               formik.setFieldValue("paymentTerms", val);
             }}
+          />
+
+          <AccountSelect
+            label="Pay Into Account"
+            value={formik.values.bankAccountId}
+            onChange={(id) => formik.setFieldValue("bankAccountId", id)}
+            helperText="Printed on the invoice for the customer to pay into"
           />
         </Stack>
       </Grid>

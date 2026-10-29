@@ -3,6 +3,8 @@ import type { FormikProps } from "formik";
 // import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
+import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
+import { PaymentModeDto } from "@/shared/interface/payment";
 import { SectionCard } from "./SectionCard";
 import {
   PAYMENT_MODE_OPTIONS,
@@ -11,14 +13,14 @@ import {
 
 interface PaymentDetailsProps {
   formik: FormikProps<CreatePaymentFormValues>;
-  bankAccountOptions: { label: string; value: string }[];
-  onSelectDepositAccount: (id: string) => void;
+  onModeChange: (mode: PaymentModeDto) => void;
+  depositFallbackAccountId: string | null;
 }
 
 export function PaymentDetails({
   formik,
-  // bankAccountOptions,
-  // onSelectDepositAccount,
+  onModeChange,
+  depositFallbackAccountId,
 }: PaymentDetailsProps) {
   const { values, errors, touched } = formik;
 
@@ -34,18 +36,19 @@ export function PaymentDetails({
           required
           options={PAYMENT_MODE_OPTIONS}
           value={[values.mode]}
-          onChange={(opt: any) => formik.setFieldValue("mode", opt?.value?.[0])}
+          onChange={(opt: { value: string[] }) =>
+            onModeChange(opt?.value?.[0] as PaymentModeDto)
+          }
           error={touched.mode && errors.mode ? errors.mode : undefined}
         />
-        {/* 
-        <CustomSelect
+        <AccountSelect
           label="Deposit To"
-          placeholder="Select account..."
-          options={bankAccountOptions}
-          noOptionsText="No bank accounts configured"
-          value={values.depositToAccountId ? [values.depositToAccountId] : []}
-          onChange={(opt: any) => onSelectDepositAccount(opt?.value?.[0] ?? "")}
-        /> */}
+          includeCash
+          isCash={values.mode === PaymentModeDto.CASH}
+          fallbackAccountId={depositFallbackAccountId}
+          value={values.depositToAccountId}
+          onChange={(id) => formik.setFieldValue("depositToAccountId", id)}
+        />
 
         <CustomNumberInput
           label="Amount Received"

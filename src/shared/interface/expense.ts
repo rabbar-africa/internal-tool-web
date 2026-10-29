@@ -1,5 +1,6 @@
 import type { IBaseFilter } from "./filter";
 import { PaymentModeDto } from "./payment";
+import type { IAccountRef } from "./settings";
 
 export type ExpenseCategory =
   | "PARTS"
@@ -26,6 +27,9 @@ export interface Expense {
   unitCost: string;
   amount: string;
   paymentMode?: PaymentModeDto | null;
+  /** The org account the money left; null only if the org had none. */
+  paidThroughAccountId?: string | null;
+  paidThroughAccount?: IAccountRef | null;
   currencyCode: string;
   fileUrl?: string | null;
   fileName?: string | null;
@@ -50,6 +54,11 @@ export interface CreateExpensePayload {
   unitCost?: number;
   amount?: number;
   paymentMode?: PaymentModeDto;
+  /**
+   * Omitted → Cash for cash, else the org's primary. On update, `null` moves
+   * it back to that default.
+   */
+  paidThroughAccountId?: string | null;
   currencyCode?: string;
   fileUrl?: string;
   fileName?: string;
@@ -64,6 +73,7 @@ export type UpdateExpensePayload = Partial<CreateExpensePayload>;
 export interface IGetExpenseFilter extends IBaseFilter {
   jobCardId?: string;
   category?: string;
+  paidThroughAccountId?: string;
 }
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {

@@ -3,6 +3,8 @@ import type { FormikProps } from "formik";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
+import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
+import { PaymentModeDto } from "@/shared/interface/payment";
 import { SectionCard } from "./SectionCard";
 import {
   PAYMENT_MODE_OPTIONS,
@@ -11,9 +13,15 @@ import {
 
 interface PresetPaymentFieldsProps {
   formik: FormikProps<CreatePaymentFormValues>;
+  onModeChange: (mode: PaymentModeDto) => void;
+  depositFallbackAccountId: string | null;
 }
 
-export function PresetPaymentFields({ formik }: PresetPaymentFieldsProps) {
+export function PresetPaymentFields({
+  formik,
+  onModeChange,
+  depositFallbackAccountId,
+}: PresetPaymentFieldsProps) {
   const { values, errors, touched } = formik;
 
   return (
@@ -22,7 +30,7 @@ export function PresetPaymentFields({ formik }: PresetPaymentFieldsProps) {
       title="Payment Details"
       subtitle="Enter the amount received, how it was paid, and when"
     >
-      <Grid templateColumns={{ base: "1fr", sm: "repeat(3, 1fr)" }} gap="4">
+      <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
         <CustomNumberInput
           label="Amount Received"
           required
@@ -39,7 +47,9 @@ export function PresetPaymentFields({ formik }: PresetPaymentFieldsProps) {
           required
           options={PAYMENT_MODE_OPTIONS}
           value={[values.mode]}
-          onChange={(opt: any) => formik.setFieldValue("mode", opt?.value?.[0])}
+          onChange={(opt: { value: string[] }) =>
+            onModeChange(opt?.value?.[0] as PaymentModeDto)
+          }
           error={touched.mode && errors.mode ? errors.mode : undefined}
         />
         <CustomInput
@@ -50,6 +60,14 @@ export function PresetPaymentFields({ formik }: PresetPaymentFieldsProps) {
           value={values.date}
           onChange={formik.handleChange}
           error={touched.date && errors.date ? errors.date : undefined}
+        />
+        <AccountSelect
+          label="Deposit To"
+          includeCash
+          isCash={values.mode === PaymentModeDto.CASH}
+          fallbackAccountId={depositFallbackAccountId}
+          value={values.depositToAccountId}
+          onChange={(id) => formik.setFieldValue("depositToAccountId", id)}
         />
       </Grid>
     </SectionCard>

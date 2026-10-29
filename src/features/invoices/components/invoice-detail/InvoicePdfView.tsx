@@ -59,7 +59,10 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
     .join(" , ");
 
   const orgConfig = userOrganization?.config;
-  const bankAccount = userOrganization?.primaryBankAccount;
+  // The account this invoice asks to be paid into; older ones fall back to
+  // the primary, as the backend PDF does.
+  const bankAccount =
+    invoice.bankAccount ?? userOrganization?.primaryBankAccount;
   const orgAddress = formatAddress(userOrganization?.primaryAddress);
 
   const notes = invoice.notes || orgConfig?.invoiceNotesDefault;

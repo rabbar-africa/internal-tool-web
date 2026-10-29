@@ -44,9 +44,13 @@ export type UpdateOrgAddressPayload = CreateOrgAddressPayload & {
   isActive?: boolean;
 };
 
+/** BANK is a real bank account; CASH is the org's till (exactly one per org). */
+export type OrgAccountType = "BANK" | "CASH";
+
 export interface IOrgBankAccount {
   id: string;
   organizationId?: string;
+  type?: OrgAccountType;
   accountName: string;
   accountNumber: string;
   bankName: string;
@@ -54,6 +58,20 @@ export interface IOrgBankAccount {
   isPrimary: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/**
+ * The account a payment, expense or invoice went through, as money records
+ * return it. Cash has no number or bank.
+ */
+export interface IAccountRef {
+  id: string;
+  type: OrgAccountType;
+  accountName: string;
+  accountNumber: string | null;
+  bankName: string | null;
+  bankCode?: string | null;
+  isPrimary: boolean;
 }
 
 export interface CreateOrgBankAccountPayload {

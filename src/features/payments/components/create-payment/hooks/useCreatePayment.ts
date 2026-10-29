@@ -10,10 +10,8 @@ import {
   useGetInvoiceByIdQuery,
   useCollectInvoicePaymentMutation,
 } from "@/features/invoices/api/query";
-import {
-  useGetOrganizationBankAccounts,
-  useGetOrganizationDetails,
-} from "@/features/settings/api";
+import { useGetOrganizationDetails } from "@/features/settings/api";
+import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
 import {
   useCreatePaymentMutation,
   useGetPaymentByIdQuery,
@@ -34,6 +32,8 @@ export interface AllocationRow {
   dueDate: string;
   balance: number;
   amountApplied: string;
+  /** The invoice's pay-into account; undefined when the row doesn't know it. */
+  bankAccountId?: string | null;
 }
 
 export interface CreatePaymentFormValues {
@@ -149,19 +149,6 @@ export function useCreatePayment() {
     [customers],
   );
 
-  // ─── Bank accounts (deposit to) ─────────────────────────────────────────
-  const { data: bankAccountsData } = useGetOrganizationBankAccounts();
-  const bankAccountOptions = useMemo(
-    () =>
-      (bankAccountsData?.data ?? []).map((acc) => ({
-        label: acc.bankName
-          ? `${acc.accountName} — ${acc.bankName}`
-          : acc.accountName,
-        value: acc.id,
-      })),
-    [bankAccountsData?.data],
-  );
-
   const formik = useFormik<CreatePaymentFormValues>({
     enableReinitialize: false,
     validationSchema,
@@ -200,6 +187,9 @@ export function useCreatePayment() {
               ? { referenceNumber: values.referenceNumber }
               : {}),
             ...(values.notes ? { notes: values.notes } : {}),
+            ...(values.depositToAccountId
+              ? { depositToAccountId: values.depositToAccountId }
+              : {}),
           },
         });
         navigate(
@@ -226,7 +216,12 @@ export function useCreatePayment() {
         exchangeRate: toNum(values.exchangeRate) || 1,
         amount,
         bankCharges: toNum(values.bankCharges),
-        depositToAccountId: values.depositToAccountId,
+        depositToAccountId: accountFieldForSave(
+          values.depositToAccountId,
+          isEditMode
+            ? { original: editPayment?.depositToAccountId }
+            : undefined,
+        ),
         depositToName: values.depositToName,
         notes: values.notes,
         allocations: values.allocations
@@ -281,6 +276,7 @@ export function useCreatePayment() {
       dueDate: inv.dueDate,
       balance: toNum(inv.balance),
       amountApplied: "",
+      bankAccountId: inv.bankAccountId ?? null,
     }));
     setFieldValue("allocations", rows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -354,6 +350,7 @@ export function useCreatePayment() {
         dueDate: inv.dueDate,
         balance: toNum(inv.balance) + applied,
         amountApplied: applied > 0 ? String(applied) : "",
+        bankAccountId: inv.bankAccountId ?? null,
       });
     });
 
@@ -414,11 +411,33 @@ export function useCreatePayment() {
     setFieldValue("customerName", customerCache[id]?.name ?? "");
   };
 
-  const handleSelectDepositAccount = (id: string) => {
-    const acc = (bankAccountsData?.data ?? []).find((a) => a.id === id);
-    setFieldValue("depositToAccountId", id);
-    setFieldValue("depositToName", acc?.accountName ?? "");
+  // Cash and non-cash default to different accounts, so switching between
+  // them drops a hand-picked account back to the default for the new mode.
+  const handleModeChange = (mode: PaymentModeDto) => {
+    const wasCash = values.mode === PaymentModeDto.CASH;
+    setFieldValue("mode", mode);
+    if (wasCash !== (mode === PaymentModeDto.CASH)) {
+      setFieldValue("depositToAccountId", "");
+    }
   };
+
+  // Non-cash money defaults to the account the paid invoices name, when they
+  // all name the same one (the server's rule) — preview it in the picker.
+  const depositFallbackAccountId = useMemo(() => {
+    if (isPresetMode) {
+      // Brought-forward invoices are paid too and their accounts aren't known
+      // here, so only preview the invoice's account when it's paid alone.
+      return presetBroughtForward.length
+        ? null
+        : (presetInvoice?.bankAccountId ?? null);
+    }
+    const paid = values.allocations.filter((a) => toNum(a.amountApplied) > 0);
+    if (!paid.length || paid.some((a) => a.bankAccountId === undefined)) {
+      return null;
+    }
+    const ids = new Set(paid.map((a) => a.bankAccountId));
+    return ids.size === 1 ? ([...ids][0] ?? null) : null;
+  }, [isPresetMode, presetBroughtForward, presetInvoice, values.allocations]);
 
   const setAllocationAmount = (index: number, value: string) => {
     const next = values.allocations.map((row, i) =>
@@ -540,8 +559,8 @@ export function useCreatePayment() {
     isSearchingCustomers: customersQuery.isFetching,
     handleSelectCustomer,
     // deposit
-    bankAccountOptions,
-    handleSelectDepositAccount,
+    handleModeChange,
+    depositFallbackAccountId,
     // allocations
     isLoadingInvoices: invoicesQuery.isFetching,
     setAllocationAmount,

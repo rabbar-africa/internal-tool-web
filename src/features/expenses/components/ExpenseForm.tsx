@@ -19,7 +19,11 @@ import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomFileInput } from "@/components/common/CustomFileInput";
 import { uploadFile } from "@/features/paperwork/api/service";
 import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
-import type { PaymentModeDto } from "@/shared/interface/payment";
+import {
+  AccountSelect,
+  accountFieldForSave,
+} from "@/features/settings/components/account-details/AccountSelect";
+import { PaymentModeDto } from "@/shared/interface/payment";
 import {
   EXPENSE_CATEGORY_OPTIONS,
   PAYMENT_MODE_OPTIONS,
@@ -133,6 +137,7 @@ export function ExpenseForm({
       unitCost: expense ? String(Number(expense.unitCost)) : "",
       amount: expense ? String(Number(expense.amount)) : "",
       paymentMode: (expense?.paymentMode ?? "") as PaymentModeDto | "",
+      paidThroughAccountId: expense?.paidThroughAccountId ?? "",
       notes: expense?.notes ?? "",
     },
     enableReinitialize: true,
@@ -165,6 +170,10 @@ export function ExpenseForm({
         unitCost: values.unitCost ? Number(values.unitCost) : undefined,
         amount: values.amount ? Number(values.amount) : undefined,
         paymentMode: values.paymentMode || undefined,
+        paidThroughAccountId: accountFieldForSave(
+          values.paidThroughAccountId,
+          expense ? { original: expense.paidThroughAccountId } : undefined,
+        ),
         notes: values.notes || undefined,
         ...receipt,
       });
@@ -188,6 +197,15 @@ export function ExpenseForm({
   const handleUnitCostChange = (raw: string) => {
     formik.setFieldValue("unitCost", raw);
     formik.setFieldValue("amount", computeAmount(formik.values.quantity, raw));
+  };
+
+  // Cash and non-cash default to different accounts, so switching between
+  // them drops a hand-picked account back to the default for the new mode.
+  const handlePaymentModeChange = (mode: string) => {
+    const wasCash = formik.values.paymentMode === PaymentModeDto.CASH;
+    const isCash = mode === PaymentModeDto.CASH;
+    formik.setFieldValue("paymentMode", mode);
+    if (wasCash !== isCash) formik.setFieldValue("paidThroughAccountId", "");
   };
 
   const isBusy = isSubmitting || isUploading;
@@ -314,21 +332,28 @@ export function ExpenseForm({
                 onBlur={formik.handleBlur}
                 placeholder="e.g. AutoParts Ltd"
               />
-              <Box gridColumn={{ sm: "1 / -1" }}>
-                <CustomSelect
-                  label="How It Was Paid"
-                  placeholder="Select payment mode..."
-                  options={PAYMENT_MODE_OPTIONS}
-                  value={
-                    formik.values.paymentMode
-                      ? [formik.values.paymentMode]
-                      : undefined
-                  }
-                  onChange={(opt: { value: string[] }) =>
-                    formik.setFieldValue("paymentMode", opt?.value?.[0] ?? "")
-                  }
-                />
-              </Box>
+              <CustomSelect
+                label="How It Was Paid"
+                placeholder="Select payment mode..."
+                options={PAYMENT_MODE_OPTIONS}
+                value={
+                  formik.values.paymentMode
+                    ? [formik.values.paymentMode]
+                    : undefined
+                }
+                onChange={(opt: { value: string[] }) =>
+                  handlePaymentModeChange(opt?.value?.[0] ?? "")
+                }
+              />
+              <AccountSelect
+                label="Paid Through"
+                includeCash
+                isCash={formik.values.paymentMode === PaymentModeDto.CASH}
+                value={formik.values.paidThroughAccountId}
+                onChange={(id) =>
+                  formik.setFieldValue("paidThroughAccountId", id)
+                }
+              />
             </Grid>
           </Card.Body>
         </Card.Root>

@@ -1,4 +1,5 @@
 import type { IBaseFilter } from "./filter";
+import type { IAccountRef } from "./settings";
 
 export type PaymentMethod =
   | "cash"
@@ -42,7 +43,9 @@ export interface IPaymentReceived {
   amountRefunded: string;
   unusedAmount: string;
   bankCharges: string;
-  depositToAccountId: string;
+  /** The org account the money landed in; null only if the org had none. */
+  depositToAccountId: string | null;
+  depositToAccount?: IAccountRef | null;
   depositToName: string;
   notes: string;
   source: string;
@@ -92,7 +95,11 @@ export interface CreatePaymentPayload {
   exchangeRate: number;
   amount: number;
   bankCharges: number;
-  depositToAccountId: string;
+  /**
+   * Omitted → Cash for cash, else the invoices' account when they agree, else
+   * the primary. On update, `null` moves it back to that default.
+   */
+  depositToAccountId?: string | null;
   depositToName: string;
   notes: string;
   allocations: Array<{
@@ -136,4 +143,5 @@ export interface IGetPaymentsReceivedFilter extends IBaseFilter {
   customerId?: string;
   mode?: string;
   status?: string;
+  depositToAccountId?: string;
 }

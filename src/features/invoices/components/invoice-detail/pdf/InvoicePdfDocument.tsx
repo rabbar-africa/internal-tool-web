@@ -274,7 +274,9 @@ export function InvoicePdfDocument({
       : balance + broughtForwardTotal;
 
   const orgConfig = organization?.config;
-  const bankAccount = organization?.primaryBankAccount;
+  // The account this invoice asks to be paid into; older ones fall back to
+  // the primary, as the backend PDF does.
+  const bankAccount = invoice.bankAccount ?? organization?.primaryBankAccount;
   const orgAddress = formatAddress(organization?.primaryAddress);
   const orgLocation = [organization?.city, organization?.country]
     .filter(Boolean)
