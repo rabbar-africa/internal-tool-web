@@ -1,10 +1,11 @@
 import { matchPath } from "@/utils/navigation";
 import { removeToken } from "@/utils/persistToken";
 import { useLocation, useNavigate } from "react-router";
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Image, Text } from "@chakra-ui/react";
 import { RouteConstants } from "@/shared/constants/routes";
 import storage from "@/utils/storage";
 import { Logo } from "../common/Logo";
+import rabbarIcon from "@/assets/images/logo/rabbar-icon.png";
 import { sideBarItems } from "@/shared/data";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
 import { CaretRight } from "@/assets/custom/CaretRight";
@@ -63,7 +64,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         transition="padding 0.2s ease"
       >
         {collapsed ? (
-          <Box w="32px" h="32px" bg="primary.500" rounded="md" />
+          <Image
+            src={rabbarIcon}
+            alt="Rabbar"
+            w="36px"
+            h="36px"
+            objectFit="contain"
+          />
         ) : (
           <Logo w={"10rem"} />
         )}
