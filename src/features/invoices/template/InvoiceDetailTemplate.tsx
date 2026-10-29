@@ -7,6 +7,7 @@ import { InvoiceDetailHeader } from "@/features/invoices/components/invoice-deta
 import { InvoiceDetailSkeleton } from "@/features/invoices/components/invoice-detail/InvoiceDetailSkeleton";
 import { InvoicePdfView } from "@/features/invoices/components/invoice-detail/InvoicePdfView";
 import { ConnectedPayments } from "@/features/invoices/components/invoice-detail/ConnectedPayments";
+import { InvoiceCostsPanel } from "@/features/invoices/components/invoice-detail/InvoiceCostsPanel";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
 
 export function InvoiceDetailTemplate() {
@@ -79,6 +80,8 @@ export function InvoiceDetailTemplate() {
           invoiceId={invoice.id}
           onViewPayment={viewPayment}
         />
+
+        <InvoiceCostsPanel invoiceId={invoice.id} />
 
         <InvoicePdfView invoice={invoice} />
       </Stack>

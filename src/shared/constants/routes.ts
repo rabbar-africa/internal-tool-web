@@ -47,6 +47,7 @@ const invoices = {
   create: defineRoute("/invoices/create" as const),
   detail: defineRoute("/invoices/:id" as const),
   edit: defineRoute("/invoices/:id/edit" as const),
+  costs: defineRoute("/invoices/:id/costs" as const),
 } as const;
 
 const payments = {
@@ -74,6 +75,7 @@ const paperwork = {
 const expenses = {
   base: defineRoute("/expenses" as const),
   create: defineRoute("/expenses/create" as const),
+  bulk: defineRoute("/expenses/bulk" as const),
   edit: defineRoute("/expenses/:id/edit" as const),
 } as const;
 

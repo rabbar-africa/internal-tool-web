@@ -10,6 +10,10 @@ const { CreateExpensePage } = lazyImport(
   () => import("../pages/CreateExpensePage"),
   "CreateExpensePage",
 );
+const { BulkExpensePage } = lazyImport(
+  () => import("../pages/BulkExpensePage"),
+  "BulkExpensePage",
+);
 const { EditExpensePage } = lazyImport(
   () => import("../pages/EditExpensePage"),
   "EditExpensePage",
@@ -23,6 +27,10 @@ export const ExpenseRoutes: RouteObject[] = [
   {
     path: RouteConstants.expenses.create.path,
     element: <CreateExpensePage />,
+  },
+  {
+    path: RouteConstants.expenses.bulk.path,
+    element: <BulkExpensePage />,
   },
   {
     path: RouteConstants.expenses.edit.path,

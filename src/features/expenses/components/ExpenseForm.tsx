@@ -17,6 +17,12 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomFileInput } from "@/components/common/CustomFileInput";
+import { SearchCombobox } from "@/components/input/SearchCombobox";
+import {
+  useGetAllInvoicesQuery,
+  useGetInvoiceByIdQuery,
+} from "@/features/invoices/api/query";
+import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { uploadFile } from "@/features/paperwork/api/service";
 import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
 import {
@@ -123,6 +129,38 @@ export function ExpenseForm({
     [jobCardsData?.data],
   );
 
+  // ─── Invoice it was spent for (searchable) ──────────────────────────────
+  const [invoiceSearch, setInvoiceSearch] = useState("");
+  const invoicesQuery = useGetAllInvoicesQuery({
+    page: 1,
+    limit: 20,
+    ...(invoiceSearch ? { search: invoiceSearch } : {}),
+  });
+  const invoiceOptions = useMemo(() => {
+    // The list endpoint returns the rich invoice shape; the service is typed
+    // with the legacy `Invoice`.
+    const list = (invoicesQuery.data?.data ??
+      []) as unknown as IInvoiceResponse[];
+    const options = list.map((invoice) => ({
+      label: invoice.invoiceNumber,
+      value: invoice.id,
+      subLabel:
+        invoice.customerName || invoice.client?.displayName || undefined,
+    }));
+    // Keep the linked invoice selectable while editing, whatever the search.
+    if (
+      expense?.invoice &&
+      !options.some((option) => option.value === expense.invoice?.id)
+    ) {
+      options.unshift({
+        label: expense.invoice.invoiceNumber,
+        value: expense.invoice.id,
+        subLabel: undefined,
+      });
+    }
+    return options;
+  }, [invoicesQuery.data?.data, expense?.invoice]);
+
   const today = new Date().toISOString().split("T")[0];
 
   const formik = useFormik({
@@ -132,6 +170,8 @@ export function ExpenseForm({
       description: expense?.description ?? "",
       category: (expense?.category ?? "PARTS") as ExpenseCategory,
       jobCardId: expense?.jobCardId ?? defaultJobCardId ?? "",
+      invoiceId: expense?.invoiceId ?? "",
+      invoiceLineItemId: expense?.invoiceLineItemId ?? "",
       vendorName: expense?.vendorName ?? "",
       quantity: expense ? String(Number(expense.quantity)) : "1",
       unitCost: expense ? String(Number(expense.unitCost)) : "",
@@ -164,7 +204,18 @@ export function ExpenseForm({
         name: values.name,
         description: values.description || undefined,
         category: values.category,
-        jobCardId: values.jobCardId || undefined,
+        // A linked expense takes the invoice's job card; sending one could
+        // only disagree with it (a 400).
+        jobCardId: values.invoiceId ? undefined : values.jobCardId || undefined,
+        // Same "send only what changed, null to unlink" rule as accounts.
+        invoiceId: accountFieldForSave(
+          values.invoiceId,
+          expense ? { original: expense.invoiceId } : undefined,
+        ),
+        invoiceLineItemId: accountFieldForSave(
+          values.invoiceLineItemId,
+          expense ? { original: expense.invoiceLineItemId } : undefined,
+        ),
         vendorName: values.vendorName || undefined,
         quantity: values.quantity ? Number(values.quantity) : undefined,
         unitCost: values.unitCost ? Number(values.unitCost) : undefined,
@@ -211,6 +262,22 @@ export function ExpenseForm({
       formik.setFieldValue("paidThroughAccountId", "");
     }
   };
+
+  // The chosen invoice's items, and the job card it belongs to.
+  const { data: linkedInvoiceData } = useGetInvoiceByIdQuery(
+    formik.values.invoiceId,
+  );
+  const linkedInvoice = formik.values.invoiceId
+    ? linkedInvoiceData?.data
+    : undefined;
+  const lineItemOptions = useMemo(
+    () =>
+      (linkedInvoice?.lineItems ?? []).map((line) => ({
+        label: line.name,
+        value: line.id,
+      })),
+    [linkedInvoice?.lineItems],
+  );
 
   const isBusy = isSubmitting || isUploading;
 
@@ -363,28 +430,94 @@ export function ExpenseForm({
           </Card.Body>
         </Card.Root>
 
-        {/* Section 2: Job Card Link */}
+        {/* Section 2: Invoice & Job Card */}
         <Card.Root borderWidth="1px" borderColor="gray.75" shadow="none">
           <Card.Header pb="0">
             <SectionHeader
               num={2}
-              title="Job Card"
-              subtitle="Linking makes this expense count against the job's profit"
+              title="Invoice & Job Card"
+              subtitle="Linking makes this expense count against the invoice's margin and the job's profit"
             />
           </Card.Header>
           <Card.Body>
-            <CustomSelect
-              label="Link to Job Card (optional)"
-              placeholder="Select job card..."
-              options={jobCardOptions}
-              loading={jobCardsLoading}
-              value={
-                formik.values.jobCardId ? [formik.values.jobCardId] : undefined
-              }
-              onChange={(opt: { value: string[] }) =>
-                formik.setFieldValue("jobCardId", opt?.value?.[0] ?? "")
-              }
-            />
+            <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
+              <Box>
+                <SearchCombobox
+                  label="Spent for Invoice (optional)"
+                  placeholder="Search invoice #..."
+                  options={invoiceOptions}
+                  value={formik.values.invoiceId || undefined}
+                  onChange={(value) => {
+                    formik.setFieldValue("invoiceId", value);
+                    formik.setFieldValue("invoiceLineItemId", "");
+                  }}
+                  onSearchChange={setInvoiceSearch}
+                  searchDebounceMs={400}
+                  serverSearch
+                  isLoading={invoicesQuery.isFetching}
+                />
+                {formik.values.invoiceId && (
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    px="1"
+                    mt="1"
+                    color="gray.400"
+                    onClick={() => {
+                      formik.setFieldValue("invoiceId", "");
+                      formik.setFieldValue("invoiceLineItemId", "");
+                    }}
+                  >
+                    Unlink invoice
+                  </Button>
+                )}
+              </Box>
+              <CustomSelect
+                label="Invoice Item (optional)"
+                placeholder={
+                  formik.values.invoiceId
+                    ? "Select item..."
+                    : "Choose an invoice first"
+                }
+                disabled={!formik.values.invoiceId}
+                options={lineItemOptions}
+                value={
+                  formik.values.invoiceLineItemId
+                    ? [formik.values.invoiceLineItemId]
+                    : undefined
+                }
+                onChange={(opt: { value: string[] }) =>
+                  formik.setFieldValue(
+                    "invoiceLineItemId",
+                    opt?.value?.[0] ?? "",
+                  )
+                }
+              />
+              <Box gridColumn={{ sm: "1 / -1" }}>
+                <CustomSelect
+                  label="Link to Job Card (optional)"
+                  placeholder="Select job card..."
+                  options={jobCardOptions}
+                  loading={jobCardsLoading}
+                  // With an invoice, the expense takes the invoice's job card.
+                  disabled={Boolean(formik.values.invoiceId)}
+                  helperText={
+                    formik.values.invoiceId
+                      ? "Follows the invoice's job card"
+                      : undefined
+                  }
+                  value={(() => {
+                    const jobCardId = formik.values.invoiceId
+                      ? linkedInvoice?.jobCardId
+                      : formik.values.jobCardId;
+                    return jobCardId ? [jobCardId] : undefined;
+                  })()}
+                  onChange={(opt: { value: string[] }) =>
+                    formik.setFieldValue("jobCardId", opt?.value?.[0] ?? "")
+                  }
+                />
+              </Box>
+            </Grid>
           </Card.Body>
         </Card.Root>
 

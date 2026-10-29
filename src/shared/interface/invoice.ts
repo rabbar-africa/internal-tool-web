@@ -59,6 +59,8 @@ export interface IInvoiceResponse {
   taxId?: string | null;
   taxName?: string | null;
   taxPercent?: string | number | null;
+  /** The job card this invoice belongs to. */
+  jobCardId?: string | null;
   /** The account printed for the customer to pay into; null → the primary. */
   bankAccountId?: string | null;
   bankAccount?: IAccountRef | null;

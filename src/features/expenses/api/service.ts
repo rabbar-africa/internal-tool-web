@@ -5,6 +5,9 @@ import type {
   CreateExpensePayload,
   Expense,
   IGetExpenseFilter,
+  InvoiceCosts,
+  RecordInvoiceCostsPayload,
+  RecordInvoiceCostsResponse,
   UpdateExpensePayload,
 } from "@/shared/interface/expense";
 
@@ -42,4 +45,35 @@ export const updateExpense = async (
 
 export const deleteExpense = async (id: string): Promise<void> => {
   await axios.delete(`/expenses/${id}`);
+};
+
+/**
+ * Up to 100 expenses saved together — all of them or none. An error names the
+ * entry it is about: "expenses[2]: …".
+ */
+export const createExpensesBulk = async (expenses: CreateExpensePayload[]) => {
+  const response = await axios.post<ApiResponse<Expense[]>>("/expenses/bulk", {
+    expenses,
+  });
+  return response.data;
+};
+
+/** What the invoice billed against what was spent, line by line. */
+export const getInvoiceCosts = async (invoiceId: string) => {
+  const response = await axios.get<ApiResponse<InvoiceCosts>>(
+    `/invoices/${invoiceId}/expenses`,
+  );
+  return response.data;
+};
+
+/** Adds costs to an invoice (never replaces earlier ones). */
+export const recordInvoiceCosts = async (
+  invoiceId: string,
+  payload: RecordInvoiceCostsPayload,
+) => {
+  const response = await axios.post<ApiResponse<RecordInvoiceCostsResponse>>(
+    `/invoices/${invoiceId}/expenses`,
+    payload,
+  );
+  return response.data;
 };

@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
+import RequirePermission from "@/routes/RequirePermission";
 
 const { InvoiceListPage } = lazyImport(
   () => import("../pages/InvoiceListPage"),
@@ -19,6 +20,11 @@ const { EditInvoicePage } = lazyImport(
   "EditInvoicePage",
 );
 
+const { RecordInvoiceCostsPage } = lazyImport(
+  () => import("../pages/RecordInvoiceCostsPage"),
+  "RecordInvoiceCostsPage",
+);
+
 export const InvoiceRoutes: RouteObject[] = [
   {
     path: RouteConstants.invoices.base.path,
@@ -35,5 +41,14 @@ export const InvoiceRoutes: RouteObject[] = [
   {
     path: RouteConstants.invoices.detail.path,
     element: <InvoiceDetailPage />,
+  },
+  {
+    element: <RequirePermission permissions={["create:expenses"]} />,
+    children: [
+      {
+        path: RouteConstants.invoices.costs.path,
+        element: <RecordInvoiceCostsPage />,
+      },
+    ],
   },
 ];
