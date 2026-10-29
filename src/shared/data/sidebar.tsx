@@ -108,9 +108,10 @@ export const sideBarItems: SideBarItem[] = [
   {
     name: "Banking",
     icon: ArrowLeftRightIcon,
-    href: RouteConstants.banking.transfers.path,
+    href: RouteConstants.banking.base.path,
     slug: "banking",
-    paths: [RouteConstants.banking.transfers.path],
+    // Transfers and statements.
+    paths: ["/banking"],
     permission: "read:banking",
   },
   {

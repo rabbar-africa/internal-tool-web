@@ -78,7 +78,9 @@ const expenses = {
 } as const;
 
 const banking = {
+  base: defineRoute("/banking" as const),
   transfers: defineRoute("/banking/transfers" as const),
+  statement: defineRoute("/banking/accounts/:id/statement" as const),
 } as const;
 
 const jobCards = {
