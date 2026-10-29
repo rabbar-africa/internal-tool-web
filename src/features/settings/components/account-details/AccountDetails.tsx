@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import {
   Badge,
@@ -23,6 +24,75 @@ import {
 } from "../../api";
 import type { IOrgBankAccount } from "@/shared/interface/settings";
 import { formatCurrency } from "@/utils/calculations";
+import { usePermissions } from "@/hooks/usePermissions";
+import { RouteConstants } from "@/shared/constants/routes";
+import {
+  TransferModal,
+  type TransferKind,
+} from "@/features/banking/components/TransferModal";
+
+/**
+ * Where this account's money is: its payments, expenses and transfers (each
+ * list filtered to it), plus banking or withdrawing cash from here.
+ */
+function AccountMoneyLinks({
+  account,
+  onTransfer,
+}: {
+  account: IOrgBankAccount;
+  onTransfer: (kind: TransferKind, accountId: string) => void;
+}) {
+  const navigate = useNavigate();
+  const { canRead, canCreate } = usePermissions();
+  const isCash = account.type === "CASH";
+  const id = encodeURIComponent(account.id);
+
+  const links = [
+    canRead("payments_received") && {
+      label: "Payments",
+      to: `${RouteConstants.payments.base.path}?depositToAccountId=${id}`,
+    },
+    canRead("expenses") && {
+      label: "Expenses",
+      to: `${RouteConstants.expenses.base.path}?paidThroughAccountId=${id}`,
+    },
+    canRead("banking") && {
+      label: "Transfers",
+      to: `${RouteConstants.banking.transfers.path}?accountId=${id}`,
+    },
+  ].filter(Boolean) as { label: string; to: string }[];
+
+  if (!links.length && !canCreate("banking")) return null;
+
+  return (
+    <Flex align="center" gap="3" mt="3" flexWrap="wrap">
+      {links.map((link) => (
+        <Button
+          key={link.label}
+          size="xs"
+          variant="ghost"
+          px="1"
+          color="primary.300"
+          onClick={() => navigate(link.to)}
+        >
+          {link.label}
+        </Button>
+      ))}
+      {canCreate("banking") && (
+        <Button
+          size="xs"
+          variant="outline"
+          ml="auto"
+          onClick={() =>
+            onTransfer(isCash ? "deposit" : "withdraw", account.id)
+          }
+        >
+          {isCash ? "Deposit to bank" : "Withdraw cash"}
+        </Button>
+      )}
+    </Flex>
+  );
+}
 
 /** "Balance on 01 Oct 2026: ₦50,000.00", or nothing when none is set. */
 function OpeningBalanceLine({ account }: { account: IOrgBankAccount }) {
@@ -59,6 +129,12 @@ export function AccountDetails() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<IOrgBankAccount | null>(null);
   const [deleting, setDeleting] = useState<IOrgBankAccount | null>(null);
+  const [transfer, setTransfer] = useState<{
+    kind: TransferKind;
+    accountId: string;
+  } | null>(null);
+  const openTransfer = (kind: TransferKind, accountId: string) =>
+    setTransfer({ kind, accountId });
 
   const confirmDelete = () => {
     if (!deleting) return;
@@ -153,6 +229,7 @@ export function AccountDetails() {
                 {account.accountNumber}
               </Text>
               <OpeningBalanceLine account={account} />
+              <AccountMoneyLinks account={account} onTransfer={openTransfer} />
               <Flex
                 gap="2"
                 mt="3"
@@ -219,6 +296,7 @@ export function AccountDetails() {
             here.
           </Text>
           <OpeningBalanceLine account={cashAccount} />
+          <AccountMoneyLinks account={cashAccount} onTransfer={openTransfer} />
           <Flex
             gap="2"
             mt="3"
@@ -237,6 +315,13 @@ export function AccountDetails() {
           </Flex>
         </Box>
       )}
+
+      <TransferModal
+        open={Boolean(transfer)}
+        onClose={() => setTransfer(null)}
+        kind={transfer?.kind}
+        accountId={transfer?.accountId}
+      />
 
       <BankAccountModal
         open={modalOpen}

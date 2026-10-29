@@ -77,6 +77,10 @@ const expenses = {
   edit: defineRoute("/expenses/:id/edit" as const),
 } as const;
 
+const banking = {
+  transfers: defineRoute("/banking/transfers" as const),
+} as const;
+
 const jobCards = {
   base: defineRoute("/job-cards" as const),
   create: defineRoute("/job-cards/create" as const),
@@ -189,6 +193,7 @@ export const RouteConstants = {
   items,
   paperwork,
   expenses,
+  banking,
   jobCards,
   technicians,
   reminders,

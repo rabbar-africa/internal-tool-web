@@ -24,6 +24,7 @@ export type PermissionSubject =
   | "job_cards"
   | "expenses"
   | "reminders"
+  | "banking"
   | (string & {});
 
 /** A permission as it appears on the user's flattened `permissions` array. */

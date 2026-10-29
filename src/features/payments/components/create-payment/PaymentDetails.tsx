@@ -44,7 +44,7 @@ export function PaymentDetails({
           error={touched.mode && errors.mode ? errors.mode : undefined}
         />
         <AccountSelect
-          label="Deposit To"
+          label="Paid Into"
           includeCash
           isCash={values.mode === PaymentModeDto.CASH}
           fallbackAccountId={depositFallbackAccountId}

@@ -294,7 +294,7 @@ export function InvoiceFormHeader({
           />
 
           <AccountSelect
-            label="Pay Into Account"
+            label="Customer Pays Into"
             value={formik.values.bankAccountId}
             onChange={(id) => formik.setFieldValue("bankAccountId", id)}
             helperText="Printed on the invoice for the customer to pay into"

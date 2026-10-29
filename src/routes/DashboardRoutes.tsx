@@ -10,6 +10,7 @@ import { CustomerRoutes } from "@/features/customers/routes";
 import { PaperworkRoutes } from "@/features/paperwork/routes";
 import { ItemRoutes } from "@/features/items/routes";
 import { ExpenseRoutes } from "@/features/expenses/routes";
+import { BankingRoutes } from "@/features/banking/routes";
 import { JobCardRoutes } from "@/features/job-cards/routes";
 import { TechnicianRoutes } from "@/features/technicians/routes";
 import { ReminderRoutes } from "@/features/reminders/routes";
@@ -46,6 +47,7 @@ export const DashboardRoutes: RouteObject = {
     ...PaperworkRoutes,
     ...ItemRoutes,
     ...ExpenseRoutes,
+    ...BankingRoutes,
     ...JobCardRoutes,
     ...TechnicianRoutes,
     ...ReminderRoutes,
