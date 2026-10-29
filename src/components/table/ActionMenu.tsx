@@ -16,7 +16,8 @@ export interface TableAction<T = any> {
 }
 
 interface ActionMenuProps<T> {
-  row: Row<T>;
+  /** A table row, or `{ original: item }` to use the menu outside a table. */
+  row: Pick<Row<T>, "original">;
   actions: TableAction<T>[];
 }
 
@@ -62,7 +63,7 @@ export function ActionMenu<T>({ row, actions }: ActionMenuProps<T>) {
 
               return (
                 <Box key={index}>
-                  {action.separator && (
+                  {action.separator && index > 0 && (
                     <Menu.Separator borderColor={"gray.50"} />
                   )}
                   <Menu.Item

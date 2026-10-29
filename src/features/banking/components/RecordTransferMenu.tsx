@@ -4,7 +4,6 @@ import type { TransferKind } from "./TransferModal";
 const ITEMS: { kind: TransferKind; label: string }[] = [
   { kind: "deposit", label: "Deposit cash to bank" },
   { kind: "withdraw", label: "Withdraw cash" },
-  { kind: "transfer", label: "Transfer between accounts" },
 ];
 
 /** "Record Transfer" button offering the three kinds of transfer. */

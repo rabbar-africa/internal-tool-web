@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Box, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { RouteConstants } from "@/shared/constants/routes";
 import { type ColumnDef } from "@tanstack/react-table";
 import moment from "moment";
 import { CustomTable, type TableAction } from "@/components/table";
@@ -13,6 +15,7 @@ import { formatCurrency } from "@/utils/calculations";
 import {
   AccountFilterSelect,
   formatAccountLabel,
+  useAccountOptions,
 } from "@/features/settings/components/account-details/AccountSelect";
 import type { IAccountTransfer } from "@/shared/interface/banking";
 import {
@@ -90,6 +93,13 @@ const columns: ColumnDef<IAccountTransfer>[] = [
 export function TransferListTemplate() {
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const { canUpdate, canDelete } = usePermissions();
+  const navigate = useNavigate();
+  // "Statement" opens the filtered account, else the primary.
+  const { accounts } = useAccountOptions({ includeCash: true });
+  const statementAccountId =
+    filters.accountId ||
+    accounts.find((a) => a.isPrimary && a.type === "BANK")?.id ||
+    accounts[0]?.id;
 
   const { data, isLoading } = useGetAccountTransfersQuery({
     page: filters.page,
@@ -149,11 +159,27 @@ export function TransferListTemplate() {
           title="Account Transfers"
           subtitle="Cash banked, cash withdrawn and money moved between your accounts"
           action={
-            <PermissionGate anyOf={["create:banking"]}>
-              <RecordTransferMenu
-                onSelect={(kind) => setModal({ kind, transfer: undefined })}
-              />
-            </PermissionGate>
+            <Flex gap="2" flexWrap="wrap">
+              {statementAccountId && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    navigate(
+                      RouteConstants.banking.statement.generate({
+                        id: statementAccountId,
+                      }),
+                    )
+                  }
+                >
+                  Statement
+                </Button>
+              )}
+              <PermissionGate anyOf={["create:banking"]}>
+                <RecordTransferMenu
+                  onSelect={(kind) => setModal({ kind, transfer: undefined })}
+                />
+              </PermissionGate>
+            </Flex>
           }
         />
 
