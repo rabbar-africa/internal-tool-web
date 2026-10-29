@@ -397,7 +397,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
       </Flex>
 
       {/* Notes + primary bank account */}
-      {(notes || bankAccount) && (
+      {(notes || bankAccount?.accountNumber) && (
         <Box mb="6">
           <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
             Notes
@@ -412,7 +412,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
               {notes}
             </Text>
           )}
-          {bankAccount && (
+          {bankAccount?.accountNumber && (
             <Stack gap="0" mt={notes ? "4" : "0"}>
               <Text fontSize="12px" fontWeight="700" color="gray.500">
                 {bankAccount.accountNumber}

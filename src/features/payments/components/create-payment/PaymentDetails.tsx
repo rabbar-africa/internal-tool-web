@@ -14,12 +14,14 @@ import {
 interface PaymentDetailsProps {
   formik: FormikProps<CreatePaymentFormValues>;
   onModeChange: (mode: PaymentModeDto) => void;
+  onSelectDepositAccount: (id: string) => void;
   depositFallbackAccountId: string | null;
 }
 
 export function PaymentDetails({
   formik,
   onModeChange,
+  onSelectDepositAccount,
   depositFallbackAccountId,
 }: PaymentDetailsProps) {
   const { values, errors, touched } = formik;
@@ -47,7 +49,7 @@ export function PaymentDetails({
           isCash={values.mode === PaymentModeDto.CASH}
           fallbackAccountId={depositFallbackAccountId}
           value={values.depositToAccountId}
-          onChange={(id) => formik.setFieldValue("depositToAccountId", id)}
+          onChange={onSelectDepositAccount}
         />
 
         <CustomNumberInput

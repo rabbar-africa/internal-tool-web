@@ -1,4 +1,5 @@
 import {
+  Badge,
   Field,
   Portal,
   Select,
@@ -117,6 +118,11 @@ export function CustomSelect({
                     {...itemProps}
                   >
                     <Select.ItemText>{option.label}</Select.ItemText>
+                    {option.badge && (
+                      <Badge size="sm" variant="subtle" ml="auto">
+                        {option.badge}
+                      </Badge>
+                    )}
                     {multiple && <Select.ItemIndicator />}
                   </Select.Item>
                 ))

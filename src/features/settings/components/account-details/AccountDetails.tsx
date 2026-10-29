@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import moment from "moment";
 import {
   Badge,
   Box,
@@ -21,10 +22,35 @@ import {
   useSetPrimaryOrganizationBankAccount,
 } from "../../api";
 import type { IOrgBankAccount } from "@/shared/interface/settings";
+import { formatCurrency } from "@/utils/calculations";
+
+/** "Balance on 01 Oct 2026: ₦50,000.00", or nothing when none is set. */
+function OpeningBalanceLine({ account }: { account: IOrgBankAccount }) {
+  const amount = Number(account.openingBalance ?? 0) || 0;
+  if (!amount && !account.openingBalanceDate) return null;
+  const on = account.openingBalanceDate
+    ? `on ${moment(account.openingBalanceDate.slice(0, 10)).format("DD MMM YYYY")}`
+    : "from the start";
+  return (
+    <Text fontSize="12px" color="gray.300" mt="1">
+      Opening balance {on}: {formatCurrency(amount)}
+    </Text>
+  );
+}
 
 export function AccountDetails() {
-  const { data, isLoading } = useGetOrganizationBankAccounts();
-  const accounts = data?.data ?? [];
+  // The settings list is bank accounts; the Cash account (the till) only comes
+  // back with includeCash, and gets its own card.
+  const { data, isLoading } = useGetOrganizationBankAccounts({
+    includeCash: true,
+  });
+  const { accounts, cashAccount } = useMemo(() => {
+    const all = data?.data ?? [];
+    return {
+      accounts: all.filter((account) => account.type !== "CASH"),
+      cashAccount: all.find((account) => account.type === "CASH") ?? null,
+    };
+  }, [data?.data]);
   const { mutate: setPrimary, isPending: isSettingPrimary } =
     useSetPrimaryOrganizationBankAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
@@ -126,6 +152,7 @@ export function AccountDetails() {
               >
                 {account.accountNumber}
               </Text>
+              <OpeningBalanceLine account={account} />
               <Flex
                 gap="2"
                 mt="3"
@@ -165,6 +192,50 @@ export function AccountDetails() {
             </Box>
           ))}
         </Grid>
+      )}
+
+      {cashAccount && (
+        <Box
+          borderWidth="1px"
+          borderColor="gray.75"
+          rounded="lg"
+          p="4"
+          mt="4"
+          maxW={{ lg: "calc(50% - 0.5rem)" }}
+        >
+          <Flex align="center" gap="2" flexWrap="wrap" mb="2">
+            <Text fontSize="14px" fontWeight="600" color="gray.500">
+              Cash on hand
+            </Text>
+            <Badge size="sm" variant="subtle">
+              Cash
+            </Badge>
+          </Flex>
+          <Text fontSize="13px" color="gray.400">
+            {cashAccount.accountName}
+          </Text>
+          <Text fontSize="12px" color="gray.300">
+            Money in the till: cash payments land here, cash expenses leave from
+            here.
+          </Text>
+          <OpeningBalanceLine account={cashAccount} />
+          <Flex
+            gap="2"
+            mt="3"
+            pt="3"
+            borderTopWidth="1px"
+            borderColor="gray.75"
+          >
+            <Button
+              size="xs"
+              variant="ghost"
+              color="gray.400"
+              onClick={() => openEdit(cashAccount)}
+            >
+              Edit
+            </Button>
+          </Flex>
+        </Box>
       )}
 
       <BankAccountModal

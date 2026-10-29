@@ -500,7 +500,7 @@ export function InvoicePdfDocument({
         </View>
 
         {/* Account details */}
-        {bankAccount ? (
+        {bankAccount?.accountNumber ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Account Details</Text>
             <Text style={styles.bankAccountNumber}>

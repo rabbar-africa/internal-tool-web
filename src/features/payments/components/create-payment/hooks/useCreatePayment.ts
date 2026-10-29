@@ -412,13 +412,23 @@ export function useCreatePayment() {
   };
 
   // Cash and non-cash default to different accounts, so switching between
-  // them drops a hand-picked account back to the default for the new mode.
+  // them moves the picker to the new default — unless the user chose an
+  // account by hand on this form.
+  const depositPickedRef = useRef(false);
   const handleModeChange = (mode: PaymentModeDto) => {
     const wasCash = values.mode === PaymentModeDto.CASH;
     setFieldValue("mode", mode);
-    if (wasCash !== (mode === PaymentModeDto.CASH)) {
+    if (
+      wasCash !== (mode === PaymentModeDto.CASH) &&
+      !depositPickedRef.current
+    ) {
       setFieldValue("depositToAccountId", "");
     }
+  };
+
+  const handleSelectDepositAccount = (id: string) => {
+    depositPickedRef.current = true;
+    setFieldValue("depositToAccountId", id);
   };
 
   // Non-cash money defaults to the account the paid invoices name, when they
@@ -560,6 +570,7 @@ export function useCreatePayment() {
     handleSelectCustomer,
     // deposit
     handleModeChange,
+    handleSelectDepositAccount,
     depositFallbackAccountId,
     // allocations
     isLoadingInvoices: invoicesQuery.isFetching,
