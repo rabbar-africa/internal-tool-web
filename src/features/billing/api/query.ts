@@ -30,10 +30,11 @@ export const useBillingOverviewQuery = (options?: { enabled?: boolean }) =>
     enabled: options?.enabled ?? true,
   });
 
-export const useBillingPlansQuery = () =>
+export const useBillingPlansQuery = (options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: [customQueryKey.billing.plans],
     queryFn: () => billingService.getPlans(),
+    enabled: options?.enabled ?? true,
   });
 
 /**

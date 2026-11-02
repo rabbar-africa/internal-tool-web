@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
+import { CheckIcon } from "@/assets/custom/CheckIcon";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import SectionLoader from "@/components/common/SectionLoader";
 import { SectionTitle } from "@/features/settings/components/SectionTitle";
@@ -95,83 +96,171 @@ function planActionFor(
   };
 }
 
-interface PlanOptionProps {
+/** How many of a plan's rows show before "See more". */
+const PREVIEW_ROWS = 4;
+
+/**
+ * What a plan includes, as the API words it. Never built up by hand here. What
+ * exists comes first, so the preview never leads with something not built yet.
+ */
+function planRows(plan: BillingPlan) {
+  const rows = [
+    ...(plan.limits ?? []).map((row) => ({
+      key: `limit-${row.key}`,
+      text: row.phrase,
+      comingSoon: row.comingSoon,
+    })),
+    ...(plan.features ?? [])
+      .filter((row) => row.included)
+      .map((row) => ({
+        key: `feature-${row.key}`,
+        text: row.label,
+        comingSoon: row.comingSoon,
+      })),
+  ];
+  return [
+    ...rows.filter((row) => !row.comingSoon),
+    ...rows.filter((row) => row.comingSoon),
+  ];
+}
+
+interface PlanCardProps {
   plan: BillingPlan;
-  tag?: string;
   selected: boolean;
+  /** Worth drawing the eye to: the upgrade from a free plan. */
+  highlighted: boolean;
+  buttonLabel: string;
+  buttonDisabled: boolean;
   onSelect: () => void;
+  /** A second way in, for a plan whose main button is "Active plan". */
+  renew?: () => void;
 }
 
-/** What a plan includes, as the API words it. Never built up by hand here. */
-function PlanIncludes({ plan }: { plan: BillingPlan }) {
-  const limits = plan.limits ?? [];
-  const features = (plan.features ?? []).filter((row) => row.included);
-  if (!limits.length && !features.length) return null;
-
-  const row = (key: string, text: string, comingSoon: boolean) => (
-    <Flex key={key} align="center" gap="2" flexWrap="wrap">
-      <Text fontSize="12px" color={comingSoon ? "gray.300" : "gray.400"}>
-        {text}
-      </Text>
-      {comingSoon && (
-        <Badge size="xs" variant="subtle">
-          Coming soon
-        </Badge>
-      )}
-    </Flex>
-  );
+function PlanCard({
+  plan,
+  selected,
+  highlighted,
+  buttonLabel,
+  buttonDisabled,
+  onSelect,
+  renew,
+}: PlanCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const rows = planRows(plan);
+  const visible = expanded ? rows : rows.slice(0, PREVIEW_ROWS);
 
   return (
-    <Stack gap="1" mt="2" pt="2" borderTopWidth="1px" borderColor="gray.75">
-      {limits.map((l) => row(l.key, l.phrase, l.comingSoon))}
-      {features.map((f) => row(f.key, f.label, f.comingSoon))}
-    </Stack>
-  );
-}
-
-function PlanOption({ plan, tag, selected, onSelect }: PlanOptionProps) {
-  return (
-    <Box
-      as="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      textAlign="left"
-      p="4"
+    <Flex
+      direction="column"
+      p="5"
       rounded="xl"
-      borderWidth="2px"
-      borderColor={selected ? "primary.400" : "gray.75"}
-      bg={selected ? "primary.50" : "white"}
-      cursor="pointer"
-      transition="border-color .15s ease, background .15s ease"
-      _hover={{ borderColor: selected ? "primary.400" : "gray.100" }}
-      _focusVisible={{ outline: "2px solid", outlineColor: "primary.300" }}
-      w="100%"
+      borderWidth="1px"
+      borderColor={selected || highlighted ? "primary.300" : "gray.75"}
+      bg="white"
+      shadow={selected || highlighted ? "sm" : "none"}
+      transition="border-color .15s ease, box-shadow .15s ease"
     >
-      <Stack gap="1">
-        <Box>
-          <Text fontSize="16px" fontWeight="700" color="gray.500">
-            {plan.name}
-          </Text>
-          {tag && (
-            <Badge size="sm" bg="primary.100" color="primary.500" mt="1">
-              {tag}
-            </Badge>
-          )}
-        </Box>
-        <Text fontSize="15px" fontWeight="600" color="primary.500">
+      <Flex align="center" justify="space-between" gap="2" minH="1.5rem">
+        <Text fontSize="15px" fontWeight="600" color="gray.500">
+          {plan.name}
+        </Text>
+        {highlighted && (
+          <Badge size="sm" bg="primary.50" color="primary.500">
+            Recommended
+          </Badge>
+        )}
+      </Flex>
+
+      <Flex align="baseline" gap="1" mt="2">
+        <Text
+          fontSize="1.75rem"
+          lineHeight="1.2"
+          fontWeight="700"
+          color="primary.500"
+        >
           {isPaidPlan(plan)
-            ? `${formatPrice(plan.monthlyPrice, plan.currency)} a month`
+            ? formatPrice(plan.monthlyPrice, plan.currency)
             : "Free"}
         </Text>
-        {plan.description && (
-          <Text fontSize="12px" color="gray.300" lineHeight="1.5">
-            {plan.description}
+        {isPaidPlan(plan) && (
+          <Text fontSize="13px" color="gray.300">
+            / month
           </Text>
         )}
-        <PlanIncludes plan={plan} />
-      </Stack>
-    </Box>
+      </Flex>
+
+      {plan.description && (
+        <Text fontSize="13px" color="gray.400" lineHeight="1.5" mt="2">
+          {plan.description}
+        </Text>
+      )}
+
+      {rows.length > 0 && (
+        <Stack gap="2" mt="4" pt="4" borderTopWidth="1px" borderColor="gray.75">
+          {visible.map((row) => (
+            <Flex key={row.key} align="flex-start" gap="2">
+              <CheckIcon
+                boxSize="1rem"
+                mt="0.125rem"
+                flexShrink={0}
+                color={row.comingSoon ? "gray.200" : "primary.300"}
+              />
+              <Text
+                fontSize="13px"
+                lineHeight="1.4"
+                color={row.comingSoon ? "gray.300" : "gray.500"}
+              >
+                {row.text}
+                {row.comingSoon && (
+                  <Badge size="xs" variant="subtle" ml="2">
+                    Coming soon
+                  </Badge>
+                )}
+              </Text>
+            </Flex>
+          ))}
+          {rows.length > PREVIEW_ROWS && (
+            <Box>
+              <Button
+                variant="ghost"
+                size="xs"
+                px="0"
+                color="primary.300"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((open) => !open)}
+              >
+                {expanded ? "See less" : "See more"}
+              </Button>
+            </Box>
+          )}
+        </Stack>
+      )}
+
+      {/* Pushes the button down, so the cards' buttons line up. */}
+      <Box flex="1" minH="4" />
+
+      <Button
+        w="full"
+        size="sm"
+        variant={highlighted && !selected ? "primary" : "outline"}
+        disabled={buttonDisabled}
+        aria-pressed={selected}
+        onClick={onSelect}
+      >
+        {buttonLabel}
+      </Button>
+      {renew && (
+        <Button
+          variant="ghost"
+          size="xs"
+          mt="2"
+          color="gray.400"
+          onClick={renew}
+        >
+          Pay for another month
+        </Button>
+      )}
+    </Flex>
   );
 }
 
@@ -201,6 +290,17 @@ export function ChoosePlanSection({
     [plans],
   );
 
+  // On a phone the panel opens below every card, out of sight of the tap.
+  const actionPanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (selected) {
+      actionPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [selected]);
+
   const selectedPlan = sortedPlans.find((p) => p.tier === selected) ?? null;
   const action = selectedPlan ? planActionFor(selectedPlan, overview) : null;
   const inPaidPeriod = isInPaidPeriod(overview);
@@ -219,9 +319,16 @@ export function ChoosePlanSection({
     );
   }
 
-  const tagFor = (plan: BillingPlan) => {
-    if (plan.tier !== overview.plan.tier) return undefined;
-    return lapsed ? "Your last plan" : "Your plan";
+  const isActivePlan = (plan: BillingPlan) =>
+    plan.tier === overview.plan.tier && !lapsed;
+
+  const buttonLabelFor = (plan: BillingPlan) => {
+    if (plan.tier === selected) return "Selected";
+    if (isActivePlan(plan)) return "Active plan";
+    if (plan.tier === overview.plan.tier) return "Renew plan";
+    return planActionFor(plan, overview).kind === "scheduled"
+      ? "Scheduled"
+      : "Select plan";
   };
 
   return (
@@ -232,35 +339,45 @@ export function ChoosePlanSection({
             ? "Change or renew your plan"
             : "Upgrade your plan"
         }
-        subtitle="Tap a plan to see what you'll pay."
+        subtitle="Pick the plan that fits your workshop. You'll see what you'd pay before you pay anything."
       />
 
       {isLoading ? (
         <SectionLoader h="8rem" />
       ) : (
         <Grid
-          role="radiogroup"
-          aria-label="Plans"
           templateColumns={{
             base: "1fr",
             md: `repeat(${Math.max(1, Math.min(sortedPlans.length, 3))}, 1fr)`,
           }}
-          gap="3"
+          gap="4"
         >
           {sortedPlans.map((plan) => (
-            <PlanOption
+            <PlanCard
               key={plan.id}
               plan={plan}
-              tag={tagFor(plan)}
               selected={plan.tier === selected}
-              onSelect={() => setSelected(plan.tier)}
+              highlighted={!isPaidPlan(overview.plan) && isPaidPlan(plan)}
+              buttonLabel={buttonLabelFor(plan)}
+              buttonDisabled={isActivePlan(plan) && plan.tier !== selected}
+              // Tapping the selected plan again closes its panel.
+              onSelect={() =>
+                setSelected((current) =>
+                  current === plan.tier ? null : plan.tier,
+                )
+              }
+              renew={
+                isActivePlan(plan) && inPaidPeriod && plan.tier !== selected
+                  ? () => setSelected(plan.tier)
+                  : undefined
+              }
             />
           ))}
         </Grid>
       )}
 
       {selectedPlan && action && (
-        <Box mt="5">
+        <Box mt="5" ref={actionPanelRef}>
           {action.kind === "current" && (
             <Text fontSize="14px" color="gray.400">
               You're already on this plan.

@@ -12,40 +12,74 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import type { LimitUsage, PlanFeature, PlanLimit } from "../api/types";
+import { useBillingPlansQuery } from "../api/query";
+import type { PlanFeature, PlanLimit } from "../api/types";
 import { usePlanAccess } from "../hooks/usePlanAccess";
-import { TONE_STYLES, type BillingTone } from "../utils/copy";
+import { TONE_STYLES, isPaidPlan, type BillingTone } from "../utils/copy";
+import { formatPrice } from "../utils/format";
 
 /** Used this much of a limit and we start showing the meter. */
 const NEAR_CAP_RATIO = 0.8;
 
-const LIMIT_NOUNS: Record<string, { one: string; many: string }> = {
-  invoices: { one: "invoice", many: "invoices" },
-  customers: { one: "customer", many: "customers" },
-  users: { one: "user", many: "users" },
-  jobCards: { one: "job card", many: "job cards" },
-  inspections: { one: "inspection", many: "inspections" },
-  paperwork: { one: "paperwork record", many: "paperwork records" },
+const LIMIT_COPY: Record<string, { one: string; many: string; why: string }> = {
+  invoices: {
+    one: "invoice",
+    many: "invoices",
+    why: "so you can keep billing customers without stopping",
+  },
+  customers: {
+    one: "customer",
+    many: "customers",
+    why: "so every new customer goes straight into your records",
+  },
+  users: {
+    one: "user",
+    many: "users",
+    why: "so your whole team can work in one place",
+  },
+  jobCards: {
+    one: "job card",
+    many: "job cards",
+    why: "so every car that comes in gets tracked",
+  },
+  inspections: {
+    one: "inspection",
+    many: "inspections",
+    why: "so you can keep sending reports to customers",
+  },
+  paperwork: {
+    one: "paperwork record",
+    many: "paperwork records",
+    why: "so no document's expiry catches you out",
+  },
 };
 
-/** Why each lockable feature is worth having, for the upgrade prompt. */
-const FEATURE_PITCH: Record<string, string> = {
-  reminders:
-    "Reminders are on the Standard plan. Upgrade to schedule services, follow-ups and paperwork renewals, and keep the ones you have working.",
-  businessStatement:
-    "The business statement is on the Standard plan. Upgrade for your whole business on one page: money by account, sales, spending, profit and tax.",
-  invoiceTerms:
-    "Terms & conditions print on invoices on the Standard plan. Upgrade to add them.",
-  defaultVat:
-    "A default VAT on every new invoice is on the Standard plan. You can still pick a tax on each invoice.",
+/** The case for each lockable feature, for the upgrade prompt. */
+const FEATURE_PITCH: Record<string, { title: string; body: string }> = {
+  reminders: {
+    title: "Bring customers back on time.",
+    body: "Upgrade to Standard to schedule services, follow-ups and paperwork renewals.",
+  },
+  businessStatement: {
+    title: "See your whole business on one page.",
+    body: "Upgrade to Standard for money by account, sales, spending, profit and tax, ready to download or send to your accountant.",
+  },
+  invoiceTerms: {
+    title: "Protect your business with your own terms.",
+    body: "Upgrade to Standard to print terms & conditions on your invoices.",
+  },
+  defaultVat: {
+    title: "Stop adding VAT by hand.",
+    body: "Upgrade to Standard and it goes on every new invoice for you. You can still pick a tax on each invoice.",
+  },
 };
 
-/** "12 of 15 invoices", "96 of 100 invoices this month". */
-export function describeUsage(limit: PlanLimit, usage: LimitUsage) {
-  const noun = LIMIT_NOUNS[limit];
-  const name = noun ? (usage.limit === 1 ? noun.one : noun.many) : limit;
-  const period = usage.per === "month" ? " this month" : "";
-  return `${usage.used} of ${usage.limit} ${name}${period}`;
+/** The cheapest paid plan, to quote its real allowance and price. */
+function useUpgradePlan(enabled: boolean) {
+  const { data: plans } = useBillingPlansQuery({ enabled });
+  return [...(plans ?? [])]
+    .filter((plan) => isPaidPlan(plan))
+    .sort((a, b) => Number(a.monthlyPrice) - Number(b.monthlyPrice))[0];
 }
 
 export function PlanBadge(props: BadgeProps) {
@@ -56,7 +90,7 @@ export function PlanBadge(props: BadgeProps) {
   );
 }
 
-export function UpgradeButton() {
+export function UpgradeButton({ label = "Upgrade" }: { label?: string }) {
   const navigate = useNavigate();
   return (
     <Button
@@ -64,20 +98,23 @@ export function UpgradeButton() {
       flexShrink={0}
       onClick={() => navigate(RouteConstants.settings.billing.path)}
     >
-      Upgrade
+      {label}
     </Button>
   );
 }
 
 function PlanNotice({
   tone,
-  message,
-  showUpgrade,
+  title,
+  body,
+  upgradeLabel,
   ...rest
 }: {
   tone: BillingTone;
-  message: string;
-  showUpgrade: boolean;
+  title: string;
+  body?: string;
+  /** Left out where upgrading wouldn't help. */
+  upgradeLabel?: string;
 } & FlexProps) {
   const style = TONE_STYLES[tone];
   return (
@@ -95,48 +132,84 @@ function PlanNotice({
       borderColor={style.border}
       {...rest}
     >
-      <Text textStyle="small-regular" color="gray.500">
-        {message}
-      </Text>
-      {showUpgrade && <UpgradeButton />}
+      <Box>
+        <Text textStyle="small-semibold" color="gray.500">
+          {title}
+        </Text>
+        {body && (
+          <Text textStyle="small-regular" color="gray.400" mt="0.5">
+            {body}
+          </Text>
+        )}
+      </Box>
+      {upgradeLabel && <UpgradeButton label={upgradeLabel} />}
     </Flex>
   );
 }
 
 /**
- * Shows a limit once it's close, so reaching it is no surprise. Renders nothing
- * below that, on a plan with no cap, or while the plan is unknown.
+ * Shows a limit once it's close, and makes the case for upgrading while there's
+ * still something to gain. Renders nothing below that, on a plan with no cap,
+ * or while the plan is unknown. Figures come from the API, never from here.
  */
 export function PlanLimitNotice({
   limit,
   ...rest
 }: { limit: PlanLimit } & FlexProps) {
   const { usageOf, isAtLimit, canUpgrade } = usePlanAccess();
+  const upgradePlan = useUpgradePlan(canUpgrade);
   const usage = usageOf(limit);
   if (!usage || usage.limit === null) return null;
 
-  const used = describeUsage(limit, usage);
-  if (isAtLimit(limit)) {
-    const next = canUpgrade
-      ? "Upgrade to add more."
-      : usage.per === "month"
-        ? "More are available on the 1st."
-        : "";
-    return (
-      <PlanNotice
-        tone="warning"
-        message={`You've used ${used}. ${next}`.trim()}
-        showUpgrade={canUpgrade}
-        {...rest}
-      />
-    );
+  const atLimit = isAtLimit(limit);
+  if (!atLimit && usage.used < usage.limit * NEAR_CAP_RATIO) return null;
+
+  const copy = LIMIT_COPY[limit];
+  const nameOf = (count: number) =>
+    copy ? (count === 1 ? copy.one : copy.many) : limit;
+  const monthly = usage.per === "month";
+  const where = monthly
+    ? "this month"
+    : canUpgrade
+      ? "on your free plan"
+      : "on your plan";
+
+  let title: string;
+  if (!atLimit) {
+    const left = usage.remaining ?? 0;
+    title = `Only ${left} ${nameOf(left)} left ${where}.`;
+  } else if (usage.limit === 1) {
+    title = `Your plan includes just 1 ${nameOf(1)}, and it's in use.`;
+  } else {
+    title = `You've used all ${usage.limit} ${nameOf(usage.limit)} ${where}.`;
   }
-  if (usage.used < usage.limit * NEAR_CAP_RATIO) return null;
+
+  let body: string | undefined;
+  if (canUpgrade) {
+    const phrase = upgradePlan?.limits?.find(
+      (row) => row.key === limit,
+    )?.phrase;
+    const why = copy?.why ? ` ${copy.why}` : "";
+    body =
+      upgradePlan && phrase
+        ? `${upgradePlan.name} gives you ${phrase}${why}, all for ${formatPrice(upgradePlan.monthlyPrice, upgradePlan.currency)} a month.`
+        : `Upgrade${why}.`;
+  } else if (monthly) {
+    body = "More are available on the 1st.";
+  }
+
   return (
     <PlanNotice
-      tone="neutral"
-      message={`You've used ${used}.`}
-      showUpgrade={canUpgrade}
+      tone={atLimit ? "warning" : "neutral"}
+      title={title}
+      body={body}
+      upgradeLabel={
+        canUpgrade
+          ? upgradePlan
+            ? `Upgrade to ${upgradePlan.name}`
+            : "Upgrade"
+          : undefined
+      }
       {...rest}
     />
   );
@@ -149,14 +222,16 @@ export function PlanFeatureNotice({
 }: { feature: PlanFeature } & FlexProps) {
   const { hasFeature } = usePlanAccess();
   if (hasFeature(feature)) return null;
+  const pitch = FEATURE_PITCH[feature] ?? {
+    title: "This is on the Standard plan.",
+    body: "Upgrade to use it.",
+  };
   return (
     <PlanNotice
       tone="neutral"
-      message={
-        FEATURE_PITCH[feature] ??
-        "This is on the Standard plan. Upgrade to use it."
-      }
-      showUpgrade
+      title={pitch.title}
+      body={pitch.body}
+      upgradeLabel="Upgrade"
       {...rest}
     />
   );

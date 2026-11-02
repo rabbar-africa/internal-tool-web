@@ -1,7 +1,15 @@
-import { useFormik } from "formik";
+import { useFormik, type FormikErrors } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { toaster } from "@/components/ui";
 import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
@@ -140,6 +148,29 @@ const validationSchema = Yup.object({
     .min(1, "Add at least one line item")
     .required(),
 });
+
+/** The first thing stopping the invoice saving, in the order the form reads. */
+function firstInvoiceError(
+  errors: FormikErrors<CreateInvoiceFormValues>,
+): string | undefined {
+  const field =
+    errors.customerId ?? errors.invoiceNumber ?? errors.date ?? errors.dueDate;
+  if (field) return field;
+
+  const { lineItems } = errors;
+  if (!lineItems) return undefined;
+  if (typeof lineItems === "string") return lineItems;
+
+  const rows = lineItems as (FormikErrors<LineItemFormRow> | undefined)[];
+  // Every row has an error: nothing has been entered yet, not one bad row.
+  if (rows.length && rows.every((row) => row?.name)) {
+    return "Add at least one item to the invoice";
+  }
+  const index = rows.findIndex(Boolean);
+  const row = rows[index];
+  const message = row?.name ?? row?.quantity ?? row?.rate ?? row?.description;
+  return message ? `Item ${index + 1}: ${message}` : undefined;
+}
 
 export const PAYMENT_TERMS_OPTIONS = [
   { label: "Due on Receipt", value: "0" },
@@ -312,6 +343,17 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       navigate(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
     },
   });
+
+  // Formik stays silent when validation fails, and the inline errors can be a
+  // long way from the button, so say what's wrong.
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    const message = firstInvoiceError(await formik.validateForm());
+    if (message) toaster.create({ description: message, type: "error" });
+    // Also when invalid: it marks the fields touched, showing the inline errors.
+    await formik.submitForm();
+  };
+
   // Vehicle query for the selected customer
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useGetVehiclesByClientQuery(formik?.values?.customerId ?? "");
@@ -591,6 +633,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     isEdit,
     isLoadingInvoice: isEdit && invoiceQuery.isLoading,
     formik,
+    handleSubmit,
     addLineItem,
     removeLineItem,
     customerOptions,

@@ -17,6 +17,7 @@ import {
   CustomSwitch,
 } from "@/components/input";
 import { formatTransactionSeries } from "@/utils/string-formatter";
+import { SeparatorSelect } from "@/features/settings/components/transaction-series/SeparatorSelect";
 import {
   useGetOrganizationTransactionSeries,
   useUpdateOrganizationTransactionSeries,
@@ -165,16 +166,10 @@ export function InvoiceNumberConfigModal({
                       value={values.suffix}
                       onChange={formik.handleChange}
                     />
-                    <CustomInput
-                      label="Separator"
-                      placeholder="-"
-                      name="separator"
-                      value={values.separator}
-                      onChange={formik.handleChange}
-                      error={
-                        formik.touched.separator
-                          ? (formik.errors.separator as string)
-                          : undefined
+                    <SeparatorSelect
+                      value={values.separator ?? ""}
+                      onChange={(separator) =>
+                        formik.setFieldValue("separator", separator)
                       }
                     />
                     {numberField("padding", "Padding (digits)", 0, 20)}
