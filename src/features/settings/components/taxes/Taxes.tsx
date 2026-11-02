@@ -1,3 +1,5 @@
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useState } from "react";
 import {
   Badge,
@@ -24,6 +26,7 @@ import type { IOrgTax } from "@/shared/interface/settings";
 
 export function Taxes() {
   const { data, isLoading } = useGetOrganizationTaxes();
+  const { hasFeature } = usePlanAccess();
   const taxes = data?.data ?? [];
   const { mutate: updateTax, isPending: isUpdating } =
     useUpdateOrganizationTax();
@@ -65,6 +68,7 @@ export function Taxes() {
         />
       }
     >
+      <PlanFeatureNotice feature="defaultVat" mb="4" />
       {isLoading ? (
         <Center py="12">
           <Spinner color="primary.300" />
@@ -139,6 +143,7 @@ export function Taxes() {
                     size="xs"
                     variant="ghost"
                     color="primary.300"
+                    disabled={!hasFeature("defaultVat")}
                     loading={isUpdating}
                     onClick={() => makeDefault(tax)}
                   >

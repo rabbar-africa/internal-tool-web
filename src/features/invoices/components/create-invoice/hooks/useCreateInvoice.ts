@@ -32,6 +32,7 @@ import {
 } from "@/features/settings/api";
 import { formatTransactionSeries } from "@/utils/string-formatter";
 import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -161,6 +162,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const jobCardId = searchParams.get("jobCardId") ?? "";
 
   const navigate = useNavigate();
+  const { hasFeature } = usePlanAccess();
+  const canUseDefaultVat = hasFeature("defaultVat");
+  const canUseTerms = hasFeature("invoiceTerms");
   const { mutateAsync, isPending: isCreating } = useCreateInvoiceMutation();
   const { mutateAsync: updateAsync, isPending: isUpdating } =
     useUpdateInvoiceMutation();
@@ -351,18 +355,20 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     [taxes, formik.values.taxId],
   );
 
-  // New invoices start on the organization's default tax. Edits keep whatever
-  // the invoice was issued with, including none.
+  // New invoices start on the organization's default tax, if the plan includes
+  // that (one saved before a downgrade can stay set). Edits keep whatever the
+  // invoice was issued with, including none.
   const taxPreselectedRef = useRef(false);
   useEffect(() => {
     if (isEdit || taxPreselectedRef.current || taxes.length === 0) return;
+    if (!canUseDefaultVat) return;
     taxPreselectedRef.current = true;
     const defaultTax = taxes.find((tax) => tax.isDefault);
     if (defaultTax && !formik.values.taxId) {
       formik.setFieldValue("taxId", defaultTax.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEdit, taxes]);
+  }, [isEdit, taxes, canUseDefaultVat]);
 
   const [items, setItems] = useState<Item[]>(
     itemsData?.map((item) => ({
@@ -560,7 +566,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // user has already typed their own.
   const appliedTermsRef = useRef(false);
   useEffect(() => {
-    if (isEdit || appliedTermsRef.current || !defaultTerms) return;
+    if (isEdit || appliedTermsRef.current || !defaultTerms || !canUseTerms)
+      return;
     appliedTermsRef.current = true;
     if (!formik.values.terms) formik.setFieldValue("terms", defaultTerms);
     // eslint-disable-next-line react-hooks/exhaustive-deps

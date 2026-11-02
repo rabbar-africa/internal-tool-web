@@ -1,3 +1,5 @@
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { Box, Flex, Grid, Separator, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
@@ -26,6 +28,7 @@ interface InvoiceFooterProps {
 
 export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
   const { formatMoney } = useFormatMoney();
+  const { hasFeature } = usePlanAccess();
   const { subtotal, entityDiscount, taxVal, adjustmentVal, total } = totals;
 
   const taxOptions = [
@@ -58,10 +61,12 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
           placeholder="Enter any terms and conditions"
           rows={4}
           name="terms"
+          disabled={!hasFeature("invoiceTerms")}
           value={formik.values.terms}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
         />
+        <PlanFeatureNotice feature="invoiceTerms" />
       </Stack>
 
       {/* Right: Totals */}

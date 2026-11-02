@@ -6,7 +6,7 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
 import { Link } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import { useBillingOverviewQuery } from "@/features/billing/api/query";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import rabbarLogo from "@/assets/logo.png";
 import {
   RABBAR_JOBCARD_DISPLAY,
@@ -23,9 +23,8 @@ interface InvoicePdfViewProps {
 export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const { formatMoney } = useFormatMoney();
   const { userOrganization } = useCurrentUser();
-  const { data: billing } = useBillingOverviewQuery();
-  // Mirrors the PDF: Starter (free) invoices carry a small Rabbar credit.
-  const showRabbarBranding = billing?.effectiveTier === "STARTER";
+  const { hasFeature } = usePlanAccess();
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
 
   const client = invoice.client;
   const subtotal = toNum(invoice.subTotal);
@@ -79,7 +78,10 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
         { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
       ].filter((row) => row.value)
     : [];
-  const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
+  // Left off, not deleted: they come back the day the org upgrades.
+  const terms = hasFeature("invoiceTerms")
+    ? invoice.terms || orgConfig?.invoiceTermsDefault
+    : null;
 
   const formatPlain = (n: number) => formatMoney(n, { showSymbol: false });
   const formatWithCode = (n: number) =>

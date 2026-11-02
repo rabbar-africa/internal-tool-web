@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -113,6 +115,7 @@ const FILTER_SCHEMA = {
 
 export function CustomerListTemplate() {
   const navigate = useNavigate();
+  const { isAtLimit } = usePlanAccess();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [editCustomer, setEditCustomer] = useState<ICustomer | null>(null);
@@ -170,6 +173,7 @@ export function CustomerListTemplate() {
                 headers={CSV_HEADERS}
               />
               <Button
+                disabled={isAtLimit("customers")}
                 onClick={() => navigate(RouteConstants.customers.create.path)}
               >
                 Add Customer
@@ -177,6 +181,8 @@ export function CustomerListTemplate() {
             </Flex>
           }
         />
+
+        <PlanLimitNotice limit="customers" />
 
         <Box
           pt="2rem"

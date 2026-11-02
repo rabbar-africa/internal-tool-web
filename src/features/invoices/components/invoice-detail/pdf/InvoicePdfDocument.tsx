@@ -230,12 +230,15 @@ interface InvoicePdfDocumentProps {
   organization?: IOrganization;
   /** Starter (free) plan invoices carry a small Rabbar credit. */
   showRabbarBranding?: boolean;
+  /** Terms & conditions are a plan feature; the backend PDF drops them too. */
+  showTerms?: boolean;
 }
 
 export function InvoicePdfDocument({
   invoice,
   organization,
   showRabbarBranding = false,
+  showTerms = true,
 }: InvoicePdfDocumentProps) {
   const client = invoice.client;
   const currencyCode = invoice.currencyCode || organization?.currency;
@@ -296,7 +299,9 @@ export function InvoicePdfDocument({
         { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
       ].filter((row) => row.value)
     : [];
-  const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
+  const terms = showTerms
+    ? invoice.terms || orgConfig?.invoiceTermsDefault
+    : null;
 
   const plain = (n: number) =>
     formatMoney(n, { currencyCode, showSymbol: false });

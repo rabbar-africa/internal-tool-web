@@ -1,6 +1,6 @@
 import { createElement, useCallback, useMemo, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useBillingOverviewQuery } from "@/features/billing/api/query";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { createDownloadLink } from "@/utils/file-helper";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 
@@ -38,11 +38,11 @@ const isIosStandalone = (): boolean => {
 
 export function useInvoicePdf(invoice?: IInvoiceResponse) {
   const { userOrganization } = useCurrentUser();
-  const { data: billing } = useBillingOverviewQuery();
-  // `effectiveTier` already drops a lapsed paid plan back to Starter. Unknown
-  // (still loading) is treated as paid, so a paying customer's invoice is
-  // never branded by a race.
-  const showRabbarBranding = billing?.effectiveTier === "STARTER";
+  const { hasFeature } = usePlanAccess();
+  // Unknown (still loading) counts as included, so a paying customer's invoice
+  // is never branded by a race. Matches the backend's PDF.
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
+  const showTerms = hasFeature("invoiceTerms");
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Whether to offer the "Send PDF" action. We only require navigator.share to
@@ -79,13 +79,14 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
           invoice: subject,
           organization: userOrganization,
           showRabbarBranding,
+          showTerms,
         }) as unknown as Parameters<typeof pdf>[0];
         return await pdf(element).toBlob();
       } finally {
         setIsGenerating(false);
       }
     },
-    [invoice, userOrganization, showRabbarBranding],
+    [invoice, userOrganization, showRabbarBranding, showTerms],
   );
 
   /** Render the document to a File (named after the invoice). */

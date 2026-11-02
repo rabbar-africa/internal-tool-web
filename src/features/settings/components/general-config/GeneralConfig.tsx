@@ -1,3 +1,5 @@
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import {
   Box,
   Button,
@@ -53,6 +55,7 @@ function SectionLabel({ children }: { children: string }) {
 
 export function GeneralConfig() {
   const { data, isLoading } = useGetOrganizationDetails();
+  const { hasFeature } = usePlanAccess();
   const config = data?.data?.config;
 
   const { mutate: updateConfig, isPending } = useUpdateOrganizationConfig();
@@ -292,9 +295,11 @@ export function GeneralConfig() {
                 placeholder="Default terms & conditions prefilled on new invoices"
                 name="invoiceTermsDefault"
                 rows={2}
+                disabled={!hasFeature("invoiceTerms")}
                 value={values.invoiceTermsDefault ?? ""}
                 onChange={formik.handleChange}
               />
+              <PlanFeatureNotice feature="invoiceTerms" mt="2" />
             </Box>
           </Grid>
 

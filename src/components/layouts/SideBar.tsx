@@ -8,6 +8,8 @@ import { Logo } from "../common/Logo";
 import rabbarIcon from "@/assets/images/logo/rabbar-icon.png";
 import { sideBarItems } from "@/shared/data";
 import { usePermissions } from "@/hooks/usePermissions";
+import { PlanBadge } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
 import { CaretRight } from "@/assets/custom/CaretRight";
 
@@ -27,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const currentRoute = useLocation();
   const navigate = useNavigate();
   const { has } = usePermissions();
+  const { hasFeature } = usePlanAccess();
   const visibleItems = sideBarItems.filter(
     (item) => !item.permission || has(item.permission),
   );
@@ -129,6 +132,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {item.name}
                 </Text>
               )}
+              {!collapsed &&
+                item.planFeature &&
+                !hasFeature(item.planFeature) && <PlanBadge ml="2" />}
             </Flex>
           );
         })}

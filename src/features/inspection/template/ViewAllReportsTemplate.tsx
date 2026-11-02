@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { SearchInput } from "@/components/input/SearchInput";
 import { CustomTable, type TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -91,6 +93,7 @@ const columns: ColumnDef<IInspection>[] = [
 
 export function ViewAllReportsTemplate() {
   const navigate = useNavigate();
+  const { isAtLimit } = usePlanAccess();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
 
@@ -165,6 +168,7 @@ export function ViewAllReportsTemplate() {
 
           <Button
             type="button"
+            disabled={isAtLimit("inspections")}
             onClick={() =>
               navigate(RouteConstants.inspection.createInspection.path)
             }
@@ -172,6 +176,8 @@ export function ViewAllReportsTemplate() {
             Add Report
           </Button>
         </Flex>
+
+        <PlanLimitNotice limit="inspections" />
 
         <Box
           pt="2rem"

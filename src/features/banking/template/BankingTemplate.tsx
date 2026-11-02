@@ -7,6 +7,12 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { CustomTable, type TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
+import {
+  formatAccountLabel,
+  useAccountOptions,
+} from "@/features/settings/components/account-details/AccountSelect";
 import type { BusinessAccountRow } from "@/shared/interface/banking";
 import {
   useDownloadBusinessStatementPdfMutation,
@@ -22,17 +28,48 @@ import { EmailStatementModal } from "../components/statement/EmailStatementModal
 
 const formatDay = (day: string) => moment(day).format("DD MMM YYYY");
 
+/** An account row; the period's figures come with the business statement. */
+type AccountRow = Pick<
+  BusinessAccountRow,
+  "id" | "type" | "label" | "isPrimary"
+> &
+  Partial<BusinessAccountRow>;
+
 /**
  * Banking home: one period, the whole business's statement to download or
- * email, and every account (Cash included) with its own statement.
+ * email, and every account (Cash included) with its own statement. Account
+ * statements are on every plan. The business statement isn't, and its API is
+ * refused without it, so without it the accounts come from the account list
+ * and their figures wait until one is opened.
  */
 export function BankingTemplate() {
   const navigate = useNavigate();
   const { search } = useLocation();
   const { preset, range, setRange } = useStatementRange();
 
-  const { data, isLoading, isFetching } = useGetBusinessStatementQuery(range);
-  const statement = data?.data;
+  const { hasFeature } = usePlanAccess();
+  const hasBusinessStatement = hasFeature("businessStatement");
+
+  const { data, isLoading, isFetching } = useGetBusinessStatementQuery(range, {
+    enabled: hasBusinessStatement,
+  });
+  const statement = hasBusinessStatement ? data?.data : undefined;
+
+  const { accounts, isLoading: accountsLoading } = useAccountOptions({
+    includeCash: true,
+  });
+  const rows = useMemo<AccountRow[]>(
+    () =>
+      hasBusinessStatement
+        ? (statement?.accounts.rows ?? [])
+        : accounts.map((account) => ({
+            id: account.id,
+            type: account.type,
+            label: formatAccountLabel(account),
+            isPrimary: account.isPrimary,
+          })),
+    [hasBusinessStatement, statement?.accounts.rows, accounts],
+  );
   const currencyCode = statement?.currencyCode ?? "NGN";
   const money = (amount: number) => formatCurrency(amount, currencyCode);
 
@@ -49,7 +86,7 @@ export function BankingTemplate() {
       `${RouteConstants.banking.statement.generate({ id: accountId })}${search}`,
     );
 
-  const columns = useMemo<ColumnDef<BusinessAccountRow>[]>(
+  const columns = useMemo<ColumnDef<AccountRow>[]>(
     () => [
       {
         accessorKey: "label",
@@ -72,70 +109,74 @@ export function BankingTemplate() {
           </Flex>
         ),
       },
-      {
-        accessorKey: "openingBalance",
-        header: "Opening",
-        cell: ({ getValue }) => {
-          const value = getValue() as number;
-          return (
-            <Text
-              textStyle="small-regular"
-              color={value < 0 ? "error.300" : "gray.500"}
-              whiteSpace="nowrap"
-            >
-              {money(value)}
-            </Text>
-          );
-        },
-      },
-      {
-        accessorKey: "moneyIn",
-        header: "Money in",
-        cell: ({ getValue }) => (
-          <Text
-            textStyle="small-semibold"
-            color="success.300"
-            whiteSpace="nowrap"
-          >
-            {money(getValue() as number)}
-          </Text>
-        ),
-      },
-      {
-        accessorKey: "moneyOut",
-        header: "Money out",
-        cell: ({ getValue }) => (
-          <Text
-            textStyle="small-semibold"
-            color="error.300"
-            whiteSpace="nowrap"
-          >
-            {money(getValue() as number)}
-          </Text>
-        ),
-      },
-      {
-        accessorKey: "closingBalance",
-        header: "Closing",
-        cell: ({ getValue }) => {
-          const value = getValue() as number;
-          return (
-            <Text
-              textStyle="small-semibold"
-              color={value < 0 ? "error.300" : "gray.500"}
-              whiteSpace="nowrap"
-            >
-              {money(value)}
-            </Text>
-          );
-        },
-      },
+      ...(!hasBusinessStatement
+        ? []
+        : ([
+            {
+              accessorKey: "openingBalance",
+              header: "Opening",
+              cell: ({ getValue }) => {
+                const value = getValue() as number;
+                return (
+                  <Text
+                    textStyle="small-regular"
+                    color={value < 0 ? "error.300" : "gray.500"}
+                    whiteSpace="nowrap"
+                  >
+                    {money(value)}
+                  </Text>
+                );
+              },
+            },
+            {
+              accessorKey: "moneyIn",
+              header: "Money in",
+              cell: ({ getValue }) => (
+                <Text
+                  textStyle="small-semibold"
+                  color="success.300"
+                  whiteSpace="nowrap"
+                >
+                  {money(getValue() as number)}
+                </Text>
+              ),
+            },
+            {
+              accessorKey: "moneyOut",
+              header: "Money out",
+              cell: ({ getValue }) => (
+                <Text
+                  textStyle="small-semibold"
+                  color="error.300"
+                  whiteSpace="nowrap"
+                >
+                  {money(getValue() as number)}
+                </Text>
+              ),
+            },
+            {
+              accessorKey: "closingBalance",
+              header: "Closing",
+              cell: ({ getValue }) => {
+                const value = getValue() as number;
+                return (
+                  <Text
+                    textStyle="small-semibold"
+                    color={value < 0 ? "error.300" : "gray.500"}
+                    whiteSpace="nowrap"
+                  >
+                    {money(value)}
+                  </Text>
+                );
+              },
+            },
+          ] as ColumnDef<AccountRow>[])),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currencyCode],
+    [currencyCode, hasBusinessStatement],
   );
 
-  const actions: TableAction<BusinessAccountRow>[] = [
+  const actions: TableAction<AccountRow>[] = [
     {
       label: "View statement",
       value: "view",
@@ -185,7 +226,7 @@ export function BankingTemplate() {
             align={{ base: "flex-start", md: "center" }}
             direction={{ base: "column", md: "row" }}
             gap="3"
-            mb="5"
+            mb={hasBusinessStatement ? "5" : "3"}
           >
             <Box>
               <Text textStyle="large-bold" color="gray.500">
@@ -199,25 +240,29 @@ export function BankingTemplate() {
                   : "Money by account, sales, spending, profit and tax"}
               </Text>
             </Box>
-            <Flex gap="2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!statement}
-                onClick={() => setEmailing({})}
-              >
-                Email
-              </Button>
-              <Button
-                size="sm"
-                loading={isDownloadingBusiness}
-                disabled={!statement}
-                onClick={() => downloadBusiness(range)}
-              >
-                Download PDF
-              </Button>
-            </Flex>
+            {hasBusinessStatement && (
+              <Flex gap="2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!statement}
+                  onClick={() => setEmailing({})}
+                >
+                  Email
+                </Button>
+                <Button
+                  size="sm"
+                  loading={isDownloadingBusiness}
+                  disabled={!statement}
+                  onClick={() => downloadBusiness(range)}
+                >
+                  Download PDF
+                </Button>
+              </Flex>
+            )}
           </Flex>
+
+          <PlanFeatureNotice feature="businessStatement" />
 
           {total && (
             <StatementSummary
@@ -260,9 +305,9 @@ export function BankingTemplate() {
           </Box>
           <Box overflowX="auto" minW={0}>
             <CustomTable
-              data={statement?.accounts.rows ?? []}
+              data={rows}
               columns={columns}
-              loading={isLoading}
+              loading={hasBusinessStatement ? isLoading : accountsLoading}
               actions={actions}
               enableActions
               onRowClick={(row) => openStatement(row.original.id)}

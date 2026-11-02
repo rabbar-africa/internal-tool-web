@@ -23,6 +23,8 @@ export interface SideBarItem {
   paths: string[];
   /** Hidden unless the user holds it. */
   permission?: PermissionInput;
+  /** Still shown without it, badged, so people see what upgrading gives them. */
+  planFeature?: string;
 }
 
 export const sideBarItems: SideBarItem[] = [
@@ -76,6 +78,7 @@ export const sideBarItems: SideBarItem[] = [
     href: RouteConstants.reminders.base.path,
     slug: "reminders",
     paths: [RouteConstants.reminders.base.path],
+    planFeature: "reminders",
   },
   {
     name: "Technicians",
