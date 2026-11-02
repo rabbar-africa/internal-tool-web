@@ -10,7 +10,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
@@ -77,6 +77,8 @@ function Section({
 export function RecordInvoiceCostsTemplate() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const jobCardId = searchParams.get("jobCardId") ?? "";
   const { formatMoney } = useFormatMoney();
 
   const { data: invoiceData } = useGetInvoiceByIdQuery(id);
@@ -118,8 +120,16 @@ export function RecordInvoiceCostsTemplate() {
     }
   };
 
-  const backToInvoice = () =>
-    navigate(RouteConstants.invoices.detail.generate({ id }));
+  // Back where they came from: the job card's expenses, or the invoice.
+  const goBack = () =>
+    navigate(
+      jobCardId
+        ? RouteConstants.jobCards.detail.generate(
+            { id: jobCardId },
+            { tab: "expenses" },
+          )
+        : RouteConstants.invoices.detail.generate({ id }),
+    );
 
   const save = async () => {
     const lines = (costs?.lines ?? [])
@@ -153,10 +163,8 @@ export function RecordInvoiceCostsTemplate() {
         ...(others.length ? { other: others } : {}),
       },
     });
-    // The costs query refetches, so "Spent so far" goes up; clear the boxes
-    // for the next round of spending.
-    setSpentNow({});
-    setOther([]);
+    // A failed save throws before this, so what they typed stays on screen.
+    goBack();
   };
 
   if (isLoading) {
@@ -184,9 +192,9 @@ export function RecordInvoiceCostsTemplate() {
           px="1"
           mb="2"
           color="primary.300"
-          onClick={backToInvoice}
+          onClick={goBack}
         >
-          ← {costs.invoiceNumber}
+          ← {jobCardId ? "Job card" : costs.invoiceNumber}
         </Button>
         <PageHeader
           title="Record Costs"
@@ -396,12 +404,8 @@ export function RecordInvoiceCostsTemplate() {
           )}
         </Box>
         <Flex gap="3" justify="flex-end">
-          <Button
-            variant="outline"
-            onClick={backToInvoice}
-            disabled={isPending}
-          >
-            Done
+          <Button variant="outline" onClick={goBack} disabled={isPending}>
+            Cancel
           </Button>
           <Button loading={isPending} onClick={() => void save()}>
             Save Costs

@@ -13,14 +13,23 @@ export function CreateExpenseTemplate() {
   const { mutateAsync: createExpense, isPending } = useCreateExpenseMutation();
 
   const backPath = jobCardId
-    ? RouteConstants.jobCards.detail.generate({ id: jobCardId })
+    ? RouteConstants.jobCards.detail.generate(
+        { id: jobCardId },
+        { tab: "expenses" },
+      )
     : RouteConstants.expenses.base.path;
 
   const handleSubmit = async (payload: CreateExpensePayload) => {
     await createExpense(payload);
+    // A linked invoice decides the job card server-side, so `payload` may not
+    // name one even when they arrived from a job card.
+    const returnJobCardId = payload.jobCardId ?? jobCardId;
     navigate(
-      payload.jobCardId
-        ? RouteConstants.jobCards.detail.generate({ id: payload.jobCardId })
+      returnJobCardId
+        ? RouteConstants.jobCards.detail.generate(
+            { id: returnJobCardId },
+            { tab: "expenses" },
+          )
         : RouteConstants.expenses.base.path,
     );
   };
