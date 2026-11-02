@@ -25,6 +25,7 @@ export function CreateInvoiceTemplate({
     isEdit,
     isLoadingInvoice,
     formik,
+    handleSubmit,
     addLineItem,
     removeLineItem,
     customerOptions,
@@ -63,7 +64,7 @@ export function CreateInvoiceTemplate({
   }
 
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <Stack gap="4">
         {/* Top bar */}
         <Flex
