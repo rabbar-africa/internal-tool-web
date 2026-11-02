@@ -3,6 +3,7 @@ import SectionLoader from "@/components/common/SectionLoader";
 import { usePermissions } from "@/hooks/usePermissions";
 import { SettingsSubPage } from "@/features/settings/components/SettingsSubPage";
 import { useBillingOverviewQuery } from "../api/query";
+import { CheckoutReturnBanner } from "./CheckoutReturnBanner";
 import { ChoosePlanSection } from "./ChoosePlanSection";
 import { CurrentPlanSection } from "./CurrentPlanSection";
 import { PaymentHistorySection } from "./PaymentHistorySection";
@@ -25,6 +26,7 @@ export function BillingSettings() {
       title="Plan & Billing"
       subtitle="Your plan, how you pay, and your payment history"
     >
+      <CheckoutReturnBanner />
       {isLoading ? (
         <SectionLoader h="20rem" />
       ) : isError || !overview ? (

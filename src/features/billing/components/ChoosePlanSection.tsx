@@ -319,8 +319,14 @@ export function ChoosePlanSection({
     );
   }
 
+  // Switched off from the back office: they're on Starter whatever plan is on
+  // file, and that plan needs paying for to come back.
+  const switchedOff =
+    overview.status === "CANCELLED" || overview.status === "INACTIVE";
   const isActivePlan = (plan: BillingPlan) =>
-    plan.tier === overview.plan.tier && !lapsed;
+    switchedOff
+      ? plan.tier === overview.effectiveTier
+      : plan.tier === overview.plan.tier && !lapsed;
 
   const buttonLabelFor = (plan: BillingPlan) => {
     if (plan.tier === selected) return "Selected";
@@ -357,7 +363,9 @@ export function ChoosePlanSection({
               key={plan.id}
               plan={plan}
               selected={plan.tier === selected}
-              highlighted={!isPaidPlan(overview.plan) && isPaidPlan(plan)}
+              highlighted={
+                overview.effectiveTier === "STARTER" && isPaidPlan(plan)
+              }
               buttonLabel={buttonLabelFor(plan)}
               buttonDisabled={isActivePlan(plan) && plan.tier !== selected}
               // Tapping the selected plan again closes its panel.

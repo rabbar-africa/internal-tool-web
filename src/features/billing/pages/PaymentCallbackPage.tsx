@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@chakra-ui/react";
 import type { AxiosError } from "axios";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@/lib/react-query";
 import { Head } from "@/components/seo/head";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -14,12 +14,30 @@ const POLL_INTERVAL_MS = 3_000;
 const MAX_WAIT_MS = 90_000;
 
 /**
- * `/billing/callback?reference=…` — where Paystack sends the user after
- * paying. Bank transfers can take a minute, so poll before giving up.
+ * `/billing/callback?reference=…` — where Paystack returns an emailed "Pay now"
+ * link, whose payer is often logged out. Anyone logged in is better off on
+ * their billing page, which confirms the payment in the background.
  */
 export function PaymentCallbackPage() {
   const [params] = useSearchParams();
   const reference = params.get("reference") || params.get("trxref") || "";
+
+  if (getToken()?.accessToken) {
+    return (
+      <Navigate
+        to={RouteConstants.settings.billing.generate(
+          {},
+          reference ? { reference } : undefined,
+        )}
+        replace
+      />
+    );
+  }
+  return <PublicPaymentStatus reference={reference} />;
+}
+
+/** Bank transfers can take a minute, so poll before giving up. */
+function PublicPaymentStatus({ reference }: { reference: string }) {
   const queryClient = useQueryClient();
 
   // Bumped by "Check again" to restart the polling window.
@@ -46,19 +64,7 @@ export function PaymentCallbackPage() {
     }
   }, [succeeded, queryClient]);
 
-  const isLoggedIn = Boolean(getToken()?.accessToken);
-  const actions = isLoggedIn ? (
-    <>
-      <Button asChild variant="accent" w="full">
-        <Link to={RouteConstants.settings.billing.path}>
-          Go to my billing page
-        </Link>
-      </Button>
-      <Button asChild variant="outlineSecondary" w="full">
-        <Link to={RouteConstants.overview.base.path}>Back to the app</Link>
-      </Button>
-    </>
-  ) : (
+  const actions = (
     <Button asChild variant="accent" w="full">
       <Link to={RouteConstants.auth.login.path}>Log in</Link>
     </Button>

@@ -15,8 +15,12 @@ export function PublicOnlyRoute({ children }: PublicOnlyRouteProps) {
 
   if (isAuthenticated) {
     // If user is coming from a protected route, redirect back there
-    const from = (location.state as any)?.from?.pathname;
-    const redirectTo = from || RouteConstants.overview.base.path;
+    const from = (location.state as any)?.from;
+    // With its query string: it can carry work to finish, like a payment's
+    // reference on the billing page.
+    const redirectTo = from?.pathname
+      ? `${from.pathname}${from.search ?? ""}`
+      : RouteConstants.overview.base.path;
 
     return <Navigate to={redirectTo} replace />;
   }
