@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Button, Dialog, Flex, Grid, Portal, Stack } from "@chakra-ui/react";
@@ -24,6 +26,7 @@ export function InspectionAddCustomerModal({
   onSave,
 }: InspectionAddCustomerModalProps) {
   const { mutateAsync, isPending } = useCreateCustomerMutation();
+  const { isAtLimit } = usePlanAccess();
 
   const formik = useFormik({
     initialValues: {
@@ -77,6 +80,7 @@ export function InspectionAddCustomerModal({
             <form onSubmit={formik.handleSubmit}>
               <Dialog.Body py="5">
                 <Stack gap="4">
+                  <PlanLimitNotice limit="customers" />
                   <Grid templateColumns="1fr 1fr" gap="4">
                     <CustomInput
                       label="First Name"
@@ -147,6 +151,7 @@ export function InspectionAddCustomerModal({
                     type="submit"
                     loading={isPending}
                     loadingText="Saving..."
+                    disabled={isAtLimit("customers")}
                   >
                     Add Customer
                   </Button>

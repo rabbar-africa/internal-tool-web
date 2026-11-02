@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Button, Dialog, Flex, Grid, Portal, Stack } from "@chakra-ui/react";
@@ -46,6 +48,7 @@ export function AddNewCustomerModal({
   onSave,
 }: AddNewCustomerModalProps) {
   const { mutateAsync, isPending } = useCreateCustomerMutation();
+  const { isAtLimit } = usePlanAccess();
 
   const formik = useFormik({
     initialValues: {
@@ -188,6 +191,7 @@ export function AddNewCustomerModal({
             <form onSubmit={formik.handleSubmit}>
               <Dialog.Body py="5">
                 <Stack gap="4">
+                  <PlanLimitNotice limit="customers" />
                   {/* First / Last name */}
                   <Grid
                     templateColumns={{ base: "1fr", sm: "1fr 1fr" }}
@@ -381,6 +385,7 @@ export function AddNewCustomerModal({
                     type="submit"
                     loading={isPending}
                     loadingText="Saving..."
+                    disabled={isAtLimit("customers")}
                   >
                     Save Customer
                   </Button>

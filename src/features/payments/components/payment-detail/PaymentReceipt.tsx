@@ -6,7 +6,7 @@ import { formatAddress } from "@/utils/string-formatter";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import { Link } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import { useBillingOverviewQuery } from "@/features/billing/api/query";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import rabbarLogo from "@/assets/logo.png";
 import {
   RABBAR_JOBCARD_DISPLAY,
@@ -43,9 +43,8 @@ interface PaymentReceiptProps {
 export function PaymentReceipt({ payment }: PaymentReceiptProps) {
   const { userOrganization } = useCurrentUser();
   const { formatMoney } = useFormatMoney();
-  const { data: billing } = useBillingOverviewQuery();
-  // Mirrors the PDF: Starter (free) receipts carry a small Rabbar credit.
-  const showRabbarBranding = billing?.effectiveTier === "STARTER";
+  const { hasFeature } = usePlanAccess();
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
   const money = (n: number) =>
     formatMoney(n, { currencyCode: payment.currencyCode });
 

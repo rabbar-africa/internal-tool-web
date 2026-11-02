@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Badge, Box, Button, Grid, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import SectionLoader from "@/components/common/SectionLoader";
 import { SectionTitle } from "@/features/settings/components/SectionTitle";
@@ -102,6 +102,33 @@ interface PlanOptionProps {
   onSelect: () => void;
 }
 
+/** What a plan includes, as the API words it. Never built up by hand here. */
+function PlanIncludes({ plan }: { plan: BillingPlan }) {
+  const limits = plan.limits ?? [];
+  const features = (plan.features ?? []).filter((row) => row.included);
+  if (!limits.length && !features.length) return null;
+
+  const row = (key: string, text: string, comingSoon: boolean) => (
+    <Flex key={key} align="center" gap="2" flexWrap="wrap">
+      <Text fontSize="12px" color={comingSoon ? "gray.300" : "gray.400"}>
+        {text}
+      </Text>
+      {comingSoon && (
+        <Badge size="xs" variant="subtle">
+          Coming soon
+        </Badge>
+      )}
+    </Flex>
+  );
+
+  return (
+    <Stack gap="1" mt="2" pt="2" borderTopWidth="1px" borderColor="gray.75">
+      {limits.map((l) => row(l.key, l.phrase, l.comingSoon))}
+      {features.map((f) => row(f.key, f.label, f.comingSoon))}
+    </Stack>
+  );
+}
+
 function PlanOption({ plan, tag, selected, onSelect }: PlanOptionProps) {
   return (
     <Box
@@ -142,6 +169,7 @@ function PlanOption({ plan, tag, selected, onSelect }: PlanOptionProps) {
             {plan.description}
           </Text>
         )}
+        <PlanIncludes plan={plan} />
       </Stack>
     </Box>
   );

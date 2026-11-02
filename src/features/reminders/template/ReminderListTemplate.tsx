@@ -1,3 +1,4 @@
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
 import { useMemo, useState } from "react";
 import { Box, Button, Flex, Grid, Stack, Tabs, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -182,6 +183,8 @@ export function ReminderListTemplate() {
             </Flex>
           }
         />
+
+        <PlanFeatureNotice feature="reminders" />
 
         <Tabs.Root
           value={filters.type || "all"}

@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
@@ -14,6 +16,7 @@ import { JobCardFilters } from "../components/job-card-list/JobCardFilters";
 
 export function JobCardListTemplate() {
   const navigate = useNavigate();
+  const { isAtLimit } = usePlanAccess();
   const {
     jobCards,
     meta,
@@ -50,6 +53,7 @@ export function JobCardListTemplate() {
                 headers={JOB_CARD_CSV_HEADERS}
               />
               <Button
+                disabled={isAtLimit("jobCards")}
                 onClick={() => navigate(RouteConstants.jobCards.create.path)}
               >
                 New Job Card
@@ -57,6 +61,8 @@ export function JobCardListTemplate() {
             </Flex>
           }
         />
+
+        <PlanLimitNotice limit="jobCards" />
 
         <Box
           pt={{ base: "1.25rem", md: "2rem" }}

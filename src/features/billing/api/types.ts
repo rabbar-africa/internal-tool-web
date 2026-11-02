@@ -11,6 +11,57 @@ export type CheckoutStatus = "PENDING" | "SUCCESS" | "FAILED" | "ABANDONED";
 
 export type CheckoutPurpose = "SUBSCRIPTION" | "CARD_SETUP";
 
+/** On/off entitlements. `(string & {})`: a new backend key must not break the build. */
+export type PlanFeature =
+  | "reminders"
+  | "businessStatement"
+  | "noRabbarBranding"
+  | "invoiceTerms"
+  | "defaultVat"
+  | (string & {});
+
+/** Counted entitlements. */
+export type PlanLimit =
+  | "invoices"
+  | "customers"
+  | "users"
+  | "templates"
+  | "jobCards"
+  | "inspections"
+  | "paperwork"
+  | (string & {});
+
+export type LimitPeriod = "total" | "month";
+
+/** How much of a limit is used. `limit`/`remaining` are null with no cap. */
+export interface LimitUsage {
+  used: number;
+  limit: number | null;
+  remaining: number | null;
+  per: LimitPeriod;
+  /** Templates only: the allowance is per type, so check the type on screen. */
+  byDocumentType?: Record<string, number>;
+}
+
+/** A row of what a plan includes, ready to print. */
+export interface PlanFeatureRow {
+  key: string;
+  label: string;
+  included: boolean;
+  /** On the price list, but not built yet. */
+  comingSoon: boolean;
+}
+
+export interface PlanLimitRow {
+  key: string;
+  label: string;
+  max: number | null;
+  per: LimitPeriod;
+  /** "15 invoices", "100 invoices a month", "Unlimited customers". */
+  phrase: string;
+  comingSoon: boolean;
+}
+
 export interface BillingPlan {
   id: string;
   tier: PlanTier;
@@ -20,6 +71,8 @@ export interface BillingPlan {
   monthlyPrice: string;
   currency: string;
   isActive?: boolean;
+  features?: PlanFeatureRow[];
+  limits?: PlanLimitRow[];
 }
 
 export interface BillingCard {
@@ -85,6 +138,10 @@ export interface BillingOverview {
   failedChargeAttempts: number;
   /** The tier the org actually gets (lapsed plans fall back to Starter). */
   effectiveTier: PlanTier;
+  /** Feature keys the effective plan includes. */
+  features?: PlanFeature[];
+  /** Every limit with how much is used. */
+  limits?: Record<PlanLimit, LimitUsage>;
   card: BillingCard | null;
   activePromo: ActivePromo | null;
   payments: BillingPayment[];

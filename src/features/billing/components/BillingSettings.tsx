@@ -7,6 +7,7 @@ import { ChoosePlanSection } from "./ChoosePlanSection";
 import { CurrentPlanSection } from "./CurrentPlanSection";
 import { PaymentHistorySection } from "./PaymentHistorySection";
 import { PaymentMethodSection } from "./PaymentMethodSection";
+import { PlanUsageSection } from "./PlanUsageSection";
 
 /** Settings → Plan & Billing. Everyone can look; only billing admins act. */
 export function BillingSettings() {
@@ -38,6 +39,7 @@ export function BillingSettings() {
       ) : (
         <Stack gap="8" separator={<Separator borderColor="gray.75" />}>
           <CurrentPlanSection overview={overview} canManage={canManage} />
+          <PlanUsageSection overview={overview} />
           <PaymentMethodSection overview={overview} canManage={canManage} />
           <ChoosePlanSection overview={overview} canManage={canManage} />
           <PaymentHistorySection payments={overview.payments ?? []} />
