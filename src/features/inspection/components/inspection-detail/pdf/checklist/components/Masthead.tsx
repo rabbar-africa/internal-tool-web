@@ -128,7 +128,7 @@ export function Masthead({
 
         {registration ? (
           <View style={styles.plate}>
-            <Text style={styles.plateLabel}>Registration</Text>
+            <Text style={styles.plateLabel}>Plate Number</Text>
             <Text style={styles.plateValue}>{registration}</Text>
           </View>
         ) : null}

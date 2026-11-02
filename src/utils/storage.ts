@@ -9,7 +9,8 @@ export type keyType =
   | "redirect_path"
   | "current_org"
   | "user_organizations"
-  | "whatsapp_banner_dismissed";
+  | "whatsapp_banner_dismissed"
+  | "sidebar_open_groups";
 
 function getExpiresTime(payload: DurationType) {
   switch (payload.unit) {

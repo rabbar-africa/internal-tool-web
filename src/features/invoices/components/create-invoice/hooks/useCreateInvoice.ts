@@ -368,7 +368,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       label: `${v.year ? `${v.year} ` : ""}${v.make} ${v.model}`,
       value: v.id,
       subLabel: v.registrationNumber
-        ? `Reg: ${v.registrationNumber}`
+        ? `Plate: ${v.registrationNumber}`
         : undefined,
     }));
   }, [vehicles]);

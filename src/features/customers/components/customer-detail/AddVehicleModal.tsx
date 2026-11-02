@@ -205,9 +205,9 @@ export function AddVehicleModal({
                     />
                   </Grid>
 
-                  {/* Registration Number */}
+                  {/* Plate number */}
                   <CustomInput
-                    label="Registration Number"
+                    label="Plate Number"
                     name="registrationNumber"
                     value={formik.values.registrationNumber}
                     onChange={formik.handleChange}

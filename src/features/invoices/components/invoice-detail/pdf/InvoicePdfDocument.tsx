@@ -296,7 +296,7 @@ export function InvoicePdfDocument({
           label: "Year",
           value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
         },
-        { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
+        { label: "Plate No.", value: invoice.vehicle.registrationNumber },
       ].filter((row) => row.value)
     : [];
   const terms = showTerms

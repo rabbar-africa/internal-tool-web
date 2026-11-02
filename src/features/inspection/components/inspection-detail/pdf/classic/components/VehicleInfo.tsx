@@ -65,7 +65,7 @@ export function VehicleInfo({ inspection }: { inspection: IInspection }) {
           <Text style={styles.heading}>Vehicle Details</Text>
           <InfoLine label="Make / Model" value={vehicleTitle(inspection)} />
           <InfoLine
-            label="Reg. Number"
+            label="Plate Number"
             value={inspection.vehicleRegistrationNumber}
           />
           <InfoLine label="Color" value={inspection.vehicleColor} />
