@@ -105,6 +105,8 @@ export interface JobCardPayment {
   mode: string;
   status: string;
   amount: string;
+  referenceNumber?: string | null;
+  depositToAccountId?: string | null;
 }
 
 export interface JobCardVehicle {

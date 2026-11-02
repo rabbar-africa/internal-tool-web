@@ -1,6 +1,7 @@
 import { Head } from "@/components/seo/head";
 import { UserDashboardContainer } from "@/components/hoc";
 import { GenerateInspectionTemplate } from "../template/GenerateInspectionTemplate";
+import { PlanLimitGate } from "@/features/billing/components/PlanLock";
 
 export function GenerateInspectionPage() {
   return (
@@ -10,7 +11,9 @@ export function GenerateInspectionPage() {
         description="Generate a new inspection"
       />
       <UserDashboardContainer py="1.5rem">
-        <GenerateInspectionTemplate />
+        <PlanLimitGate limit="inspections">
+          <GenerateInspectionTemplate />
+        </PlanLimitGate>
       </UserDashboardContainer>
     </>
   );

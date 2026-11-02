@@ -6,7 +6,7 @@ import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
 import { Link } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import { useBillingOverviewQuery } from "@/features/billing/api/query";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import rabbarLogo from "@/assets/logo.png";
 import {
   RABBAR_JOBCARD_DISPLAY,
@@ -23,14 +23,18 @@ interface InvoicePdfViewProps {
 export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
   const { formatMoney } = useFormatMoney();
   const { userOrganization } = useCurrentUser();
-  const { data: billing } = useBillingOverviewQuery();
-  // Mirrors the PDF: Starter (free) invoices carry a small Rabbar credit.
-  const showRabbarBranding = billing?.effectiveTier === "STARTER";
+  const { hasFeature } = usePlanAccess();
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
 
   const client = invoice.client;
   const subtotal = toNum(invoice.subTotal);
   const discountAmount = toNum(invoice.discount);
   const taxAmount = toNum(invoice.taxAmount);
+  // The invoice carries the tax it was issued with; older ones have neither.
+  const taxPercent = Number(invoice.taxPercent ?? 0);
+  const taxLabel = invoice.taxName
+    ? `${invoice.taxName}${taxPercent ? ` (${taxPercent}%)` : ""}`
+    : "VAT";
   const adjustment = toNum(invoice.adjustment);
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
@@ -54,7 +58,10 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
     .join(" , ");
 
   const orgConfig = userOrganization?.config;
-  const bankAccount = userOrganization?.primaryBankAccount;
+  // The account this invoice asks to be paid into; older ones fall back to
+  // the primary, as the backend PDF does.
+  const bankAccount =
+    invoice.bankAccount ?? userOrganization?.primaryBankAccount;
   const orgAddress = formatAddress(userOrganization?.primaryAddress);
 
   const notes = invoice.notes || orgConfig?.invoiceNotesDefault;
@@ -68,10 +75,13 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
           label: "Year",
           value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
         },
-        { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
+        { label: "Plate No.", value: invoice.vehicle.registrationNumber },
       ].filter((row) => row.value)
     : [];
-  const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
+  // Left off, not deleted: they come back the day the org upgrades.
+  const terms = hasFeature("invoiceTerms")
+    ? invoice.terms || orgConfig?.invoiceTermsDefault
+    : null;
 
   const formatPlain = (n: number) => formatMoney(n, { showSymbol: false });
   const formatWithCode = (n: number) =>
@@ -321,7 +331,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
             />
           )}
           {taxAmount > 0 && (
-            <TotalRow label="VAT" value={formatPlain(taxAmount)} />
+            <TotalRow label={taxLabel} value={formatPlain(taxAmount)} />
           )}
           {adjustment !== 0 && (
             <TotalRow
@@ -389,7 +399,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
       </Flex>
 
       {/* Notes + primary bank account */}
-      {(notes || bankAccount) && (
+      {(notes || bankAccount?.accountNumber) && (
         <Box mb="6">
           <Text fontSize="13px" fontWeight="600" color="primary.400" mb="2">
             Notes
@@ -404,7 +414,7 @@ export function InvoicePdfView({ invoice }: InvoicePdfViewProps) {
               {notes}
             </Text>
           )}
-          {bankAccount && (
+          {bankAccount?.accountNumber && (
             <Stack gap="0" mt={notes ? "4" : "0"}>
               <Text fontSize="12px" fontWeight="700" color="gray.500">
                 {bankAccount.accountNumber}

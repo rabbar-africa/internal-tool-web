@@ -82,7 +82,7 @@ export const vehicleColumns: ColumnDef<Vehicle>[] = [
   },
   {
     accessorKey: "registrationNumber",
-    header: "Reg. No.",
+    header: "Plate No.",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
         {getValue() as string}

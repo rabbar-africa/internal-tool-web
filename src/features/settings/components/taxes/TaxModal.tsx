@@ -1,3 +1,5 @@
+import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useEffect } from "react";
 import {
   Button,
@@ -35,6 +37,7 @@ const validationSchema = Yup.object({
 
 export function TaxModal({ open, onClose, tax }: TaxModalProps) {
   const isEdit = !!tax;
+  const { hasFeature } = usePlanAccess();
   const { mutate: createTax, isPending: isCreating } =
     useCreateOrganizationTax();
   const { mutate: updateTax, isPending: isUpdating } =
@@ -130,6 +133,11 @@ export function TaxModal({ open, onClose, tax }: TaxModalProps) {
                   </CustomSwitch>
                   <CustomSwitch
                     reversed
+                    // Locked only for turning it on: a default saved before a
+                    // downgrade can still be turned off.
+                    disabled={
+                      !hasFeature("defaultVat") && !formik.values.isDefault
+                    }
                     checked={formik.values.isDefault}
                     onCheckedChange={(e: { checked: boolean }) =>
                       formik.setFieldValue("isDefault", e.checked)
@@ -137,6 +145,7 @@ export function TaxModal({ open, onClose, tax }: TaxModalProps) {
                   >
                     Set as default tax
                   </CustomSwitch>
+                  <PlanFeatureNotice feature="defaultVat" />
                   <Flex gap="3" justify="flex-end" pt="2">
                     <Button variant="outline" type="button" onClick={onClose}>
                       Cancel

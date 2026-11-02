@@ -108,7 +108,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
     title: "Transaction settings",
     items: [
       {
-        title: "Transaction Series",
+        title: "Auto Numbering",
         description:
           "Numbering for invoices, receipts, payments, and other modules.",
         icon: ListBullets,

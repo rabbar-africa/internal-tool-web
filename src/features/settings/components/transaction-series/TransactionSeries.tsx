@@ -38,7 +38,7 @@ export function TransactionSeries() {
 
   return (
     <SettingsSubPage
-      title="Transaction Series"
+      title="Auto Numbering"
       subtitle="Control the numbering format for each module's transactions."
     >
       {isLoading ? (

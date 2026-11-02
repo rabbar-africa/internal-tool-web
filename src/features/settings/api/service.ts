@@ -114,9 +114,16 @@ export const setPrimaryOrganizationAddress = async (id: string) => {
 // NOTE: not yet exposed in Swagger; follows the same REST convention as
 // addresses so it works as soon as the backend ships these routes.
 
-export const getOrganizationBankAccounts = async () => {
+/**
+ * Real bank accounts only, unless `includeCash` — payment and expense pickers
+ * need the Cash account too (the server lists it last).
+ */
+export const getOrganizationBankAccounts = async (
+  params: { includeCash?: boolean } = {},
+) => {
   const response = await axios.get<ApiResponse<IOrgBankAccount[]>>(
     "/organizations/me/bank-accounts",
+    { params: params.includeCash ? { includeCash: true } : undefined },
   );
   return response.data;
 };

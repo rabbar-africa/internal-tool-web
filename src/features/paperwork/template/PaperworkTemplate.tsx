@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useMemo, useState } from "react";
 import { Box, Button, Flex, Stack } from "@chakra-ui/react";
 import { CustomSelect } from "@/components/input/CustomSelect";
@@ -33,6 +35,7 @@ const FILTER_SCHEMA = {
 };
 
 export function PaperworkTemplate() {
+  const { isAtLimit } = usePlanAccess();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
 
@@ -94,8 +97,14 @@ export function PaperworkTemplate() {
         <PageHeader
           title="Paperwork"
           subtitle="Track document expiries and keep digital copies in one place"
-          action={<Button onClick={openCreate}>Add Document</Button>}
+          action={
+            <Button disabled={isAtLimit("paperwork")} onClick={openCreate}>
+              Add Document
+            </Button>
+          }
         />
+
+        <PlanLimitNotice limit="paperwork" />
 
         <Box
           pt="2rem"

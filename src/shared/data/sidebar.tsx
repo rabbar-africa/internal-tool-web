@@ -12,99 +12,152 @@ import { ChartBar } from "@/assets/custom/ChartBar";
 import { GearIcon } from "@/assets/custom/GearIcon";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
 import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
+import { ArrowLeftRightIcon } from "@/assets/custom/ArrowLeftRightIcon";
+import type { PermissionInput } from "@/utils/permissions";
 
-export const sideBarItems = [
+export interface SideBarItem {
+  name: string;
+  icon: typeof DashboardIcon;
+  href: string;
+  slug: string;
+  paths: string[];
+  /** Hidden unless the user holds it. */
+  permission?: PermissionInput;
+  /** Still shown without it, badged, so people see what upgrading gives them. */
+  planFeature?: string;
+}
+
+/** Related pages under one heading, so the sidebar opens short. */
+export interface SideBarGroup {
+  name: string;
+  icon: typeof DashboardIcon;
+  items: SideBarItem[];
+}
+
+export const sideBarHome: SideBarItem = {
+  name: "Dashboard",
+  icon: DashboardIcon,
+  href: RouteConstants.overview.base.path,
+  slug: "dashboard",
+  paths: [RouteConstants.overview.base.path],
+};
+
+export const sideBarGroups: SideBarGroup[] = [
+  // Billing customers: the everyday loop, in the order it happens.
   {
-    name: "Dashboard",
-    icon: DashboardIcon,
-    href: RouteConstants.overview.base.path,
-    slug: "dashboard",
-    paths: [RouteConstants.overview.base.path],
-  },
-  // ── Most-used, in workflow order ──────────────────────────────────────────
-  {
-    name: "Customers",
-    icon: UsersIcon,
-    href: RouteConstants.customers.base.path,
-    slug: "customers",
-    paths: [RouteConstants.customers.base.path],
-  },
-  {
-    name: "Invoices",
-    icon: FileTextIcon,
-    href: RouteConstants.invoices.base.path,
-    slug: "invoices",
-    paths: [RouteConstants.invoices.base.path],
-  },
-  {
-    name: "Payments Received",
+    name: "Sales",
     icon: Money,
-    href: RouteConstants.payments.base.path,
-    slug: "payments",
-    paths: [RouteConstants.payments.base.path],
+    items: [
+      {
+        name: "Customers",
+        icon: UsersIcon,
+        href: RouteConstants.customers.base.path,
+        slug: "customers",
+        paths: [RouteConstants.customers.base.path],
+      },
+      {
+        name: "Invoices",
+        icon: FileTextIcon,
+        href: RouteConstants.invoices.base.path,
+        slug: "invoices",
+        paths: [RouteConstants.invoices.base.path],
+      },
+      {
+        name: "Payments",
+        icon: Money,
+        href: RouteConstants.payments.base.path,
+        slug: "payments",
+        paths: [RouteConstants.payments.base.path],
+      },
+      {
+        name: "Items & Services",
+        icon: BriefCase,
+        href: RouteConstants.items.base.path,
+        slug: "items",
+        paths: [RouteConstants.items.base.path],
+      },
+    ],
   },
+  // Doing the work: cars in, people on them, what's coming due.
   {
-    name: "Job Cards",
+    name: "Workshop",
     icon: ClipboardIcon,
-    href: RouteConstants.jobCards.base.path,
-    slug: "job-cards",
-    paths: [RouteConstants.jobCards.base.path],
+    items: [
+      {
+        name: "Job Cards",
+        icon: ClipboardIcon,
+        href: RouteConstants.jobCards.base.path,
+        slug: "job-cards",
+        paths: [RouteConstants.jobCards.base.path],
+      },
+      {
+        name: "Inspections",
+        icon: TaskIcon,
+        href: RouteConstants.inspection.base.path,
+        slug: "inspection",
+        paths: [RouteConstants.inspection.base.path],
+      },
+      {
+        name: "Technicians",
+        icon: UsersThree,
+        href: RouteConstants.technicians.base.path,
+        slug: "technicians",
+        paths: [RouteConstants.technicians.base.path],
+      },
+      {
+        name: "Reminders",
+        icon: BellSimpleRingingIcon,
+        href: RouteConstants.reminders.base.path,
+        slug: "reminders",
+        paths: [RouteConstants.reminders.base.path],
+        planFeature: "reminders",
+      },
+      {
+        name: "Paperwork",
+        icon: ShieldCheckIcon,
+        href: RouteConstants.paperwork.base.path,
+        slug: "paperwork",
+        paths: [RouteConstants.paperwork.base.path],
+      },
+    ],
   },
-  // ── Everything else ───────────────────────────────────────────────────────
+  // Where the money went, and how the business is doing.
   {
-    name: "Inspection",
-    icon: TaskIcon,
-    href: RouteConstants.inspection.base.path,
-    slug: "inspection",
-    paths: [RouteConstants.inspection.base.path],
-  },
-  {
-    name: "Reminders",
-    icon: BellSimpleRingingIcon,
-    href: RouteConstants.reminders.base.path,
-    slug: "reminders",
-    paths: [RouteConstants.reminders.base.path],
-  },
-  {
-    name: "Technicians",
-    icon: UsersThree,
-    href: RouteConstants.technicians.base.path,
-    slug: "technicians",
-    paths: [RouteConstants.technicians.base.path],
-  },
-  {
-    name: "Paperwork",
-    icon: ShieldCheckIcon,
-    href: RouteConstants.paperwork.base.path,
-    slug: "paperwork",
-    paths: [RouteConstants.paperwork.base.path],
-  },
-  {
-    name: "Items / Services",
-    icon: BriefCase,
-    href: RouteConstants.items.base.path,
-    slug: "items",
-    paths: [RouteConstants.items.base.path],
-  },
-  {
-    name: "Expense Tracking",
-    icon: ClipboardTextIcon,
-    href: RouteConstants.expenses.base.path,
-    slug: "expenses",
-    paths: [RouteConstants.expenses.base.path],
-  },
-  {
-    name: "Reports",
+    name: "Finance",
     icon: ChartBar,
-    href: RouteConstants.reports.base.path,
-    slug: "reports",
-    paths: [RouteConstants.reports.base.path],
-  },
-  {
-    name: "Settings",
-    icon: GearIcon,
-    href: RouteConstants.settings.base.path,
-    slug: "settings",
-    paths: [RouteConstants.settings.base.path],
+    items: [
+      {
+        name: "Expenses",
+        icon: ClipboardTextIcon,
+        href: RouteConstants.expenses.base.path,
+        slug: "expenses",
+        paths: [RouteConstants.expenses.base.path],
+      },
+      {
+        name: "Banking",
+        icon: ArrowLeftRightIcon,
+        href: RouteConstants.banking.base.path,
+        slug: "banking",
+        // Transfers and statements.
+        paths: ["/banking"],
+        permission: "read:banking",
+      },
+      {
+        name: "Reports",
+        icon: ChartBar,
+        href: RouteConstants.reports.base.path,
+        slug: "reports",
+        paths: [RouteConstants.reports.base.path],
+      },
+    ],
   },
 ];
+
+/** Pinned to the bottom of the sidebar, out of the way of daily work. */
+export const sideBarFooter: SideBarItem = {
+  name: "Settings",
+  icon: GearIcon,
+  href: RouteConstants.settings.base.path,
+  slug: "settings",
+  paths: [RouteConstants.settings.base.path],
+};

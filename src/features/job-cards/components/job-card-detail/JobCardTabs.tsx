@@ -1,17 +1,24 @@
 import { useState } from "react";
 import { Box, Button, Flex, Tabs, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import moment from "moment";
 import { CustomTable, type TableAction } from "@/components/table";
 import Status from "@/components/common/Status";
 import { PlusIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
+import { DownloadButton } from "@/components/common/DownloadButton";
 import {
   EXPENSE_CATEGORY_LABELS,
+  PAYMENT_MODE_LABELS,
   type Expense,
 } from "@/shared/interface/expense";
+import type { PaymentModeDto } from "@/shared/interface/payment";
+import {
+  formatAccountLabel,
+  useAccountOptions,
+} from "@/features/settings/components/account-details/AccountSelect";
 import type {
   JobCardDetail,
   JobCardFile,
@@ -27,6 +34,7 @@ import {
 import { LinkInvoiceModal } from "./LinkInvoiceModal";
 import { LinkInspectionModal } from "./LinkInspectionModal";
 import { AttachFileModal } from "./AttachFileModal";
+import { RecordExpenseModal } from "./RecordExpenseModal";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
@@ -260,9 +268,78 @@ const fileColumns: ColumnDef<JobCardFile>[] = [
 
 type TabValue = "invoices" | "payments" | "inspections" | "expenses" | "files";
 
+const PAYMENT_CSV_HEADERS = {
+  paymentNumber: "Payment #",
+  date: "Date",
+  amount: "Amount",
+  mode: "Mode",
+  paidInto: "Paid Into",
+  referenceNumber: "Reference #",
+  status: "Status",
+} as const;
+
+const EXPENSE_CSV_HEADERS = {
+  expenseNumber: "Expense #",
+  date: "Date",
+  name: "Item",
+  category: "Category",
+  invoiceNumber: "Invoice",
+  vendorName: "Supplier",
+  quantity: "Quantity",
+  unitCost: "Unit Cost",
+  amount: "Amount",
+  mode: "How It Was Paid",
+  paidFrom: "Paid From",
+} as const;
+
+const modeLabel = (mode?: string | null) =>
+  mode ? (PAYMENT_MODE_LABELS[mode as PaymentModeDto] ?? mode) : "";
+
 export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabValue>("invoices");
+  // `?tab=` brings someone back to the tab they left, e.g. after recording costs.
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabValue>(
+    searchParams.get("tab") === "expenses" ? "expenses" : "invoices",
+  );
+  const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
+
+  // The job card only carries each record's account id, so name them here.
+  const { accounts } = useAccountOptions({ includeCash: true });
+  const accountName = (id?: string | null) => {
+    const account = accounts.find((a) => a.id === id);
+    return account ? formatAccountLabel(account) : "";
+  };
+  const paymentsCsv = jobCard.payments.map((payment) => ({
+    paymentNumber: payment.paymentNumber,
+    date: payment.date.slice(0, 10),
+    amount: payment.amount,
+    mode: modeLabel(payment.mode),
+    paidInto: accountName(payment.depositToAccountId),
+    referenceNumber: payment.referenceNumber ?? "",
+    status: payment.status,
+  }));
+  const expensesCsv = jobCard.expenses.map((expense) => ({
+    expenseNumber: expense.expenseNumber,
+    date: expense.date.slice(0, 10),
+    name: expense.name,
+    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
+    invoiceNumber:
+      jobCard.invoices.find((invoice) => invoice.id === expense.invoiceId)
+        ?.invoiceNumber ?? "",
+    vendorName: expense.vendorName ?? "",
+    quantity: expense.quantity,
+    unitCost: expense.unitCost,
+    amount: expense.amount,
+    mode: modeLabel(expense.paymentMode),
+    paidFrom: accountName(expense.paidThroughAccountId),
+  }));
+  // A void invoice's work isn't happening, so nothing to cost against it.
+  const costableInvoices = jobCard.invoices.filter(
+    (invoice) => !["VOID", "DELETED"].includes(invoice.status?.toUpperCase()),
+  );
+  const recordOtherExpense = () =>
+    navigate(`${RouteConstants.expenses.create.path}?jobCardId=${jobCard.id}`);
   const [linkInvoiceOpen, setLinkInvoiceOpen] = useState(false);
   const [linkInspectionOpen, setLinkInspectionOpen] = useState(false);
   const [attachFileOpen, setAttachFileOpen] = useState(false);
@@ -420,6 +497,15 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
           </Tabs.Content>
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
+            <Flex justify="flex-end" mb="3">
+              <DownloadButton
+                size="sm"
+                data={paymentsCsv}
+                filename={`${jobCard.jobNumber}-payments`}
+                headers={PAYMENT_CSV_HEADERS}
+                disabled={!paymentsCsv.length}
+              />
+            </Flex>
             {/* <Flex justify="flex-end" mb="3">
               <Button
                 size="sm"
@@ -464,13 +550,21 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
           </Tabs.Content>
 
           <Tabs.Content value="expenses" px="4" pb="4" pt="3">
-            <Flex justify="flex-end" mb="3">
+            <Flex justify="flex-end" gap="2" mb="3" wrap="wrap">
+              <DownloadButton
+                size="sm"
+                data={expensesCsv}
+                filename={`${jobCard.jobNumber}-expenses`}
+                headers={EXPENSE_CSV_HEADERS}
+                disabled={!expensesCsv.length}
+              />
               <Button
                 size="sm"
                 onClick={() =>
-                  navigate(
-                    `${RouteConstants.expenses.create.path}?jobCardId=${jobCard.id}`,
-                  )
+                  // With nothing invoiced yet there's nothing to ask.
+                  costableInvoices.length
+                    ? setRecordExpenseOpen(true)
+                    : recordOtherExpense()
                 }
               >
                 <PlusIcon />
@@ -516,6 +610,20 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
         linkedInspectionIds={jobCard.inspections.map(
           (inspection) => inspection.id,
         )}
+      />
+      <RecordExpenseModal
+        open={recordExpenseOpen}
+        onClose={() => setRecordExpenseOpen(false)}
+        invoices={costableInvoices}
+        onSelectInvoice={(invoiceId) =>
+          navigate(
+            RouteConstants.invoices.costs.generate(
+              { id: invoiceId },
+              { jobCardId: jobCard.id },
+            ),
+          )
+        }
+        onSelectOther={recordOtherExpense}
       />
       <AttachFileModal
         open={attachFileOpen}

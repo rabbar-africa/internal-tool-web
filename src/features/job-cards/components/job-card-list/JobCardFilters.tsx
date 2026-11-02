@@ -71,7 +71,7 @@ export function JobCardFilters({
       </Box>
 
       <SearchInput
-        placeholder="Search by job #, customer, reg. no or complaint"
+        placeholder="Search by job #, customer, plate no. or complaint"
         value={searchInput}
         onChange={onSearchInputChange}
         onSearch={onSearchCommit}

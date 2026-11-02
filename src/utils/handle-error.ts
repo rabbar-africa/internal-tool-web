@@ -1,3 +1,21 @@
+/**
+ * A 402 from the API: the plan doesn't include this, or its allowance is used
+ * up. `canUpgrade` is false on the top plan, where there is nothing to sell.
+ */
+export function getPlanLock(
+  error: any,
+): { message: string; canUpgrade: boolean } | null {
+  const { status, data } = error?.response ?? {};
+  if (
+    status !== 402 ||
+    (data?.code !== "PLAN_LIMIT_REACHED" &&
+      data?.code !== "PLAN_FEATURE_LOCKED")
+  ) {
+    return null;
+  }
+  return { message: data.message, canUpgrade: Boolean(data.canUpgrade) };
+}
+
 export function getErrorMessage(error: any) {
   const response = error?.response;
   if (response) {

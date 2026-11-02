@@ -150,11 +150,14 @@ export const useSetPrimaryOrganizationAddress = () => {
 // ─── Bank accounts ───────────────────────────────────────────────────────────
 
 export const useGetOrganizationBankAccounts = (
+  params: { includeCash?: boolean } = {},
   config?: QueryConfigType<typeof getOrganizationBankAccounts>,
 ) => {
+  const includeCash = Boolean(params.includeCash);
   return useQuery({
-    queryKey: [orgKeys.bankAccounts],
-    queryFn: getOrganizationBankAccounts,
+    // Mutations invalidate the bare key, which prefix-matches both lists.
+    queryKey: [orgKeys.bankAccounts, { includeCash }],
+    queryFn: () => getOrganizationBankAccounts({ includeCash }),
     ...config,
   });
 };

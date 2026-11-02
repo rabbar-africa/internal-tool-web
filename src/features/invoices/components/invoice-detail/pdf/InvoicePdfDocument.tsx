@@ -230,12 +230,15 @@ interface InvoicePdfDocumentProps {
   organization?: IOrganization;
   /** Starter (free) plan invoices carry a small Rabbar credit. */
   showRabbarBranding?: boolean;
+  /** Terms & conditions are a plan feature; the backend PDF drops them too. */
+  showTerms?: boolean;
 }
 
 export function InvoicePdfDocument({
   invoice,
   organization,
   showRabbarBranding = false,
+  showTerms = true,
 }: InvoicePdfDocumentProps) {
   const client = invoice.client;
   const currencyCode = invoice.currencyCode || organization?.currency;
@@ -250,6 +253,11 @@ export function InvoicePdfDocument({
   const subtotal = toNum(invoice.subTotal);
   const discountAmount = toNum(invoice.discount);
   const taxAmount = toNum(invoice.taxAmount);
+  // The invoice carries the tax it was issued with; older ones have neither.
+  const taxPercent = Number(invoice.taxPercent ?? 0);
+  const taxLabel = invoice.taxName
+    ? `${invoice.taxName}${taxPercent ? ` (${taxPercent}%)` : ""}`
+    : "VAT";
   const adjustment = toNum(invoice.adjustment);
   const total = toNum(invoice.total);
   const balance = toNum(invoice.balance);
@@ -269,7 +277,9 @@ export function InvoicePdfDocument({
       : balance + broughtForwardTotal;
 
   const orgConfig = organization?.config;
-  const bankAccount = organization?.primaryBankAccount;
+  // The account this invoice asks to be paid into; older ones fall back to
+  // the primary, as the backend PDF does.
+  const bankAccount = invoice.bankAccount ?? organization?.primaryBankAccount;
   const orgAddress = formatAddress(organization?.primaryAddress);
   const orgLocation = [organization?.city, organization?.country]
     .filter(Boolean)
@@ -286,10 +296,12 @@ export function InvoicePdfDocument({
           label: "Year",
           value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
         },
-        { label: "Reg. No.", value: invoice.vehicle.registrationNumber },
+        { label: "Plate No.", value: invoice.vehicle.registrationNumber },
       ].filter((row) => row.value)
     : [];
-  const terms = invoice.terms || orgConfig?.invoiceTermsDefault;
+  const terms = showTerms
+    ? invoice.terms || orgConfig?.invoiceTermsDefault
+    : null;
 
   const plain = (n: number) =>
     formatMoney(n, { currencyCode, showSymbol: false });
@@ -440,7 +452,7 @@ export function InvoicePdfDocument({
               />
             ) : null}
             {taxAmount > 0 ? (
-              <TotalRow label="VAT" value={plain(taxAmount)} />
+              <TotalRow label={taxLabel} value={plain(taxAmount)} />
             ) : null}
             {adjustment !== 0 ? (
               <TotalRow
@@ -493,7 +505,7 @@ export function InvoicePdfDocument({
         </View>
 
         {/* Account details */}
-        {bankAccount ? (
+        {bankAccount?.accountNumber ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Account Details</Text>
             <Text style={styles.bankAccountNumber}>

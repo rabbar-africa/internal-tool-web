@@ -2,6 +2,7 @@ import type { Vehicle } from "@/features/customers/api/service";
 import type { ICustomer } from "./customer";
 import type { IBaseFilter } from "./filter";
 import type { PaymentModeDto } from "./payment";
+import type { IAccountRef } from "./settings";
 
 export type InvoiceStatus =
   | "draft"
@@ -54,6 +55,15 @@ export interface IInvoiceResponse {
   customerName: string;
   vehicleId?: string | null;
   vehicle?: Vehicle | null;
+  /** Whole-job tax: the orgTaxes id, with a snapshot of its name and rate. */
+  taxId?: string | null;
+  taxName?: string | null;
+  taxPercent?: string | number | null;
+  /** The job card this invoice belongs to. */
+  jobCardId?: string | null;
+  /** The account printed for the customer to pay into; null → the primary. */
+  bankAccountId?: string | null;
+  bankAccount?: IAccountRef | null;
   status: string;
   date: string;
   dueDate: string;
@@ -131,6 +141,8 @@ export interface CollectInvoicePaymentPayload {
   mode?: PaymentModeDto;
   referenceNumber?: string;
   notes?: string;
+  /** Omitted → the account on the invoices paid, when they agree, else the primary. */
+  depositToAccountId?: string;
   allocations?: Array<{ invoiceId: string; amountApplied: number }>;
 }
 
@@ -180,6 +192,11 @@ export interface CreateInvoicePayload {
   referenceNumber: string;
   customerId: string;
   vehicleId?: string | null;
+  /**
+   * Whole-job tax — an orgTaxes id, charged once after discounts. `null`
+   * clears it on update. Not allowed alongside per-line taxIds.
+   */
+  taxId?: string | null;
   customer: {
     name: string;
     email: string;
@@ -199,6 +216,11 @@ export interface CreateInvoicePayload {
   status: InvoiceStatusDto;
   /** Links the invoice to a job card at creation time. */
   jobCardId?: string;
+  /**
+   * Bank account printed for the customer to pay into (never Cash). Omitted →
+   * the primary; `null` on update moves it back to the primary.
+   */
+  bankAccountId?: string | null;
 }
 
 export type UpdateInvoicePayload = Partial<CreateInvoicePayload>;
@@ -224,6 +246,10 @@ export interface CreateInvoiceFormValues {
   invoiceNumber: string;
   customerId: string;
   vehicleId?: string;
+  /** Whole-job tax (orgTaxes id); "" means no tax. */
+  taxId: string;
+  /** Account to pay into; "" means the org's primary. */
+  bankAccountId: string;
   customer: {
     name: string;
     email: string;

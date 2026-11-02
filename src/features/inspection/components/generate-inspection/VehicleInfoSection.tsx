@@ -83,7 +83,10 @@ export function VehicleInfoSection({ form }: { form: InspectionFormApi }) {
               gap="4"
             >
               <ReadOnlyField label="Vehicle" value={values.vehicleName} />
-              <ReadOnlyField label="Reg. Number" value={values.vehicleNumber} />
+              <ReadOnlyField
+                label="Plate Number"
+                value={values.vehicleNumber}
+              />
               <ReadOnlyField label="Color" value={values.vehicleColor} />
               <ReadOnlyField label="Year" value={vehicleYear} />
             </Grid>

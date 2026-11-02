@@ -1,5 +1,8 @@
 import { toaster } from "@/components/ui/toaster";
-import { getErrorMessage } from "@/utils/handle-error";
+import { getErrorMessage, getPlanLock } from "@/utils/handle-error";
+import { getToken } from "@/utils/persistToken";
+import { customQueryKey } from "@/shared/constants/query-keys";
+import { RouteConstants } from "@/shared/constants/routes";
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import type {
   UseQueryOptions,
@@ -57,9 +60,21 @@ export const queryClient = new QueryClient({
     onError: (error) => {
       // console.log('in global config error');
 
+      // Refused by the plan: say why, and offer the way out if there is one.
+      const planLock = getPlanLock(error);
       toaster.create({
-        description: getErrorMessage(error),
+        description: planLock?.message ?? getErrorMessage(error),
         type: "error",
+        ...(planLock?.canUpgrade
+          ? {
+              duration: 10_000,
+              action: {
+                label: "Upgrade",
+                onClick: () =>
+                  window.location.assign(RouteConstants.settings.billing.path),
+              },
+            }
+          : {}),
       });
     },
     onSettled: (_data, _error, _variables, _context, mutation) => {
@@ -81,6 +96,15 @@ export const queryClient = new QueryClient({
 },
 
       */
+      // Anything saved or deleted can change what's used of the plan's limits,
+      // and a refusal means the screen's numbers were stale. Doing it here
+      // means no create or delete can forget to.
+      if (getToken()?.accessToken) {
+        queryClient.invalidateQueries({
+          queryKey: [customQueryKey.user.getCurrentSubscription],
+        });
+      }
+
       if (mutation?.meta?.invalidatesQueryKeys) {
         mutation.meta.invalidatesQueryKeys.forEach((queryKey) => {
           queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });

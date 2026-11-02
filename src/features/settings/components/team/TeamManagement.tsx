@@ -16,6 +16,8 @@ import {
 } from "../../api/team.query";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { InviteMemberModal } from "./InviteMemberModal";
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { MemberRolesModal } from "./MemberRolesModal";
 import { inviteColumns, memberColumns } from "./teamColumns";
 
@@ -31,6 +33,7 @@ const isSuperAdmin = (member: ITeamMember) =>
 /** Members and pending invitations for the organization. */
 export function TeamManagement() {
   const { canCreate, canUpdate, canDelete } = usePermissions();
+  const { isAtLimit } = usePlanAccess();
   const [search, setSearch] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [rolesTarget, setRolesTarget] = useState<ITeamMember | null>(null);
@@ -110,12 +113,18 @@ export function TeamManagement() {
         subtitle="Invite people and control what they can do"
         action={
           canCreate("users") ? (
-            <Button size="sm" onClick={() => setInviteOpen(true)}>
+            <Button
+              size="sm"
+              disabled={isAtLimit("users")}
+              onClick={() => setInviteOpen(true)}
+            >
               Invite member
             </Button>
           ) : null
         }
       >
+        <PlanLimitNotice limit="users" mb="4" />
+
         <Tabs.Root defaultValue="members" variant="line">
           <Tabs.List borderColor="gray.75">
             <Tabs.Trigger value="members">

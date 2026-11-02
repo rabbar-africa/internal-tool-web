@@ -1,7 +1,15 @@
-import { useFormik } from "formik";
+import { useFormik, type FormikErrors } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { toaster } from "@/components/ui";
 import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
@@ -19,6 +27,7 @@ import {
   type LineItemFormRow,
 } from "@/shared/interface/invoice";
 import { useGetItemListSimpleQuery } from "@/features/items/api";
+import { useGetOrganizationTaxes } from "@/features/settings/api";
 import {
   useGetAllCustomersQuery,
   useGetVehiclesByClientQuery,
@@ -30,11 +39,16 @@ import {
   useGetOrganizationDetails,
 } from "@/features/settings/api";
 import { formatTransactionSeries } from "@/utils/string-formatter";
+import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 
 const today = new Date().toISOString().split("T")[0];
 
-// Nigerian standard VAT rate (7.5%).
-export const VAT_RATE = 0.075;
+/**
+ * Tax is no longer a hand-written adjustment: the invoice carries a `taxId`
+ * from the organization's taxes and the backend charges it once, after
+ * discounts, freezing the rate onto the invoice.
+ */
 
 // Generated once per session
 export const DEFAULT_INVOICE_PREFIX = "RINV-";
@@ -66,8 +80,10 @@ const defaultValues: CreateInvoiceFormValues = {
   terms: "",
   discount: "0",
   discountType: "entityLevel",
+  taxId: "",
+  bankAccountId: "",
   adjustment: "",
-  adjustmentDescription: "VAT",
+  adjustmentDescription: "Adjustment",
   isDiscountBeforeTax: true,
   lineItems: [{ ...EMPTY_LINE_ITEM }],
   status: InvoiceStatusDto.SENT,
@@ -82,6 +98,8 @@ export function mapInvoiceToFormValues(
     invoiceNumber: invoice.invoiceNumber ?? "",
     customerId: invoice.customerId ?? "",
     vehicleId: invoice.vehicleId ?? "",
+    taxId: invoice.taxId ?? "",
+    bankAccountId: invoice.bankAccountId ?? "",
     customer: {
       name: invoice.customerName ?? invoice.client?.displayName ?? "",
       email: invoice.client?.email ?? "",
@@ -131,6 +149,29 @@ const validationSchema = Yup.object({
     .required(),
 });
 
+/** The first thing stopping the invoice saving, in the order the form reads. */
+function firstInvoiceError(
+  errors: FormikErrors<CreateInvoiceFormValues>,
+): string | undefined {
+  const field =
+    errors.customerId ?? errors.invoiceNumber ?? errors.date ?? errors.dueDate;
+  if (field) return field;
+
+  const { lineItems } = errors;
+  if (!lineItems) return undefined;
+  if (typeof lineItems === "string") return lineItems;
+
+  const rows = lineItems as (FormikErrors<LineItemFormRow> | undefined)[];
+  // Every row has an error: nothing has been entered yet, not one bad row.
+  if (rows.length && rows.every((row) => row?.name)) {
+    return "Add at least one item to the invoice";
+  }
+  const index = rows.findIndex(Boolean);
+  const row = rows[index];
+  const message = row?.name ?? row?.quantity ?? row?.rate ?? row?.description;
+  return message ? `Item ${index + 1}: ${message}` : undefined;
+}
+
 export const PAYMENT_TERMS_OPTIONS = [
   { label: "Due on Receipt", value: "0" },
   { label: "Net 15", value: "15" },
@@ -152,6 +193,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const jobCardId = searchParams.get("jobCardId") ?? "";
 
   const navigate = useNavigate();
+  const { hasFeature } = usePlanAccess();
+  const canUseDefaultVat = hasFeature("defaultVat");
+  const canUseTerms = hasFeature("invoiceTerms");
   const { mutateAsync, isPending: isCreating } = useCreateInvoiceMutation();
   const { mutateAsync: updateAsync, isPending: isUpdating } =
     useUpdateInvoiceMutation();
@@ -228,6 +272,15 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         ...(values.vehicleId
           ? { vehicleId: values.vehicleId }
           : { vehicleId: null }),
+        // null clears the tax on update; the backend rejects a taxId here
+        // together with per-line taxIds.
+        taxId: values.taxId || null,
+        bankAccountId: accountFieldForSave(
+          values.bankAccountId,
+          isEdit
+            ? { original: invoiceQuery.data?.data?.bankAccountId }
+            : undefined,
+        ),
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,
@@ -290,6 +343,17 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       navigate(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
     },
   });
+
+  // Formik stays silent when validation fails, and the inline errors can be a
+  // long way from the button, so say what's wrong.
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    const message = firstInvoiceError(await formik.validateForm());
+    if (message) toaster.create({ description: message, type: "error" });
+    // Also when invalid: it marks the fields touched, showing the inline errors.
+    await formik.submitForm();
+  };
+
   // Vehicle query for the selected customer
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useGetVehiclesByClientQuery(formik?.values?.customerId ?? "");
@@ -304,7 +368,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       label: `${v.year ? `${v.year} ` : ""}${v.make} ${v.model}`,
       value: v.id,
       subLabel: v.registrationNumber
-        ? `Reg: ${v.registrationNumber}`
+        ? `Plate: ${v.registrationNumber}`
         : undefined,
     }));
   }, [vehicles]);
@@ -319,6 +383,34 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  // ── Tax ──────────────────────────────────────────────────────────────────
+  // One whole-job tax from the organization's list. The rate shown here is the
+  // current one; once saved, the backend freezes it onto the invoice.
+  const { data: taxesData } = useGetOrganizationTaxes();
+  const taxes = useMemo(
+    () => (taxesData?.data ?? []).filter((tax) => tax.isActive),
+    [taxesData?.data],
+  );
+  const selectedTax = useMemo(
+    () => taxes.find((tax) => tax.id === formik.values.taxId) ?? null,
+    [taxes, formik.values.taxId],
+  );
+
+  // New invoices start on the organization's default tax, if the plan includes
+  // that (one saved before a downgrade can stay set). Edits keep whatever the
+  // invoice was issued with, including none.
+  const taxPreselectedRef = useRef(false);
+  useEffect(() => {
+    if (isEdit || taxPreselectedRef.current || taxes.length === 0) return;
+    if (!canUseDefaultVat) return;
+    taxPreselectedRef.current = true;
+    const defaultTax = taxes.find((tax) => tax.isDefault);
+    if (defaultTax && !formik.values.taxId) {
+      formik.setFieldValue("taxId", defaultTax.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, taxes, canUseDefaultVat]);
 
   const [items, setItems] = useState<Item[]>(
     itemsData?.map((item) => ({
@@ -482,24 +574,18 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
     const entityDiscount = parseFloat(formik.values.discount) || 0;
     const adjustmentVal = parseFloat(formik.values.adjustment) || 0;
-    const total = subtotal - entityDiscount + adjustmentVal;
+    // Mirrors the backend: one tax, charged on the discounted subtotal.
+    const taxRate = selectedTax ? Number(selectedTax.rate) || 0 : 0;
+    const taxVal = Math.max(subtotal - entityDiscount, 0) * (taxRate / 100);
+    const total = subtotal - entityDiscount + taxVal + adjustmentVal;
 
-    return { subtotal, entityDiscount, adjustmentVal, total };
+    return { subtotal, entityDiscount, taxVal, taxRate, adjustmentVal, total };
   }, [
     formik.values.lineItems,
     formik.values.discount,
     formik.values.adjustment,
+    selectedTax,
   ]);
-
-  // Auto-calculate Nigerian VAT (7.5%) on the taxable base (subtotal less any
-  // entity-level discount) and set it as the adjustment.
-  const applyVat = useCallback(() => {
-    const base = Math.max(totals.subtotal - totals.entityDiscount, 0);
-    const vat = base * VAT_RATE;
-    formik.setFieldValue("adjustment", vat.toFixed(2));
-    formik.setFieldValue("adjustmentDescription", "VAT");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totals.subtotal, totals.entityDiscount]);
 
   const getLineAmount = (li: LineItemFormRow) => {
     const qty = parseFloat(li.quantity) || 0;
@@ -522,7 +608,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // user has already typed their own.
   const appliedTermsRef = useRef(false);
   useEffect(() => {
-    if (isEdit || appliedTermsRef.current || !defaultTerms) return;
+    if (isEdit || appliedTermsRef.current || !defaultTerms || !canUseTerms)
+      return;
     appliedTermsRef.current = true;
     if (!formik.values.terms) formik.setFieldValue("terms", defaultTerms);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -546,13 +633,15 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     isEdit,
     isLoadingInvoice: isEdit && invoiceQuery.isLoading,
     formik,
+    handleSubmit,
     addLineItem,
     removeLineItem,
     customerOptions,
     selectedCustomer,
     handleItemSelect,
     totals,
-    applyVat,
+    taxes,
+    selectedTax,
     getLineAmount,
     isPending: isEdit ? isUpdating : isCreating || carry.isFlushing,
     handleCancel,

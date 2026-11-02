@@ -1,3 +1,5 @@
+import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
@@ -14,6 +16,7 @@ import { DeleteInvoiceConfirm } from "@/features/invoices/components/invoice-lis
 
 export function InvoiceListTemplate() {
   const navigate = useNavigate();
+  const { isAtLimit } = usePlanAccess();
   const {
     invoices,
     meta,
@@ -65,6 +68,7 @@ export function InvoiceListTemplate() {
                 label={downloadLabel}
               />
               <Button
+                disabled={isAtLimit("invoices")}
                 onClick={() => navigate(RouteConstants.invoices.create.path)}
               >
                 New Invoice
@@ -72,6 +76,8 @@ export function InvoiceListTemplate() {
             </Flex>
           }
         />
+
+        <PlanLimitNotice limit="invoices" />
 
         <Box
           pt={{ base: "1.25rem", md: "2rem" }}

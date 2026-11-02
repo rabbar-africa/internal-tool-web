@@ -336,7 +336,7 @@ export function InspectionDetailTemplate() {
               <InfoField label="Year" value={inspection.vehicleYear} />
               <InfoField label="Color" value={inspection.vehicleColor} />
               <InfoField
-                label="Registration"
+                label="Plate Number"
                 value={
                   inspection.vehicleRegistrationNumber ? (
                     <Text fontFamily="mono" fontSize="13px" color="gray.500">

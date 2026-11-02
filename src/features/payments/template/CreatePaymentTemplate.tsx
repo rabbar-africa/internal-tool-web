@@ -31,8 +31,9 @@ export function CreatePaymentTemplate() {
     setCustomerSearch,
     isSearchingCustomers,
     handleSelectCustomer,
-    bankAccountOptions,
+    handleModeChange,
     handleSelectDepositAccount,
+    depositFallbackAccountId,
     isLoadingInvoices,
     setAllocationAmount,
     autoAllocate,
@@ -88,7 +89,12 @@ export function CreatePaymentTemplate() {
           /* ───────────────────────────────────────── Invoice-driven flow ───────────────────────────────── */
           <>
             <InvoicePreview summary={presetSummary} />
-            <PresetPaymentFields formik={formik} />
+            <PresetPaymentFields
+              formik={formik}
+              onModeChange={handleModeChange}
+              onSelectDepositAccount={handleSelectDepositAccount}
+              depositFallbackAccountId={depositFallbackAccountId}
+            />
             <SectionCard
               step={3}
               title="Notes"
@@ -116,8 +122,9 @@ export function CreatePaymentTemplate() {
 
             <PaymentDetails
               formik={formik}
-              bankAccountOptions={bankAccountOptions}
+              onModeChange={handleModeChange}
               onSelectDepositAccount={handleSelectDepositAccount}
+              depositFallbackAccountId={depositFallbackAccountId}
             />
 
             <InvoiceAllocations
