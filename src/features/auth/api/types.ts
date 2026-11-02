@@ -70,7 +70,7 @@ export interface SubscriptionPlan {
 }
 
 /**
- * The fields the route gate reads from `GET /subscriptions/me`. The full
+ * The fields read here from `GET /subscriptions/me`. The full
  * billing overview is typed as `BillingOverview` in features/billing.
  */
 export interface Subscription {

@@ -51,11 +51,11 @@ export function describeStatus(overview: BillingOverview): {
   label: string;
   tone: BillingTone;
 } {
+  if (!isPaidPlan(overview.plan)) {
+    return { label: "Free plan", tone: "neutral" };
+  }
   switch (overview.status) {
     case "ACTIVE":
-      if (!isPaidPlan(overview.plan)) {
-        return { label: "Free plan", tone: "neutral" };
-      }
       return overview.billing.needsPayment
         ? { label: "Due soon", tone: "warning" }
         : { label: "Active", tone: "success" };
@@ -174,8 +174,14 @@ export function describePlanSummary(overview: BillingOverview): string[] {
         `You're on the free Starter plan for now. Pay to get ${plan.name} back.`,
       ];
     case "CANCELLED":
-      return ["Your plan has been cancelled. Contact us if you need help."];
+      return [
+        `Your ${plan.name} plan has been cancelled.`,
+        `You're on the free Starter plan for now. Pay to get ${plan.name} back.`,
+      ];
     default:
-      return ["Your plan isn't active right now. Contact us if you need help."];
+      return [
+        `Your ${plan.name} plan isn't active right now.`,
+        `You're on the free Starter plan for now. Pay to get ${plan.name} back.`,
+      ];
   }
 }
