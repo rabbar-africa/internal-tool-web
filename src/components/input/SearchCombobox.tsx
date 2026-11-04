@@ -163,6 +163,10 @@ export function SearchCombobox({
         width="100%"
         openOnClick
         allowCustomValue
+        // Only render the options while open. A form can hold many of these,
+        // and every closed one's list otherwise re-renders with the form.
+        lazyMount
+        unmountOnExit
         selectionBehavior="replace"
         disabled={disabled}
         invalid={!!error}
