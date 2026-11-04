@@ -140,9 +140,12 @@ const ALL_ACCOUNTS = "__all__";
 export function AccountFilterSelect({
   value,
   onChange,
+  fullWidth = false,
 }: {
   value: string;
   onChange: (id: string) => void;
+  /** Fill the parent, e.g. a grid cell, instead of a fixed width. */
+  fullWidth?: boolean;
 }) {
   const { options, isLoading } = useAccountOptions({ includeCash: true });
   return (
@@ -154,8 +157,11 @@ export function AccountFilterSelect({
         const next = opt?.value?.[0] ?? ALL_ACCOUNTS;
         onChange(next === ALL_ACCOUNTS ? "" : next);
       }}
-      rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
-      controlProps={{ w: { base: "100%", md: "200px" } }}
+      rootProps={{
+        size: "sm",
+        w: fullWidth ? "100%" : { base: "100%", md: "auto" },
+      }}
+      controlProps={{ w: fullWidth ? "100%" : { base: "100%", md: "200px" } }}
     />
   );
 }
