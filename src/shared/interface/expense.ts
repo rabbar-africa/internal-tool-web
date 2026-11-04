@@ -11,6 +11,22 @@ export type ExpenseCategory =
   | "FEES"
   | "OTHER";
 
+/**
+ * The vehicle an expense was for. It comes from what the expense is linked to,
+ * the invoice first, then the job card, so any field can be missing.
+ */
+export interface ExpenseVehicle {
+  /** Null when only the job card's copy of the details is left. */
+  id: string | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  registrationNumber: string | null;
+  vin: string | null;
+  color: string | null;
+  source: "INVOICE" | "JOB_CARD";
+}
+
 export interface Expense {
   id: string;
   organizationId: string;
@@ -45,6 +61,7 @@ export interface Expense {
   invoiceLineItemId?: string | null;
   invoice?: { id: string; invoiceNumber: string } | null;
   invoiceLineItem?: { id: string; name: string } | null;
+  vehicle?: ExpenseVehicle | null;
 }
 
 export interface CreateExpensePayload {
