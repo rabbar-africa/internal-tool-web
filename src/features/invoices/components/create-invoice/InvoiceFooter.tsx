@@ -1,6 +1,15 @@
 import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
-import { Box, Flex, Grid, Separator, Stack, Text } from "@chakra-ui/react";
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Separator,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import type { FormikProps } from "formik";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { CustomInput } from "@/components/input/CustomInput";
@@ -9,6 +18,7 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import type { IOrgTax } from "@/shared/interface/settings";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
+import { discountForAmountToPay } from "../../utils/invoice-summary";
 
 interface Totals {
   subtotal: number;
@@ -24,6 +34,134 @@ interface InvoiceFooterProps {
   totals: Totals;
   /** The organization's active taxes, for the whole-job tax picker. */
   taxes: IOrgTax[];
+}
+
+/**
+ * "I just want them to pay 120,000": works out the discount that gets there, so
+ * nobody has to, tax included. Only fills in the discount field, which stays
+ * editable, so a later change to the items moves the total as normal.
+ */
+function AmountToPay({
+  formik,
+  totals,
+}: {
+  formik: FormikProps<CreateInvoiceFormValues>;
+  totals: Totals;
+}) {
+  const { formatMoney } = useFormatMoney();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState<{
+    amount: number;
+    discount: number;
+    adjustmentChange: number;
+  } | null>(null);
+
+  const close = () => {
+    setOpen(false);
+    setAmount("");
+    setError(null);
+  };
+
+  const apply = () => {
+    const target = Number(amount);
+    if (!target || target <= 0) {
+      setError("Enter the amount the customer should pay.");
+      return;
+    }
+    const result = discountForAmountToPay(target, {
+      subtotal: totals.subtotal,
+      taxRate: totals.taxRate,
+      adjustment: totals.adjustmentVal,
+      isDiscountBeforeTax: formik.values.isDiscountBeforeTax,
+    });
+    if (!result.ok) {
+      setError(
+        result.reason === "above-total"
+          ? `That's more than the total with no discount (${formatMoney(result.limit)}).`
+          : `The lowest this invoice can go is ${formatMoney(result.limit)}.`,
+      );
+      return;
+    }
+    formik.setFieldValue("discount", String(result.discount));
+    if (result.adjustment !== totals.adjustmentVal) {
+      formik.setFieldValue("adjustment", String(result.adjustment));
+    }
+    setApplied({
+      amount: target,
+      discount: result.discount,
+      adjustmentChange: result.adjustment - totals.adjustmentVal,
+    });
+    close();
+  };
+
+  if (totals.subtotal <= 0) return null;
+
+  if (open) {
+    return (
+      <Stack gap="2" pt="3">
+        <CustomNumberInput
+          label="Amount to pay (₦)"
+          placeholder="0.00"
+          min={0}
+          allowNegative={false}
+          value={amount}
+          onValueChange={(raw) => {
+            setAmount(raw);
+            setError(null);
+          }}
+          error={error ?? undefined}
+          inputProps={{
+            autoFocus: true,
+            textAlign: "right",
+            // Enter here means this box, not "save the invoice".
+            onKeyDown: (event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                apply();
+              }
+            },
+          }}
+        />
+        <Flex gap="2" justify="flex-end">
+          <Button type="button" variant="ghost" size="xs" onClick={close}>
+            Cancel
+          </Button>
+          <Button type="button" size="xs" onClick={apply}>
+            Apply
+          </Button>
+        </Flex>
+      </Stack>
+    );
+  }
+
+  // Only while it's still true: editing the items afterwards moves the total.
+  const stillApplied =
+    applied && Math.abs(totals.total - applied.amount) < 0.005;
+
+  return (
+    <Box pt="2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        px="1"
+        color="primary.300"
+        onClick={() => setOpen(true)}
+      >
+        Set amount to pay
+      </Button>
+      {stillApplied && (
+        <Text fontSize="12px" color="gray.400" mt="1">
+          {formatMoney(applied.discount)} discount applied, so the total is
+          exactly {formatMoney(applied.amount)}.
+          {Math.abs(applied.adjustmentChange) >= 0.005 &&
+            " The adjustment moved by a few kobo to cover tax rounding."}
+        </Text>
+      )}
+    </Box>
+  );
 }
 
 export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
@@ -194,6 +332,8 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
               {formatMoney(total)}
             </Text>
           </Flex>
+
+          <AmountToPay formik={formik} totals={totals} />
         </Stack>
       </Box>
     </Grid>
