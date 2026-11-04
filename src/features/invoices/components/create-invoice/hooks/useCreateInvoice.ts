@@ -204,12 +204,10 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const invoiceQuery = useGetInvoiceByIdQuery(isEdit ? id : "");
 
   // Item search with debounce (server-side, mirrors the customer search below).
-  const [itemSearch, setItemSearch] = useState("");
   const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
   const itemSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleItemSearch = useCallback((query: string) => {
-    setItemSearch(query);
     if (itemSearchTimerRef.current) clearTimeout(itemSearchTimerRef.current);
     itemSearchTimerRef.current = setTimeout(() => {
       setDebouncedItemSearch(query);
@@ -656,7 +654,6 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     handleCustomerSearch,
     isSearchingCustomers: customersQuery.isFetching,
     itemsData: itemsQuery?.data?.data || [],
-    itemSearch,
     handleItemSearch,
     isSearchingItems: itemsQuery.isFetching,
 

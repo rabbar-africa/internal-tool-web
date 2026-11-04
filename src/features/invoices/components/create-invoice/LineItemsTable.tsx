@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -7,6 +7,7 @@ import {
   IconButton,
   Stack,
   Text,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import type { FormikErrors, FormikProps, FormikTouched } from "formik";
 import { SearchCombobox } from "@/components/input/SearchCombobox";
@@ -67,20 +68,43 @@ function TableHeader() {
 
 interface LineItemRowProps {
   idx: number;
-  formik: FormikProps<CreateInvoiceFormValues>;
+  lineItem: LineItemFormRow;
+  isDesktop: boolean;
+  // Plain strings rather than formik's error objects, which are rebuilt on
+  // every validation: anything new here re-renders the row.
+  nameError?: string;
+  descriptionError?: string;
+  quantityError?: string;
+  rateError?: string;
+  setFieldValue: FormikProps<CreateInvoiceFormValues>["setFieldValue"];
+  handleChange: FormikProps<CreateInvoiceFormValues>["handleChange"];
+  handleBlur: FormikProps<CreateInvoiceFormValues>["handleBlur"];
   searchOptions: SearchComboboxOption[];
   handleItemSelect: (idx: number, itemId: string) => void;
   lineAmount: number;
   canRemove: boolean;
-  onRemove: () => void;
-  onOpenAddItem: () => void;
+  onRemove: (idx: number) => void;
+  onOpenAddItem: (idx: number) => void;
   onItemSearch: (query: string) => void;
   isSearchingItems: boolean;
 }
 
-function LineItemRow({
+/**
+ * Memoised so typing in one row doesn't re-render the others: every prop has to
+ * stay the same between renders for that to work, so nothing here may be an
+ * inline callback or the whole `formik` object.
+ */
+const LineItemRow = memo(function LineItemRow({
   idx,
-  formik,
+  lineItem,
+  isDesktop,
+  nameError,
+  descriptionError,
+  quantityError,
+  rateError,
+  setFieldValue,
+  handleChange,
+  handleBlur,
   searchOptions,
   handleItemSelect,
   lineAmount,
@@ -91,24 +115,20 @@ function LineItemRow({
   isSearchingItems,
 }: LineItemRowProps) {
   const { formatMoney } = useFormatMoney();
-  const lineItem = formik.values.lineItems[idx];
-  const lineErrors = (
-    formik.errors.lineItems as FormikErrors<LineItemFormRow>[] | undefined
-  )?.[idx];
-  const lineTouched = (
-    formik.touched.lineItems as FormikTouched<LineItemFormRow>[] | undefined
-  )?.[idx];
 
-  const fieldError = (field: keyof LineItemFormRow) => {
-    if (lineTouched?.[field] || formik.submitCount > 0) {
-      return lineErrors?.[field] as string | undefined;
+  const handleNameInput = (text: string) => {
+    setFieldValue(`lineItems.${idx}.name`, text);
+    if (lineItem.itemId) {
+      setFieldValue(`lineItems.${idx}.itemId`, "");
     }
-    return undefined;
+  };
+  const addItemAction = {
+    label: "Add New Item",
+    onClick: () => onOpenAddItem(idx),
   };
 
-  return (
-    <>
-      {/* Desktop layout */}
+  if (isDesktop) {
+    return (
       <Grid
         templateColumns={COL_WIDTHS}
         gap="2"
@@ -117,7 +137,6 @@ function LineItemRow({
         borderBottomWidth="1px"
         borderColor="gray.50"
         alignItems="start"
-        display={{ base: "none", lg: "grid" }}
         _hover={{ bg: "gray.25" }}
         transition="background 0.1s"
       >
@@ -136,27 +155,19 @@ function LineItemRow({
             isLoading={isSearchingItems}
             onSearchChange={onItemSearch}
             onChange={(val) => handleItemSelect(idx, val)}
-            onInputChange={(text) => {
-              formik.setFieldValue(`lineItems.${idx}.name`, text);
-              if (lineItem.itemId) {
-                formik.setFieldValue(`lineItems.${idx}.itemId`, "");
-              }
-            }}
+            onInputChange={handleNameInput}
             placeholder="Select or type an item name..."
-            error={fieldError("name")}
-            footerAction={{
-              label: "Add New Item",
-              onClick: onOpenAddItem,
-            }}
+            error={nameError}
+            footerAction={addItemAction}
           />
           <CustomInput
             placeholder="Item description"
             name={`lineItems.${idx}.description`}
             value={lineItem.description}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            onChange={handleChange}
+            onBlur={handleBlur}
             inputProps={{ fontSize: "12px" }}
-            error={fieldError("description")}
+            error={descriptionError}
           />
         </Stack>
 
@@ -165,31 +176,29 @@ function LineItemRow({
           precision={2}
           value={lineItem.quantity}
           onValueChange={(raw) =>
-            formik.setFieldValue(`lineItems.${idx}.quantity`, raw)
+            setFieldValue(`lineItems.${idx}.quantity`, raw)
           }
-          onBlur={formik.handleBlur}
+          onBlur={handleBlur}
           name={`lineItems.${idx}.quantity`}
-          error={fieldError("quantity")}
+          error={quantityError}
         />
 
         <CustomNumberInput
           placeholder="0.00"
           precision={2}
           value={lineItem.rate}
-          onValueChange={(raw) =>
-            formik.setFieldValue(`lineItems.${idx}.rate`, raw)
-          }
-          onBlur={formik.handleBlur}
+          onValueChange={(raw) => setFieldValue(`lineItems.${idx}.rate`, raw)}
+          onBlur={handleBlur}
           name={`lineItems.${idx}.rate`}
-          error={fieldError("rate")}
+          error={rateError}
         />
 
         {/* <CustomInput
           placeholder="0%"
           name={`lineItems.${idx}.discount`}
           value={lineItem.discount}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
+          onChange={handleChange}
+          onBlur={handleBlur}
         /> */}
 
         <Flex align="center" justify="flex-end" h="40px">
@@ -206,140 +215,121 @@ function LineItemRow({
               size="xs"
               color="gray.300"
               _hover={{ color: "red.400", bg: "red.50" }}
-              onClick={onRemove}
+              onClick={() => onRemove(idx)}
             >
               ×
             </IconButton>
           )}
         </Flex>
       </Grid>
+    );
+  }
 
-      {/* Mobile layout — each row is a distinct card so rows are easy to tell
-          apart on small screens. */}
-      <Box
-        display={{ base: "block", lg: "none" }}
-        mx="3"
-        mt="3"
-        p="4"
-        bg="gray.25"
-        borderWidth="1px"
+  // Mobile: each row is a distinct card, so rows are easy to tell apart.
+  return (
+    <Box
+      mx="3"
+      mt="3"
+      p="4"
+      bg="gray.25"
+      borderWidth="1px"
+      borderColor="gray.100"
+      rounded="xl"
+      shadow="xs"
+    >
+      <Flex
+        justify="space-between"
+        align="center"
+        mb="3"
+        pb="2.5"
+        borderBottomWidth="1px"
         borderColor="gray.100"
-        rounded="xl"
-        shadow="xs"
       >
-        <Flex
-          justify="space-between"
-          align="center"
-          mb="3"
-          pb="2.5"
-          borderBottomWidth="1px"
-          borderColor="gray.100"
-        >
-          <Box
-            bg="primary.50"
-            color="primary.500"
-            px="2.5"
-            py="1"
-            rounded="full"
+        <Box bg="primary.50" color="primary.500" px="2.5" py="1" rounded="full">
+          <Text fontSize="12px" fontWeight="600">
+            Item {idx + 1}
+          </Text>
+        </Box>
+        {canRemove && (
+          <Button
+            variant="ghost"
+            size="xs"
+            color="red.400"
+            onClick={() => onRemove(idx)}
           >
-            <Text fontSize="12px" fontWeight="600">
-              Item {idx + 1}
-            </Text>
-          </Box>
-          {canRemove && (
-            <Button
-              variant="ghost"
-              size="xs"
-              color="red.400"
-              onClick={onRemove}
-            >
-              Remove
-            </Button>
-          )}
-        </Flex>
-        <Stack gap="3">
-          <SearchCombobox
-            label="Item Name"
-            required
-            options={searchOptions}
-            value={lineItem.itemId || undefined}
-            inputValue={lineItem.name}
-            serverSearch
-            isLoading={isSearchingItems}
-            onSearchChange={onItemSearch}
-            onChange={(val) => handleItemSelect(idx, val)}
-            onInputChange={(text) => {
-              formik.setFieldValue(`lineItems.${idx}.name`, text);
-              if (lineItem.itemId) {
-                formik.setFieldValue(`lineItems.${idx}.itemId`, "");
-              }
-            }}
-            placeholder="Select or type an item name..."
-            error={fieldError("name")}
-            footerAction={{
-              label: "Add New Item",
-              onClick: onOpenAddItem,
-            }}
+            Remove
+          </Button>
+        )}
+      </Flex>
+      <Stack gap="3">
+        <SearchCombobox
+          label="Item Name"
+          required
+          options={searchOptions}
+          value={lineItem.itemId || undefined}
+          inputValue={lineItem.name}
+          serverSearch
+          isLoading={isSearchingItems}
+          onSearchChange={onItemSearch}
+          onChange={(val) => handleItemSelect(idx, val)}
+          onInputChange={handleNameInput}
+          placeholder="Select or type an item name..."
+          error={nameError}
+          footerAction={addItemAction}
+        />
+        <CustomInput
+          label="Description"
+          placeholder="Item description"
+          name={`lineItems.${idx}.description`}
+          value={lineItem.description}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          error={descriptionError}
+        />
+        <Grid templateColumns={{ base: "1fr 1fr", lg: "1fr 1fr 1fr" }} gap="3">
+          <CustomNumberInput
+            label="Qty"
+            placeholder="1"
+            precision={2}
+            value={lineItem.quantity}
+            onValueChange={(raw) =>
+              setFieldValue(`lineItems.${idx}.quantity`, raw)
+            }
+            onBlur={handleBlur}
+            name={`lineItems.${idx}.quantity`}
+            error={quantityError}
           />
-          <CustomInput
-            label="Description"
-            placeholder="Item description"
-            name={`lineItems.${idx}.description`}
-            value={lineItem.description}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={fieldError("description")}
+          <CustomNumberInput
+            label="Rate (₦)"
+            placeholder="0.00"
+            precision={2}
+            value={lineItem.rate}
+            onValueChange={(raw) => setFieldValue(`lineItems.${idx}.rate`, raw)}
+            onBlur={handleBlur}
+            name={`lineItems.${idx}.rate`}
+            error={rateError}
           />
-          <Grid
-            templateColumns={{ base: "1fr 1fr", lg: "1fr 1fr 1fr" }}
-            gap="3"
-          >
-            <CustomNumberInput
-              label="Qty"
-              placeholder="1"
-              precision={2}
-              value={lineItem.quantity}
-              onValueChange={(raw) =>
-                formik.setFieldValue(`lineItems.${idx}.quantity`, raw)
-              }
-              onBlur={formik.handleBlur}
-              name={`lineItems.${idx}.quantity`}
-              error={fieldError("quantity")}
-            />
-            <CustomNumberInput
-              label="Rate (₦)"
-              placeholder="0.00"
-              precision={2}
-              value={lineItem.rate}
-              onValueChange={(raw) =>
-                formik.setFieldValue(`lineItems.${idx}.rate`, raw)
-              }
-              onBlur={formik.handleBlur}
-              name={`lineItems.${idx}.rate`}
-              error={fieldError("rate")}
-            />
-            {/* <CustomInput
+          {/* <CustomInput
               label="Disc"
               placeholder="0%"
               name={`lineItems.${idx}.discount`}
               value={lineItem.discount}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              onChange={handleChange}
+              onBlur={handleBlur}
             /> */}
-          </Grid>
-          <Flex justify="flex-end">
-            <Text fontSize="13px" color="gray.400">
-              Amount:{" "}
-              <Text as="span" fontWeight="600" color="gray.500">
-                {formatMoney(lineAmount)}
-              </Text>
+        </Grid>
+        <Flex justify="flex-end">
+          <Text fontSize="13px" color="gray.400">
+            Amount:{" "}
+            <Text as="span" fontWeight="600" color="gray.500">
+              {formatMoney(lineAmount)}
             </Text>
-          </Flex>
-        </Stack>
-      </Box>
-    </>
+          </Text>
+        </Flex>
+      </Stack>
+    </Box>
   );
-}
+});
 
 export function LineItemsTable({
   formik,
@@ -356,6 +346,40 @@ export function LineItemsTable({
   // Remembers which line row opened the modal so the newly created item can be
   // auto-selected back into that row.
   const [activeRowIdx, setActiveRowIdx] = useState<number | null>(null);
+
+  // One layout at a time: mounting both and hiding one with CSS rendered every
+  // input twice, on every keystroke.
+  const isDesktop =
+    useBreakpointValue({ base: false, lg: true }, { ssr: false }) ?? false;
+
+  // These change every render but are only read when called, so the rows get
+  // stable callbacks and stay memoised.
+  const latest = useRef({ removeLineItem, handleItemSelect });
+  latest.current = { removeLineItem, handleItemSelect };
+  const onRemove = useCallback(
+    (idx: number) => latest.current.removeLineItem(idx),
+    [],
+  );
+  const onSelectItem = useCallback(
+    (idx: number, itemId: string) =>
+      latest.current.handleItemSelect(idx, itemId),
+    [],
+  );
+  const onOpenAddItem = useCallback((idx: number) => {
+    setActiveRowIdx(idx);
+    setAddItemOpen(true);
+  }, []);
+
+  const lineErrors = formik.errors.lineItems as
+    | FormikErrors<LineItemFormRow>[]
+    | undefined;
+  const lineTouched = formik.touched.lineItems as
+    | FormikTouched<LineItemFormRow>[]
+    | undefined;
+  const fieldError = (idx: number, field: keyof LineItemFormRow) =>
+    lineTouched?.[idx]?.[field] || formik.submitCount > 0
+      ? (lineErrors?.[idx]?.[field] as string | undefined)
+      : undefined;
 
   const searchOptions: SearchComboboxOption[] = useMemo(
     () =>
@@ -375,18 +399,23 @@ export function LineItemsTable({
         <LineItemRow
           key={idx}
           idx={idx}
-          formik={formik}
+          lineItem={lineItem}
+          isDesktop={isDesktop}
+          nameError={fieldError(idx, "name")}
+          descriptionError={fieldError(idx, "description")}
+          quantityError={fieldError(idx, "quantity")}
+          rateError={fieldError(idx, "rate")}
+          setFieldValue={formik.setFieldValue}
+          handleChange={formik.handleChange}
+          handleBlur={formik.handleBlur}
           searchOptions={searchOptions}
-          handleItemSelect={handleItemSelect}
+          handleItemSelect={onSelectItem}
           lineAmount={getLineAmount(lineItem)}
           canRemove={formik.values.lineItems.length > 1}
-          onRemove={() => removeLineItem(idx)}
+          onRemove={onRemove}
           onItemSearch={onItemSearch}
           isSearchingItems={isSearchingItems}
-          onOpenAddItem={() => {
-            setActiveRowIdx(idx);
-            setAddItemOpen(true);
-          }}
+          onOpenAddItem={onOpenAddItem}
         />
       ))}
 
