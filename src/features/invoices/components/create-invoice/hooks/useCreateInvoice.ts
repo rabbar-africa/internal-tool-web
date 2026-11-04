@@ -34,6 +34,7 @@ import {
 } from "@/features/customers/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
+import { calcInvoiceSummary } from "../../../utils/invoice-summary";
 import {
   useGetOrganizationTransactionSeries,
   useGetOrganizationDetails,
@@ -572,16 +573,22 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
     const entityDiscount = parseFloat(formik.values.discount) || 0;
     const adjustmentVal = parseFloat(formik.values.adjustment) || 0;
-    // Mirrors the backend: one tax, charged on the discounted subtotal.
+    // One tax, charged on the discounted subtotal.
     const taxRate = selectedTax ? Number(selectedTax.rate) || 0 : 0;
-    const taxVal = Math.max(subtotal - entityDiscount, 0) * (taxRate / 100);
-    const total = subtotal - entityDiscount + taxVal + adjustmentVal;
+    const { taxVal, total } = calcInvoiceSummary({
+      subtotal,
+      discount: entityDiscount,
+      taxRate,
+      adjustment: adjustmentVal,
+      isDiscountBeforeTax: formik.values.isDiscountBeforeTax,
+    });
 
     return { subtotal, entityDiscount, taxVal, taxRate, adjustmentVal, total };
   }, [
     formik.values.lineItems,
     formik.values.discount,
     formik.values.adjustment,
+    formik.values.isDiscountBeforeTax,
     selectedTax,
   ]);
 
