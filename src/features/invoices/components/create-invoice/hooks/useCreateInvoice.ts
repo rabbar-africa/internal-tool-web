@@ -34,7 +34,10 @@ import {
 } from "@/features/customers/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
-import { calcInvoiceSummary } from "../../../utils/invoice-summary";
+import {
+  calcInvoiceSummary,
+  NEGATIVE_TOTAL_MESSAGE,
+} from "../../../utils/invoice-summary";
 import {
   useGetOrganizationTransactionSeries,
   useGetOrganizationDetails,
@@ -354,8 +357,13 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // long way from the button, so say what's wrong.
   const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-    const message = firstInvoiceError(await formik.validateForm());
+    const fieldError = firstInvoiceError(await formik.validateForm());
+    const isTotalNegative = totals.total < 0;
+    const message =
+      fieldError ?? (isTotalNegative ? NEGATIVE_TOTAL_MESSAGE : undefined);
     if (message) toaster.create({ description: message, type: "error" });
+    // The total isn't a form field, so Formik's validation can't stop this save.
+    if (!fieldError && isTotalNegative) return;
     // Also when invalid: it marks the fields touched, showing the inline errors.
     await formik.submitForm();
   };
