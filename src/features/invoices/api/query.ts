@@ -1,6 +1,7 @@
 import { useQuery, useMutation, type QueryConfigType } from "@/lib/react-query";
 import {
   getInvoiceById,
+  getInvoicePdf,
   createInvoice,
   updateInvoice,
   writeOffInvoice,
@@ -32,6 +33,10 @@ export const useGetAllInvoicesQuery = (
     ...config,
   });
 };
+
+/** A mutation so a failed download gets the global error toast. */
+export const useGetInvoicePdfMutation = () =>
+  useMutation({ mutationFn: getInvoicePdf });
 
 export const useGetInvoiceByIdQuery = (id: string) =>
   useQuery({
