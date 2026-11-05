@@ -83,6 +83,7 @@ const defaultValues: CreateInvoiceFormValues = {
   discountType: "entityLevel",
   taxId: "",
   bankAccountId: "",
+  templateId: "",
   adjustment: "",
   adjustmentDescription: "Adjustment",
   isDiscountBeforeTax: true,
@@ -101,6 +102,7 @@ export function mapInvoiceToFormValues(
     vehicleId: invoice.vehicleId ?? "",
     taxId: invoice.taxId ?? "",
     bankAccountId: invoice.bankAccountId ?? "",
+    templateId: invoice.templateId ?? "",
     customer: {
       name: invoice.customerName ?? invoice.client?.displayName ?? "",
       email: invoice.client?.email ?? "",
@@ -281,6 +283,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
             ? { original: invoiceQuery.data?.data?.bankAccountId }
             : undefined,
         ),
+        templateId: values.templateId || null,
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,

@@ -1,0 +1,53 @@
+import type { IInvoiceResponse } from "@/shared/interface/invoice";
+
+/** Made-up invoice for previewing a design; never saved or sent anywhere. */
+export const SAMPLE_INVOICE = {
+  id: "sample",
+  invoiceNumber: "INV-00123",
+  customerName: "Ada Okafor",
+  status: "SENT",
+  date: "2026-11-05T00:00:00.000Z",
+  dueDate: "2026-11-20T00:00:00.000Z",
+  paymentTerms: 15,
+  paymentTermsLabel: "Net 15",
+  currencyCode: "NGN",
+  subTotal: "185000.00",
+  discount: "5000.00",
+  taxAmount: "13500.00",
+  taxName: "VAT",
+  taxPercent: "7.50",
+  adjustment: "0",
+  adjustmentDescription: null,
+  total: "193500.00",
+  balance: "93500.00",
+  notes: "Thanks for doing business with us.",
+  terms: "Payment is due within 15 days of the invoice date.",
+  billingAddress: "14 Admiralty Way, Lekki, Lagos",
+  client: { id: "sample-customer", displayName: "Ada Okafor" },
+  vehicle: {
+    make: "Toyota",
+    model: "Camry",
+    year: 2019,
+    registrationNumber: "LND-482-XA",
+  },
+  bankAccount: null,
+  broughtForward: [],
+  lineItems: [
+    {
+      id: "line-1",
+      name: "Full service",
+      description: "Engine oil, filters, and a 40-point inspection",
+      quantity: "1",
+      rate: "85000.00",
+      total: "85000.00",
+    },
+    {
+      id: "line-2",
+      name: "Front brake pads",
+      description: "Supply and fit",
+      quantity: "2",
+      rate: "50000.00",
+      total: "100000.00",
+    },
+  ],
+} as unknown as IInvoiceResponse;

@@ -51,6 +51,13 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
         href: settings.logo.path,
       },
       {
+        title: "Invoice Templates",
+        description:
+          "Design how your invoices look: layout, colours, fonts, and fields.",
+        icon: BooksIcon,
+        href: settings.invoiceTemplates.path,
+      },
+      {
         title: "Addresses",
         description:
           "Manage billing, shipping, and office addresses; set a primary.",
