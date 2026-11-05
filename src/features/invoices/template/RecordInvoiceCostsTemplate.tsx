@@ -436,7 +436,7 @@ export function RecordInvoiceCostsTemplate() {
                 >
                   Billed {formatMoney(row.billed)}
                   <br />
-                  Spent so far {formatMoney(row.spent)}
+                  Spent so far <b>{formatMoney(row.spent)}</b>
                 </Text>
                 <CustomNumberInput
                   precision={2}
