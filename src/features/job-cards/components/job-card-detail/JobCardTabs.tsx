@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Box, Button, Flex, Tabs, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -160,15 +160,6 @@ const inspectionColumns: ColumnDef<JobCardInspection>[] = [
 
 const expenseColumns: ColumnDef<Expense>[] = [
   {
-    accessorKey: "expenseNumber",
-    header: "Expense #",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
-      </Text>
-    ),
-  },
-  {
     accessorKey: "name",
     header: "Item",
     cell: ({ getValue }) => (
@@ -278,18 +269,21 @@ const PAYMENT_CSV_HEADERS = {
   status: "Status",
 } as const;
 
+// exportToCSV writes columns in the order of each row's keys.
 const EXPENSE_CSV_HEADERS = {
-  expenseNumber: "Expense #",
-  date: "Date",
   name: "Item",
+  vehicle: "Vehicle",
+  plateNumber: "Plate Number",
+  amount: "Amount",
+  date: "Date",
+  paidFrom: "Paid From",
+  expenseNumber: "Expense #",
   category: "Category",
   invoiceNumber: "Invoice",
   vendorName: "Supplier",
   quantity: "Quantity",
   unitCost: "Unit Cost",
-  amount: "Amount",
   mode: "How It Was Paid",
-  paidFrom: "Paid From",
 } as const;
 
 const modeLabel = (mode?: string | null) =>
@@ -306,10 +300,28 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
 
   // The job card only carries each record's account id, so name them here.
   const { accounts } = useAccountOptions({ includeCash: true });
-  const accountName = (id?: string | null) => {
-    const account = accounts.find((a) => a.id === id);
-    return account ? formatAccountLabel(account) : "";
-  };
+  const accountName = useCallback(
+    (id?: string | null) => {
+      const account = accounts.find((a) => a.id === id);
+      return account ? formatAccountLabel(account) : "";
+    },
+    [accounts],
+  );
+  const expenseTableColumns = useMemo<ColumnDef<Expense>[]>(
+    () => [
+      ...expenseColumns,
+      {
+        id: "paidFrom",
+        header: "Paid From",
+        cell: ({ row }) => (
+          <Text textStyle="small-regular" color="gray.500">
+            {accountName(row.original.paidThroughAccountId) || "—"}
+          </Text>
+        ),
+      },
+    ],
+    [accountName],
+  );
   const paymentsCsv = jobCard.payments.map((payment) => ({
     paymentNumber: payment.paymentNumber,
     date: payment.date.slice(0, 10),
@@ -319,10 +331,28 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     referenceNumber: payment.referenceNumber ?? "",
     status: payment.status,
   }));
+  // This endpoint doesn't work out a vehicle per expense, so it's the job's,
+  // or the copy the job card keeps if the vehicle record has gone.
+  const jobVehicleName = (
+    jobCard.vehicle
+      ? [jobCard.vehicle.year, jobCard.vehicle.make, jobCard.vehicle.model]
+      : [jobCard.vehicleYear, jobCard.vehicleMake, jobCard.vehicleModel]
+  )
+    .filter(Boolean)
+    .join(" ");
+  const jobPlateNumber =
+    jobCard.vehicle?.registrationNumber ??
+    jobCard.vehicleRegistrationNumber ??
+    "";
   const expensesCsv = jobCard.expenses.map((expense) => ({
-    expenseNumber: expense.expenseNumber,
-    date: expense.date.slice(0, 10),
     name: expense.name,
+    vehicle: jobVehicleName,
+    plateNumber: jobPlateNumber,
+    amount: expense.amount,
+    // A plain YYYY-MM-DD, which spreadsheets read as a date.
+    date: expense.date.slice(0, 10),
+    paidFrom: accountName(expense.paidThroughAccountId),
+    expenseNumber: expense.expenseNumber,
     category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
     invoiceNumber:
       jobCard.invoices.find((invoice) => invoice.id === expense.invoiceId)
@@ -330,9 +360,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     vendorName: expense.vendorName ?? "",
     quantity: expense.quantity,
     unitCost: expense.unitCost,
-    amount: expense.amount,
     mode: modeLabel(expense.paymentMode),
-    paidFrom: accountName(expense.paidThroughAccountId),
   }));
   // A void invoice's work isn't happening, so nothing to cost against it.
   const costableInvoices = jobCard.invoices.filter(
@@ -573,7 +601,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             </Flex>
             <CustomTable
               data={jobCard.expenses}
-              columns={expenseColumns}
+              columns={expenseTableColumns}
               enableActions
               actions={expenseActions}
               tableScrollAreaProps={scrollAreaProps}

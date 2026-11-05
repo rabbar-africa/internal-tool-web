@@ -7,12 +7,17 @@ import {
   type CustomerFilter,
   updateCustomer,
   getVehiclesByClient,
+  getCustomerStatement,
+  downloadCustomerStatementPdf,
   createVehicle,
   updateVehicle,
   deleteVehicle,
   type CreateVehiclePayload,
 } from "./service";
-import type { CreateCustomerPayload } from "@/shared/interface/customer";
+import type {
+  CreateCustomerPayload,
+  CustomerStatementParams,
+} from "@/shared/interface/customer";
 import { customQueryKey } from "@/shared/constants/query-keys";
 
 export const useGetAllCustomersQuery = (
@@ -104,3 +109,27 @@ export const useDeleteVehicleMutation = (clientId: string) => {
     },
   });
 };
+
+export const useGetCustomerStatementQuery = (
+  clientId: string,
+  params: CustomerStatementParams,
+  options?: { enabled?: boolean },
+) =>
+  useQuery({
+    queryKey: [customQueryKey.customers.statement, clientId, params],
+    queryFn: () => getCustomerStatement(clientId, params),
+    enabled: Boolean(clientId) && (options?.enabled ?? true),
+    // What's about to be sent to a client shouldn't be minutes old.
+    staleTime: 0,
+  });
+
+export const useDownloadCustomerStatementMutation = () =>
+  useMutation({
+    mutationFn: ({
+      clientId,
+      params,
+    }: {
+      clientId: string;
+      params: CustomerStatementParams;
+    }) => downloadCustomerStatementPdf(clientId, params),
+  });

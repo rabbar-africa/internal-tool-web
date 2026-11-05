@@ -40,9 +40,11 @@ const columns: ColumnDef<Expense>[] = [
         {row.original.invoice && (
           <Text fontSize="12px" color="primary.300" lineClamp={1}>
             for {row.original.invoice.invoiceNumber}
-            {row.original.invoiceLineItem
-              ? ` · ${row.original.invoiceLineItem.name}`
-              : ""}
+            {row.original.sharedLines?.length
+              ? ` · ${row.original.sharedLines.map((l) => l.name).join(", ")}`
+              : row.original.invoiceLineItem
+                ? ` · ${row.original.invoiceLineItem.name}`
+                : ""}
           </Text>
         )}
         {row.original.description && (
@@ -122,17 +124,18 @@ const columns: ColumnDef<Expense>[] = [
   },
 ];
 
+// exportToCSV writes columns in the order of each row's keys.
 const CSV_HEADERS = {
-  expenseNumber: "Expense #",
   name: "Item",
-  category: "Category",
-  amount: "Amount (₦)",
-  date: "Date",
-  jobNumber: "Job Card",
   vehicle: "Vehicle",
   plateNumber: "Plate Number",
-  invoiceNumber: "Invoice",
+  amount: "Amount (₦)",
+  date: "Date",
   paidThrough: "Paid From",
+  expenseNumber: "Expense #",
+  category: "Category",
+  jobNumber: "Job Card",
+  invoiceNumber: "Invoice",
 } as const;
 
 const FILTER_SCHEMA = {
@@ -175,18 +178,19 @@ export function ExpenseListTemplate() {
   const meta = data?.meta;
 
   const csvData = expenses.map((expense) => ({
-    expenseNumber: expense.expenseNumber,
     name: expense.name,
-    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
-    amount: expense.amount,
-    date: expense.date,
-    jobNumber: expense.jobCard?.jobNumber ?? "",
     vehicle: vehicleName(expense.vehicle),
     plateNumber: expense.vehicle?.registrationNumber ?? "",
-    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
+    amount: expense.amount,
+    // A plain YYYY-MM-DD, which spreadsheets read as a date.
+    date: expense.date.slice(0, 10),
     paidThrough: expense.paidThroughAccount
       ? formatAccountLabel(expense.paidThroughAccount)
       : "",
+    expenseNumber: expense.expenseNumber,
+    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
+    jobNumber: expense.jobCard?.jobNumber ?? "",
+    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
   }));
 
   const tableActions: TableAction<Expense>[] = [

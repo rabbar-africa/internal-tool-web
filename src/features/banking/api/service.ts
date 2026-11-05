@@ -1,7 +1,7 @@
 import { axios } from "@/lib/axios";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 import type { ApiResponse } from "@/shared/interface/api";
-import { createDownloadLink } from "@/utils/file-helper";
+import { downloadPdf } from "@/utils/download-pdf";
 import type {
   AccountStatement,
   BusinessStatement,
@@ -74,27 +74,13 @@ export const getAccountStatement = async (
   return response.data;
 };
 
-/** `attachment; filename="statement-cash-….pdf"` → the filename. */
-const filenameFrom = (disposition: unknown): string | null => {
-  if (typeof disposition !== "string") return null;
-  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-  return match ? decodeURIComponent(match[1]) : null;
-};
-
 /** Saves a statement PDF under the server's filename. */
-const downloadStatementPdf = async (url: string, range: StatementRange) => {
-  const response = await axios.get<Blob>(`${url}/pdf`, {
-    params: range,
-    responseType: "blob",
-  });
-  const filename =
-    filenameFrom(response.headers["content-disposition"]) ??
-    `statement-${range.from ?? ""}-to-${range.to ?? ""}.pdf`;
-  createDownloadLink(
-    new Blob([response.data], { type: "application/pdf" }),
-    filename,
+const downloadStatementPdf = (url: string, range: StatementRange) =>
+  downloadPdf(
+    `${url}/pdf`,
+    range,
+    `statement-${range.from ?? ""}-to-${range.to ?? ""}.pdf`,
   );
-};
 
 export const downloadAccountStatementPdf = (
   accountId: string,

@@ -1,8 +1,11 @@
 import type {
   ClientStats,
   CreateCustomerPayload,
+  CustomerStatement,
+  CustomerStatementParams,
   ICustomer,
 } from "@/shared/interface/customer";
+import { downloadPdf } from "@/utils/download-pdf";
 import { axios } from "@/lib/axios";
 import { buildUrlWithQueryParams } from "@/utils/build-url-query";
 import { type ApiResponse } from "@/shared/interface/api";
@@ -102,3 +105,25 @@ export const updateVehicle = async (
 export const deleteVehicle = async (id: string): Promise<void> => {
   await axios.delete(`/vehicles/${id}`);
 };
+
+export const getCustomerStatement = async (
+  clientId: string,
+  params: CustomerStatementParams,
+) => {
+  const response = await axios.get<ApiResponse<CustomerStatement>>(
+    `/clients/${clientId}/statement`,
+    { params },
+  );
+  return response.data;
+};
+
+/** Called with the same query as the preview, so the two always match. */
+export const downloadCustomerStatementPdf = (
+  clientId: string,
+  params: CustomerStatementParams,
+) =>
+  downloadPdf(
+    `/clients/${clientId}/statement/pdf`,
+    params,
+    `work-history-${params.from}-to-${params.to}.pdf`,
+  );

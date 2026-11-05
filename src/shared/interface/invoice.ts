@@ -175,6 +175,8 @@ export interface Invoice {
 }
 
 export interface CreateLineItemPayload {
+  /** The saved item, when editing: its recorded costs stay with it. */
+  id?: string;
   itemOrder: number;
   itemId?: string;
   name: string;
@@ -233,6 +235,8 @@ export interface IGetInvoiceFilter extends IBaseFilter {
 }
 
 export interface LineItemFormRow {
+  /** The saved item, when editing; new rows have none. */
+  id?: string;
   itemId: string;
   name: string;
   description: string;

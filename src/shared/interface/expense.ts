@@ -61,6 +61,8 @@ export interface Expense {
   invoiceLineItemId?: string | null;
   invoice?: { id: string; invoiceNumber: string } | null;
   invoiceLineItem?: { id: string; name: string } | null;
+  /** Set when it covers several items bought for one price; then `invoiceLineItem` is null. */
+  sharedLines?: Array<{ id: string; name: string }>;
   vehicle?: ExpenseVehicle | null;
 }
 
@@ -163,7 +165,18 @@ export interface InvoiceCosts {
     margin: number;
     expenses: InvoiceCostExpense[];
   }>;
-  /** Costs not tied to a current line: other costs, or lines since rewritten. */
+  /**
+   * Items bought together for one price. There's no spent or margin per item,
+   * and these items are not in `lines` as well.
+   */
+  shared?: Array<{
+    lines: Array<{ invoiceLineItemId: string; name: string; billed: number }>;
+    billed: number;
+    spent: number;
+    margin: number;
+    expenses: InvoiceCostExpense[];
+  }>;
+  /** Costs not tied to a current line: other costs, or removed items. */
   other: { spent: number; expenses: InvoiceCostExpense[] };
   totals: { billed: number; spent: number; margin: number };
 }
@@ -188,6 +201,8 @@ export interface RecordInvoiceCostsPayload {
     vendorName?: string;
   }>;
   other?: Array<{ name: string; amount: number; category?: ExpenseCategory }>;
+  /** Items bought together: one expense for all of them, never split. */
+  shared?: Array<{ invoiceLineItemIds: string[]; amount: number }>;
 }
 
 export interface RecordInvoiceCostsResponse {
