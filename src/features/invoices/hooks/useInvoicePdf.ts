@@ -1,21 +1,21 @@
-import { useCallback, useMemo } from "react";
+import { createElement, useCallback, useMemo, useState } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { createDownloadLink } from "@/utils/file-helper";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
-import { useGetInvoicePdfMutation } from "../api/query";
 
 /**
- * Invoice PDFs, rendered by the API so they match what every other channel
- * sends. Exposes helpers to get a File, trigger a download, open in a new tab,
- * or print.
+ * Client-side invoice PDF generation via @react-pdf/renderer.
+ * Renders the invoice document in the browser (no server round-trip) and
+ * exposes helpers to get the raw blob / File, an object URL, trigger a
+ * download, open in a new tab, or print.
  *
  * Pass an invoice to bind the hook to it (e.g. on the detail page), or omit it
- * and pass a target per-call (e.g. from a list row) — every action accepts an
- * optional override argument.
+ * and pass a target per-call (e.g. from a list row, after fetching the full
+ * invoice) — every action accepts an optional override argument.
  */
 
-type InvoicePdfTarget = Pick<IInvoiceResponse, "id" | "invoiceNumber">;
-
-const fileNameFor = (invoice: InvoicePdfTarget) =>
+const fileNameFor = (invoice: IInvoiceResponse) =>
   `${invoice.invoiceNumber || `invoice-${invoice.id ?? ""}`}.pdf`;
 
 /**
@@ -37,8 +37,13 @@ const isIosStandalone = (): boolean => {
 };
 
 export function useInvoicePdf(invoice?: IInvoiceResponse) {
-  const { mutateAsync: fetchPdf, isPending: isGenerating } =
-    useGetInvoicePdfMutation();
+  const { userOrganization } = useCurrentUser();
+  const { hasFeature } = usePlanAccess();
+  // Unknown (still loading) counts as included, so a paying customer's invoice
+  // is never branded by a race. Matches the backend's PDF.
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
+  const showTerms = hasFeature("invoiceTerms");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Whether to offer the "Send PDF" action. We only require navigator.share to
   // exist (true on iOS Safari, iOS Chrome, Android). iOS Chrome exposes share
@@ -54,24 +59,39 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
     [invoice?.invoiceNumber, invoice?.id],
   );
 
+  /** Render the document to a Blob. */
   const getBlob = useCallback(
-    async (target?: InvoicePdfTarget): Promise<Blob> => {
+    async (target?: IInvoiceResponse): Promise<Blob> => {
       const subject = target ?? invoice;
       if (!subject) throw new Error("No invoice provided");
-      return fetchPdf(subject.id);
+      setIsGenerating(true);
+      try {
+        // Lazy-loaded so the heavy @react-pdf/renderer bundle is only fetched
+        // when a PDF action is actually triggered, not on page load.
+        const [{ pdf }, { InvoicePdfDocument }] = await Promise.all([
+          import("@react-pdf/renderer"),
+          import("../components/invoice-detail/pdf/InvoicePdfDocument"),
+        ]);
+        // InvoicePdfDocument renders a <Document>, but its prop type doesn't
+        // structurally match react-pdf's DocumentProps — cast to pdf()'s
+        // expected element type.
+        const element = createElement(InvoicePdfDocument, {
+          invoice: subject,
+          organization: userOrganization,
+          showRabbarBranding,
+          showTerms,
+        }) as unknown as Parameters<typeof pdf>[0];
+        return await pdf(element).toBlob();
+      } finally {
+        setIsGenerating(false);
+      }
     },
-    [invoice, fetchPdf],
+    [invoice, userOrganization, showRabbarBranding, showTerms],
   );
 
-  /** Null on failure: the mutation has already shown the error toast. */
-  const tryGetBlob = useCallback(
-    (target?: InvoicePdfTarget) => getBlob(target).catch(() => null),
-    [getBlob],
-  );
-
-  /** The PDF as a File (named after the invoice). */
+  /** Render the document to a File (named after the invoice). */
   const getFile = useCallback(
-    async (target?: InvoicePdfTarget): Promise<File> => {
+    async (target?: IInvoiceResponse): Promise<File> => {
       const blob = await getBlob(target);
       const name = target ? fileNameFor(target) : fileName;
       return new File([blob], name, { type: "application/pdf" });
@@ -79,19 +99,31 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
     [getBlob, fileName],
   );
 
-  /** Fetch and trigger a browser download. */
+  /**
+   * Render to an object URL. Caller is responsible for revoking it via
+   * `URL.revokeObjectURL` once done (unless using `download`/`open`/`print`,
+   * which handle cleanup themselves).
+   */
+  const getBlobUrl = useCallback(
+    async (target?: IInvoiceResponse): Promise<string> => {
+      const blob = await getBlob(target);
+      return URL.createObjectURL(blob);
+    },
+    [getBlob],
+  );
+
+  /** Generate and trigger a browser download. */
   const download = useCallback(
-    async (target?: InvoicePdfTarget): Promise<void> => {
-      const blob = await tryGetBlob(target);
-      if (!blob) return;
+    async (target?: IInvoiceResponse): Promise<void> => {
+      const blob = await getBlob(target);
       const name = target ? fileNameFor(target) : fileName;
       createDownloadLink(blob, name);
     },
-    [tryGetBlob, fileName],
+    [getBlob, fileName],
   );
 
   /**
-   * Fetch the PDF and hand it to the OS share sheet (Web Share API level 2).
+   * Generate the PDF and hand it to the OS share sheet (Web Share API level 2).
    *
    * iOS Safari and Android Chrome can share the file directly (native "Share"
    * menu → WhatsApp, Mail, Drive, …). iOS Chrome/Firefox/Edge expose
@@ -102,7 +134,7 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
    * otherwise iOS pops-up-blocks it once the user gesture is gone.
    */
   const share = useCallback(
-    async (target?: InvoicePdfTarget): Promise<void> => {
+    async (target?: IInvoiceResponse): Promise<void> => {
       const nav = navigator as Navigator & {
         canShare?: (data?: ShareData) => boolean;
       };
@@ -153,36 +185,32 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
     [getFile, invoice],
   );
 
-  /** Fetch and open the PDF in a new browser tab. */
+  /** Generate and open the PDF in a new browser tab. */
   const open = useCallback(
-    async (target?: InvoicePdfTarget): Promise<void> => {
-      // Opened now, inside the tap: browsers block a tab opened after a network
-      // wait. Installed iOS PWAs can't open a blob URL in a new tab at all, so
-      // those (and blocked popups) download instead — the user can preview or
-      // share it from Files.
-      const win = isIosStandalone() ? null : window.open("", "_blank");
-      const blob = await tryGetBlob(target);
-      if (!blob) {
-        win?.close();
+    async (target?: IInvoiceResponse): Promise<void> => {
+      // Installed iOS PWAs can't open a blob URL in a new tab — download instead
+      // so the user still gets the PDF (they can preview/share it from Files).
+      if (isIosStandalone()) {
+        const blob = await getBlob(target);
+        const name = target ? fileNameFor(target) : fileName;
+        createDownloadLink(blob, name);
         return;
       }
-      if (!win) {
-        createDownloadLink(blob, target ? fileNameFor(target) : fileName);
-        return;
+      const url = await getBlobUrl(target);
+      const win = window.open(url, "_blank");
+      // Revoke once the tab has had time to load the document.
+      if (win) {
+        win.addEventListener("beforeunload", () => URL.revokeObjectURL(url));
       }
-      const url = URL.createObjectURL(blob);
-      win.location.href = url;
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     },
-    [tryGetBlob, fileName],
+    [getBlobUrl, getBlob, fileName],
   );
 
-  /** Fetch and open the system print dialog via a hidden iframe. */
+  /** Generate and open the system print dialog via a hidden iframe. */
   const print = useCallback(
-    async (target?: InvoicePdfTarget): Promise<void> => {
-      const blob = await tryGetBlob(target);
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
+    async (target?: IInvoiceResponse): Promise<void> => {
+      const url = await getBlobUrl(target);
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.right = "0";
@@ -202,14 +230,16 @@ export function useInvoicePdf(invoice?: IInvoiceResponse) {
         URL.revokeObjectURL(url);
       }, 60_000);
     },
-    [tryGetBlob],
+    [getBlobUrl],
   );
 
   return {
     fileName,
     isGenerating,
     canShareFiles,
+    getBlob,
     getFile,
+    getBlobUrl,
     download,
     share,
     open,

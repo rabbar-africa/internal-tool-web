@@ -32,14 +32,6 @@ export const deleteInvoice = async (id: string): Promise<void> => {
   await axios.delete(`/invoices/${id}`);
 };
 
-/** The invoice's PDF, rendered by the API. */
-export const getInvoicePdf = async (id: string): Promise<Blob> => {
-  const response = await axios.get<Blob>(`/invoices/${id}/pdf`, {
-    responseType: "blob",
-  });
-  return new Blob([response.data], { type: "application/pdf" });
-};
-
 export const createInvoice = async (payload: CreateInvoicePayload) => {
   const lineItems = payload.lineItems.map((li, idx) => {
     const rate =

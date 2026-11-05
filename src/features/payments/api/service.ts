@@ -15,17 +15,6 @@ export const getPayments = async (filter?: IGetPaymentsReceivedFilter) => {
   return response.data;
 };
 
-/** The payment's receipt PDF, rendered by the API. */
-export const getReceiptPdf = async (id: string): Promise<Blob> => {
-  const response = await axios.get<Blob>(
-    `/payments-received/${id}/receipt/pdf`,
-    {
-      responseType: "blob",
-    },
-  );
-  return new Blob([response.data], { type: "application/pdf" });
-};
-
 export const getPaymentById = async (id: string) => {
   const response = await axios.get<ApiResponse<IPaymentReceived>>(
     `/payments-received/${id}`,
