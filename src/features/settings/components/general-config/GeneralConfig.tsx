@@ -218,7 +218,7 @@ export function GeneralConfig() {
               >
                 Apply discount before tax
               </CustomSwitch>
-              <CustomSwitch
+              {/* <CustomSwitch
                 reversed
                 checked={values.allowNegativeStock}
                 onCheckedChange={(e: { checked: boolean }) =>
@@ -226,7 +226,7 @@ export function GeneralConfig() {
                 }
               >
                 Allow negative stock
-              </CustomSwitch>
+              </CustomSwitch> */}
               <CustomSwitch
                 reversed
                 checked={values.requireSignatureOnInspection}
