@@ -169,6 +169,13 @@ const settings = {
   currency: defineRoute("/settings/currency" as const),
   accountDetails: defineRoute("/settings/account-details" as const),
   taxes: defineRoute("/settings/taxes" as const),
+  invoiceTemplates: defineRoute("/settings/invoice-templates" as const),
+  createInvoiceTemplate: defineRoute(
+    "/settings/invoice-templates/create" as const,
+  ),
+  editInvoiceTemplate: defineRoute(
+    "/settings/invoice-templates/:id/edit" as const,
+  ),
   transactionSeries: defineRoute("/settings/transaction-series" as const),
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),

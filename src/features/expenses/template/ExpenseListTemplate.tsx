@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -17,7 +17,6 @@ import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_OPTIONS,
   type Expense,
-  type ExpenseCategory,
 } from "@/shared/interface/expense";
 import {
   AccountFilterSelect,
@@ -25,27 +24,11 @@ import {
 } from "@/features/settings/components/account-details/AccountSelect";
 import { useDeleteExpenseMutation, useGetExpensesQuery } from "../api/query";
 
-const CATEGORY_STYLES: Record<ExpenseCategory, { bg: string; color: string }> =
-  {
-    PARTS: { bg: "blue.50", color: "blue.600" },
-    SUBLET: { bg: "purple.50", color: "purple.600" },
-    CONSUMABLES: { bg: "cyan.50", color: "cyan.600" },
-    LABOR: { bg: "orange.50", color: "orange.600" },
-    TOWING: { bg: "pink.50", color: "pink.600" },
-    FEES: { bg: "gray.100", color: "gray.600" },
-    OTHER: { bg: "gray.50", color: "gray.500" },
-  };
+/** "2019 Toyota Camry", from whichever parts were recorded. */
+const vehicleName = (vehicle: Expense["vehicle"]) =>
+  [vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(" ");
 
 const columns: ColumnDef<Expense>[] = [
-  {
-    accessorKey: "expenseNumber",
-    header: "Expense #",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-        {getValue() as string}
-      </Text>
-    ),
-  },
   {
     accessorKey: "name",
     header: "Item",
@@ -54,14 +37,16 @@ const columns: ColumnDef<Expense>[] = [
         <Text textStyle="small-regular" color="gray.500" fontWeight="500">
           {row.original.name}
         </Text>
-        {row.original.invoice && (
+        {/* {row.original.invoice && (
           <Text fontSize="12px" color="primary.300" lineClamp={1}>
             for {row.original.invoice.invoiceNumber}
-            {row.original.invoiceLineItem
-              ? ` · ${row.original.invoiceLineItem.name}`
-              : ""}
+            {row.original.sharedLines?.length
+              ? ` · ${row.original.sharedLines.map((l) => l.name).join(", ")}`
+              : row.original.invoiceLineItem
+                ? ` · ${row.original.invoiceLineItem.name}`
+                : ""}
           </Text>
-        )}
+        )} */}
         {row.original.description && (
           <Text fontSize="12px" color="gray.300" lineClamp={1}>
             {row.original.description}
@@ -71,24 +56,30 @@ const columns: ColumnDef<Expense>[] = [
     ),
   },
   {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ getValue }) => {
-      const category = getValue() as ExpenseCategory;
-      const styles = CATEGORY_STYLES[category] ?? CATEGORY_STYLES.OTHER;
-      return (
-        <Box
-          display="inline-flex"
-          bg={styles.bg}
-          px="10px"
-          py="4px"
-          rounded="md"
-          alignItems="center"
-        >
-          <Text fontSize="12px" fontWeight="500" color={styles.color}>
-            {EXPENSE_CATEGORY_LABELS[category] ?? category}
+    id: "vehicle",
+    header: "Vehicle",
+    cell: ({ row }) => {
+      const { vehicle } = row.original;
+      const name = vehicleName(vehicle);
+      const plate = vehicle?.registrationNumber;
+      if (!name && !plate) {
+        return (
+          <Text textStyle="small-regular" color="gray.500">
+            —
           </Text>
-        </Box>
+        );
+      }
+      return (
+        <Stack gap="0">
+          <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+            {name || plate}
+          </Text>
+          {name && plate && (
+            <Text fontSize="12px" color="gray.300">
+              {plate}
+            </Text>
+          )}
+        </Stack>
       );
     },
   },
@@ -133,15 +124,18 @@ const columns: ColumnDef<Expense>[] = [
   },
 ];
 
+// exportToCSV writes columns in the order of each row's keys.
 const CSV_HEADERS = {
-  expenseNumber: "Expense #",
   name: "Item",
-  category: "Category",
+  vehicle: "Vehicle",
+  plateNumber: "Plate Number",
   amount: "Amount (₦)",
   date: "Date",
+  paidThrough: "Paid From",
+  expenseNumber: "Expense #",
+  category: "Category",
   jobNumber: "Job Card",
   invoiceNumber: "Invoice",
-  paidThrough: "Paid From",
 } as const;
 
 const FILTER_SCHEMA = {
@@ -184,16 +178,19 @@ export function ExpenseListTemplate() {
   const meta = data?.meta;
 
   const csvData = expenses.map((expense) => ({
-    expenseNumber: expense.expenseNumber,
     name: expense.name,
-    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
+    vehicle: vehicleName(expense.vehicle),
+    plateNumber: expense.vehicle?.registrationNumber ?? "",
     amount: expense.amount,
-    date: expense.date,
-    jobNumber: expense.jobCard?.jobNumber ?? "",
-    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
+    // A plain YYYY-MM-DD, which spreadsheets read as a date.
+    date: expense.date.slice(0, 10),
     paidThrough: expense.paidThroughAccount
       ? formatAccountLabel(expense.paidThroughAccount)
       : "",
+    expenseNumber: expense.expenseNumber,
+    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
+    jobNumber: expense.jobCard?.jobNumber ?? "",
+    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
   }));
 
   const tableActions: TableAction<Expense>[] = [
@@ -275,13 +272,17 @@ export function ExpenseListTemplate() {
             </Box>
           </Flex>
 
-          <Flex
-            justifyContent="flex-start"
-            alignItems={{ base: "stretch", md: "center" }}
+          {/* A grid, not a wrapping flex: every select fills its parent's width,
+              so in a flex each one took a whole line and they stacked. */}
+          <Grid
+            templateColumns={{
+              base: "1fr",
+              sm: "1fr 1fr",
+              xl: "minmax(0, 1fr) minmax(0, 1.2fr) auto minmax(0, 1.4fr)",
+            }}
+            alignItems="center"
             mb="1.5rem"
             gap="3"
-            direction={{ base: "column", md: "row" }}
-            wrap="wrap"
           >
             <CustomSelect
               placeholder="All Categories"
@@ -290,34 +291,30 @@ export function ExpenseListTemplate() {
               onChange={(opt: { value: string[] }) =>
                 setFilters({ category: opt?.value?.[0] ?? "", page: 1 })
               }
-              rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
-              controlProps={{ w: { base: "100%", md: "160px" } }}
+              rootProps={{ size: "sm", w: "100%" }}
+              controlProps={{ w: "100%" }}
             />
             <AccountFilterSelect
+              fullWidth
               value={filters.paidThroughAccountId}
               onChange={(id) =>
                 setFilters({ paidThroughAccountId: id, page: 1 })
               }
             />
-            <Flex
-              flexWrap={{ base: "wrap", lg: "unset" }}
-              gap="2"
-              align="center"
-              w={{ base: "100%", md: "auto" }}
-            >
+            <Flex gap="2" align="center" minW={0}>
               <DateField
                 label="From"
                 value={filters.dateFrom}
                 max={filters.dateTo || undefined}
                 onChange={(val) => setFilters({ dateFrom: val, page: 1 })}
-                containerProps={{ flex: { base: "1", lg: "unset" } }}
+                containerProps={{ flex: "1", minW: 0 }}
               />
               <DateField
                 label="To"
                 value={filters.dateTo}
                 min={filters.dateFrom || undefined}
                 onChange={(val) => setFilters({ dateTo: val, page: 1 })}
-                containerProps={{ flex: { base: "1", lg: "unset" } }}
+                containerProps={{ flex: "1", minW: 0 }}
               />
             </Flex>
             <SearchInput
@@ -327,9 +324,9 @@ export function ExpenseListTemplate() {
               onSearch={(val: string) => setFilters({ search: val, page: 1 })}
               debounceMs={400}
               loading={isFetching}
-              width={{ base: "100%", md: "21rem" }}
+              width="100%"
             />
-          </Flex>
+          </Grid>
 
           {filters.invoiceId && (
             <Flex

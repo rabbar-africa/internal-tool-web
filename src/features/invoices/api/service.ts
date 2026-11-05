@@ -32,24 +32,6 @@ export const deleteInvoice = async (id: string): Promise<void> => {
   await axios.delete(`/invoices/${id}`);
 };
 
-export const downloadInvoicePdf = async (
-  id: string,
-  invoiceNumber?: string,
-): Promise<void> => {
-  const response = await axios.get(`/invoices/${id}/pdf`, {
-    responseType: "blob",
-  });
-  const blob = new Blob([response.data], { type: "application/pdf" });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${invoiceNumber ?? `invoice-${id}`}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-};
-
 export const createInvoice = async (payload: CreateInvoicePayload) => {
   const lineItems = payload.lineItems.map((li, idx) => {
     const rate =

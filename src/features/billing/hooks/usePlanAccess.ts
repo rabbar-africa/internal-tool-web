@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useBillingOverviewQuery } from "../api/query";
 import type { PlanFeature, PlanLimit } from "../api/types";
+import { HIGHEST_PLAN_TIER } from "../utils/tiers";
 
 /**
  * What this org's plan includes, from `GET /subscriptions/me`. Never hardcode
@@ -25,8 +26,16 @@ export function usePlanAccess() {
       usageOf,
       /** What exists is never touched; this only stops adding more. */
       isAtLimit: (limit: PlanLimit) => usageOf(limit)?.remaining === 0,
-      /** Mirrors the API's `canUpgrade`: nothing to sell above Standard. */
-      canUpgrade: overview?.effectiveTier === "STARTER",
+      /** The plan they actually get; undefined while it's unknown. */
+      tier: overview?.effectiveTier,
+      isOnFreePlan: overview?.effectiveTier === "STARTER",
+      /**
+       * There's a higher plan to sell. Whether it would help with a given lock
+       * is for useFeatureUpgrade / useLimitUpgrade. False while the plan is
+       * unknown, so nobody is shown an upgrade prompt while it loads.
+       */
+      canUpgrade:
+        overview !== undefined && overview.effectiveTier !== HIGHEST_PLAN_TIER,
     };
   }, [overview]);
 }

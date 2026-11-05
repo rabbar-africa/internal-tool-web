@@ -1,3 +1,10 @@
+/**
+ * Invoice PDF, generated in the browser.
+ *
+ * Must look exactly like the WhatsApp bot's copy:
+ *   internal-tool-backend/src/invoices/pdf/invoice-pdf.document.tsx
+ * Change the two together.
+ */
 import {
   Document,
   Page,
@@ -17,13 +24,23 @@ import { formatMoney } from "@/hooks/useFormatMoney";
 import type { IOrganization } from "@/shared/interface/common";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { formatAddress } from "@/utils/string-formatter";
+import {
+  applyStyleOverrides,
+  invoicePdfStyleOverrides,
+  normalizeInvoiceDesign,
+} from "@/features/invoices/utils/invoice-design";
 import { pdfColors as c } from "./colors";
 import { registerPdfFonts } from "./registerFonts";
 
 registerPdfFonts();
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
-const formatDate = (v: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
+// Dates are stored without a time, so read them in UTC: in local time a user west
+// of UTC would see the day before, and the backend's copy wouldn't match.
+const formatDate = (v: string) => {
+  const date = moment.utc(v);
+  return v && date.isValid() ? date.format("DD MMM YYYY") : "—";
+};
 
 const styles = StyleSheet.create({
   page: {
@@ -62,6 +79,7 @@ const styles = StyleSheet.create({
   logoFallbackText: { color: c.white, fontSize: 12, fontWeight: 600 },
   orgName: { fontSize: 11, fontWeight: 700, color: c.gray500 },
   orgLine: { fontSize: 8, color: c.gray400, marginTop: 1.5 },
+  billLine: { fontSize: 8, color: c.gray400, marginTop: 3 },
 
   metaCol: { width: "50%", alignItems: "flex-end" },
   invoiceTitle: {
@@ -290,13 +308,16 @@ export function InvoicePdfDocument({
   // Vehicle details shown beside the totals. Unrecorded fields are left out.
   const vehicleRows = invoice.vehicle
     ? [
-        { label: "Make", value: invoice.vehicle.make },
-        { label: "Model", value: invoice.vehicle.model },
+        { label: "Make", value: invoice.vehicle.make?.trim() },
+        { label: "Model", value: invoice.vehicle.model?.trim() },
         {
           label: "Year",
           value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
         },
-        { label: "Plate No.", value: invoice.vehicle.registrationNumber },
+        {
+          label: "Plate No.",
+          value: invoice.vehicle.registrationNumber?.trim(),
+        },
       ].filter((row) => row.value)
     : [];
   const terms = showTerms
@@ -308,116 +329,128 @@ export function InvoicePdfDocument({
   const withCode = (n: number) =>
     formatMoney(n, { currencyCode, showCurrencyCode: true, showSymbol: false });
 
+  const design = normalizeInvoiceDesign(invoice.design);
+  const { show, labels } = design;
+  const s = applyStyleOverrides(styles, invoicePdfStyleOverrides(design));
+  const shownVehicleRows = show.vehicle ? vehicleRows : [];
+
   return (
     <Document title={`Invoice ${invoice.invoiceNumber}`}>
       <Page
         size="A4"
-        style={
-          showRabbarBranding ? [styles.page, styles.pageBranded] : styles.page
-        }
+        style={showRabbarBranding ? [s.page, s.pageBranded] : s.page}
       >
         {/* Header */}
-        <View style={styles.headerRow}>
-          <View style={styles.brandCol}>
-            {organization?.logoUrl ? (
-              <Image src={organization.logoUrl} style={styles.logo} />
+        <View style={s.headerRow}>
+          <View style={s.brandCol}>
+            {!show.logo ? null : organization?.logoUrl ? (
+              <Image src={organization.logoUrl} style={s.logo} />
             ) : (
-              <View style={styles.logoFallback}>
-                <Text style={styles.logoFallbackText}>
+              <View style={s.logoFallback}>
+                <Text style={s.logoFallbackText}>
                   {organization?.name?.[0] ?? "R"}
                 </Text>
               </View>
             )}
-            <Text style={styles.orgName}>{organization?.name ?? "—"}</Text>
-            {organization?.rcNumber ? (
-              <Text style={styles.orgLine}>RC: {organization.rcNumber}</Text>
+            <Text style={s.orgName}>{organization?.name ?? "—"}</Text>
+            {show.rcNumber && organization?.rcNumber ? (
+              <Text style={s.orgLine}>RC: {organization.rcNumber}</Text>
             ) : null}
-            {orgAddress ? (
-              <Text style={styles.orgLine}>{orgAddress}</Text>
+            {!show.orgAddress ? null : orgAddress ? (
+              <Text style={s.orgLine}>{orgAddress}</Text>
             ) : orgLocation ? (
-              <Text style={styles.orgLine}>{orgLocation}</Text>
+              <Text style={s.orgLine}>{orgLocation}</Text>
             ) : null}
-            {organization?.companyEmail || organization?.email ? (
-              <Text style={styles.orgLine}>
+            {show.orgContact &&
+            (organization?.companyEmail || organization?.email) ? (
+              <Text style={s.orgLine}>
                 {organization?.companyEmail || organization?.email}
               </Text>
             ) : null}
-            {organization?.phone ? (
-              <Text style={styles.orgLine}>{organization.phone}</Text>
+            {show.orgContact && organization?.phone ? (
+              <Text style={s.orgLine}>{organization.phone}</Text>
             ) : null}
-            {organization?.website ? (
-              <Text style={styles.orgLine}>{organization.website}</Text>
+            {show.orgContact && organization?.website ? (
+              <Text style={s.orgLine}>{organization.website}</Text>
             ) : null}
           </View>
 
-          <View style={styles.metaCol}>
-            <Text style={styles.invoiceTitle}>Invoice</Text>
-            <Text style={styles.invoiceNumber}># {invoice.invoiceNumber}</Text>
-            <Text style={styles.balanceLabel}>
-              {hasCarry ? "Total Due Now" : "Balance Due"}
+          <View style={s.metaCol}>
+            <Text style={s.invoiceTitle}>{labels.title}</Text>
+            <Text style={s.invoiceNumber}># {invoice.invoiceNumber}</Text>
+            <Text style={s.balanceLabel}>
+              {hasCarry ? "Total Due Now" : labels.balanceDue}
             </Text>
-            <Text style={styles.balanceValue}>
+            <Text style={s.balanceValue}>
               {withCode(hasCarry ? totalDueNow : balance)}
             </Text>
           </View>
         </View>
 
         {/* Bill To + meta */}
-        <View style={styles.infoRow}>
-          <View style={styles.billCol}>
-            <Text style={styles.label}>Bill To</Text>
-            <Text style={styles.billName}>
+        <View style={s.infoRow}>
+          <View style={s.billCol}>
+            <Text style={s.label}>{labels.billTo}</Text>
+            <Text style={s.billName}>
               {client?.displayName ?? invoice.customerName ?? "—"}
             </Text>
-            {billingAddress ? (
-              <Text style={[styles.orgLine, { marginTop: 3 }]}>
-                {billingAddress}
-              </Text>
+            {show.billingAddress && billingAddress ? (
+              <Text style={s.billLine}>{billingAddress}</Text>
             ) : null}
           </View>
 
-          <View style={styles.metaInfoCol}>
-            <MetaRow label="Invoice Date" value={formatDate(invoice.date)} />
+          <View style={s.metaInfoCol}>
             <MetaRow
-              label="Terms"
-              value={
-                invoice.paymentTermsLabel || `Net ${invoice.paymentTerms ?? 0}`
-              }
+              s={s}
+              label={labels.invoiceDate}
+              value={formatDate(invoice.date)}
             />
-            <MetaRow label="Due Date" value={formatDate(invoice.dueDate)} />
+            {show.paymentTerms ? (
+              <MetaRow
+                s={s}
+                label={labels.paymentTerms}
+                value={
+                  invoice.paymentTermsLabel ||
+                  `Net ${invoice.paymentTerms ?? 0}`
+                }
+              />
+            ) : null}
+            {show.dueDate ? (
+              <MetaRow
+                s={s}
+                label={labels.dueDate}
+                value={formatDate(invoice.dueDate)}
+              />
+            ) : null}
           </View>
         </View>
 
         {/* Line items */}
         <View>
-          <View style={styles.tableHead}>
-            <Text style={[styles.th, styles.colIndex]}>#</Text>
-            <Text style={[styles.th, styles.colName]}>
-              Item &amp; Description
-            </Text>
-            <Text style={[styles.th, styles.colQty]}>Qty</Text>
-            <Text style={[styles.th, styles.colRate]}>Rate</Text>
-            <Text style={[styles.th, styles.colAmount]}>Amount</Text>
+          <View style={s.tableHead}>
+            <Text style={[s.th, s.colIndex]}>#</Text>
+            <Text style={[s.th, s.colName]}>{labels.items}</Text>
+            <Text style={[s.th, s.colQty]}>{labels.quantity}</Text>
+            <Text style={[s.th, s.colRate]}>{labels.rate}</Text>
+            <Text style={[s.th, s.colAmount]}>{labels.amount}</Text>
           </View>
 
           {invoice.lineItems?.map((li, idx) => (
-            <View key={li.id} style={styles.row} wrap={false}>
-              <Text style={[styles.cellAccent, styles.colIndex]}>
-                {idx + 1}
-              </Text>
-              <View style={styles.colName}>
-                <Text style={styles.itemName}>{li.name}</Text>
-                {li.description ? (
-                  <Text style={styles.itemDesc}>{li.description}</Text>
+            <View key={li.id} style={s.row} wrap={false}>
+              <Text style={[s.cellAccent, s.colIndex]}>{idx + 1}</Text>
+              <View style={s.colName}>
+                <Text style={s.itemName}>{li.name}</Text>
+                {show.itemDescription && li.description ? (
+                  <Text style={s.itemDesc}>{li.description}</Text>
                 ) : null}
               </View>
-              <Text style={[styles.cellAccent, styles.colQty]}>
-                {Number(li.quantity).toFixed(2)}
+              <Text style={[s.cellAccent, s.colQty]}>
+                {toNum(li.quantity).toFixed(2)}
               </Text>
-              <Text style={[styles.cellAccent, styles.colRate]}>
+              <Text style={[s.cellAccent, s.colRate]}>
                 {plain(toNum(li.rate))}
               </Text>
-              <Text style={[styles.cellMuted, styles.colAmount]}>
+              <Text style={[s.cellMuted, s.colAmount]}>
                 {plain(toNum(li.total))}
               </Text>
             </View>
@@ -427,54 +460,58 @@ export function InvoicePdfDocument({
         {/* Totals */}
         <View
           style={
-            vehicleRows.length > 0
-              ? [styles.totalsWrap, { justifyContent: "space-between" }]
-              : styles.totalsWrap
+            shownVehicleRows.length > 0
+              ? [s.totalsWrap, { justifyContent: "space-between" }]
+              : s.totalsWrap
           }
         >
-          {vehicleRows.length > 0 ? (
-            <View style={styles.vehicleInfo}>
-              <Text style={styles.sectionTitle}>Vehicle Information</Text>
-              {vehicleRows.map((row) => (
-                <View key={row.label} style={styles.vehicleInfoRow}>
-                  <Text style={styles.vehicleInfoLabel}>{row.label}</Text>
-                  <Text style={styles.vehicleInfoValue}>{row.value}</Text>
+          {shownVehicleRows.length > 0 ? (
+            <View style={s.vehicleInfo}>
+              <Text style={s.sectionTitle}>{labels.vehicle}</Text>
+              {shownVehicleRows.map((row) => (
+                <View key={row.label} style={s.vehicleInfoRow}>
+                  <Text style={s.vehicleInfoLabel}>{row.label}</Text>
+                  <Text style={s.vehicleInfoValue}>{row.value}</Text>
                 </View>
               ))}
             </View>
           ) : null}
-          <View style={styles.totals}>
-            <TotalRow label="Sub Total" value={plain(subtotal)} />
+          <View style={s.totals}>
+            <TotalRow s={s} label="Sub Total" value={plain(subtotal)} />
             {discountAmount > 0 ? (
               <TotalRow
+                s={s}
                 label="Discount"
                 value={`(-) ${plain(discountAmount)}`}
               />
             ) : null}
             {taxAmount > 0 ? (
-              <TotalRow label={taxLabel} value={plain(taxAmount)} />
+              <TotalRow s={s} label={taxLabel} value={plain(taxAmount)} />
             ) : null}
             {adjustment !== 0 ? (
               <TotalRow
+                s={s}
                 label={invoice.adjustmentDescription || "Adjustment"}
                 value={`${adjustment < 0 ? "(-) " : "+ "}${plain(
                   Math.abs(adjustment),
                 )}`}
               />
             ) : null}
-            <TotalRow label="Total" value={withCode(total)} bold />
+            <TotalRow s={s} label="Total" value={withCode(total)} bold />
 
             {hasCarry ? (
               <>
                 <TotalRow
+                  s={s}
                   label="Balance on this invoice"
                   value={plain(balance)}
                 />
 
-                <View style={styles.carryBlock}>
-                  <Text style={styles.carryTitle}>Previous Balance</Text>
+                <View style={s.carryBlock}>
+                  <Text style={s.carryTitle}>Previous Balance</Text>
                   {broughtForward.map((prev) => (
                     <TotalRow
+                      s={s}
                       key={prev.id}
                       label={prev.invoiceNumber}
                       value={plain(toNum(prev.balance))}
@@ -482,66 +519,58 @@ export function InvoicePdfDocument({
                   ))}
                 </View>
 
-                <View style={styles.balanceBox}>
-                  <Text style={[styles.totalLabel, styles.bold]}>
-                    Total Due Now
-                  </Text>
-                  <Text style={[styles.totalValue, styles.bold]}>
+                <View style={s.balanceBox}>
+                  <Text style={[s.totalLabel, s.bold]}>Total Due Now</Text>
+                  <Text style={[s.totalValue, s.bold]}>
                     {withCode(totalDueNow)}
                   </Text>
                 </View>
               </>
             ) : (
-              <View style={styles.balanceBox}>
-                <Text style={[styles.totalLabel, styles.bold]}>
-                  Balance Due
-                </Text>
-                <Text style={[styles.totalValue, styles.bold]}>
-                  {withCode(balance)}
-                </Text>
+              <View style={s.balanceBox}>
+                <Text style={[s.totalLabel, s.bold]}>{labels.balanceDue}</Text>
+                <Text style={[s.totalValue, s.bold]}>{withCode(balance)}</Text>
               </View>
             )}
           </View>
         </View>
 
         {/* Account details */}
-        {bankAccount?.accountNumber ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account Details</Text>
-            <Text style={styles.bankAccountNumber}>
-              {bankAccount.accountNumber}
-            </Text>
+        {show.bankDetails && bankAccount?.accountNumber ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>{labels.bank}</Text>
+            <Text style={s.bankAccountNumber}>{bankAccount.accountNumber}</Text>
             {bankAccount.bankName ? (
-              <Text style={styles.bankLine}>{bankAccount.bankName}</Text>
+              <Text style={s.bankLine}>{bankAccount.bankName}</Text>
             ) : null}
             {bankAccount.accountName ? (
-              <Text style={styles.bankLine}>{bankAccount.accountName}</Text>
+              <Text style={s.bankLine}>{bankAccount.accountName}</Text>
             ) : null}
           </View>
         ) : null}
 
         {/* Notes */}
-        {notes ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.sectionText}>{notes}</Text>
+        {show.notes && notes ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>{labels.notes}</Text>
+            <Text style={s.sectionText}>{notes}</Text>
           </View>
         ) : null}
 
         {/* Terms */}
-        {terms ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Terms &amp; Conditions</Text>
-            <Text style={styles.sectionText}>{terms}</Text>
+        {show.terms && terms ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>{labels.terms}</Text>
+            <Text style={s.sectionText}>{terms}</Text>
           </View>
         ) : null}
         {showRabbarBranding ? (
-          <View style={styles.brandFooter} fixed>
-            <View style={styles.brandFooterLeft}>
-              <Text style={styles.brandPoweredBy}>Powered by</Text>
-              <Image src={rabbarLogo} style={styles.brandFooterLogo} />
+          <View style={s.brandFooter} fixed>
+            <View style={s.brandFooterLeft}>
+              <Text style={s.brandPoweredBy}>Powered by</Text>
+              <Image src={rabbarLogo} style={s.brandFooterLogo} />
             </View>
-            <Link src={RABBAR_JOBCARD_URL} style={styles.brandFooterLink}>
+            <Link src={RABBAR_JOBCARD_URL} style={s.brandFooterLink}>
               {RABBAR_JOBCARD_DISPLAY}
             </Link>
           </View>
@@ -551,28 +580,38 @@ export function InvoicePdfDocument({
   );
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+function MetaRow({
+  s,
+  label,
+  value,
+}: {
+  s: typeof styles;
+  label: string;
+  value: string;
+}) {
   return (
-    <View style={styles.metaLine}>
-      <Text style={styles.metaLabel}>{label} :</Text>
-      <Text style={styles.metaValue}>{value}</Text>
+    <View style={s.metaLine}>
+      <Text style={s.metaLabel}>{label} :</Text>
+      <Text style={s.metaValue}>{value}</Text>
     </View>
   );
 }
 
 function TotalRow({
+  s,
   label,
   value,
   bold,
 }: {
+  s: typeof styles;
   label: string;
   value: string;
   bold?: boolean;
 }) {
   return (
-    <View style={styles.totalRow}>
-      <Text style={[styles.totalLabel, bold ? styles.bold : {}]}>{label}</Text>
-      <Text style={[styles.totalValue, bold ? styles.bold : {}]}>{value}</Text>
+    <View style={s.totalRow}>
+      <Text style={[s.totalLabel, bold ? s.bold : {}]}>{label}</Text>
+      <Text style={[s.totalValue, bold ? s.bold : {}]}>{value}</Text>
     </View>
   );
 }

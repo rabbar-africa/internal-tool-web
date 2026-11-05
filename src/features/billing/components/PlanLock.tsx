@@ -12,10 +12,10 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
-import { useBillingPlansQuery } from "../api/query";
 import type { PlanFeature, PlanLimit } from "../api/types";
 import { usePlanAccess } from "../hooks/usePlanAccess";
-import { TONE_STYLES, isPaidPlan, type BillingTone } from "../utils/copy";
+import { useFeatureUpgrade, useLimitUpgrade } from "../hooks/useUpgradePlan";
+import { TONE_STYLES, type BillingTone } from "../utils/copy";
 import { formatPrice } from "../utils/format";
 
 /** Used this much of a limit and we start showing the meter. */
@@ -54,38 +54,48 @@ const LIMIT_COPY: Record<string, { one: string; many: string; why: string }> = {
   },
 };
 
-/** The case for each lockable feature, for the upgrade prompt. */
-const FEATURE_PITCH: Record<string, { title: string; body: string }> = {
+/** The case for each lockable feature; `plan` is whichever plan unlocks it. */
+const FEATURE_PITCH: Record<
+  string,
+  { title: string; body: (plan: string) => string }
+> = {
+  customerStatement: {
+    title: "Send customers their full history in one PDF.",
+    body: (plan) =>
+      `Upgrade to ${plan} to download a customer's work history and statement.`,
+  },
   reminders: {
     title: "Bring customers back on time.",
-    body: "Upgrade to Standard to schedule services, follow-ups and paperwork renewals.",
+    body: (plan) =>
+      `Upgrade to ${plan} to schedule services, follow-ups and paperwork renewals.`,
   },
   businessStatement: {
     title: "See your whole business on one page.",
-    body: "Upgrade to Standard for money by account, sales, spending, profit and tax, ready to download or send to your accountant.",
+    body: (plan) =>
+      `Upgrade to ${plan} for money by account, sales, spending, profit and tax, ready to download or send to your accountant.`,
   },
   invoiceTerms: {
     title: "Protect your business with your own terms.",
-    body: "Upgrade to Standard to print terms & conditions on your invoices.",
+    body: (plan) =>
+      `Upgrade to ${plan} to print terms & conditions on your invoices.`,
   },
   defaultVat: {
     title: "Stop adding VAT by hand.",
-    body: "Upgrade to Standard and it goes on every new invoice for you. You can still pick a tax on each invoice.",
+    body: (plan) =>
+      `Upgrade to ${plan} and it goes on every new invoice for you. You can still pick a tax on each invoice.`,
   },
 };
 
-/** The cheapest paid plan, to quote its real allowance and price. */
-function useUpgradePlan(enabled: boolean) {
-  const { data: plans } = useBillingPlansQuery({ enabled });
-  return [...(plans ?? [])]
-    .filter((plan) => isPaidPlan(plan))
-    .sort((a, b) => Number(a.monthlyPrice) - Number(b.monthlyPrice))[0];
-}
-
-export function PlanBadge(props: BadgeProps) {
+/** The plan a locked item needs. Nothing when no plan on sale includes it. */
+export function PlanBadge({
+  feature,
+  ...props
+}: { feature: PlanFeature } & BadgeProps) {
+  const { plan, isAvailable } = useFeatureUpgrade(feature);
+  if (!isAvailable) return null;
   return (
     <Badge size="sm" bg="secondary.50" color="primary.500" {...props}>
-      Standard
+      {plan?.name ?? "Upgrade"}
     </Badge>
   );
 }
@@ -156,13 +166,22 @@ export function PlanLimitNotice({
   limit,
   ...rest
 }: { limit: PlanLimit } & FlexProps) {
-  const { usageOf, isAtLimit, canUpgrade } = usePlanAccess();
-  const upgradePlan = useUpgradePlan(canUpgrade);
+  const { usageOf, isAtLimit, isOnFreePlan } = usePlanAccess();
   const usage = usageOf(limit);
+  const atLimit = isAtLimit(limit);
+  // Only fetch the plans once the notice is actually going to show.
+  const isShowing =
+    !!usage &&
+    usage.limit !== null &&
+    (atLimit || usage.used >= usage.limit * NEAR_CAP_RATIO);
+  const { plan: upgradePlan, isAvailable: canUpgrade } = useLimitUpgrade(
+    limit,
+    usage?.limit,
+    isShowing,
+  );
   if (!usage || usage.limit === null) return null;
 
-  const atLimit = isAtLimit(limit);
-  if (!atLimit && usage.used < usage.limit * NEAR_CAP_RATIO) return null;
+  if (!isShowing) return null;
 
   const copy = LIMIT_COPY[limit];
   const nameOf = (count: number) =>
@@ -170,7 +189,7 @@ export function PlanLimitNotice({
   const monthly = usage.per === "month";
   const where = monthly
     ? "this month"
-    : canUpgrade
+    : isOnFreePlan
       ? "on your free plan"
       : "on your plan";
 
@@ -184,18 +203,21 @@ export function PlanLimitNotice({
     title = `You've used all ${usage.limit} ${nameOf(usage.limit)} ${where}.`;
   }
 
-  let body: string | undefined;
+  // A monthly allowance comes back by itself, whatever else is on offer.
+  const refill = monthly ? "More are available on the 1st." : undefined;
+  let body = refill;
   if (canUpgrade) {
     const phrase = upgradePlan?.limits?.find(
       (row) => row.key === limit,
     )?.phrase;
     const why = copy?.why ? ` ${copy.why}` : "";
-    body =
+    // The API's phrase can start "Unlimited", which reads wrong mid-sentence.
+    const lowerPhrase = phrase && phrase[0].toLowerCase() + phrase.slice(1);
+    const pitch =
       upgradePlan && phrase
-        ? `${upgradePlan.name} gives you ${phrase}${why}, all for ${formatPrice(upgradePlan.monthlyPrice, upgradePlan.currency)} a month.`
+        ? `${upgradePlan.name} gives you ${lowerPhrase}${why}, all for ${formatPrice(upgradePlan.monthlyPrice, upgradePlan.currency)} a month.`
         : `Upgrade${why}.`;
-  } else if (monthly) {
-    body = "More are available on the 1st.";
+    body = refill ? `${refill} ${pitch}` : pitch;
   }
 
   return (
@@ -221,17 +243,32 @@ export function PlanFeatureNotice({
   ...rest
 }: { feature: PlanFeature } & FlexProps) {
   const { hasFeature } = usePlanAccess();
-  if (hasFeature(feature)) return null;
-  const pitch = FEATURE_PITCH[feature] ?? {
-    title: "This is on the Standard plan.",
-    body: "Upgrade to use it.",
-  };
+  const isLocked = !hasFeature(feature);
+  const { plan, isAvailable } = useFeatureUpgrade(feature, isLocked);
+  if (!isLocked) return null;
+
+  const pitch = FEATURE_PITCH[feature];
+  // No plan on sale includes it, so there is nothing to offer.
+  if (!isAvailable) {
+    return (
+      <PlanNotice
+        tone="neutral"
+        title={pitch?.title ?? "This isn't on your plan."}
+        body={pitch ? "This isn't on your plan." : undefined}
+        {...rest}
+      />
+    );
+  }
+  const planName = plan?.name ?? "a higher plan";
   return (
     <PlanNotice
       tone="neutral"
-      title={pitch.title}
-      body={pitch.body}
-      upgradeLabel="Upgrade"
+      title={
+        pitch?.title ??
+        `This is on ${plan ? `the ${plan.name} plan` : planName}.`
+      }
+      body={pitch?.body(planName) ?? "Upgrade to use it."}
+      upgradeLabel={plan ? `Upgrade to ${plan.name}` : "Upgrade"}
       {...rest}
     />
   );

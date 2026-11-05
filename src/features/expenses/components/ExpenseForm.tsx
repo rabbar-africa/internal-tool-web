@@ -114,6 +114,7 @@ export function ExpenseForm({
   onCancel,
 }: ExpenseFormProps) {
   const isEdit = Boolean(expense);
+  const isSharedExpense = Boolean(expense?.sharedLines?.length);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -479,7 +480,14 @@ export function ExpenseForm({
                     ? "Select item..."
                     : "Choose an invoice first"
                 }
-                disabled={!formik.values.invoiceId}
+                disabled={!formik.values.invoiceId || isSharedExpense}
+                helperText={
+                  isSharedExpense
+                    ? `Bought together: ${expense?.sharedLines
+                        ?.map((line) => line.name)
+                        .join(", ")}`
+                    : undefined
+                }
                 options={lineItemOptions}
                 value={
                   formik.values.invoiceLineItemId

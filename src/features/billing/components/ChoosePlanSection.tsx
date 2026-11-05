@@ -12,6 +12,7 @@ import {
 } from "../api/query";
 import type { BillingOverview, BillingPlan, PlanTier } from "../api/types";
 import { isInPaidPeriod, isPaidPlan } from "../utils/copy";
+import { isTierAbove } from "../utils/tiers";
 import { formatLongDate, formatPrice } from "../utils/format";
 import { CheckoutPanel } from "./CheckoutPanel";
 
@@ -127,7 +128,7 @@ function planRows(plan: BillingPlan) {
 interface PlanCardProps {
   plan: BillingPlan;
   selected: boolean;
-  /** Worth drawing the eye to: the upgrade from a free plan. */
+  /** Worth drawing the eye to: an upgrade from the plan they're on. */
   highlighted: boolean;
   buttonLabel: string;
   buttonDisabled: boolean;
@@ -363,9 +364,7 @@ export function ChoosePlanSection({
               key={plan.id}
               plan={plan}
               selected={plan.tier === selected}
-              highlighted={
-                overview.effectiveTier === "STARTER" && isPaidPlan(plan)
-              }
+              highlighted={isTierAbove(plan.tier, overview.effectiveTier)}
               buttonLabel={buttonLabelFor(plan)}
               buttonDisabled={isActivePlan(plan) && plan.tier !== selected}
               // Tapping the selected plan again closes its panel.

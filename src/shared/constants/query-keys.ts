@@ -41,6 +41,7 @@ export const customQueryKey = {
     getAll: "get-all-customers",
     getById: "get-customer-by-id",
     stats: "get-customer-stats",
+    statement: "get-customer-statement",
   },
   vehicles: {
     getAll: "get-all-vehicles",
@@ -124,6 +125,7 @@ export const customQueryKey = {
     bankAccounts: "get-organization-bank-accounts",
     currencies: "get-organization-currencies",
     taxes: "get-organization-taxes",
+    templates: "get-organization-templates",
     transactionSeries: "get-organization-transaction-series",
   },
 };

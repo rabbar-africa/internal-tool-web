@@ -1,11 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  Badge,
   Box,
   Button,
   Center,
   Flex,
   Grid,
   IconButton,
+  Portal,
   Spinner,
   Stack,
   Text,
@@ -13,6 +15,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { CustomInput } from "@/components/input/CustomInput";
+import { CustomCheckbox } from "@/components/input/CustomCheckBox";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { TrashIcon } from "@/assets/custom/TrashIcon";
@@ -31,6 +34,19 @@ interface OtherCostRow {
   key: number;
   name: string;
   amount: string;
+}
+
+/**
+ * One amount box: a single item, or items bought together for one price. A
+ * group already saved stays a group, and its box adds to it.
+ */
+interface CostRow {
+  key: string;
+  kind: "single" | "saved-group" | "new-group";
+  lineIds: string[];
+  name: string;
+  billed: number;
+  spent: number;
 }
 
 const today = () => new Date().toISOString().split("T")[0];
@@ -95,16 +111,91 @@ export function RecordInvoiceCostsTemplate() {
   const accountPickedRef = useRef(false);
   const [vendorName, setVendorName] = useState("");
 
+  // By row key, so a group has one box however many items it covers.
   const [spentNow, setSpentNow] = useState<Record<string, string>>({});
   const nextKey = useRef(1);
   const [other, setOther] = useState<OtherCostRow[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Items ticked, and the groups made from them on this screen.
+  const [ticked, setTicked] = useState<string[]>([]);
+  const [newGroups, setNewGroups] = useState<
+    { key: string; lineIds: string[] }[]
+  >([]);
+
+  const costRows = useMemo<CostRow[]>(() => {
+    if (!costs) return [];
+    const inNewGroup = new Set(newGroups.flatMap((group) => group.lineIds));
+    const singles = costs.lines.filter(
+      (line) => !inNewGroup.has(line.invoiceLineItemId),
+    );
+    return [
+      ...(costs.shared ?? []).map((group): CostRow => {
+        const lineIds = group.lines.map((line) => line.invoiceLineItemId);
+        return {
+          key: `saved-${lineIds.join()}`,
+          kind: "saved-group",
+          lineIds,
+          name: group.lines.map((line) => line.name).join(", "),
+          billed: group.billed,
+          spent: group.spent,
+        };
+      }),
+      ...newGroups.map((group): CostRow => {
+        const lines = costs.lines.filter((line) =>
+          group.lineIds.includes(line.invoiceLineItemId),
+        );
+        return {
+          key: group.key,
+          kind: "new-group",
+          lineIds: group.lineIds,
+          name: lines.map((line) => line.name).join(", "),
+          billed: lines.reduce((sum, line) => sum + line.billed, 0),
+          spent: lines.reduce((sum, line) => sum + line.spent, 0),
+        };
+      }),
+      ...singles.map(
+        (line): CostRow => ({
+          key: line.invoiceLineItemId,
+          kind: "single",
+          lineIds: [line.invoiceLineItemId],
+          name: line.name,
+          billed: line.billed,
+          spent: line.spent,
+        }),
+      ),
+    ];
+  }, [costs, newGroups]);
+
+  const singleRowCount = costRows.filter((r) => r.kind === "single").length;
+
+  const groupTicked = () => {
+    const key = `new-${nextKey.current++}`;
+    setNewGroups((prev) => [...prev, { key, lineIds: ticked }]);
+    // An amount typed for one item isn't the price of the group.
+    setSpentNow((prev) => {
+      const next = { ...prev };
+      ticked.forEach((lineId) => delete next[lineId]);
+      return next;
+    });
+    setTicked([]);
+    setFormError(null);
+  };
+
+  const ungroup = (key: string) => {
+    setNewGroups((prev) => prev.filter((group) => group.key !== key));
+    setSpentNow((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const totalNow = useMemo(
     () =>
-      Object.values(spentNow).reduce((sum, v) => sum + toNum(v), 0) +
+      costRows.reduce((sum, row) => sum + toNum(spentNow[row.key] ?? ""), 0) +
       other.reduce((sum, row) => sum + toNum(row.amount), 0),
-    [spentNow, other],
+    [costRows, spentNow, other],
   );
 
   // Cash and non-cash default to different accounts; follow the mode unless
@@ -132,12 +223,23 @@ export function RecordInvoiceCostsTemplate() {
     );
 
   const save = async () => {
-    const lines = (costs?.lines ?? [])
-      .map((line) => ({
-        invoiceLineItemId: line.invoiceLineItemId,
-        amount: toNum(spentNow[line.invoiceLineItemId] ?? ""),
-      }))
-      .filter((line) => line.amount > 0);
+    const filled = costRows
+      .map((row) => ({ row, amount: toNum(spentNow[row.key] ?? "") }))
+      .filter(({ amount }) => amount > 0);
+    // The API takes a group of 2 or more; one left after an invoice edit is
+    // just an item.
+    const lines = filled
+      .filter(({ row }) => row.lineIds.length === 1)
+      .map(({ row, amount }) => ({
+        invoiceLineItemId: row.lineIds[0],
+        amount,
+      }));
+    const shared = filled
+      .filter(({ row }) => row.lineIds.length > 1)
+      .map(({ row, amount }) => ({
+        invoiceLineItemIds: row.lineIds,
+        amount,
+      }));
     const others = other
       .map((row) => ({ name: row.name.trim(), amount: toNum(row.amount) }))
       .filter((row) => row.amount > 0);
@@ -146,7 +248,7 @@ export function RecordInvoiceCostsTemplate() {
       setFormError("Give every other cost a name.");
       return;
     }
-    if (!lines.length && !others.length) {
+    if (!lines.length && !shared.length && !others.length) {
       setFormError("Enter an amount for at least one item or other cost.");
       return;
     }
@@ -160,6 +262,7 @@ export function RecordInvoiceCostsTemplate() {
         ...(accountId ? { paidThroughAccountId: accountId } : {}),
         ...(vendorName.trim() ? { vendorName: vendorName.trim() } : {}),
         ...(lines.length ? { lines } : {}),
+        ...(shared.length ? { shared } : {}),
         ...(others.length ? { other: others } : {}),
       },
     });
@@ -184,7 +287,8 @@ export function RecordInvoiceCostsTemplate() {
   }
 
   return (
-    <Stack gap="5" pb="6">
+    // Room under the page, so the bar never sits over the Save button.
+    <Stack gap="5" pb={ticked.length >= 2 ? "24" : "6"}>
       <Box>
         <Button
           variant="ghost"
@@ -250,7 +354,7 @@ export function RecordInvoiceCostsTemplate() {
 
       <Section
         title="Invoice items"
-        subtitle="Enter what you spent on each item this time. Leave the rest blank."
+        subtitle="Enter what you spent on each item this time. Leave the rest blank. Paid one price for several items? Tick them and choose Bought together."
       >
         <Grid
           templateColumns="1fr 8rem 10rem"
@@ -269,44 +373,85 @@ export function RecordInvoiceCostsTemplate() {
           </Text>
         </Grid>
         <Stack gap="3">
-          {costs.lines.map((line) => (
-            <Grid
-              key={line.invoiceLineItemId}
-              templateColumns={{ base: "1fr", md: "1fr 8rem 10rem" }}
-              gap={{ base: "2", md: "3" }}
-              alignItems="center"
-              pt="3"
-              borderTopWidth="1px"
-              borderColor="gray.50"
-            >
-              <Text textStyle="small-semibold" color="gray.500">
-                {line.name}
-              </Text>
-              <Text
-                textStyle="tiny-regular"
-                color="gray.400"
-                textAlign={{ base: "left", md: "right" }}
+          {costRows.map((row) => {
+            const isGroup = row.kind !== "single";
+            return (
+              <Grid
+                key={row.key}
+                templateColumns={{ base: "1fr", md: "1fr 8rem 10rem" }}
+                gap={{ base: "2", md: "3" }}
+                alignItems="center"
+                pt="3"
+                borderTopWidth="1px"
+                borderColor="gray.50"
               >
-                Billed {formatMoney(line.billed)}
-                <br />
-                Spent so far {formatMoney(line.spent)}
-              </Text>
-              <CustomNumberInput
-                precision={2}
-                min={0}
-                allowNegative={false}
-                placeholder="0.00"
-                value={spentNow[line.invoiceLineItemId] ?? ""}
-                onValueChange={(raw) =>
-                  setSpentNow((prev) => ({
-                    ...prev,
-                    [line.invoiceLineItemId]: raw,
-                  }))
-                }
-              />
-            </Grid>
-          ))}
-          {costs.lines.length === 0 && (
+                {isGroup ? (
+                  <Box minW={0}>
+                    <Flex align="center" gap="2" flexWrap="wrap">
+                      <Badge size="sm" bg="primary.50" color="primary.500">
+                        Bought together
+                      </Badge>
+                      {row.kind === "new-group" && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          px="1"
+                          color="primary.300"
+                          onClick={() => ungroup(row.key)}
+                        >
+                          Ungroup
+                        </Button>
+                      )}
+                    </Flex>
+                    <Text textStyle="small-semibold" color="gray.500" mt="1">
+                      {row.name}
+                    </Text>
+                  </Box>
+                ) : singleRowCount > 1 ? (
+                  <CustomCheckbox
+                    checked={ticked.includes(row.key)}
+                    onCheckedChange={({ checked }: { checked: boolean }) =>
+                      setTicked((prev) =>
+                        checked
+                          ? [...prev, row.key]
+                          : prev.filter((lineId) => lineId !== row.key),
+                      )
+                    }
+                    labelProps={{
+                      textStyle: "small-semibold",
+                      color: "gray.500",
+                    }}
+                  >
+                    {row.name}
+                  </CustomCheckbox>
+                ) : (
+                  <Text textStyle="small-semibold" color="gray.500">
+                    {row.name}
+                  </Text>
+                )}
+                <Text
+                  textStyle="tiny-regular"
+                  color="gray.400"
+                  textAlign={{ base: "left", md: "right" }}
+                >
+                  Billed {formatMoney(row.billed)}
+                  <br />
+                  Spent so far <b>{formatMoney(row.spent)}</b>
+                </Text>
+                <CustomNumberInput
+                  precision={2}
+                  min={0}
+                  allowNegative={false}
+                  placeholder="0.00"
+                  value={spentNow[row.key] ?? ""}
+                  onValueChange={(raw) =>
+                    setSpentNow((prev) => ({ ...prev, [row.key]: raw }))
+                  }
+                />
+              </Grid>
+            );
+          })}
+          {costRows.length === 0 && (
             <Text textStyle="small-regular" color="gray.300">
               This invoice has no items. Add costs below instead.
             </Text>
@@ -412,6 +557,50 @@ export function RecordInvoiceCostsTemplate() {
           </Button>
         </Flex>
       </Flex>
+
+      {/* Floats over the page, so it's in reach wherever the ticking stopped. */}
+      {ticked.length >= 2 && (
+        <Portal>
+          <Flex
+            role="region"
+            aria-label="Ticked items"
+            position="fixed"
+            zIndex="sticky"
+            bottom={{ base: "3", md: "6" }}
+            left={{ base: "3", md: "50%" }}
+            right={{ base: "3", md: "auto" }}
+            transform={{ md: "translateX(-50%)" }}
+            align="center"
+            justify="space-between"
+            gap={{ base: "2", md: "6" }}
+            px="4"
+            py="3"
+            bg="white"
+            rounded="xl"
+            borderWidth="1px"
+            borderColor="gray.75"
+            shadow="lg"
+            animationName="fade-in, slide-from-bottom"
+            animationDuration="fast"
+          >
+            <Text
+              textStyle="small-semibold"
+              color="gray.500"
+              whiteSpace="nowrap"
+            >
+              {ticked.length} items ticked
+            </Text>
+            <Flex gap="2" flexShrink={0}>
+              <Button variant="ghost" size="sm" onClick={() => setTicked([])}>
+                Clear
+              </Button>
+              <Button size="sm" onClick={groupTicked}>
+                Bought together
+              </Button>
+            </Flex>
+          </Flex>
+        </Portal>
+      )}
     </Stack>
   );
 }

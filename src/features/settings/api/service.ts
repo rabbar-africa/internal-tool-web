@@ -17,6 +17,8 @@ import type {
   IOrgBankAccount,
   IOrgCurrency,
   IOrgTax,
+  IOrgTemplate,
+  OrgTemplatePayload,
   IOrgTransactionSeries,
   TxnSeriesModule,
   UpdateOrgConfigPayload,
@@ -207,6 +209,38 @@ export const setDefaultOrganizationCurrency = async (id: string) => {
     `/organizations/me/currencies/${id}/default`,
   );
   return response.data;
+};
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+export const getOrganizationTemplates = async () => {
+  const response = await axios.get<ApiResponse<IOrgTemplate[]>>(
+    "/organizations/me/templates",
+  );
+  return response.data;
+};
+
+export const createInvoiceTemplate = async (payload: OrgTemplatePayload) => {
+  const response = await axios.post<ApiResponse<IOrgTemplate>>(
+    "/organizations/me/templates/INVOICE",
+    payload,
+  );
+  return response.data;
+};
+
+export const updateOrganizationTemplate = async (
+  id: string,
+  payload: OrgTemplatePayload,
+) => {
+  const response = await axios.patch<ApiResponse<IOrgTemplate>>(
+    `/organizations/me/templates/${id}`,
+    payload,
+  );
+  return response.data;
+};
+
+export const deleteOrganizationTemplate = async (id: string) => {
+  await axios.delete(`/organizations/me/templates/${id}`);
 };
 
 // ─── Taxes ───────────────────────────────────────────────────────────────────

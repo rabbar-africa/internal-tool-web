@@ -34,6 +34,7 @@ import {
 } from "@/features/customers/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
+import { calcInvoiceSummary } from "../../../utils/invoice-summary";
 import {
   useGetOrganizationTransactionSeries,
   useGetOrganizationDetails,
@@ -82,6 +83,7 @@ const defaultValues: CreateInvoiceFormValues = {
   discountType: "entityLevel",
   taxId: "",
   bankAccountId: "",
+  templateId: "",
   adjustment: "",
   adjustmentDescription: "Adjustment",
   isDiscountBeforeTax: true,
@@ -100,6 +102,7 @@ export function mapInvoiceToFormValues(
     vehicleId: invoice.vehicleId ?? "",
     taxId: invoice.taxId ?? "",
     bankAccountId: invoice.bankAccountId ?? "",
+    templateId: invoice.templateId ?? "",
     customer: {
       name: invoice.customerName ?? invoice.client?.displayName ?? "",
       email: invoice.client?.email ?? "",
@@ -117,6 +120,7 @@ export function mapInvoiceToFormValues(
     adjustmentDescription: invoice.adjustmentDescription ?? "Adjustment",
     isDiscountBeforeTax: invoice.isDiscountBeforeTax ?? true,
     lineItems: (invoice.lineItems ?? []).map((li) => ({
+      id: li.id,
       itemId: li.itemId ?? "",
       name: li.name ?? "",
       description: li.description ?? "",
@@ -204,12 +208,10 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const invoiceQuery = useGetInvoiceByIdQuery(isEdit ? id : "");
 
   // Item search with debounce (server-side, mirrors the customer search below).
-  const [itemSearch, setItemSearch] = useState("");
   const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
   const itemSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleItemSearch = useCallback((query: string) => {
-    setItemSearch(query);
     if (itemSearchTimerRef.current) clearTimeout(itemSearchTimerRef.current);
     itemSearchTimerRef.current = setTimeout(() => {
       setDebouncedItemSearch(query);
@@ -281,6 +283,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
             ? { original: invoiceQuery.data?.data?.bankAccountId }
             : undefined,
         ),
+        templateId: values.templateId || null,
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,
@@ -290,6 +293,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         terms: values.terms,
         lineItems: values.lineItems.map((li, idx) => ({
           itemOrder: idx + 1,
+          // Sent so a renamed item keeps its recorded costs; without it the
+          // API matches by name and reads a rename as remove plus add.
+          ...(li.id ? { id: li.id } : {}),
           ...(li.itemId ? { itemId: li.itemId } : {}),
           name: li.name,
           description: li.description,
@@ -574,16 +580,22 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
     const entityDiscount = parseFloat(formik.values.discount) || 0;
     const adjustmentVal = parseFloat(formik.values.adjustment) || 0;
-    // Mirrors the backend: one tax, charged on the discounted subtotal.
+    // One tax, charged on the discounted subtotal.
     const taxRate = selectedTax ? Number(selectedTax.rate) || 0 : 0;
-    const taxVal = Math.max(subtotal - entityDiscount, 0) * (taxRate / 100);
-    const total = subtotal - entityDiscount + taxVal + adjustmentVal;
+    const { taxVal, total } = calcInvoiceSummary({
+      subtotal,
+      discount: entityDiscount,
+      taxRate,
+      adjustment: adjustmentVal,
+      isDiscountBeforeTax: formik.values.isDiscountBeforeTax,
+    });
 
     return { subtotal, entityDiscount, taxVal, taxRate, adjustmentVal, total };
   }, [
     formik.values.lineItems,
     formik.values.discount,
     formik.values.adjustment,
+    formik.values.isDiscountBeforeTax,
     selectedTax,
   ]);
 
@@ -656,7 +668,6 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     handleCustomerSearch,
     isSearchingCustomers: customersQuery.isFetching,
     itemsData: itemsQuery?.data?.data || [],
-    itemSearch,
     handleItemSearch,
     isSearchingItems: itemsQuery.isFetching,
 

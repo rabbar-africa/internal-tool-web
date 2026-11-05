@@ -64,6 +64,10 @@ export interface IInvoiceResponse {
   /** The account printed for the customer to pay into; null → the primary. */
   bankAccountId?: string | null;
   bankAccount?: IAccountRef | null;
+  /** The chosen template; null → the organization's default. */
+  templateId?: string | null;
+  /** How this invoice looks, already resolved by the API. Read it with normalizeInvoiceDesign. */
+  design?: unknown;
   status: string;
   date: string;
   dueDate: string;
@@ -175,6 +179,8 @@ export interface Invoice {
 }
 
 export interface CreateLineItemPayload {
+  /** The saved item, when editing: its recorded costs stay with it. */
+  id?: string;
   itemOrder: number;
   itemId?: string;
   name: string;
@@ -221,6 +227,8 @@ export interface CreateInvoicePayload {
    * the primary; `null` on update moves it back to the primary.
    */
   bankAccountId?: string | null;
+  /** The template to use; `null` moves it back to the organization's default. */
+  templateId?: string | null;
 }
 
 export type UpdateInvoicePayload = Partial<CreateInvoicePayload>;
@@ -233,6 +241,8 @@ export interface IGetInvoiceFilter extends IBaseFilter {
 }
 
 export interface LineItemFormRow {
+  /** The saved item, when editing; new rows have none. */
+  id?: string;
   itemId: string;
   name: string;
   description: string;
@@ -250,6 +260,8 @@ export interface CreateInvoiceFormValues {
   taxId: string;
   /** Account to pay into; "" means the org's primary. */
   bankAccountId: string;
+  /** Template to use; "" means the organization's default. */
+  templateId: string;
   customer: {
     name: string;
     email: string;

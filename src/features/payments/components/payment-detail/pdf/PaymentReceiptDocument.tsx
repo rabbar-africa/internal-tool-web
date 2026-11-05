@@ -1,3 +1,10 @@
+/**
+ * Payment receipt PDF, generated in the browser.
+ *
+ * Must look exactly like the WhatsApp bot's copy:
+ *   internal-tool-backend/src/payments-received/pdf/payment-receipt.document.tsx
+ * Change the two together.
+ */
 import {
   Document,
   Page,
@@ -24,7 +31,12 @@ import { registerPdfFonts } from "@/features/invoices/components/invoice-detail/
 registerPdfFonts();
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
-const formatDate = (v?: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
+// Dates are stored without a time, so read them in UTC: in local time a user west
+// of UTC would see the day before, and the backend's copy wouldn't match.
+const formatDate = (v?: string) => {
+  const date = moment.utc(v);
+  return v && date.isValid() ? date.format("DD MMM YYYY") : "—";
+};
 
 const MODE_LABELS: Record<string, string> = {
   CASH: "Cash",

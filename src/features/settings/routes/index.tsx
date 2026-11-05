@@ -26,6 +26,14 @@ const { AccountDetailsPage } = lazyImport(
   () => import("../pages/AccountDetailsPage"),
   "AccountDetailsPage",
 );
+const { InvoiceTemplatesPage } = lazyImport(
+  () => import("../pages/InvoiceTemplatesPage"),
+  "InvoiceTemplatesPage",
+);
+const { InvoiceTemplateEditorPage } = lazyImport(
+  () => import("../pages/InvoiceTemplateEditorPage"),
+  "InvoiceTemplateEditorPage",
+);
 const { TaxesPage } = lazyImport(
   () => import("../pages/TaxesPage"),
   "TaxesPage",
@@ -77,6 +85,18 @@ export const SettingsRoutes: RouteObject[] = [
   {
     path: settings.taxes.path,
     element: <TaxesPage />,
+  },
+  {
+    path: settings.invoiceTemplates.path,
+    element: <InvoiceTemplatesPage />,
+  },
+  {
+    path: settings.createInvoiceTemplate.path,
+    element: <InvoiceTemplateEditorPage />,
+  },
+  {
+    path: settings.editInvoiceTemplate.path,
+    element: <InvoiceTemplateEditorPage />,
   },
   {
     path: settings.transactionSeries.path,
