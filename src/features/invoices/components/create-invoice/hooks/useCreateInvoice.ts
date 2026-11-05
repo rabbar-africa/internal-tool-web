@@ -118,6 +118,7 @@ export function mapInvoiceToFormValues(
     adjustmentDescription: invoice.adjustmentDescription ?? "Adjustment",
     isDiscountBeforeTax: invoice.isDiscountBeforeTax ?? true,
     lineItems: (invoice.lineItems ?? []).map((li) => ({
+      id: li.id,
       itemId: li.itemId ?? "",
       name: li.name ?? "",
       description: li.description ?? "",
@@ -289,6 +290,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         terms: values.terms,
         lineItems: values.lineItems.map((li, idx) => ({
           itemOrder: idx + 1,
+          // Sent so a renamed item keeps its recorded costs; without it the
+          // API matches by name and reads a rename as remove plus add.
+          ...(li.id ? { id: li.id } : {}),
           ...(li.itemId ? { itemId: li.itemId } : {}),
           name: li.name,
           description: li.description,

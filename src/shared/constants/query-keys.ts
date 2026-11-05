@@ -41,6 +41,7 @@ export const customQueryKey = {
     getAll: "get-all-customers",
     getById: "get-customer-by-id",
     stats: "get-customer-stats",
+    statement: "get-customer-statement",
   },
   vehicles: {
     getAll: "get-all-vehicles",

@@ -85,3 +85,64 @@ export interface CreateCustomerPayload {
 
   notes?: string;
 }
+
+// ─── Customer statement (work history) ───────────────────────────────────────
+
+/** `work` has no money at all; `account` has no work. */
+export type CustomerStatementView = "work" | "both" | "account";
+export type CustomerStatementDetail = "short" | "full";
+
+export interface CustomerStatementParams {
+  /** YYYY-MM-DD, inclusive. */
+  from: string;
+  to: string;
+  show: CustomerStatementView;
+  detail: CustomerStatementDetail;
+  vehicleId?: string;
+}
+
+export interface CustomerStatement {
+  title: string;
+  view: CustomerStatementView;
+  detail: CustomerStatementDetail;
+  currencyCode: string;
+  period: { from: string; to: string };
+  generatedAt: string;
+  customer: {
+    id: string;
+    name: string;
+    company: string | null;
+    phone: string | null;
+    email: string | null;
+  };
+  /** The vehicle filter, if any. */
+  vehicle: { id: string; label: string } | null;
+  activity: {
+    jobCount: number;
+    vehicleCount: number;
+    firstVisit: string | null;
+    lastVisit: string | null;
+  };
+  /** Null in the work view. */
+  account: null | {
+    /** A negative `closingBalance` means the customer is in credit. */
+    summary: {
+      openingBalance: number;
+      billed: number;
+      paid: number;
+      writtenOff: number;
+      closingBalance: number;
+    };
+    transactions: Array<{
+      kind: "INVOICE" | "PAYMENT" | "WRITE_OFF";
+      date: string;
+      document: string;
+      details: string | null;
+      billed: number;
+      paid: number;
+      balance: number;
+    }>;
+  };
+  /** For whoever is sending it: these never appear on the PDF. */
+  warnings: { unlinkedInvoices: number; sameNameCustomers: number };
+}

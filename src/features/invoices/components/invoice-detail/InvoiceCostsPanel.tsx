@@ -185,6 +185,17 @@ export function InvoiceCostsPanel({ invoiceId }: InvoiceCostsPanelProps) {
               margin={line.margin}
             />
           ))}
+          {costs.shared?.map((group) => (
+            <CostRow
+              key={group.lines.map((line) => line.invoiceLineItemId).join()}
+              name={`Bought together: ${group.lines
+                .map((line) => line.name)
+                .join(", ")}`}
+              billed={group.billed}
+              spent={group.spent}
+              margin={group.margin}
+            />
+          ))}
           {costs.other.spent > 0 && (
             <CostRow name="Other costs" spent={costs.other.spent} muted />
           )}

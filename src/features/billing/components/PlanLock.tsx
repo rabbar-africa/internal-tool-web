@@ -56,6 +56,10 @@ const LIMIT_COPY: Record<string, { one: string; many: string; why: string }> = {
 
 /** The case for each lockable feature, for the upgrade prompt. */
 const FEATURE_PITCH: Record<string, { title: string; body: string }> = {
+  customerStatement: {
+    title: "Send customers their full history in one PDF.",
+    body: "Upgrade to Standard to download a customer's work history and statement.",
+  },
   reminders: {
     title: "Bring customers back on time.",
     body: "Upgrade to Standard to schedule services, follow-ups and paperwork renewals.",
