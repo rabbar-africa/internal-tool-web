@@ -1,16 +1,25 @@
-import { useCallback, useMemo } from "react";
+import { createElement, useCallback, useMemo, useState } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { createDownloadLink } from "@/utils/file-helper";
 import type { IPaymentReceived } from "@/shared/interface/payment";
-import { useGetReceiptPdfMutation } from "../api/query";
 
-/** Payment-receipt PDFs, rendered by the API. */
+/**
+ * Client-side payment-receipt PDF generation via @react-pdf/renderer.
+ * Mirrors the on-screen <PaymentReceipt/>. The heavy renderer + document are
+ * lazy-loaded so the bundle is only fetched when a download is triggered.
+ */
 
 const fileNameFor = (payment: IPaymentReceived) =>
   `${payment.paymentNumber || `payment-${payment.id}`}.pdf`;
 
 export function useReceiptPdf() {
-  const { mutateAsync: fetchPdf, isPending: isGenerating } =
-    useGetReceiptPdfMutation();
+  const { userOrganization } = useCurrentUser();
+  const { hasFeature } = usePlanAccess();
+  // Unknown (still loading) counts as included, so a paying customer's receipt
+  // is never branded by a race.
+  const showRabbarBranding = !hasFeature("noRabbarBranding");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Whether to offer the "Send PDF" action. We only require navigator.share to
   // exist (true on iOS Safari, iOS Chrome, Android). iOS Chrome exposes share
@@ -21,29 +30,51 @@ export function useReceiptPdf() {
     return typeof navigator.share === "function";
   }, []);
 
-  /** The receipt as a File (named after the payment). */
+  const getBlob = useCallback(
+    async (payment: IPaymentReceived): Promise<Blob> => {
+      setIsGenerating(true);
+      try {
+        const [{ pdf }, { PaymentReceiptDocument }] = await Promise.all([
+          import("@react-pdf/renderer"),
+          import("../components/payment-detail/pdf/PaymentReceiptDocument"),
+        ]);
+        // The document renders a <Document>, but its prop type doesn't
+        // structurally match react-pdf's DocumentProps — cast to pdf()'s arg.
+        const element = createElement(PaymentReceiptDocument, {
+          payment,
+          organization: userOrganization,
+          showRabbarBranding,
+        }) as unknown as Parameters<typeof pdf>[0];
+        return await pdf(element).toBlob();
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [userOrganization, showRabbarBranding],
+  );
+
+  /** Render the receipt to a File (named after the payment). */
   const getFile = useCallback(
     async (payment: IPaymentReceived): Promise<File> => {
-      const blob = await fetchPdf(payment.id);
+      const blob = await getBlob(payment);
       return new File([blob], fileNameFor(payment), {
         type: "application/pdf",
       });
     },
-    [fetchPdf],
+    [getBlob],
   );
 
-  /** Fetch and trigger a browser download. */
+  /** Generate and trigger a browser download. */
   const download = useCallback(
     async (payment: IPaymentReceived): Promise<void> => {
-      // On failure the mutation has already shown the error toast.
-      const blob = await fetchPdf(payment.id).catch(() => null);
-      if (blob) createDownloadLink(blob, fileNameFor(payment));
+      const blob = await getBlob(payment);
+      createDownloadLink(blob, fileNameFor(payment));
     },
-    [fetchPdf],
+    [getBlob],
   );
 
   /**
-   * Fetch the receipt PDF and hand it to the OS share sheet (Web Share API
+   * Generate the receipt PDF and hand it to the OS share sheet (Web Share API
    * level 2). iOS Safari and Android Chrome share the file directly; iOS
    * Chrome/Firefox/Edge expose navigator.share but can't share files, so there
    * we fall back to opening the PDF in a new tab. The fallback tab must be
@@ -96,5 +127,5 @@ export function useReceiptPdf() {
     [getFile],
   );
 
-  return { download, getFile, share, canShareFiles, isGenerating };
+  return { download, getBlob, getFile, share, canShareFiles, isGenerating };
 }
