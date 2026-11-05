@@ -316,8 +316,6 @@ export interface CreateInvoiceFormValues {
   referenceNumber: string;
   date: string;
   dueDate: string;
-  paymentTerms: string;
-  paymentTermsLabel: string;
   notes: string;
   terms: string;
   discount: string;

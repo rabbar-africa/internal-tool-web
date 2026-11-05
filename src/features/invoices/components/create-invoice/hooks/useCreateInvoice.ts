@@ -45,6 +45,7 @@ import {
 import { formatTransactionSeries } from "@/utils/string-formatter";
 import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
+import { termsFromDates } from "@/features/invoices/utils/payment-terms";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -78,8 +79,6 @@ const defaultValues: CreateInvoiceFormValues = {
   referenceNumber: "",
   date: today,
   dueDate: today,
-  paymentTerms: "0",
-  paymentTermsLabel: "Due on Receipt",
   notes: "Thanks for doing business with us.",
   terms: "",
   discount: "0",
@@ -113,8 +112,6 @@ export function mapInvoiceToFormValues(
     referenceNumber: invoice.referenceNumber ?? "",
     date: invoice.date ? invoice.date.split("T")[0] : today,
     dueDate: invoice.dueDate ? invoice.dueDate.split("T")[0] : today,
-    paymentTerms: String(invoice.paymentTerms ?? 0),
-    paymentTermsLabel: invoice.paymentTermsLabel ?? "Due on Receipt",
     notes: invoice.notes ?? "",
     terms: invoice.terms ?? "",
     discount: invoice.discount ?? "0",
@@ -178,14 +175,6 @@ function firstInvoiceError(
   const message = row?.name ?? row?.quantity ?? row?.rate ?? row?.description;
   return message ? `Item ${index + 1}: ${message}` : undefined;
 }
-
-export const PAYMENT_TERMS_OPTIONS = [
-  { label: "Due on Receipt", value: "0" },
-  { label: "Net 15", value: "15" },
-  { label: "Net 30", value: "30" },
-  { label: "Net 45", value: "45" },
-  { label: "Net 60", value: "60" },
-];
 
 export interface UseInvoiceFormOptions {
   mode?: "create" | "edit";
@@ -266,9 +255,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     initialValues: defaultValues,
     validationSchema,
     onSubmit: async (values) => {
-      const termsLabel =
-        PAYMENT_TERMS_OPTIONS.find((o) => o.value === values.paymentTerms)
-          ?.label ?? "Due on Receipt";
+      const terms = termsFromDates(values.date, values.dueDate);
 
       const payload: CreateInvoicePayload = {
         invoiceNumber: values.invoiceNumber,
@@ -290,8 +277,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,
-        paymentTerms: parseInt(values.paymentTerms) || 0,
-        paymentTermsLabel: termsLabel,
+        paymentTerms: terms.days,
+        paymentTermsLabel: terms.label,
         notes: values.notes,
         terms: values.terms,
         lineItems: values.lineItems.map((li, idx) => ({
