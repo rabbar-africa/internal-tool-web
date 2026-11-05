@@ -58,7 +58,10 @@ export function InvoiceStatusChart({ data }: InvoiceStatusChartProps) {
   const series = items.map((d) => d.count);
 
   return (
-    <DashboardCard title="Invoice Status" subtitle="Breakdown by status">
+    <DashboardCard
+      title="Invoice Status"
+      subtitle="Invoices dated in the selected period"
+    >
       {total > 0 ? (
         <ReactApexChart
           options={options}

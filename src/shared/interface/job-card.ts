@@ -93,6 +93,8 @@ export interface JobCardInvoice {
   date: string;
   dueDate: string;
   status: string;
+  /** The status to show: Overdue is worked out from the due date, never saved. */
+  displayStatus?: string;
   total: string;
   balance: string;
 }

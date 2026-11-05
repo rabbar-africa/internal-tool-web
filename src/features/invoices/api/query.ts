@@ -8,6 +8,7 @@ import {
   recalculateInvoice,
   getAllInvoices,
   deleteInvoice,
+  getInvoiceDeleteImpact,
   getOutstandingInvoices,
   addCarriedInvoice,
   removeCarriedInvoice,
@@ -19,6 +20,7 @@ import type {
   UpdateInvoicePayload,
   IGetInvoiceFilter,
   CollectInvoicePaymentPayload,
+  DeleteInvoiceOptions,
 } from "@/shared/interface/invoice";
 import { customQueryKey } from "@/shared/constants/query-keys";
 
@@ -195,12 +197,38 @@ export const useCollectInvoicePaymentMutation = () =>
     },
   });
 
+export const useGetInvoiceDeleteImpactQuery = (id: string) =>
+  useQuery({
+    queryKey: [customQueryKey.invoices.deleteImpact, id],
+    queryFn: () => getInvoiceDeleteImpact(id),
+    enabled: Boolean(id),
+    // Payments may have changed since this was last opened: always ask afresh.
+    staleTime: 0,
+    gcTime: 0,
+  });
+
 export const useDeleteInvoiceMutation = () => {
   return useMutation({
-    mutationFn: (id: string) => deleteInvoice(id),
+    mutationFn: ({
+      id,
+      options,
+    }: {
+      id: string;
+      options?: DeleteInvoiceOptions;
+    }) => deleteInvoice(id, options),
     meta: {
       successMessage: "Invoice deleted",
-      invalidatesQueryKeys: [[customQueryKey.invoices.getAll]],
+      invalidatesQueryKeys: [
+        [customQueryKey.invoices.getAll],
+        // Deleting moves payments and expenses too.
+        ["payments"],
+        [customQueryKey.expenses.getAll],
+        [customQueryKey.jobCards.getAll],
+        [customQueryKey.jobCards.getById],
+        [customQueryKey.jobCards.financials],
+        [customQueryKey.customers.stats],
+        [customQueryKey.analytics.dashboard],
+      ],
     },
   });
 };

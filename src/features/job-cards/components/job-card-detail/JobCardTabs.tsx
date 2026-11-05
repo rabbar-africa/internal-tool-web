@@ -78,8 +78,12 @@ const invoiceColumns: ColumnDef<JobCardInvoice>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ getValue }) => (
-      <Status name={(getValue() as string)?.toLowerCase()} />
+    cell: ({ row }) => (
+      <Status
+        name={(
+          row.original.displayStatus ?? row.original.status
+        )?.toLowerCase()}
+      />
     ),
   },
 ];

@@ -75,7 +75,7 @@ export function RecentInvoicesPanel({
                 </Text>
               </Box>
               <Flex align="center" gap="3" flexShrink={0}>
-                <StatusPill status={inv.status} />
+                <StatusPill status={inv.displayStatus ?? inv.status} />
                 <Text
                   fontSize="13px"
                   fontWeight="600"
