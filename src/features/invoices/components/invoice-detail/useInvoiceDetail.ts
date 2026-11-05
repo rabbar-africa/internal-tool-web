@@ -10,6 +10,7 @@ import {
 } from "../../api/query";
 import { useGetPaymentsQuery } from "@/features/payments/api";
 import { useInvoicePdf } from "../../hooks/useInvoicePdf";
+import type { DeleteInvoiceOptions } from "@/shared/interface/invoice";
 
 export function useInvoiceDetail() {
   const { id = "" } = useParams<{ id: string }>();
@@ -85,8 +86,11 @@ export function useInvoiceDetail() {
   const requestDelete = () => setPendingDelete(true);
   const cancelDelete = () => setPendingDelete(false);
 
-  const confirmDelete = async (invoiceId: string) => {
-    await deleteInvoice(invoiceId);
+  const confirmDelete = async (
+    invoiceId: string,
+    options: DeleteInvoiceOptions,
+  ) => {
+    await deleteInvoice({ id: invoiceId, options });
     setPendingDelete(false);
     navigate(RouteConstants.invoices.base.path);
   };

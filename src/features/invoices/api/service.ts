@@ -7,6 +7,8 @@ import type {
   CarriedInvoice,
   InvoiceCarry,
   CollectInvoicePaymentPayload,
+  DeleteInvoiceOptions,
+  IInvoiceDeleteImpact,
 } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 // import { MOCK_INVOICES } from "@/shared/data/mock";
@@ -28,8 +30,24 @@ export const getInvoiceById = async (id: string) => {
   return response.data;
 };
 
-export const deleteInvoice = async (id: string): Promise<void> => {
-  await axios.delete(`/invoices/${id}`);
+export const getInvoiceDeleteImpact = async (id: string) => {
+  const response = await axios.get<ApiResponse<IInvoiceDeleteImpact>>(
+    `/invoices/${id}/delete-impact`,
+  );
+  return response.data;
+};
+
+export const deleteInvoice = async (
+  id: string,
+  options: DeleteInvoiceOptions = {},
+): Promise<void> => {
+  // Query params: a request body on DELETE is not reliably delivered.
+  await axios.delete(`/invoices/${id}`, {
+    params: {
+      ...(options.deletePayments ? { deletePayments: true } : {}),
+      ...(options.deleteExpenses ? { deleteExpenses: true } : {}),
+    },
+  });
 };
 
 export const createInvoice = async (payload: CreateInvoicePayload) => {

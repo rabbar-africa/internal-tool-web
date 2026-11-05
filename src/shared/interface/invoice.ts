@@ -12,6 +12,48 @@ export type InvoiceStatus =
   | "partial"
   | "cancelled";
 
+/** Why a payment stays when its invoice is deleted, even if asked to delete it. */
+export type PaymentKeptBecause = "OTHER_INVOICES" | "REFUNDED" | "HAS_CREDIT";
+
+/** What deleting an invoice would touch: GET /invoices/:id/delete-impact. */
+export interface IInvoiceDeleteImpact {
+  invoice: {
+    id: string;
+    invoiceNumber: string;
+    currencyCode?: string;
+    jobCard?: { id: string; jobNumber: string } | null;
+  };
+  payments: Array<{
+    id: string;
+    paymentNumber: string;
+    date: string;
+    amount: number;
+    appliedHere: number;
+    account: string | null;
+    otherInvoiceNumbers: string[];
+    keptBecause: PaymentKeptBecause | null;
+  }>;
+  expenses: Array<{
+    id: string;
+    expenseNumber: string;
+    name: string;
+    amount: number;
+    date: string;
+    account: string | null;
+  }>;
+  /** The newer invoice this one's balance is brought forward onto. */
+  carriedOnto: { id: string; invoiceNumber: string } | null;
+  /** Older invoices brought forward onto this one. */
+  carries: Array<{ id: string; invoiceNumber: string }>;
+  /** What this person may also delete. */
+  can: { deletePayments: boolean; deleteExpenses: boolean };
+}
+
+export interface DeleteInvoiceOptions {
+  deletePayments?: boolean;
+  deleteExpenses?: boolean;
+}
+
 export interface LineItem {
   id: string;
   itemId: string;
@@ -68,7 +110,10 @@ export interface IInvoiceResponse {
   templateId?: string | null;
   /** How this invoice looks, already resolved by the API. Read it with normalizeInvoiceDesign. */
   design?: unknown;
+  /** What was saved. The edit form sends this back; show `displayStatus`. */
   status: string;
+  /** The status to show: Overdue is worked out from the due date, never saved. */
+  displayStatus?: string;
   date: string;
   dueDate: string;
   paymentTerms: number;
@@ -170,6 +215,8 @@ export interface Invoice {
   amountPaid: number;
   amountDue: number;
   status: InvoiceStatus;
+  /** The status to show: Overdue is worked out from the due date, never saved. */
+  displayStatus?: string;
   linkedExpenseIds: string[];
   totalLinkedExpenses: number;
   profit: number;

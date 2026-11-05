@@ -12,6 +12,7 @@ import {
 } from "../../api/query";
 import { useInvoicePdf } from "../../hooks/useInvoicePdf";
 import { toCsvRow } from "./columns";
+import type { DeleteInvoiceOptions } from "@/shared/interface/invoice";
 
 const FILTER_SCHEMA = {
   page: { defaultValue: 1 },
@@ -103,8 +104,8 @@ export function useInvoiceList() {
     [navigate, handleDownloadPdf],
   );
 
-  const confirmDelete = async (id: string) => {
-    await deleteInvoice(id);
+  const confirmDelete = async (id: string, options: DeleteInvoiceOptions) => {
+    await deleteInvoice({ id, options });
     setPendingDelete(null);
     setRowSelection((prev) => {
       if (!prev[id]) return prev;

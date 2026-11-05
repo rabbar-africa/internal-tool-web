@@ -94,7 +94,12 @@ export function InvoiceDetailHeader({
       </Stack>
 
       <Flex align="center" gap="3">
-        <Status name={invoice.status || ""} h="1.75rem" w="auto" px="3" />
+        <Status
+          name={invoice.displayStatus || invoice.status || ""}
+          h="1.75rem"
+          w="auto"
+          px="3"
+        />
 
         <Menu.Root
           open={menuOpen}
