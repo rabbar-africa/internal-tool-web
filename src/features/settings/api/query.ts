@@ -5,16 +5,19 @@ import {
   createOrganizationAddress,
   createOrganizationBankAccount,
   createOrganizationCurrency,
+  createInvoiceTemplate,
   createOrganizationTax,
   deleteOrganizationAddress,
   deleteOrganizationBankAccount,
   deleteOrganizationCurrency,
   deleteOrganizationTax,
+  deleteOrganizationTemplate,
   getOrganizationAddresses,
   getOrganizationBankAccounts,
   getOrganizationCurrencies,
   getOrganizationDetails,
   getOrganizationTaxes,
+  getOrganizationTemplates,
   getOrganizationTransactionSeries,
   setDefaultOrganizationCurrency,
   setPrimaryOrganizationAddress,
@@ -25,16 +28,19 @@ import {
   updateOrganizationConfig,
   updateOrganizationDetails,
   updateOrganizationTax,
+  updateOrganizationTemplate,
   updateOrganizationTransactionSeries,
   uploadOrganizationLogo,
 } from "./service";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { BILLING_OVERVIEW_KEY } from "@/features/billing/api/query";
 import type { QueryConfigType } from "@/lib/react-query";
 import type {
   CreateOrgAddressPayload,
   CreateOrgBankAccountPayload,
   CreateOrgCurrencyPayload,
   CreateOrgTaxPayload,
+  OrgTemplatePayload,
   TxnSeriesModule,
   UpdateOrgConfigPayload,
   UpsertOrgTransactionSeriesPayload,
@@ -266,6 +272,61 @@ export const useSetDefaultOrganizationCurrency = () => {
     meta: {
       successMessage: "Default currency updated",
       invalidatesQueryKeys: [[orgKeys.currencies], [orgKeys.details]],
+    },
+  });
+};
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+export const useGetOrganizationTemplates = (
+  config?: QueryConfigType<typeof getOrganizationTemplates>,
+) => {
+  return useQuery({
+    queryKey: [orgKeys.templates],
+    queryFn: getOrganizationTemplates,
+    ...config,
+  });
+};
+
+// Saving changes how invoices look, so anything showing one has to refetch.
+const TEMPLATE_INVALIDATIONS = [
+  [orgKeys.templates],
+  [customQueryKey.invoices.getById],
+  BILLING_OVERVIEW_KEY,
+];
+
+export const useCreateInvoiceTemplate = () => {
+  return useMutation({
+    mutationFn: (payload: OrgTemplatePayload) => createInvoiceTemplate(payload),
+    meta: {
+      successMessage: "Template created",
+      invalidatesQueryKeys: TEMPLATE_INVALIDATIONS,
+    },
+  });
+};
+
+export const useUpdateOrganizationTemplate = () => {
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: OrgTemplatePayload;
+    }) => updateOrganizationTemplate(id, payload),
+    meta: {
+      successMessage: "Template saved",
+      invalidatesQueryKeys: TEMPLATE_INVALIDATIONS,
+    },
+  });
+};
+
+export const useDeleteOrganizationTemplate = () => {
+  return useMutation({
+    mutationFn: (id: string) => deleteOrganizationTemplate(id),
+    meta: {
+      successMessage: "Template deleted",
+      invalidatesQueryKeys: TEMPLATE_INVALIDATIONS,
     },
   });
 };

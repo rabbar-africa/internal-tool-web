@@ -11,8 +11,14 @@ import type { Vehicle } from "@/features/customers/api/service";
 import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
 import { AddNewCustomerModal } from "./AddNewCustomerModal";
 import { AddVehicleModal } from "@/features/customers/components/customer-detail/AddVehicleModal";
-import { useGetOrganizationTransactionSeries } from "@/features/settings/api";
+import {
+  useGetOrganizationTemplates,
+  useGetOrganizationTransactionSeries,
+} from "@/features/settings/api";
 import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
+
+/** A select can't hold an empty value, so "use the default" needs a name. */
+const ORG_DEFAULT_TEMPLATE = "organization-default";
 
 interface InvoiceFormHeaderProps {
   formik: FormikProps<CreateInvoiceFormValues>;
@@ -43,6 +49,21 @@ export function InvoiceFormHeader({
   onCloseAddVehicle,
   onVehicleSaved,
 }: InvoiceFormHeaderProps) {
+  const { data: templatesData } = useGetOrganizationTemplates();
+  const templateOptions = useMemo(() => {
+    const templates = (templatesData?.data ?? []).filter(
+      (template) => template.module === "INVOICE",
+    );
+    return templates.length === 0
+      ? []
+      : [
+          { label: "Organization default", value: ORG_DEFAULT_TEMPLATE },
+          ...templates.map((template) => ({
+            label: template.name,
+            value: template.id,
+          })),
+        ];
+  }, [templatesData]);
   const [showConfig, setShowConfig] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
@@ -299,6 +320,22 @@ export function InvoiceFormHeader({
             onChange={(id) => formik.setFieldValue("bankAccountId", id)}
             helperText="Printed on the invoice for the customer to pay into"
           />
+
+          {templateOptions.length > 1 ? (
+            <CustomSelect
+              label="Template"
+              options={templateOptions}
+              value={[formik.values.templateId || ORG_DEFAULT_TEMPLATE]}
+              onChange={(opt: { value: string[] }) => {
+                const id = opt?.value?.[0];
+                formik.setFieldValue(
+                  "templateId",
+                  id === ORG_DEFAULT_TEMPLATE ? "" : (id ?? ""),
+                );
+              }}
+              helperText="How this invoice looks"
+            />
+          ) : null}
         </Stack>
       </Grid>
 

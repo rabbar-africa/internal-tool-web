@@ -1,3 +1,4 @@
+import type { InvoiceDesign } from "@/features/invoices/utils/invoice-design";
 export type OrgAddressType = "BILLING" | "SHIPPING" | "OFFICE" | "OTHER";
 
 export const ORG_ADDRESS_TYPES: OrgAddressType[] = [
@@ -287,3 +288,18 @@ export const PAYMENT_METHOD_OPTIONS = [
   "MOBILE_MONEY",
   "POS",
 ] as const;
+
+export interface IOrgTemplate {
+  id: string;
+  module: string;
+  name: string;
+  templateKey: string;
+  isDefault: boolean;
+  design: InvoiceDesign;
+}
+
+export interface OrgTemplatePayload {
+  name?: string;
+  design?: InvoiceDesign;
+  isDefault?: boolean;
+}
