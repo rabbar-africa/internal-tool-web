@@ -37,7 +37,7 @@ const columns: ColumnDef<Expense>[] = [
         <Text textStyle="small-regular" color="gray.500" fontWeight="500">
           {row.original.name}
         </Text>
-        {row.original.invoice && (
+        {/* {row.original.invoice && (
           <Text fontSize="12px" color="primary.300" lineClamp={1}>
             for {row.original.invoice.invoiceNumber}
             {row.original.sharedLines?.length
@@ -46,7 +46,7 @@ const columns: ColumnDef<Expense>[] = [
                 ? ` · ${row.original.invoiceLineItem.name}`
                 : ""}
           </Text>
-        )}
+        )} */}
         {row.original.description && (
           <Text fontSize="12px" color="gray.300" lineClamp={1}>
             {row.original.description}
