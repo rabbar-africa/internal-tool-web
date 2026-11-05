@@ -287,7 +287,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => go(item)}
                   >
                     {item.planFeature && !hasFeature(item.planFeature) && (
-                      <PlanBadge ml="2" flexShrink={0} />
+                      <PlanBadge
+                        feature={item.planFeature}
+                        ml="2"
+                        flexShrink={0}
+                      />
                     )}
                   </NavRow>
                 ))}

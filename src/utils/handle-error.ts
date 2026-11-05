@@ -1,6 +1,6 @@
 /**
  * A 402 from the API: the plan doesn't include this, or its allowance is used
- * up. `canUpgrade` is false on the top plan, where there is nothing to sell.
+ * up. `canUpgrade` is false when no plan on sale above theirs would help.
  */
 export function getPlanLock(
   error: any,
