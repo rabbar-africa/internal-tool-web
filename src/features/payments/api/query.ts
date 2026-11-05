@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@/lib/react-query";
 import {
   getPayments,
   getPaymentById,
+  getReceiptPdf,
   createPayment,
   updatePayment,
   deletePayment,
@@ -77,3 +78,7 @@ export const useDeletePaymentMutation = () => {
     meta: { successMessage: "Payment deleted successfully" },
   });
 };
+
+/** A mutation so a failed download gets the global error toast. */
+export const useGetReceiptPdfMutation = () =>
+  useMutation({ mutationFn: getReceiptPdf });

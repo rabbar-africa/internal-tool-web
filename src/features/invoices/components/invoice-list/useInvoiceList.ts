@@ -5,7 +5,6 @@ import { useUrlState } from "@/hooks/useUrlState";
 import type { TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { Invoice } from "@/shared/interface/invoice";
-import { getInvoiceById } from "../../api/service";
 import {
   useDeleteInvoiceMutation,
   useGetAllInvoicesQuery,
@@ -33,16 +32,13 @@ export function useInvoiceList() {
   const { mutateAsync: deleteInvoice, isPending: isDeleting } =
     useDeleteInvoiceMutation();
 
-  // Generate PDFs client-side via the same hook the detail page uses. List rows
-  // only carry the lightweight shape, so fetch the full invoice before render.
   const { download: downloadPdf } = useInvoicePdf();
 
   const handleDownloadPdf = useCallback(
     async (invoice: Invoice) => {
       setDownloadingId(invoice.id);
       try {
-        const { data } = await getInvoiceById(invoice.id);
-        await downloadPdf(data);
+        await downloadPdf(invoice);
       } finally {
         setDownloadingId(null);
       }
