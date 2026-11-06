@@ -3,6 +3,7 @@ import {
   createExpense,
   createExpensesBulk,
   deleteExpense,
+  deleteExpensesBulk,
   getInvoiceCosts,
   recordInvoiceCosts,
   regroupInvoiceCosts,
@@ -119,4 +120,10 @@ export const useRegroupInvoiceCostsMutation = () =>
       successMessage: "Items updated",
       invalidatesQueryKeys: invalidates.expense,
     },
+  });
+
+export const useDeleteExpensesBulkMutation = () =>
+  useMutation({
+    mutationFn: (ids: string[]) => deleteExpensesBulk(ids),
+    meta: { invalidatesQueryKeys: invalidates.expense },
   });

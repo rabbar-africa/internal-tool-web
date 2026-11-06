@@ -1,4 +1,5 @@
 import {
+  Checkbox,
   Flex,
   Table,
   IconButton,
@@ -18,10 +19,11 @@ import {
   type ColumnDef,
   type SortingState,
   type RowSelectionState,
+  type OnChangeFn,
+  type Table as TanstackTable,
 } from "@tanstack/react-table";
 import type { ReactNode, MouseEvent } from "react";
 import { useMemo, useCallback } from "react";
-import { CustomCheckbox } from "../input/CustomCheckBox";
 import { ActionMenu, type TableAction } from "./ActionMenu";
 import { PaginationControls } from "./PaginationControls";
 
@@ -36,8 +38,14 @@ export interface CustomTableProps<T = any> {
   // Selection
   enableRowSelection?: boolean;
   rowSelection?: RowSelectionState;
-  onRowSelectionChange?: (selection: RowSelectionState) => void;
+  /** TanStack hands over an updater; a `useState` setter takes it as is. */
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
   getRowId?: (row: T, index: number) => string;
+  /**
+   * The "n of m row(s) selected" strip under the table. Turn it off when the
+   * page shows its own selection bar, e.g. `SelectionActionBar`.
+   */
+  showSelectionSummary?: boolean;
 
   // Sorting
   sorting?: SortingState;
@@ -88,19 +96,46 @@ interface RowCheckboxProps<T> {
 }
 
 function RowCheckbox<T>({ row }: RowCheckboxProps<T>) {
-  return <CustomCheckbox aria-label={`Select row ${row.id}`} />;
+  return (
+    <Checkbox.Root
+      size="sm"
+      aria-label="Select row"
+      checked={row.getIsSelected()}
+      disabled={!row.getCanSelect()}
+      onCheckedChange={({ checked }) => row.toggleSelected(checked === true)}
+    >
+      <Checkbox.HiddenInput />
+      <Checkbox.Control rounded=".3rem" cursor="pointer">
+        <Checkbox.Indicator />
+      </Checkbox.Control>
+    </Checkbox.Root>
+  );
 }
 
 // Header Checkbox Component
 interface HeaderCheckboxProps {
-  table: any;
+  table: TanstackTable<any>;
 }
 
+/** Ticks every row on this page; a dash when only some are. */
 function HeaderCheckbox({ table }: HeaderCheckboxProps) {
+  const all = table.getIsAllPageRowsSelected();
+  const some = table.getIsSomePageRowsSelected();
   return (
-    <CustomCheckbox
-      aria-label={`Select all rows ${table.getIsAllRowsSelected()}`}
-    />
+    <Checkbox.Root
+      size="sm"
+      aria-label="Select all rows on this page"
+      checked={all ? true : some ? "indeterminate" : false}
+      onCheckedChange={({ checked }) =>
+        // From the dash, a click ticks them all.
+        table.toggleAllPageRowsSelected(checked !== false)
+      }
+    >
+      <Checkbox.HiddenInput />
+      <Checkbox.Control rounded=".3rem" cursor="pointer">
+        <Checkbox.Indicator />
+      </Checkbox.Control>
+    </Checkbox.Root>
   );
 }
 
@@ -114,6 +149,7 @@ export function CustomTable<T = any>({
   rowSelection = {},
   onRowSelectionChange,
   getRowId,
+  showSelectionSummary = true,
 
   // Sorting
   sorting = [],
@@ -432,7 +468,9 @@ export function CustomTable<T = any>({
         />
       ) : null}
 
-      {enableRowSelection && Object.keys(rowSelection).length > 0 ? (
+      {enableRowSelection &&
+      showSelectionSummary &&
+      Object.keys(rowSelection).length > 0 ? (
         <Flex
           justify="space-between"
           align="center"

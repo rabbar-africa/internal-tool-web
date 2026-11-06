@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
+import { toaster } from "@/components/ui";
+import { TrashIcon } from "@/assets/custom/TrashIcon";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
-import { CustomTable, type TableAction } from "@/components/table";
+import {
+  CustomTable,
+  SelectionActionBar,
+  type TableAction,
+} from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { DateField } from "@/components/input/DateField";
@@ -23,7 +30,11 @@ import {
   AccountFilterSelect,
   formatAccountLabel,
 } from "@/features/settings/components/account-details/AccountSelect";
-import { useDeleteExpenseMutation, useGetExpensesQuery } from "../api/query";
+import {
+  useDeleteExpenseMutation,
+  useDeleteExpensesBulkMutation,
+  useGetExpensesQuery,
+} from "../api/query";
 
 /** "2019 Toyota Camry", from whichever parts were recorded. */
 const vehicleName = (vehicle: Expense["vehicle"]) =>
@@ -164,7 +175,7 @@ export function ExpenseListTemplate() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
 
-  const { data, isLoading, isFetching } = useGetExpensesQuery({
+  const query = {
     page: filters.page,
     limit: filters.limit,
     ...(filters.search ? { search: filters.search } : {}),
@@ -176,13 +187,28 @@ export function ExpenseListTemplate() {
       : {}),
     ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
     ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
-  });
+  };
+  const { data, isLoading, isFetching } = useGetExpensesQuery(query);
 
+  const { canDelete } = usePermissions();
   const { mutateAsync: deleteExpense, isPending: isDeleting } =
     useDeleteExpenseMutation();
+  const { mutateAsync: deleteExpenses, isPending: isBulkDeleting } =
+    useDeleteExpensesBulkMutation();
+
+  // Ticked rows, by expense id. Cleared whenever the list changes, so a
+  // bulk delete only ever takes rows that are on screen.
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const queryKey = JSON.stringify(query);
+  useEffect(() => setRowSelection({}), [queryKey]);
 
   const expenses = useMemo(() => data?.data ?? [], [data?.data]);
   const meta = data?.meta;
+  const selectedExpenses = useMemo(
+    () => expenses.filter((expense) => rowSelection[expense.id]),
+    [expenses, rowSelection],
+  );
 
   const csvData = expenses.map((expense) => ({
     name: expense.name,
@@ -238,7 +264,26 @@ export function ExpenseListTemplate() {
   const confirmDelete = async () => {
     if (!pendingDelete) return;
     await deleteExpense(pendingDelete.id);
+    setRowSelection((prev) => {
+      if (!prev[pendingDelete.id]) return prev;
+      const next = { ...prev };
+      delete next[pendingDelete.id];
+      return next;
+    });
     setPendingDelete(null);
+  };
+
+  const handleBulkDelete = async () => {
+    const result = await deleteExpenses(
+      selectedExpenses.map((expense) => expense.id),
+    );
+    const deleted = result.data?.deleted ?? 0;
+    toaster.create({
+      type: "success",
+      description: `${deleted} ${deleted === 1 ? "expense" : "expenses"} deleted`,
+    });
+    setRowSelection({});
+    setConfirmBulkDelete(false);
   };
 
   return (
@@ -389,6 +434,12 @@ export function ExpenseListTemplate() {
               loading={isLoading}
               enableActions
               actions={tableActions}
+              // Deleting is the only bulk action so far.
+              enableRowSelection={canDelete("expenses")}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+              getRowId={(row) => row.id}
+              showSelectionSummary={false}
               onRowClick={(row) =>
                 navigate(
                   RouteConstants.expenses.edit.generate({
@@ -421,6 +472,38 @@ export function ExpenseListTemplate() {
         note="The expense will no longer count against its job card's profit."
         handleSubmit={confirmDelete}
         isLoading={isDeleting}
+      />
+
+      <SelectionActionBar
+        count={selectedExpenses.length}
+        onClear={() => setRowSelection({})}
+      >
+        <Button
+          size="sm"
+          variant="outline"
+          borderColor="error.300"
+          color="error.300"
+          _hover={{ bg: "error.50" }}
+          onClick={() => setConfirmBulkDelete(true)}
+        >
+          <TrashIcon boxSize="3.5" />
+          Delete ({selectedExpenses.length})
+        </Button>
+      </SelectionActionBar>
+
+      <ConsentDialog
+        open={confirmBulkDelete}
+        onOpenChange={({ open }) => {
+          if (!open && !isBulkDeleting) setConfirmBulkDelete(false);
+        }}
+        heading={`Delete ${selectedExpenses.length} ${
+          selectedExpenses.length === 1 ? "expense" : "expenses"
+        }?`}
+        note={`${formatCurrency(
+          selectedExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0),
+        )} in total. They will no longer count against their job cards' profit.`}
+        handleSubmit={() => void handleBulkDelete()}
+        isLoading={isBulkDeleting}
       />
     </>
   );
