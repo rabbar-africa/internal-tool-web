@@ -9,7 +9,7 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import { DateField } from "@/components/input/DateField";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TruncatedText } from "@/components/common/TruncatedText";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
@@ -230,10 +230,11 @@ export function ExpenseListTemplate() {
           subtitle="Record and monitor all business expenses"
           action={
             <Flex gap="2">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename="expenses"
                 headers={CSV_HEADERS}
+                module="expenses"
               />
               <Button
                 variant="outline"

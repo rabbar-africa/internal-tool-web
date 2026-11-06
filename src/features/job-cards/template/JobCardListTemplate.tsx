@@ -4,7 +4,7 @@ import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useJobCardList } from "../components/job-card-list/useJobCardList";
@@ -47,10 +47,11 @@ export function JobCardListTemplate() {
           subtitle="Track every repair job from intake to delivery"
           action={
             <Flex gap="2" wrap="wrap">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename="job-cards"
                 headers={JOB_CARD_CSV_HEADERS}
+                module="job_cards"
               />
               <Button
                 disabled={isAtLimit("jobCards")}

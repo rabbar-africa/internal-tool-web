@@ -2,7 +2,7 @@ import { axios } from "@/lib/axios";
 import { createDownloadLink } from "./file-helper";
 
 /** `attachment; filename="statement-cash-….pdf"` → the filename. */
-const filenameFrom = (disposition: unknown): string | null => {
+export const filenameFrom = (disposition: unknown): string | null => {
   if (typeof disposition !== "string") return null;
   const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
   return match ? decodeURIComponent(match[1]) : null;

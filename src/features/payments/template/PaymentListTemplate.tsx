@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatMoney } from "@/hooks/useFormatMoney";
@@ -21,26 +21,17 @@ import {
 import { useUrlState } from "@/hooks/useUrlState";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import moment from "moment";
+import {
+  MODE_LABELS,
+  PAYMENT_CSV_HEADERS,
+  invoiceNumbersOf,
+  paymentToCsvRow,
+} from "@/features/payments/utils/payment-csv";
 import Status from "@/components/ui/Status";
-
-const MODE_LABELS: Record<string, string> = {
-  CASH: "Cash",
-  BANK_TRANSFER: "Bank Transfer",
-  CARD: "Card",
-  MOBILE_MONEY: "Mobile Money",
-  CHEQUE: "Cheque",
-  ONLINE: "Online",
-  OTHER: "Other",
-};
 
 const toNum = (v: unknown) => Number(v ?? 0) || 0;
 const money = (value: string, currencyCode?: string) =>
   formatMoney(toNum(value), { currencyCode });
-
-const invoiceNumbersOf = (payment: IPaymentReceived): string[] =>
-  (payment.allocations ?? [])
-    .map((a) => a.invoice?.invoiceNumber)
-    .filter(Boolean) as string[];
 
 const columns: ColumnDef<IPaymentReceived>[] = [
   {
@@ -168,20 +159,6 @@ const columns: ColumnDef<IPaymentReceived>[] = [
   },
 ];
 
-const CSV_HEADERS = {
-  paymentNumber: "Payment #",
-  invoiceNumbers: "Invoice #",
-  referenceNumber: "Reference #",
-  customerName: "Customer",
-  mode: "Mode",
-  depositTo: "Paid Into",
-  amount: "Amount",
-  amountApplied: "Applied",
-  unusedAmount: "Unused",
-  date: "Date",
-  status: "Status",
-} as const;
-
 const FILTER_SCHEMA = {
   depositToAccountId: { defaultValue: "" },
 };
@@ -230,20 +207,6 @@ export function PaymentListTemplate() {
     setPendingDelete(null);
   };
 
-  const csvData = payments.map((p) => ({
-    paymentNumber: p.paymentNumber,
-    invoiceNumbers: invoiceNumbersOf(p).join(", "),
-    referenceNumber: p.referenceNumber,
-    customerName: p.customerName || p.client?.displayName || "",
-    mode: MODE_LABELS[p.mode] ?? p.mode,
-    depositTo: p.depositToAccount ? formatAccountLabel(p.depositToAccount) : "",
-    amount: p.amount,
-    amountApplied: p.amountApplied,
-    unusedAmount: p.unusedAmount,
-    date: p.date,
-    status: p.status,
-  }));
-
   return (
     <Stack gap="6">
       <PageHeader
@@ -251,10 +214,11 @@ export function PaymentListTemplate() {
         subtitle="Track all payments received from customers"
         action={
           <Flex gap="2">
-            <DownloadButton
-              data={csvData}
+            <ExportMenu
+              data={payments.map(paymentToCsvRow)}
               filename="payments"
-              headers={CSV_HEADERS}
+              headers={PAYMENT_CSV_HEADERS}
+              module="payments_received"
             />
             <Button
               onClick={() => navigate(RouteConstants.payments.create.path)}

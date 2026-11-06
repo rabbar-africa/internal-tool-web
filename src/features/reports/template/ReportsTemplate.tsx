@@ -5,7 +5,7 @@ import type { ApexOptions } from "apexcharts";
 import { CustomTable } from "@/components/table";
 import { StatCard } from "@/components/common/StatCard";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import { formatCurrency } from "@/utils/calculations";
 import { EXPENSE_CATEGORY_LABELS } from "@/shared/interface/expense";
 import {
@@ -161,7 +161,7 @@ export function ReportsTemplate() {
         subtitle="Financial overview and performance analysis"
         action={
           <Flex gap="2">
-            <DownloadButton
+            <ExportMenu
               data={csvData}
               filename="financial-report"
               headers={CSV_HEADERS}
