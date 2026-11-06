@@ -70,7 +70,8 @@ export function rejectErrorInterceptor(error: AxiosError) {
 export async function blobErrorInterceptor(error: AxiosError) {
   if (
     error.response?.data instanceof Blob &&
-    error.response.data.type === "application/json"
+    // Usually sent with "; charset=utf-8" on the end.
+    error.response.data.type.startsWith("application/json")
   ) {
     try {
       const text = await error.response.data.text();

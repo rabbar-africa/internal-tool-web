@@ -107,6 +107,7 @@ export const customQueryKey = {
   analytics: {
     dashboard: "get-dashboard-analytics",
   },
+  exports: { modules: "get-export-modules" },
   billing: {
     plans: "get-billing-plans",
     checkoutPreview: "get-billing-checkout-preview",

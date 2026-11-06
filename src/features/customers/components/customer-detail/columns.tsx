@@ -108,3 +108,22 @@ export const vehicleColumns: ColumnDef<Vehicle>[] = [
     ),
   },
 ];
+
+// exportToCSV writes columns in the order of each row's keys.
+export const VEHICLE_CSV_HEADERS = {
+  year: "Year",
+  make: "Make",
+  model: "Model",
+  registrationNumber: "Plate No.",
+  color: "Color",
+  vin: "VIN",
+} as const;
+
+export const vehicleToCsvRow = (vehicle: Vehicle) => ({
+  year: vehicle.year ?? "",
+  make: vehicle.make,
+  model: vehicle.model,
+  registrationNumber: vehicle.registrationNumber ?? "",
+  color: vehicle.color ?? "",
+  vin: vehicle.vin ?? "",
+});

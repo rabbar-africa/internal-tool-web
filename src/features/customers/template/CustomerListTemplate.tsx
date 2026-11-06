@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useGetAllCustomersQuery } from "@/features/customers/api/query";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -168,10 +168,11 @@ export function CustomerListTemplate() {
           subtitle="Manage your customer database"
           action={
             <Flex gap="2">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename="customers"
                 headers={CSV_HEADERS}
+                module="customers"
               />
               <Button
                 disabled={isAtLimit("customers")}

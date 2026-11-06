@@ -4,7 +4,7 @@ import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useInvoiceList } from "@/features/invoices/components/invoice-list/useInvoiceList";
 import {
@@ -51,7 +51,7 @@ export function InvoiceListTemplate() {
   const downloadLabel =
     selectionCount > 0
       ? `Export ${selectionCount} selected`
-      : "Export all (CSV)";
+      : "Export current view";
 
   return (
     <>
@@ -61,11 +61,12 @@ export function InvoiceListTemplate() {
           subtitle="Manage and track all your invoices"
           action={
             <Flex gap="2" wrap="wrap">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename={downloadFilename}
                 headers={INVOICE_CSV_HEADERS}
-                label={downloadLabel}
+                currentViewLabel={downloadLabel}
+                module="invoices"
               />
               <Button
                 disabled={isAtLimit("invoices")}

@@ -83,6 +83,7 @@ export function CustomerDetailTemplate() {
 
         <CustomerTabs
           clientId={id ?? ""}
+          customerName={customer.displayName}
           vehicles={vehicles}
           vehiclesLoading={vehiclesLoading}
           invoices={customerInvoices}
