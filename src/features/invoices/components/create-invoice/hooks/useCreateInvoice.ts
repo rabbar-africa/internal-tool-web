@@ -478,11 +478,15 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
   // In edit mode, hydrate the form once the invoice resolves and seed the
   // customer cache so the billing block + combobox label render immediately.
-  const appliedInvoiceRef = useRef(false);
+  // The form fills only once, so a cached copy that's being refetched is
+  // waited out: filling from it would edit, and save over, an old invoice.
+  const [isInvoiceApplied, setIsInvoiceApplied] = useState(false);
   useEffect(() => {
     const invoice = invoiceQuery.data?.data;
-    if (!isEdit || appliedInvoiceRef.current || !invoice) return;
-    appliedInvoiceRef.current = true;
+    if (!isEdit || isInvoiceApplied || !invoice || invoiceQuery.isFetching) {
+      return;
+    }
+    setIsInvoiceApplied(true);
     formik.setValues(mapInvoiceToFormValues(invoice));
     if (invoice.client) {
       setCustomerCache((prev) => ({
@@ -491,7 +495,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoiceQuery.data, isEdit]);
+  }, [invoiceQuery.data, invoiceQuery.isFetching, isEdit, isInvoiceApplied]);
 
   const carry = useInvoiceCarryForward({
     isEdit,
@@ -638,7 +642,11 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   return {
     mode,
     isEdit,
-    isLoadingInvoice: isEdit && invoiceQuery.isLoading,
+    // Not on an error: the form shows, as before, rather than spinning forever.
+    isLoadingInvoice:
+      isEdit &&
+      !isInvoiceApplied &&
+      (invoiceQuery.isLoading || invoiceQuery.isFetching),
     formik,
     handleSubmit,
     addLineItem,

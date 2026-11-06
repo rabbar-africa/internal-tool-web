@@ -52,7 +52,7 @@ export function CustomerTabs({
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
   const { mutateAsync: deleteVehicle, isPending: isDeleting } =
-    useDeleteVehicleMutation(clientId);
+    useDeleteVehicleMutation();
 
   const vehicleActions: TableAction<Vehicle>[] = [
     {

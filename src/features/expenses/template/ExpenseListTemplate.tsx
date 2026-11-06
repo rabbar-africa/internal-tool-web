@@ -8,6 +8,7 @@ import { SearchInput } from "@/components/input/SearchInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { DateField } from "@/components/input/DateField";
 import { PageHeader } from "@/components/common/PageHeader";
+import { TruncatedText } from "@/components/common/TruncatedText";
 import { DownloadButton } from "@/components/common/DownloadButton";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -33,10 +34,16 @@ const columns: ColumnDef<Expense>[] = [
     accessorKey: "name",
     header: "Item",
     cell: ({ row }) => (
-      <Stack gap="0">
-        <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+      // Capped so a grouped expense's long name can't widen the column.
+      <Stack gap="0" maxW="18rem">
+        <TruncatedText
+          lines={1}
+          textStyle="small-regular"
+          color="gray.500"
+          fontWeight="500"
+        >
           {row.original.name}
-        </Text>
+        </TruncatedText>
         {/* {row.original.invoice && (
           <Text fontSize="12px" color="primary.300" lineClamp={1}>
             for {row.original.invoice.invoiceNumber}
@@ -48,9 +55,9 @@ const columns: ColumnDef<Expense>[] = [
           </Text>
         )} */}
         {row.original.description && (
-          <Text fontSize="12px" color="gray.300" lineClamp={1}>
+          <TruncatedText lines={1} fontSize="12px" color="gray.300">
             {row.original.description}
-          </Text>
+          </TruncatedText>
         )}
       </Stack>
     ),
