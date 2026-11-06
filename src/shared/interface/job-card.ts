@@ -66,6 +66,8 @@ export interface JobCard {
     expenses: number;
     files: number;
   };
+  /** The job's money so far; the list sends it as well as the detail. */
+  financials?: JobCardFinancials;
 }
 
 export interface JobCardFinancials {
