@@ -45,9 +45,9 @@ export function AddVehicleModal({
 }: AddVehicleModalProps) {
   const isEdit = Boolean(vehicle);
   const { mutateAsync: createVehicle, isPending: isCreating } =
-    useCreateVehicleMutation(clientId);
+    useCreateVehicleMutation();
   const { mutateAsync: updateVehicle, isPending: isUpdating } =
-    useUpdateVehicleMutation(vehicle?.id ?? "", clientId);
+    useUpdateVehicleMutation(vehicle?.id ?? "");
   const isPending = isCreating || isUpdating;
   const { data: makeOptions = [], isLoading: makesLoading } =
     useVehicleMakesQuery();

@@ -19,6 +19,7 @@ import type {
   CustomerStatementParams,
 } from "@/shared/interface/customer";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetAllCustomersQuery = (
   filter?: CustomerFilter,
@@ -51,7 +52,7 @@ export const useCreateCustomerMutation = () => {
 
     meta: {
       successMessage: "Customer created successfully",
-      invalidatesQueryKeys: [[customQueryKey.customers.getAll]],
+      invalidatesQueryKeys: invalidates.customerCreated,
     },
   });
 };
@@ -63,7 +64,7 @@ export const useUpdateCustomerMutation = (id: string) => {
 
     meta: {
       successMessage: "Customer updated successfully",
-      invalidatesQueryKeys: [[customQueryKey.customers.getAll]],
+      invalidatesQueryKeys: invalidates.customer,
     },
   });
 };
@@ -77,35 +78,35 @@ export const useGetVehiclesByClientQuery = (clientId: string) =>
     enabled: Boolean(clientId),
   });
 
-export const useCreateVehicleMutation = (clientId: string) => {
+export const useCreateVehicleMutation = () => {
   return useMutation({
     mutationFn: (payload: CreateVehiclePayload) => createVehicle(payload),
 
     meta: {
       successMessage: "Vehicle added successfully",
-      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
+      invalidatesQueryKeys: invalidates.vehicle,
     },
   });
 };
 
-export const useUpdateVehicleMutation = (id: string, clientId: string) => {
+export const useUpdateVehicleMutation = (id: string) => {
   return useMutation({
     mutationFn: (payload: Partial<Omit<CreateVehiclePayload, "clientId">>) =>
       updateVehicle(id, payload),
 
     meta: {
       successMessage: "Vehicle updated successfully",
-      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
+      invalidatesQueryKeys: invalidates.vehicle,
     },
   });
 };
 
-export const useDeleteVehicleMutation = (clientId: string) => {
+export const useDeleteVehicleMutation = () => {
   return useMutation({
     mutationFn: (id: string) => deleteVehicle(id),
     meta: {
       successMessage: "Vehicle removed",
-      invalidatesQueryKeys: [[customQueryKey.vehicles.getByClient, clientId]],
+      invalidatesQueryKeys: invalidates.vehicle,
     },
   });
 };

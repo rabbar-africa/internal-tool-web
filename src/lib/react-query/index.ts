@@ -105,11 +105,15 @@ export const queryClient = new QueryClient({
         });
       }
 
-      if (mutation?.meta?.invalidatesQueryKeys) {
-        mutation.meta.invalidatesQueryKeys.forEach((queryKey) => {
-          queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
-        });
-      }
+      // Groups overlap, and invalidating a key twice cancels the first
+      // refetch to start another, so each key goes once.
+      const seen = new Set<string>();
+      mutation?.meta?.invalidatesQueryKeys?.forEach((queryKey) => {
+        const id = JSON.stringify(queryKey);
+        if (seen.has(id)) return;
+        seen.add(id);
+        queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
+      });
     },
   }),
 });

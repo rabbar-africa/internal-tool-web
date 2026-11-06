@@ -12,6 +12,7 @@ import type {
   UpdateTechnicianPayload,
 } from "@/shared/interface/technician";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetTechniciansQuery = (
   filter?: IGetTechnicianFilter,
@@ -35,7 +36,7 @@ export const useCreateTechnicianMutation = () =>
     mutationFn: (payload: CreateTechnicianPayload) => createTechnician(payload),
     meta: {
       successMessage: "Technician added successfully",
-      invalidatesQueryKeys: [[customQueryKey.technicians.getAll]],
+      invalidatesQueryKeys: invalidates.technician,
     },
   });
 
@@ -50,10 +51,7 @@ export const useUpdateTechnicianMutation = () =>
     }) => updateTechnician(id, payload),
     meta: {
       successMessage: "Technician updated successfully",
-      invalidatesQueryKeys: [
-        [customQueryKey.technicians.getAll],
-        [customQueryKey.technicians.getById],
-      ],
+      invalidatesQueryKeys: invalidates.technician,
     },
   });
 
@@ -62,6 +60,6 @@ export const useDeleteTechnicianMutation = () =>
     mutationFn: (id: string) => deleteTechnician(id),
     meta: {
       successMessage: "Technician removed",
-      invalidatesQueryKeys: [[customQueryKey.technicians.getAll]],
+      invalidatesQueryKeys: invalidates.technician,
     },
   });

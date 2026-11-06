@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { invalidates } from "@/shared/constants/query-invalidations";
 import {
   getBanks,
   resolveBankAccount,
@@ -190,7 +191,7 @@ export const useUpdateOrganizationBankAccount = () => {
     }) => updateOrganizationBankAccount(id, payload),
     meta: {
       successMessage: "Bank account updated successfully",
-      invalidatesQueryKeys: [[orgKeys.bankAccounts]],
+      invalidatesQueryKeys: invalidates.bankAccount,
     },
   });
 };
@@ -200,7 +201,7 @@ export const useDeleteOrganizationBankAccount = () => {
     mutationFn: (id: string) => deleteOrganizationBankAccount(id),
     meta: {
       successMessage: "Bank account removed",
-      invalidatesQueryKeys: [[orgKeys.bankAccounts]],
+      invalidatesQueryKeys: invalidates.bankAccount,
     },
   });
 };

@@ -53,6 +53,8 @@ export const customQueryKey = {
     getById: "get-item-by-id",
     getSimple: "get-item-list-simple",
   },
+  // Queries nest under this: ["payments", "list", filter], ["payments", "detail", id].
+  payments: { all: "payments" },
   invoices: {
     getAll: "get-all-invoices",
     getById: "get-invoice-by-id",

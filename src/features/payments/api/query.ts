@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@/lib/react-query";
+import { useQuery, useMutation } from "@/lib/react-query";
 import {
   getPayments,
   getPaymentById,
@@ -11,30 +11,13 @@ import type {
   IGetPaymentsReceivedFilter,
 } from "@/shared/interface/payment";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
+// Mutations invalidate the whole `customQueryKey.payments.all` prefix.
 const KEYS = {
-  all: ["payments"] as const,
   list: (filter?: IGetPaymentsReceivedFilter) =>
-    ["payments", "list", filter] as const,
-  detail: (id: string) => ["payments", "detail", id] as const,
-};
-
-// A payment updates the invoice it settles and, if that invoice is linked to a
-// job card, the job card's collected/outstanding figures — refresh both.
-const invalidateLinkedRecords = (
-  queryClient: ReturnType<typeof useQueryClient>,
-) => {
-  queryClient.invalidateQueries({ queryKey: KEYS.all });
-  queryClient.invalidateQueries({ queryKey: [customQueryKey.invoices.getAll] });
-  queryClient.invalidateQueries({
-    queryKey: [customQueryKey.invoices.getById],
-  });
-  queryClient.invalidateQueries({
-    queryKey: [customQueryKey.jobCards.getById],
-  });
-  queryClient.invalidateQueries({
-    queryKey: [customQueryKey.jobCards.financials],
-  });
+    [customQueryKey.payments.all, "list", filter] as const,
+  detail: (id: string) => [customQueryKey.payments.all, "detail", id] as const,
 };
 
 export const useGetPaymentsQuery = (filter?: IGetPaymentsReceivedFilter) =>
@@ -51,29 +34,32 @@ export const useGetPaymentByIdQuery = (id: string) =>
   });
 
 export const useCreatePaymentMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreatePaymentPayload) => createPayment(payload),
-    onSuccess: () => invalidateLinkedRecords(queryClient),
-    meta: { successMessage: "Payment recorded successfully" },
+    meta: {
+      successMessage: "Payment recorded successfully",
+      invalidatesQueryKeys: invalidates.paymentCreated,
+    },
   });
 };
 
 export const useUpdatePaymentMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { id: string; payload: CreatePaymentPayload }) =>
       updatePayment(data),
-    onSuccess: () => invalidateLinkedRecords(queryClient),
-    meta: { successMessage: "Payment updated successfully" },
+    meta: {
+      successMessage: "Payment updated successfully",
+      invalidatesQueryKeys: invalidates.payment,
+    },
   });
 };
 
 export const useDeletePaymentMutation = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deletePayment(id),
-    onSuccess: () => invalidateLinkedRecords(queryClient),
-    meta: { successMessage: "Payment deleted successfully" },
+    meta: {
+      successMessage: "Payment deleted successfully",
+      invalidatesQueryKeys: invalidates.payment,
+    },
   });
 };
