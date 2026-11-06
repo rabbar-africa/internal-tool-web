@@ -13,6 +13,7 @@ import {
   type JobCardStatus,
 } from "@/shared/interface/job-card";
 import { technicianFullName } from "@/shared/interface/technician";
+import { formatCurrency } from "@/utils/calculations";
 
 export function JobCardStatusBadge({ status }: { status: JobCardStatus }) {
   const styles = JOB_CARD_STATUS_STYLES[status] ?? {
@@ -103,13 +104,13 @@ export const jobCardColumns: ColumnDef<JobCard>[] = [
     ),
   },
   {
-    accessorKey: "promisedDate",
-    header: "Promised",
-    cell: ({ getValue }) => {
-      const value = getValue() as string | null;
+    id: "invoicedTotal",
+    header: "Invoiced",
+    cell: ({ row }) => {
+      const invoiced = row.original.financials?.invoicedTotal;
       return (
-        <Text textStyle="small-regular" color="gray.500">
-          {value ? moment(value).format("DD MMM YYYY") : "—"}
+        <Text textStyle="small-regular" color="gray.500" fontWeight="500">
+          {invoiced === undefined ? "—" : formatCurrency(invoiced)}
         </Text>
       );
     },
@@ -133,7 +134,7 @@ export const JOB_CARD_CSV_HEADERS = {
   status: "Status",
   priority: "Priority",
   technicians: "Technicians",
-  promisedDate: "Promised Date",
+  invoicedTotal: "Invoiced",
   openedAt: "Opened",
 } as const;
 
@@ -147,6 +148,6 @@ export const toCsvRow = (jobCard: JobCard) => ({
   technicians: (jobCard.technicians ?? [])
     .map((a) => technicianFullName(a.technician))
     .join("; "),
-  promisedDate: jobCard.promisedDate ?? "",
+  invoicedTotal: jobCard.financials?.invoicedTotal ?? "",
   openedAt: jobCard.openedAt,
 });
