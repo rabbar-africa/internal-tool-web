@@ -9,6 +9,7 @@ import {
 } from "./service";
 import type { CreateItemPayload } from "@/shared/interface/item";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetItemsQuery = (
   filter?: ItemFilter,
@@ -33,7 +34,7 @@ export const useCreateItemMutation = () => {
     mutationFn: (payload: CreateItemPayload) => createItem(payload),
     meta: {
       successMessage: "Item created successfully",
-      invalidatesQueryKeys: [[customQueryKey.items.getAll]],
+      invalidatesQueryKeys: invalidates.item,
     },
   });
 };
@@ -43,7 +44,7 @@ export const useUpdateItemMutation = (id: string) => {
     mutationFn: (payload: Record<string, unknown>) => updateItem(id, payload),
     meta: {
       successMessage: "Item updated successfully",
-      invalidatesQueryKeys: [[customQueryKey.items.getAll]],
+      invalidatesQueryKeys: invalidates.item,
     },
   });
 };

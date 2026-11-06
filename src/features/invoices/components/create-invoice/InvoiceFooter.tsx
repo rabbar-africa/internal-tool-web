@@ -18,7 +18,10 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import type { IOrgTax } from "@/shared/interface/settings";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
-import { discountForAmountToPay } from "../../utils/invoice-summary";
+import {
+  discountForAmountToPay,
+  NEGATIVE_TOTAL_MESSAGE,
+} from "../../utils/invoice-summary";
 
 interface Totals {
   subtotal: number;
@@ -328,10 +331,20 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
             <Text fontSize="14px" fontWeight="700" color="gray.500">
               Total
             </Text>
-            <Text fontSize="16px" fontWeight="700" color="primary.400">
+            <Text
+              fontSize="16px"
+              fontWeight="700"
+              color={total < 0 ? "red.400" : "primary.400"}
+            >
               {formatMoney(total)}
             </Text>
           </Flex>
+
+          {total < 0 && (
+            <Text fontSize="12px" color="red.400" mt="2">
+              {NEGATIVE_TOTAL_MESSAGE}
+            </Text>
+          )}
 
           <AmountToPay formik={formik} totals={totals} />
         </Stack>

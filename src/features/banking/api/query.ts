@@ -20,16 +20,9 @@ import type {
   UpdateAccountTransferPayload,
 } from "@/shared/interface/banking";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 const transferKeys = customQueryKey.accountTransfers;
-
-// A transfer moves both accounts' statements.
-const transferInvalidations = [
-  [transferKeys.getAll],
-  [transferKeys.getById],
-  [customQueryKey.accountStatements.get],
-  [customQueryKey.accountStatements.business],
-];
 
 export const useGetAccountTransfersQuery = (
   filter?: IGetAccountTransfersFilter,
@@ -54,7 +47,7 @@ export const useCreateAccountTransferMutation = () =>
       createAccountTransfer(payload),
     meta: {
       successMessage: "Transfer recorded",
-      invalidatesQueryKeys: transferInvalidations,
+      invalidatesQueryKeys: invalidates.accountTransfer,
     },
   });
 
@@ -69,7 +62,7 @@ export const useUpdateAccountTransferMutation = () =>
     }) => updateAccountTransfer(id, payload),
     meta: {
       successMessage: "Transfer updated",
-      invalidatesQueryKeys: transferInvalidations,
+      invalidatesQueryKeys: invalidates.accountTransfer,
     },
   });
 
@@ -78,7 +71,7 @@ export const useDeleteAccountTransferMutation = () =>
     mutationFn: (id: string) => deleteAccountTransfer(id),
     meta: {
       successMessage: "Transfer deleted",
-      invalidatesQueryKeys: transferInvalidations,
+      invalidatesQueryKeys: invalidates.accountTransfer,
     },
   });
 

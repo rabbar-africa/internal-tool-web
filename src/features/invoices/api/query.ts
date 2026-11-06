@@ -8,6 +8,7 @@ import {
   recalculateInvoice,
   getAllInvoices,
   deleteInvoice,
+  getInvoiceDeleteImpact,
   getOutstandingInvoices,
   addCarriedInvoice,
   removeCarriedInvoice,
@@ -19,8 +20,10 @@ import type {
   UpdateInvoicePayload,
   IGetInvoiceFilter,
   CollectInvoicePaymentPayload,
+  DeleteInvoiceOptions,
 } from "@/shared/interface/invoice";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetAllInvoicesQuery = (
   filter?: IGetInvoiceFilter,
@@ -46,13 +49,7 @@ export const useCreateInvoiceMutation = () => {
 
     meta: {
       successMessage: "Invoice created successfully",
-      // A linked job card's invoice list + P&L change when a new invoice is
-      // raised against it, so refresh those too.
-      invalidatesQueryKeys: [
-        [customQueryKey.invoices.getAll],
-        [customQueryKey.jobCards.getById],
-        [customQueryKey.jobCards.financials],
-      ],
+      invalidatesQueryKeys: invalidates.invoiceCreated,
     },
   });
 };
@@ -69,10 +66,7 @@ export const useUpdateInvoiceMutation = () => {
 
     meta: {
       successMessage: "Invoice updated successfully",
-      invalidatesQueryKeys: [
-        [customQueryKey.invoices.getAll],
-        [customQueryKey.invoices.getById],
-      ],
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 };
@@ -83,10 +77,7 @@ export const useWriteOffInvoiceMutation = () => {
       writeOffInvoice(id, payload),
     meta: {
       successMessage: "Invoice written off",
-      invalidatesQueryKeys: [
-        [customQueryKey.invoices.getAll],
-        [customQueryKey.invoices.getById],
-      ],
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 };
@@ -96,10 +87,7 @@ export const useCancelWriteOffInvoiceMutation = () => {
     mutationFn: (id: string) => cancelWriteOffInvoice(id),
     meta: {
       successMessage: "Write-off cancelled",
-      invalidatesQueryKeys: [
-        [customQueryKey.invoices.getAll],
-        [customQueryKey.invoices.getById],
-      ],
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 };
@@ -109,10 +97,7 @@ export const useRecalculateInvoiceMutation = () => {
     mutationFn: (id: string) => recalculateInvoice(id),
     meta: {
       successMessage: "Invoice balance recalculated",
-      invalidatesQueryKeys: [
-        [customQueryKey.invoices.getAll],
-        [customQueryKey.invoices.getById],
-      ],
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 };
@@ -129,14 +114,6 @@ export const useGetOutstandingInvoicesQuery = (
     ...config,
   });
 
-// Bringing a balance forward changes what's eligible elsewhere (a balance may
-// only ride on one document), so the outstanding lists are invalidated too.
-const carryInvalidations = [
-  [customQueryKey.invoices.getById],
-  [customQueryKey.invoices.getAll],
-  [customQueryKey.invoices.outstanding],
-] as const;
-
 export const useAddCarriedInvoiceMutation = () =>
   useMutation({
     mutationFn: ({
@@ -148,7 +125,7 @@ export const useAddCarriedInvoiceMutation = () =>
     }) => addCarriedInvoice(id, carriedInvoiceId),
     meta: {
       successMessage: "Previous balance brought forward",
-      invalidatesQueryKeys: carryInvalidations,
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 
@@ -163,7 +140,7 @@ export const useRemoveCarriedInvoiceMutation = () =>
     }) => removeCarriedInvoice(id, carriedInvoiceId),
     meta: {
       successMessage: "Previous balance removed",
-      invalidatesQueryKeys: carryInvalidations,
+      invalidatesQueryKeys: invalidates.invoice,
     },
   });
 
@@ -182,25 +159,34 @@ export const useCollectInvoicePaymentMutation = () =>
     }) => collectInvoicePayment(id, payload),
     meta: {
       successMessage: "Payment recorded successfully",
-      // One payment can settle several invoices across different job cards,
-      // so refresh the payment lists and job-card figures as well.
-      invalidatesQueryKeys: [
-        ...carryInvalidations,
-        // The payments feature keys its queries under a local ["payments"]
-        // prefix rather than customQueryKey; this matches KEYS.all there.
-        ["payments"],
-        [customQueryKey.jobCards.getById],
-        [customQueryKey.jobCards.financials],
-      ],
+      // One payment can settle several invoices across different job cards.
+      invalidatesQueryKeys: invalidates.paymentCreated,
     },
+  });
+
+export const useGetInvoiceDeleteImpactQuery = (id: string) =>
+  useQuery({
+    queryKey: [customQueryKey.invoices.deleteImpact, id],
+    queryFn: () => getInvoiceDeleteImpact(id),
+    enabled: Boolean(id),
+    // Payments may have changed since this was last opened: always ask afresh.
+    staleTime: 0,
+    gcTime: 0,
   });
 
 export const useDeleteInvoiceMutation = () => {
   return useMutation({
-    mutationFn: (id: string) => deleteInvoice(id),
+    mutationFn: ({
+      id,
+      options,
+    }: {
+      id: string;
+      options?: DeleteInvoiceOptions;
+    }) => deleteInvoice(id, options),
     meta: {
       successMessage: "Invoice deleted",
-      invalidatesQueryKeys: [[customQueryKey.invoices.getAll]],
+      // Deleting can take its payments and expenses with it.
+      invalidatesQueryKeys: [...invalidates.payment, ...invalidates.expense],
     },
   });
 };

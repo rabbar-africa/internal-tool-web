@@ -5,7 +5,13 @@ import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
-import { PAYMENT_TERMS_OPTIONS } from "./hooks/useCreateInvoice";
+import {
+  CUSTOM_TERMS,
+  PAYMENT_TERMS_OPTIONS,
+  addDays,
+  dueDateAfterDateChange,
+  termsFromDates,
+} from "@/features/invoices/utils/payment-terms";
 import type { ICustomer } from "@/shared/interface/customer";
 import type { Vehicle } from "@/features/customers/api/service";
 import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
@@ -50,6 +56,8 @@ export function InvoiceFormHeader({
   onVehicleSaved,
 }: InvoiceFormHeaderProps) {
   const { data: templatesData } = useGetOrganizationTemplates();
+  const terms = termsFromDates(formik.values.date, formik.values.dueDate);
+
   const templateOptions = useMemo(() => {
     const templates = (templatesData?.data ?? []).filter(
       (template) => template.module === "INVOICE",
@@ -276,7 +284,17 @@ export function InvoiceFormHeader({
               required
               name="date"
               value={formik.values.date}
-              onChange={formik.handleChange}
+              onChange={(e) => {
+                formik.setFieldValue(
+                  "dueDate",
+                  dueDateAfterDateChange(
+                    formik.values.date,
+                    e.target.value,
+                    formik.values.dueDate,
+                  ),
+                );
+                formik.handleChange(e);
+              }}
               onBlur={formik.handleBlur}
               error={
                 formik.touched.date && formik.errors.date
@@ -302,15 +320,20 @@ export function InvoiceFormHeader({
 
           <CustomSelect
             label="Payment Terms"
-            options={PAYMENT_TERMS_OPTIONS}
-            value={
-              formik.values.paymentTerms ? [formik.values.paymentTerms] : ["0"]
+            options={
+              terms.value === CUSTOM_TERMS
+                ? [...PAYMENT_TERMS_OPTIONS, terms]
+                : PAYMENT_TERMS_OPTIONS
             }
+            value={[terms.value]}
             onChange={(opt: { value: string[] }) => {
               const val = Array.isArray(opt?.value)
                 ? opt.value[0]
                 : (opt?.value ?? "0");
-              formik.setFieldValue("paymentTerms", val);
+              // Re-picking the custom row asks for nothing new.
+              if (val === CUSTOM_TERMS) return;
+              const dueDate = addDays(formik.values.date, Number(val));
+              if (dueDate) formik.setFieldValue("dueDate", dueDate);
             }}
           />
 

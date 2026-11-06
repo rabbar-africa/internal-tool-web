@@ -8,6 +8,7 @@ import type {
   InvoiceCosts,
   RecordInvoiceCostsPayload,
   RecordInvoiceCostsResponse,
+  RegroupInvoiceCostsPayload,
   UpdateExpensePayload,
 } from "@/shared/interface/expense";
 
@@ -47,6 +48,15 @@ export const deleteExpense = async (id: string): Promise<void> => {
   await axios.delete(`/expenses/${id}`);
 };
 
+/** Deletes several at once; ones already gone are skipped. */
+export const deleteExpensesBulk = async (ids: string[]) => {
+  const response = await axios.post<ApiResponse<{ deleted: number }>>(
+    "/expenses/bulk-delete",
+    { ids },
+  );
+  return response.data;
+};
+
 /**
  * Up to 100 expenses saved together — all of them or none. An error names the
  * entry it is about: "expenses[2]: …".
@@ -62,6 +72,18 @@ export const createExpensesBulk = async (expenses: CreateExpensePayload[]) => {
 export const getInvoiceCosts = async (invoiceId: string) => {
   const response = await axios.get<ApiResponse<InvoiceCosts>>(
     `/invoices/${invoiceId}/expenses`,
+  );
+  return response.data;
+};
+
+/** Changes the items a "bought together" group covers. */
+export const regroupInvoiceCosts = async (
+  invoiceId: string,
+  payload: RegroupInvoiceCostsPayload,
+) => {
+  const response = await axios.put<ApiResponse<InvoiceCosts>>(
+    `/invoices/${invoiceId}/expenses/group`,
+    payload,
   );
   return response.data;
 };

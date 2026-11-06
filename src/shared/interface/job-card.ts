@@ -66,6 +66,8 @@ export interface JobCard {
     expenses: number;
     files: number;
   };
+  /** The job's money so far; the list sends it as well as the detail. */
+  financials?: JobCardFinancials;
 }
 
 export interface JobCardFinancials {
@@ -93,6 +95,8 @@ export interface JobCardInvoice {
   date: string;
   dueDate: string;
   status: string;
+  /** The status to show: Overdue is worked out from the due date, never saved. */
+  displayStatus?: string;
   total: string;
   balance: string;
 }

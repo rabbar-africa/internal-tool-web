@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import { useGetItemsQuery } from "@/features/items/api/query";
@@ -189,10 +189,11 @@ export function ItemListTemplate() {
           subtitle="Manage products and services used in invoices"
           action={
             <Flex gap="2">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename="items-services"
                 headers={CSV_HEADERS}
+                module="items"
               />
               <Button
                 onClick={() => navigate(RouteConstants.items.create.path)}

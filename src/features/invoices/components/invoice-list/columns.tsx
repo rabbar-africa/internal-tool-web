@@ -4,10 +4,14 @@ import { type ColumnDef } from "@tanstack/react-table";
 import moment from "moment";
 import Status from "@/components/ui/Status";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
-import type { Invoice, InvoiceStatus } from "@/shared/interface/invoice";
+import type { Invoice } from "@/shared/interface/invoice";
 import { InvoiceStatusDto } from "@/shared/interface/invoice";
 
 const toNum = (v: unknown) => Number(v ?? 0) || 0;
+
+const shownStatus = (inv: Invoice) => inv.displayStatus ?? inv.status;
+const isOverdueRow = (inv: Invoice) =>
+  shownStatus(inv).toLowerCase() === "overdue";
 
 // Values are sent verbatim to the API, so they must be the backend enum names.
 // DELETED is omitted — soft-deleted invoices aren't part of the browsable list.
@@ -69,7 +73,7 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         header: "Due Date",
         cell: ({ getValue, row }) => {
           const value = getValue() as string;
-          const isOverdue = row.original.status === "overdue";
+          const isOverdue = isOverdueRow(row.original);
           return (
             <Text
               fontSize="12px"
@@ -96,7 +100,7 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         cell: ({ getValue, row }) => {
           const balance = toNum(getValue());
           const isPaid = balance <= 0;
-          const isOverdue = row.original.status === "overdue";
+          const isOverdue = isOverdueRow(row.original);
           return (
             <Text
               fontSize="13px"
@@ -113,10 +117,9 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ getValue }) => {
-          const status = getValue() as InvoiceStatus;
-          return <Status name={status} px={".25rem"} />;
-        },
+        cell: ({ row }) => (
+          <Status name={shownStatus(row.original)} px={".25rem"} />
+        ),
       },
     ],
     [formatMoney],
@@ -141,6 +144,6 @@ export function toCsvRow(inv: Invoice) {
     dueDate: inv.dueDate,
     totalAmount: inv.totalAmount,
     amountDue: inv.amountDue,
-    status: inv.status,
+    status: shownStatus(inv),
   };
 }

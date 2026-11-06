@@ -25,12 +25,7 @@ import type {
   UpdateJobCardPayload,
 } from "@/shared/interface/job-card";
 import { customQueryKey } from "@/shared/constants/query-keys";
-
-const detailInvalidations = [
-  [customQueryKey.jobCards.getAll],
-  [customQueryKey.jobCards.getById],
-  [customQueryKey.jobCards.financials],
-];
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetJobCardsQuery = (
   filter?: IGetJobCardFilter,
@@ -61,7 +56,7 @@ export const useCreateJobCardMutation = () =>
     mutationFn: (payload: CreateJobCardPayload) => createJobCard(payload),
     meta: {
       successMessage: "Job card created successfully",
-      invalidatesQueryKeys: [[customQueryKey.jobCards.getAll]],
+      invalidatesQueryKeys: invalidates.jobCardCreated,
     },
   });
 
@@ -76,7 +71,7 @@ export const useUpdateJobCardMutation = () =>
     }) => updateJobCard(id, payload),
     meta: {
       successMessage: "Job card updated successfully",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.jobCard,
     },
   });
 
@@ -93,7 +88,7 @@ export const useUpdateJobCardStatusMutation = () =>
     }) => updateJobCardStatus(id, status, closedAt),
     meta: {
       successMessage: "Job card status updated",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.jobCard,
     },
   });
 
@@ -102,7 +97,7 @@ export const useDeleteJobCardMutation = () =>
     mutationFn: (id: string) => deleteJobCard(id),
     meta: {
       successMessage: "Job card deleted",
-      invalidatesQueryKeys: [[customQueryKey.jobCards.getAll]],
+      invalidatesQueryKeys: invalidates.jobCard,
     },
   });
 
@@ -117,7 +112,7 @@ export const useAssignJobCardTechnicianMutation = () =>
       assignJobCardTechnician(jobCardId, payload),
     meta: {
       successMessage: "Technician assigned",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.technician,
     },
   });
 
@@ -132,7 +127,7 @@ export const useUnassignJobCardTechnicianMutation = () =>
     }) => unassignJobCardTechnician(jobCardId, technicianId),
     meta: {
       successMessage: "Technician unassigned",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.technician,
     },
   });
 
@@ -147,7 +142,7 @@ export const useAttachJobCardFileMutation = () =>
       attachJobCardFile(jobCardId, payload),
     meta: {
       successMessage: "File attached",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.jobCardDetail,
     },
   });
 
@@ -162,7 +157,7 @@ export const useRemoveJobCardFileMutation = () =>
     }) => removeJobCardFile(jobCardId, fileId),
     meta: {
       successMessage: "File removed",
-      invalidatesQueryKeys: detailInvalidations,
+      invalidatesQueryKeys: invalidates.jobCardDetail,
     },
   });
 
@@ -179,10 +174,7 @@ export const useLinkJobCardInvoiceMutation = () =>
     }) => linkJobCardInvoice(jobCardId, invoiceId),
     meta: {
       successMessage: "Invoice linked to job card",
-      invalidatesQueryKeys: [
-        ...detailInvalidations,
-        [customQueryKey.invoices.getAll],
-      ],
+      invalidatesQueryKeys: invalidates.jobCard,
     },
   });
 
@@ -197,10 +189,7 @@ export const useUnlinkJobCardInvoiceMutation = () =>
     }) => unlinkJobCardInvoice(jobCardId, invoiceId),
     meta: {
       successMessage: "Invoice unlinked",
-      invalidatesQueryKeys: [
-        ...detailInvalidations,
-        [customQueryKey.invoices.getAll],
-      ],
+      invalidatesQueryKeys: invalidates.jobCard,
     },
   });
 
@@ -215,10 +204,7 @@ export const useLinkJobCardInspectionMutation = () =>
     }) => linkJobCardInspection(jobCardId, inspectionId),
     meta: {
       successMessage: "Inspection linked to job card",
-      invalidatesQueryKeys: [
-        ...detailInvalidations,
-        [customQueryKey.inspections.getAll],
-      ],
+      invalidatesQueryKeys: invalidates.jobCardInspection,
     },
   });
 
@@ -233,9 +219,6 @@ export const useUnlinkJobCardInspectionMutation = () =>
     }) => unlinkJobCardInspection(jobCardId, inspectionId),
     meta: {
       successMessage: "Inspection unlinked",
-      invalidatesQueryKeys: [
-        ...detailInvalidations,
-        [customQueryKey.inspections.getAll],
-      ],
+      invalidatesQueryKeys: invalidates.jobCardInspection,
     },
   });

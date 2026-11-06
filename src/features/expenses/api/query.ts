@@ -3,8 +3,10 @@ import {
   createExpense,
   createExpensesBulk,
   deleteExpense,
+  deleteExpensesBulk,
   getInvoiceCosts,
   recordInvoiceCosts,
+  regroupInvoiceCosts,
   getExpenseById,
   getExpenses,
   updateExpense,
@@ -13,20 +15,11 @@ import type {
   CreateExpensePayload,
   IGetExpenseFilter,
   RecordInvoiceCostsPayload,
+  RegroupInvoiceCostsPayload,
   UpdateExpensePayload,
 } from "@/shared/interface/expense";
 import { customQueryKey } from "@/shared/constants/query-keys";
-
-// Expenses roll up into job card P&L, invoice margins and account
-// statements, so mutations refresh those too.
-const expenseInvalidations = [
-  [customQueryKey.expenses.getAll],
-  [customQueryKey.expenses.invoiceCosts],
-  [customQueryKey.jobCards.getById],
-  [customQueryKey.jobCards.financials],
-  [customQueryKey.accountStatements.get],
-  [customQueryKey.accountStatements.business],
-];
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetExpensesQuery = (
   filter?: IGetExpenseFilter,
@@ -50,7 +43,7 @@ export const useCreateExpenseMutation = () =>
     mutationFn: (payload: CreateExpensePayload) => createExpense(payload),
     meta: {
       successMessage: "Expense recorded successfully",
-      invalidatesQueryKeys: expenseInvalidations,
+      invalidatesQueryKeys: invalidates.expenseCreated,
     },
   });
 
@@ -65,10 +58,7 @@ export const useUpdateExpenseMutation = () =>
     }) => updateExpense(id, payload),
     meta: {
       successMessage: "Expense updated successfully",
-      invalidatesQueryKeys: [
-        ...expenseInvalidations,
-        [customQueryKey.expenses.getById],
-      ],
+      invalidatesQueryKeys: invalidates.expense,
     },
   });
 
@@ -77,7 +67,7 @@ export const useDeleteExpenseMutation = () =>
     mutationFn: (id: string) => deleteExpense(id),
     meta: {
       successMessage: "Expense deleted",
-      invalidatesQueryKeys: expenseInvalidations,
+      invalidatesQueryKeys: invalidates.expense,
     },
   });
 
@@ -87,7 +77,7 @@ export const useCreateExpensesBulkMutation = () =>
       createExpensesBulk(expenses),
     meta: {
       successMessage: "Expenses recorded",
-      invalidatesQueryKeys: expenseInvalidations,
+      invalidatesQueryKeys: invalidates.expenseCreated,
     },
   });
 
@@ -113,6 +103,27 @@ export const useRecordInvoiceCostsMutation = () =>
     }) => recordInvoiceCosts(invoiceId, payload),
     meta: {
       successMessage: "Costs recorded",
-      invalidatesQueryKeys: expenseInvalidations,
+      invalidatesQueryKeys: invalidates.expenseCreated,
     },
+  });
+
+export const useRegroupInvoiceCostsMutation = () =>
+  useMutation({
+    mutationFn: ({
+      invoiceId,
+      payload,
+    }: {
+      invoiceId: string;
+      payload: RegroupInvoiceCostsPayload;
+    }) => regroupInvoiceCosts(invoiceId, payload),
+    meta: {
+      successMessage: "Items updated",
+      invalidatesQueryKeys: invalidates.expense,
+    },
+  });
+
+export const useDeleteExpensesBulkMutation = () =>
+  useMutation({
+    mutationFn: (ids: string[]) => deleteExpensesBulk(ids),
+    meta: { invalidatesQueryKeys: invalidates.expense },
   });

@@ -53,10 +53,13 @@ export const customQueryKey = {
     getById: "get-item-by-id",
     getSimple: "get-item-list-simple",
   },
+  // Queries nest under this: ["payments", "list", filter], ["payments", "detail", id].
+  payments: { all: "payments" },
   invoices: {
     getAll: "get-all-invoices",
     getById: "get-invoice-by-id",
     outstanding: "get-invoice-outstanding",
+    deleteImpact: "get-invoice-delete-impact",
   },
   inspections: {
     getAll: "get-all-inspections",
@@ -104,6 +107,7 @@ export const customQueryKey = {
   analytics: {
     dashboard: "get-dashboard-analytics",
   },
+  exports: { modules: "get-export-modules" },
   billing: {
     plans: "get-billing-plans",
     checkoutPreview: "get-billing-checkout-preview",

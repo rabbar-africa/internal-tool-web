@@ -18,6 +18,7 @@ import type {
   SummarizeNotesPayload,
 } from "@/shared/interface/inspection";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { invalidates } from "@/shared/constants/query-invalidations";
 
 export const useGetAllInspectionsQuery = (
   filters: InspectionFilter = {},
@@ -34,7 +35,7 @@ export const useCreateInspectionMutation = () =>
     mutationFn: (data: InspectionPayload) => createInspection(data),
     meta: {
       successMessage: "Inspection created successfully",
-      invalidatesQueryKeys: [[customQueryKey.inspections.getAll]],
+      invalidatesQueryKeys: invalidates.inspectionCreated,
     },
   });
 
@@ -49,10 +50,7 @@ export const useUpdateInspectionMutation = () =>
     }) => updateInspection(id, data),
     meta: {
       successMessage: "Inspection updated successfully",
-      invalidatesQueryKeys: [
-        [customQueryKey.inspections.getAll],
-        [customQueryKey.inspections.getById],
-      ],
+      invalidatesQueryKeys: invalidates.inspection,
     },
   });
 
@@ -75,10 +73,7 @@ export const useCompleteInspectionMutation = () =>
     mutationFn: (id: string) => completeInspection(id),
     meta: {
       successMessage: "Inspection marked as completed",
-      invalidatesQueryKeys: [
-        [customQueryKey.inspections.getAll],
-        [customQueryKey.inspections.getById],
-      ],
+      invalidatesQueryKeys: invalidates.inspection,
     },
   });
 
@@ -118,6 +113,6 @@ export const useDeleteInspectionMutation = () =>
     mutationFn: (id: string) => deleteInspection(id),
     meta: {
       successMessage: "Inspection deleted successfully",
-      invalidatesQueryKeys: [[customQueryKey.inspections.getAll]],
+      invalidatesQueryKeys: invalidates.inspection,
     },
   });

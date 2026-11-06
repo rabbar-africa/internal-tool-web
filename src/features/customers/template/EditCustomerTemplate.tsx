@@ -16,6 +16,7 @@ import {
   CustomerForm,
   type CustomerFormValues,
 } from "@/features/customers/components/customer-form/CustomerForm";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 export function EditCustomerTemplate() {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export function EditCustomerTemplate() {
     lastName: customer.lastName ?? "",
     displayName: customer.displayName ?? "",
     email: customer.email ?? "",
-    phone: customer.phone ?? "",
+    phone: formatPhoneDisplay(customer.phone),
     type: customer.type ?? "",
     stage: customer.stage ?? "",
     address: customer.address ?? "",

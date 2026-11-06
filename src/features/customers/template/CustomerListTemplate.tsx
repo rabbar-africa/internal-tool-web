@@ -8,13 +8,14 @@ import { useNavigate } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu } from "@/features/exports/components";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useGetAllCustomersQuery } from "@/features/customers/api/query";
 import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
 import { EditCustomerModal } from "@/features/customers/components/customer-list/EditCustomerModal";
 import type { ICustomer } from "@/shared/interface/customer";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   CUSTOMER: { bg: "blue.50", color: "blue.600" },
@@ -36,7 +37,7 @@ const columns: ColumnDef<ICustomer>[] = [
     header: "Phone",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as string | null) ?? "—"}
+        {formatPhoneDisplay(getValue() as string | null) || "—"}
       </Text>
     ),
   },
@@ -167,10 +168,11 @@ export function CustomerListTemplate() {
           subtitle="Manage your customer database"
           action={
             <Flex gap="2">
-              <DownloadButton
+              <ExportMenu
                 data={csvData}
                 filename="customers"
                 headers={CSV_HEADERS}
+                module="customers"
               />
               <Button
                 disabled={isAtLimit("customers")}

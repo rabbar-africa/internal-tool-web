@@ -5,14 +5,32 @@ import { CustomTable, type TableAction } from "@/components/table";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { PlusIcon } from "@/assets/custom";
-import { useInvoiceListColumns } from "@/features/invoices/components/invoice-list/columns";
-import { jobCardColumns } from "@/features/job-cards/components/job-card-list/columns";
+import {
+  INVOICE_CSV_HEADERS,
+  toCsvRow as invoiceToCsvRow,
+  useInvoiceListColumns,
+} from "@/features/invoices/components/invoice-list/columns";
+import {
+  JOB_CARD_CSV_HEADERS,
+  jobCardColumns,
+  toCsvRow as jobCardToCsvRow,
+} from "@/features/job-cards/components/job-card-list/columns";
+import {
+  PAYMENT_CSV_HEADERS,
+  paymentToCsvRow,
+} from "@/features/payments/utils/payment-csv";
+import { ExportMenu, customerExportScope } from "@/features/exports/components";
 import type { Invoice } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import type { JobCard } from "@/shared/interface/job-card";
 import type { Vehicle } from "../../api/service";
 import { useDeleteVehicleMutation } from "../../api/query";
-import { paymentColumns, vehicleColumns } from "./columns";
+import {
+  VEHICLE_CSV_HEADERS,
+  paymentColumns,
+  vehicleColumns,
+  vehicleToCsvRow,
+} from "./columns";
 import { AddVehicleModal } from "./AddVehicleModal";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
@@ -22,6 +40,8 @@ const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
   clientId: string;
+  /** Names the file and the "Only for …" option in the export. */
+  customerName: string;
   vehicles: Vehicle[];
   vehiclesLoading: boolean;
   invoices: Invoice[];
@@ -35,6 +55,7 @@ interface CustomerTabsProps {
 
 export function CustomerTabs({
   clientId,
+  customerName,
   vehicles,
   vehiclesLoading,
   invoices,
@@ -48,11 +69,18 @@ export function CustomerTabs({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceColumns = useInvoiceListColumns();
+  const exportScope = customerExportScope(clientId, customerName);
+  // "Ade Motors" → "ade-motors", for the CSV's file name.
+  const fileStem =
+    customerName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "customer";
 
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
   const { mutateAsync: deleteVehicle, isPending: isDeleting } =
-    useDeleteVehicleMutation(clientId);
+    useDeleteVehicleMutation();
 
   const vehicleActions: TableAction<Vehicle>[] = [
     {
@@ -129,7 +157,15 @@ export function CustomerTabs({
           </Tabs.List>
 
           <Tabs.Content value="vehicles" px="4" pb="4" pt="3">
-            <Flex justify="flex-end" mb="3">
+            <Flex justify="flex-end" gap="2" mb="3">
+              <ExportMenu
+                size="sm"
+                data={vehicles.map(vehicleToCsvRow)}
+                filename={`${fileStem}-vehicles`}
+                headers={VEHICLE_CSV_HEADERS}
+                module="vehicles"
+                scope={exportScope}
+              />
               <Button
                 size="sm"
                 variant="outline"
@@ -152,6 +188,16 @@ export function CustomerTabs({
           </Tabs.Content>
 
           <Tabs.Content value="invoices" px="4" pb="4" pt="3">
+            <Flex justify="flex-end" mb="3">
+              <ExportMenu
+                size="sm"
+                data={invoices.map(invoiceToCsvRow)}
+                filename={`${fileStem}-invoices`}
+                headers={INVOICE_CSV_HEADERS}
+                module="invoices"
+                scope={exportScope}
+              />
+            </Flex>
             <CustomTable
               data={invoices}
               columns={invoiceColumns}
@@ -168,6 +214,16 @@ export function CustomerTabs({
           </Tabs.Content>
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
+            <Flex justify="flex-end" mb="3">
+              <ExportMenu
+                size="sm"
+                data={payments.map(paymentToCsvRow)}
+                filename={`${fileStem}-payments`}
+                headers={PAYMENT_CSV_HEADERS}
+                module="payments_received"
+                scope={exportScope}
+              />
+            </Flex>
             <CustomTable
               data={payments}
               columns={paymentColumns}
@@ -184,6 +240,16 @@ export function CustomerTabs({
           </Tabs.Content>
 
           <Tabs.Content value="job-cards" px="4" pb="4" pt="3">
+            <Flex justify="flex-end" mb="3">
+              <ExportMenu
+                size="sm"
+                data={jobCards.map(jobCardToCsvRow)}
+                filename={`${fileStem}-job-cards`}
+                headers={JOB_CARD_CSV_HEADERS}
+                module="job_cards"
+                scope={exportScope}
+              />
+            </Flex>
             <CustomTable
               data={jobCards}
               columns={jobCardColumns}

@@ -34,7 +34,10 @@ import {
 } from "@/features/customers/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
-import { calcInvoiceSummary } from "../../../utils/invoice-summary";
+import {
+  calcInvoiceSummary,
+  NEGATIVE_TOTAL_MESSAGE,
+} from "../../../utils/invoice-summary";
 import {
   useGetOrganizationTransactionSeries,
   useGetOrganizationDetails,
@@ -42,6 +45,7 @@ import {
 import { formatTransactionSeries } from "@/utils/string-formatter";
 import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
+import { termsFromDates } from "@/features/invoices/utils/payment-terms";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -75,8 +79,6 @@ const defaultValues: CreateInvoiceFormValues = {
   referenceNumber: "",
   date: today,
   dueDate: today,
-  paymentTerms: "0",
-  paymentTermsLabel: "Due on Receipt",
   notes: "Thanks for doing business with us.",
   terms: "",
   discount: "0",
@@ -110,8 +112,6 @@ export function mapInvoiceToFormValues(
     referenceNumber: invoice.referenceNumber ?? "",
     date: invoice.date ? invoice.date.split("T")[0] : today,
     dueDate: invoice.dueDate ? invoice.dueDate.split("T")[0] : today,
-    paymentTerms: String(invoice.paymentTerms ?? 0),
-    paymentTermsLabel: invoice.paymentTermsLabel ?? "Due on Receipt",
     notes: invoice.notes ?? "",
     terms: invoice.terms ?? "",
     discount: invoice.discount ?? "0",
@@ -175,14 +175,6 @@ function firstInvoiceError(
   const message = row?.name ?? row?.quantity ?? row?.rate ?? row?.description;
   return message ? `Item ${index + 1}: ${message}` : undefined;
 }
-
-export const PAYMENT_TERMS_OPTIONS = [
-  { label: "Due on Receipt", value: "0" },
-  { label: "Net 15", value: "15" },
-  { label: "Net 30", value: "30" },
-  { label: "Net 45", value: "45" },
-  { label: "Net 60", value: "60" },
-];
 
 export interface UseInvoiceFormOptions {
   mode?: "create" | "edit";
@@ -263,9 +255,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     initialValues: defaultValues,
     validationSchema,
     onSubmit: async (values) => {
-      const termsLabel =
-        PAYMENT_TERMS_OPTIONS.find((o) => o.value === values.paymentTerms)
-          ?.label ?? "Due on Receipt";
+      const terms = termsFromDates(values.date, values.dueDate);
 
       const payload: CreateInvoicePayload = {
         invoiceNumber: values.invoiceNumber,
@@ -287,8 +277,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         customer: values.customer,
         date: values.date,
         dueDate: values.dueDate,
-        paymentTerms: parseInt(values.paymentTerms) || 0,
-        paymentTermsLabel: termsLabel,
+        paymentTerms: terms.days,
+        paymentTermsLabel: terms.label,
         notes: values.notes,
         terms: values.terms,
         lineItems: values.lineItems.map((li, idx) => ({
@@ -354,8 +344,13 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // long way from the button, so say what's wrong.
   const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
-    const message = firstInvoiceError(await formik.validateForm());
+    const fieldError = firstInvoiceError(await formik.validateForm());
+    const isTotalNegative = totals.total < 0;
+    const message =
+      fieldError ?? (isTotalNegative ? NEGATIVE_TOTAL_MESSAGE : undefined);
     if (message) toaster.create({ description: message, type: "error" });
+    // The total isn't a form field, so Formik's validation can't stop this save.
+    if (!fieldError && isTotalNegative) return;
     // Also when invalid: it marks the fields touched, showing the inline errors.
     await formik.submitForm();
   };
@@ -483,11 +478,15 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
   // In edit mode, hydrate the form once the invoice resolves and seed the
   // customer cache so the billing block + combobox label render immediately.
-  const appliedInvoiceRef = useRef(false);
+  // The form fills only once, so a cached copy that's being refetched is
+  // waited out: filling from it would edit, and save over, an old invoice.
+  const [isInvoiceApplied, setIsInvoiceApplied] = useState(false);
   useEffect(() => {
     const invoice = invoiceQuery.data?.data;
-    if (!isEdit || appliedInvoiceRef.current || !invoice) return;
-    appliedInvoiceRef.current = true;
+    if (!isEdit || isInvoiceApplied || !invoice || invoiceQuery.isFetching) {
+      return;
+    }
+    setIsInvoiceApplied(true);
     formik.setValues(mapInvoiceToFormValues(invoice));
     if (invoice.client) {
       setCustomerCache((prev) => ({
@@ -496,7 +495,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoiceQuery.data, isEdit]);
+  }, [invoiceQuery.data, invoiceQuery.isFetching, isEdit, isInvoiceApplied]);
 
   const carry = useInvoiceCarryForward({
     isEdit,
@@ -643,7 +642,11 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   return {
     mode,
     isEdit,
-    isLoadingInvoice: isEdit && invoiceQuery.isLoading,
+    // Not on an error: the form shows, as before, rather than spinning forever.
+    isLoadingInvoice:
+      isEdit &&
+      !isInvoiceApplied &&
+      (invoiceQuery.isLoading || invoiceQuery.isFetching),
     formik,
     handleSubmit,
     addLineItem,

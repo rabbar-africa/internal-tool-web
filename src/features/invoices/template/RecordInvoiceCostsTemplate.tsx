@@ -29,6 +29,11 @@ import {
   useRecordInvoiceCostsMutation,
 } from "@/features/expenses/api/query";
 import { useGetInvoiceByIdQuery } from "../api/query";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  EditCostGroupDialog,
+  type GroupableLine,
+} from "../components/record-costs/EditCostGroupDialog";
 
 interface OtherCostRow {
   key: number;
@@ -96,6 +101,7 @@ export function RecordInvoiceCostsTemplate() {
   const [searchParams] = useSearchParams();
   const jobCardId = searchParams.get("jobCardId") ?? "";
   const { formatMoney } = useFormatMoney();
+  const { canUpdate } = usePermissions();
 
   const { data: invoiceData } = useGetInvoiceByIdQuery(id);
   const invoice = invoiceData?.data;
@@ -122,6 +128,8 @@ export function RecordInvoiceCostsTemplate() {
   const [newGroups, setNewGroups] = useState<
     { key: string; lineIds: string[] }[]
   >([]);
+  // The saved group whose items are being changed.
+  const [editingKey, setEditingKey] = useState<string | null>(null);
 
   const costRows = useMemo<CostRow[]>(() => {
     if (!costs) return [];
@@ -133,7 +141,9 @@ export function RecordInvoiceCostsTemplate() {
       ...(costs.shared ?? []).map((group): CostRow => {
         const lineIds = group.lines.map((line) => line.invoiceLineItemId);
         return {
-          key: `saved-${lineIds.join()}`,
+          // By its first purchase, which survives a change to its items, so
+          // an amount typed in its box stays put.
+          key: `saved-${group.expenses[0]?.id ?? lineIds.join()}`,
           kind: "saved-group",
           lineIds,
           name: group.lines.map((line) => line.name).join(", "),
@@ -168,6 +178,50 @@ export function RecordInvoiceCostsTemplate() {
   }, [costs, newGroups]);
 
   const singleRowCount = costRows.filter((r) => r.kind === "single").length;
+
+  const editingRow = costRows.find((row) => row.key === editingKey);
+  // Every item on the invoice, in its order, for picking a group's items.
+  const groupableLines = useMemo<GroupableLine[]>(() => {
+    if (!costs || !editingRow) return [];
+    const byId = new Map(
+      [
+        ...costs.lines.map((l) => ({ ...l, id: l.invoiceLineItemId })),
+        ...(costs.shared ?? []).flatMap((g) =>
+          g.lines.map((l) => ({ ...l, id: l.invoiceLineItemId })),
+        ),
+      ].map((l) => [l.id, l]),
+    );
+    const inOtherGroup = new Set(
+      costRows
+        .filter((row) => row.kind === "saved-group" && row !== editingRow)
+        .flatMap((row) => row.lineIds),
+    );
+    const inNewGroup = new Set(newGroups.flatMap((group) => group.lineIds));
+    const order = invoice?.lineItems?.map((line) => line.id) ?? [];
+    return [...byId.values()]
+      .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+      .map((line) => ({
+        id: line.id,
+        name: line.name,
+        billed: line.billed,
+        lockedReason: inOtherGroup.has(line.id)
+          ? "Bought together with other items"
+          : inNewGroup.has(line.id)
+            ? "In a group you're making on this page"
+            : undefined,
+      }));
+  }, [costs, costRows, editingRow, newGroups, invoice?.lineItems]);
+
+  // Cut down to one item, the group's box is that item's box now.
+  const handleGroupSaved = (key: string, lineIds: string[]) => {
+    if (lineIds.length !== 1) return;
+    setSpentNow((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev, [lineIds[0]]: prev[key] };
+      delete next[key];
+      return next;
+    });
+  };
 
   const groupTicked = () => {
     const key = `new-${nextKey.current++}`;
@@ -402,6 +456,17 @@ export function RecordInvoiceCostsTemplate() {
                           Ungroup
                         </Button>
                       )}
+                      {row.kind === "saved-group" && canUpdate("expenses") && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          px="1"
+                          color="primary.300"
+                          onClick={() => setEditingKey(row.key)}
+                        >
+                          Edit items
+                        </Button>
+                      )}
                     </Flex>
                     <Text textStyle="small-semibold" color="gray.500" mt="1">
                       {row.name}
@@ -557,6 +622,17 @@ export function RecordInvoiceCostsTemplate() {
           </Button>
         </Flex>
       </Flex>
+
+      {editingRow && (
+        <EditCostGroupDialog
+          invoiceId={id}
+          groupLineIds={editingRow.lineIds}
+          spent={editingRow.spent}
+          lines={groupableLines}
+          onClose={() => setEditingKey(null)}
+          onSaved={(lineIds) => handleGroupSaved(editingRow.key, lineIds)}
+        />
+      )}
 
       {/* Floats over the page, so it's in reach wherever the ticking stopped. */}
       {ticked.length >= 2 && (

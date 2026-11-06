@@ -30,6 +30,10 @@ export function calcInvoiceSummary({
   return { taxVal, total: round2(subtotal - discount + taxVal + adjustment) };
 }
 
+/** Shown wherever a negative total stops an invoice from saving. */
+export const NEGATIVE_TOTAL_MESSAGE =
+  "The total can't be negative. Lower the discount or the adjustment.";
+
 export type AmountToPayResult =
   | { ok: true; discount: number; adjustment: number }
   /** `limit` is the nearest amount that can be reached. */

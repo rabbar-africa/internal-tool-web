@@ -8,7 +8,7 @@ import Status from "@/components/common/Status";
 import { PlusIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
-import { DownloadButton } from "@/components/common/DownloadButton";
+import { ExportMenu, jobCardExportScope } from "@/features/exports/components";
 import {
   EXPENSE_CATEGORY_LABELS,
   PAYMENT_MODE_LABELS,
@@ -78,8 +78,12 @@ const invoiceColumns: ColumnDef<JobCardInvoice>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ getValue }) => (
-      <Status name={(getValue() as string)?.toLowerCase()} />
+    cell: ({ row }) => (
+      <Status
+        name={(
+          row.original.displayStatus ?? row.original.status
+        )?.toLowerCase()}
+      />
     ),
   },
 ];
@@ -363,6 +367,8 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     mode: modeLabel(expense.paymentMode),
   }));
   // A void invoice's work isn't happening, so nothing to cost against it.
+  const exportScope = jobCardExportScope(jobCard.id, jobCard.jobNumber);
+
   const costableInvoices = jobCard.invoices.filter(
     (invoice) => !["VOID", "DELETED"].includes(invoice.status?.toUpperCase()),
   );
@@ -526,12 +532,13 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
             <Flex justify="flex-end" mb="3">
-              <DownloadButton
+              <ExportMenu
                 size="sm"
                 data={paymentsCsv}
                 filename={`${jobCard.jobNumber}-payments`}
                 headers={PAYMENT_CSV_HEADERS}
-                disabled={!paymentsCsv.length}
+                module="payments_received"
+                scope={exportScope}
               />
             </Flex>
             {/* <Flex justify="flex-end" mb="3">
@@ -579,12 +586,13 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
 
           <Tabs.Content value="expenses" px="4" pb="4" pt="3">
             <Flex justify="flex-end" gap="2" mb="3" wrap="wrap">
-              <DownloadButton
+              <ExportMenu
                 size="sm"
                 data={expensesCsv}
                 filename={`${jobCard.jobNumber}-expenses`}
                 headers={EXPENSE_CSV_HEADERS}
-                disabled={!expensesCsv.length}
+                module="expenses"
+                scope={exportScope}
               />
               <Button
                 size="sm"

@@ -79,6 +79,12 @@ export interface CreateExpensePayload {
   invoiceId?: string | null;
   /** One line of that invoice (implies `invoiceId`). */
   invoiceLineItemId?: string | null;
+  /**
+   * Every line it was spent for, replacing what it covered: two or more were
+   * bought together for one price, one is the same as `invoiceLineItemId`,
+   * none leaves it on the invoice for no item. Not with `invoiceLineItemId`.
+   */
+  invoiceLineItemIds?: string[];
   vendorName?: string;
   itemId?: string;
   quantity?: number;
@@ -203,6 +209,17 @@ export interface RecordInvoiceCostsPayload {
   other?: Array<{ name: string; amount: number; category?: ExpenseCategory }>;
   /** Items bought together: one expense for all of them, never split. */
   shared?: Array<{ invoiceLineItemIds: string[]; amount: number }>;
+}
+
+/**
+ * Changes the items a "bought together" group covers. The money already
+ * recorded stays with the group; one item left makes it that item's cost.
+ */
+export interface RegroupInvoiceCostsPayload {
+  /** The group as the costs list shows it. */
+  currentLineItemIds: string[];
+  /** What it should cover: at least one. */
+  invoiceLineItemIds: string[];
 }
 
 export interface RecordInvoiceCostsResponse {

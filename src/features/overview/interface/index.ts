@@ -77,6 +77,7 @@ export interface RecentInvoice {
   invoiceNumber?: string;
   customerName?: string;
   status?: string;
+  displayStatus?: string;
   total?: number | string;
   balance?: number | string;
   currencyCode?: string;
