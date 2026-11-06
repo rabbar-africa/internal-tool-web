@@ -12,6 +12,7 @@ import type {
 } from "@/shared/interface/customer";
 import { useCreateCustomerMutation } from "@/features/customers/api/query";
 import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
+import { phoneField } from "@/utils/phone";
 
 interface AddNewCustomerModalProps {
   open: boolean;
@@ -24,7 +25,7 @@ const validationSchema = Yup.object({
   lastName: Yup.string().required("Last name is required"),
   displayName: Yup.string().required("Display name is required"),
   email: Yup.string().email("Invalid email"),
-  phone: Yup.string(),
+  phone: phoneField(),
   type: Yup.string().required("Customer type is required"),
   stage: Yup.string().required("Customer stage is required"),
 });
