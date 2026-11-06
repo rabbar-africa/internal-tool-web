@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useUrlState } from "@/hooks/useUrlState";
@@ -68,11 +68,11 @@ export function useInvoiceList() {
     [invoices, rowSelection],
   );
 
-  const csvData = useMemo(
-    () =>
-      (selectedInvoices.length > 0 ? selectedInvoices : invoices).map(toCsvRow),
-    [invoices, selectedInvoices],
-  );
+  const csvData = useMemo(() => invoices.map(toCsvRow), [invoices]);
+
+  // Ticks are for the rows on screen: a new page or filter starts afresh.
+  const filtersKey = JSON.stringify(filters);
+  useEffect(() => setRowSelection({}), [filtersKey]);
 
   const tableActions = useMemo<TableAction<Invoice>[]>(
     () => [

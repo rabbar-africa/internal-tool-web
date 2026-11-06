@@ -2,13 +2,16 @@ import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { CustomTable } from "@/components/table";
+import { CustomTable, SelectionActionBar } from "@/components/table";
+import { DownloadSimple } from "@/assets/custom";
+import { exportToCSV } from "@/utils/exportToCSV";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ExportMenu } from "@/features/exports/components";
 import { RouteConstants } from "@/shared/constants/routes";
 import { useInvoiceList } from "@/features/invoices/components/invoice-list/useInvoiceList";
 import {
   INVOICE_CSV_HEADERS,
+  toCsvRow,
   useInvoiceListColumns,
 } from "@/features/invoices/components/invoice-list/columns";
 import { InvoiceFilters } from "@/features/invoices/components/invoice-list/InvoiceFilters";
@@ -46,12 +49,6 @@ export function InvoiceListTemplate() {
   const columns = useInvoiceListColumns();
 
   const selectionCount = selectedInvoices.length;
-  const downloadFilename =
-    selectionCount > 0 ? "invoices-selected" : "invoices";
-  const downloadLabel =
-    selectionCount > 0
-      ? `Export ${selectionCount} selected`
-      : "Export current view";
 
   return (
     <>
@@ -63,9 +60,8 @@ export function InvoiceListTemplate() {
             <Flex gap="2" wrap="wrap">
               <ExportMenu
                 data={csvData}
-                filename={downloadFilename}
+                filename="invoices"
                 headers={INVOICE_CSV_HEADERS}
-                currentViewLabel={downloadLabel}
                 module="invoices"
               />
               <Button
@@ -131,6 +127,7 @@ export function InvoiceListTemplate() {
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
               getRowId={(row) => row.id}
+              showSelectionSummary={false}
               enableActions
               actions={tableActions}
               onRowClick={(row) => navigateToDetail(row.original)}
@@ -149,6 +146,26 @@ export function InvoiceListTemplate() {
           </Box>
         </Box>
       </Stack>
+
+      <SelectionActionBar
+        count={selectionCount}
+        onClear={() => setRowSelection({})}
+      >
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            exportToCSV(
+              selectedInvoices.map(toCsvRow),
+              "invoices-selected",
+              INVOICE_CSV_HEADERS,
+            )
+          }
+        >
+          <DownloadSimple boxSize="3.5" />
+          Export ({selectionCount})
+        </Button>
+      </SelectionActionBar>
 
       <DeleteInvoiceConfirm
         target={
