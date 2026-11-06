@@ -15,6 +15,7 @@ import type {
   JobCardPriority,
   JobCardStatus,
 } from "@/shared/interface/job-card";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 const validationSchema = Yup.object({
   clientId: Yup.string(),
@@ -132,7 +133,7 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
       (customer) => ({
         label: customer.displayName,
         value: customer.id,
-        subLabel: customer.phone ?? undefined,
+        subLabel: formatPhoneDisplay(customer.phone) || undefined,
       }),
     );
     // Keep the currently-selected customer visible even when it isn't in the

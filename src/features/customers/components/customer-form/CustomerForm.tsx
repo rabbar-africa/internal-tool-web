@@ -13,6 +13,7 @@ import * as Yup from "yup";
 import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import type { CustomerType } from "@/shared/interface/customer";
+import { phoneField } from "@/utils/phone";
 
 export interface CustomerFormValues {
   firstName: string;
@@ -47,7 +48,6 @@ const validationSchema = Yup.object({
   lastName: Yup.string().required("Last name is required"),
   displayName: Yup.string().required("Display name is required"),
   email: Yup.string().email("Invalid email"),
-  phone: Yup.string(),
   type: Yup.string().required("Customer type is required"),
   stage: Yup.string().required("Stage is required"),
   address: Yup.string(),
@@ -119,7 +119,9 @@ export function CustomerForm({
   const formik = useFormik({
     enableReinitialize: true,
     initialValues,
-    validationSchema,
+    validationSchema: validationSchema.shape({
+      phone: phoneField(initialValues.phone),
+    }),
     onSubmit,
   });
 

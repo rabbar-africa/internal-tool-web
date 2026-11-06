@@ -15,6 +15,7 @@ import { useUrlState } from "@/hooks/useUrlState";
 import Status from "@/components/common/Status";
 import { EditCustomerModal } from "@/features/customers/components/customer-list/EditCustomerModal";
 import type { ICustomer } from "@/shared/interface/customer";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 const STAGE_BADGE: Record<string, { bg: string; color: string }> = {
   CUSTOMER: { bg: "blue.50", color: "blue.600" },
@@ -36,7 +37,7 @@ const columns: ColumnDef<ICustomer>[] = [
     header: "Phone",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.500">
-        {(getValue() as string | null) ?? "—"}
+        {formatPhoneDisplay(getValue() as string | null) || "—"}
       </Text>
     ),
   },

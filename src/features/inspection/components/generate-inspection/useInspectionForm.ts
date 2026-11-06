@@ -25,6 +25,7 @@ import type {
   InspectionPayload,
 } from "./inspection-form.types";
 import { answersFromChecklists, answersToEntries } from "../../util/inspection";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 const EMPTY_FINDING: Finding = { component: "", observation: "", status: "" };
 
@@ -346,7 +347,10 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
     if (customer) {
       void formik.setFieldValue("customerName", customer.displayName);
       void formik.setFieldValue("customerEmail", customer.email ?? "");
-      void formik.setFieldValue("customerPhone", customer.phone ?? "");
+      void formik.setFieldValue(
+        "customerPhone",
+        formatPhoneDisplay(customer.phone),
+      );
     }
   };
 
@@ -359,7 +363,10 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
     void formik.setFieldValue("clientId", customer.id);
     void formik.setFieldValue("customerName", customer.displayName);
     void formik.setFieldValue("customerEmail", customer.email ?? "");
-    void formik.setFieldValue("customerPhone", customer.phone ?? "");
+    void formik.setFieldValue(
+      "customerPhone",
+      formatPhoneDisplay(customer.phone),
+    );
     clearVehicleFields();
     setAddCustomerOpen(false);
   };

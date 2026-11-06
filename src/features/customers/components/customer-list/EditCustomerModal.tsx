@@ -5,6 +5,8 @@ import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { useUpdateCustomerMutation } from "../../api/query";
 import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
+import { phoneField } from "@/utils/phone";
+import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 interface CustomerRow {
   id: string;
@@ -31,7 +33,6 @@ const validationSchema = Yup.object({
   lastName: Yup.string().required("Last name is required"),
   displayName: Yup.string().required("Display name is required"),
   email: Yup.string().email("Invalid email"),
-  phone: Yup.string(),
   stage: Yup.string().required("Stage is required"),
   address: Yup.string(),
   city: Yup.string(),
@@ -61,14 +62,16 @@ export function EditCustomerModal({
       lastName: customer.lastName ?? "",
       displayName: customer.displayName ?? "",
       email: customer.email ?? "",
-      phone: customer.phone ?? "",
+      phone: formatPhoneDisplay(customer.phone),
       stage: customer.stage ?? "",
       address: customer.address ?? "",
       city: customer.city ?? "",
       state: customer.state ?? "",
       country: customer.country ?? "Nigeria",
     },
-    validationSchema,
+    validationSchema: validationSchema.shape({
+      phone: phoneField(formatPhoneDisplay(customer.phone)),
+    }),
     onSubmit: async (values) => {
       await mutateAsync(
         removeFalsyAndEmptyArrayFields({
