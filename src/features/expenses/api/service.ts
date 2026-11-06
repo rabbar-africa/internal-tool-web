@@ -8,6 +8,7 @@ import type {
   InvoiceCosts,
   RecordInvoiceCostsPayload,
   RecordInvoiceCostsResponse,
+  RegroupInvoiceCostsPayload,
   UpdateExpensePayload,
 } from "@/shared/interface/expense";
 
@@ -62,6 +63,18 @@ export const createExpensesBulk = async (expenses: CreateExpensePayload[]) => {
 export const getInvoiceCosts = async (invoiceId: string) => {
   const response = await axios.get<ApiResponse<InvoiceCosts>>(
     `/invoices/${invoiceId}/expenses`,
+  );
+  return response.data;
+};
+
+/** Changes the items a "bought together" group covers. */
+export const regroupInvoiceCosts = async (
+  invoiceId: string,
+  payload: RegroupInvoiceCostsPayload,
+) => {
+  const response = await axios.put<ApiResponse<InvoiceCosts>>(
+    `/invoices/${invoiceId}/expenses/group`,
+    payload,
   );
   return response.data;
 };

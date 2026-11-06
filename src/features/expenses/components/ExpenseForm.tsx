@@ -114,7 +114,16 @@ export function ExpenseForm({
   onCancel,
 }: ExpenseFormProps) {
   const isEdit = Boolean(expense);
-  const isSharedExpense = Boolean(expense?.sharedLines?.length);
+  // What it was spent for: one line, several bought together, or none.
+  const originalLineIds = useMemo(
+    () =>
+      expense?.sharedLines?.length
+        ? expense.sharedLines.map((line) => line.id)
+        : expense?.invoiceLineItemId
+          ? [expense.invoiceLineItemId]
+          : [],
+    [expense?.sharedLines, expense?.invoiceLineItemId],
+  );
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -164,6 +173,21 @@ export function ExpenseForm({
 
   const today = new Date().toISOString().split("T")[0];
 
+  /** Whether what it was spent for differs from what was saved. */
+  const linesChanged = (values: {
+    invoiceId: string;
+    invoiceLineItemIds: string[];
+  }) => {
+    if (!expense) return values.invoiceLineItemIds.length > 0;
+    // On another invoice, the old lines can't be what it covers now.
+    if (values.invoiceId !== (expense.invoiceId ?? "")) return true;
+    const before = new Set(originalLineIds);
+    return (
+      values.invoiceLineItemIds.length !== before.size ||
+      values.invoiceLineItemIds.some((id) => !before.has(id))
+    );
+  };
+
   const formik = useFormik({
     initialValues: {
       date: expense?.date ? expense.date.slice(0, 10) : today,
@@ -172,7 +196,7 @@ export function ExpenseForm({
       category: (expense?.category ?? "PARTS") as ExpenseCategory,
       jobCardId: expense?.jobCardId ?? defaultJobCardId ?? "",
       invoiceId: expense?.invoiceId ?? "",
-      invoiceLineItemId: expense?.invoiceLineItemId ?? "",
+      invoiceLineItemIds: originalLineIds,
       vendorName: expense?.vendorName ?? "",
       quantity: expense ? String(Number(expense.quantity)) : "1",
       unitCost: expense ? String(Number(expense.unitCost)) : "",
@@ -213,10 +237,11 @@ export function ExpenseForm({
           values.invoiceId,
           expense ? { original: expense.invoiceId } : undefined,
         ),
-        invoiceLineItemId: accountFieldForSave(
-          values.invoiceLineItemId,
-          expense ? { original: expense.invoiceLineItemId } : undefined,
-        ),
+        // Sent only when it changed: it replaces everything the expense
+        // covered, so leaving it out keeps a group exactly as it was.
+        ...(values.invoiceId && linesChanged(values)
+          ? { invoiceLineItemIds: values.invoiceLineItemIds }
+          : {}),
         vendorName: values.vendorName || undefined,
         quantity: values.quantity ? Number(values.quantity) : undefined,
         unitCost: values.unitCost ? Number(values.unitCost) : undefined,
@@ -279,6 +304,24 @@ export function ExpenseForm({
       })),
     [linkedInvoice?.lineItems],
   );
+
+  /** The name an expense gets from its lines: theirs, joined in invoice order. */
+  const defaultNameFor = (ids: string[]) =>
+    lineItemOptions
+      .filter((line) => ids.includes(line.value))
+      .map((line) => line.label)
+      .join(", ");
+
+  // Picking items is how a group gains or loses one. A name that was only
+  // ever the items' names follows them; one somebody typed stays.
+  const handleLinesChange = (ids: string[]) => {
+    const previous = formik.values.invoiceLineItemIds;
+    const name = formik.values.name.trim();
+    if (ids.length && (!name || name === defaultNameFor(previous))) {
+      formik.setFieldValue("name", defaultNameFor(ids));
+    }
+    formik.setFieldValue("invoiceLineItemIds", ids);
+  };
 
   const isBusy = isSubmitting || isUploading;
 
@@ -450,7 +493,7 @@ export function ExpenseForm({
                   value={formik.values.invoiceId || undefined}
                   onChange={(value) => {
                     formik.setFieldValue("invoiceId", value);
-                    formik.setFieldValue("invoiceLineItemId", "");
+                    formik.setFieldValue("invoiceLineItemIds", []);
                   }}
                   onSearchChange={setInvoiceSearch}
                   searchDebounceMs={400}
@@ -466,7 +509,7 @@ export function ExpenseForm({
                     color="gray.400"
                     onClick={() => {
                       formik.setFieldValue("invoiceId", "");
-                      formik.setFieldValue("invoiceLineItemId", "");
+                      formik.setFieldValue("invoiceLineItemIds", []);
                     }}
                   >
                     Unlink invoice
@@ -474,31 +517,26 @@ export function ExpenseForm({
                 )}
               </Box>
               <CustomSelect
-                label="Invoice Item (optional)"
+                label="Invoice Items (optional)"
                 placeholder={
                   formik.values.invoiceId
-                    ? "Select item..."
+                    ? "Select items..."
                     : "Choose an invoice first"
                 }
-                disabled={!formik.values.invoiceId || isSharedExpense}
+                multiple
+                disabled={!formik.values.invoiceId}
                 helperText={
-                  isSharedExpense
-                    ? `Bought together: ${expense?.sharedLines
-                        ?.map((line) => line.name)
-                        .join(", ")}`
-                    : undefined
+                  formik.values.invoiceLineItemIds.length > 1
+                    ? "Bought together for one price: the amount covers all of them"
+                    : formik.values.invoiceId
+                      ? "Pick several if they were bought together for one price"
+                      : undefined
                 }
                 options={lineItemOptions}
-                value={
-                  formik.values.invoiceLineItemId
-                    ? [formik.values.invoiceLineItemId]
-                    : undefined
-                }
-                onChange={(opt: { value: string[] }) =>
-                  formik.setFieldValue(
-                    "invoiceLineItemId",
-                    opt?.value?.[0] ?? "",
-                  )
+                value={formik.values.invoiceLineItemIds}
+                // Multiple mode hands over the values themselves.
+                onChange={(ids: string[] | undefined) =>
+                  handleLinesChange(ids ?? [])
                 }
               />
               <Box gridColumn={{ sm: "1 / -1" }}>

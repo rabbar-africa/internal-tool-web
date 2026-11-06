@@ -5,6 +5,7 @@ import {
   deleteExpense,
   getInvoiceCosts,
   recordInvoiceCosts,
+  regroupInvoiceCosts,
   getExpenseById,
   getExpenses,
   updateExpense,
@@ -13,6 +14,7 @@ import type {
   CreateExpensePayload,
   IGetExpenseFilter,
   RecordInvoiceCostsPayload,
+  RegroupInvoiceCostsPayload,
   UpdateExpensePayload,
 } from "@/shared/interface/expense";
 import { customQueryKey } from "@/shared/constants/query-keys";
@@ -101,5 +103,20 @@ export const useRecordInvoiceCostsMutation = () =>
     meta: {
       successMessage: "Costs recorded",
       invalidatesQueryKeys: invalidates.expenseCreated,
+    },
+  });
+
+export const useRegroupInvoiceCostsMutation = () =>
+  useMutation({
+    mutationFn: ({
+      invoiceId,
+      payload,
+    }: {
+      invoiceId: string;
+      payload: RegroupInvoiceCostsPayload;
+    }) => regroupInvoiceCosts(invoiceId, payload),
+    meta: {
+      successMessage: "Items updated",
+      invalidatesQueryKeys: invalidates.expense,
     },
   });

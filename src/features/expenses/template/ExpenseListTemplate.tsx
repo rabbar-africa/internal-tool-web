@@ -201,6 +201,25 @@ export function ExpenseListTemplate() {
   }));
 
   const tableActions: TableAction<Expense>[] = [
+    // Only on expenses linked to one; the job card follows the invoice's.
+    {
+      label: "View invoice",
+      value: "view-invoice",
+      hidden: (expense) => !expense.invoiceId,
+      onClick: (expense) =>
+        navigate(
+          RouteConstants.invoices.detail.generate({ id: expense.invoiceId! }),
+        ),
+    },
+    {
+      label: "View job card",
+      value: "view-job-card",
+      hidden: (expense) => !expense.jobCardId,
+      onClick: (expense) =>
+        navigate(
+          RouteConstants.jobCards.detail.generate({ id: expense.jobCardId! }),
+        ),
+    },
     {
       label: "Edit",
       value: "edit",
