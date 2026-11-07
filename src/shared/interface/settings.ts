@@ -303,3 +303,46 @@ export interface OrgTemplatePayload {
   design?: InvoiceDesign;
   isDefault?: boolean;
 }
+
+// ─── Deleting the business ──────────────────────────────────────────────────
+
+/** `GET /organizations/me/deletion`. */
+export interface BusinessDeletionStatus {
+  /** This user is the owner: may request a deletion, or cancel one. */
+  canRequest: boolean;
+  graceDays: number;
+  scheduled: {
+    scheduledFor: string;
+    requestedAt: string;
+    /** Masked, e.g. "ba***@motors.ng". */
+    requestedBy: string;
+  } | null;
+}
+
+/** What goes, by kind of record. */
+export interface BusinessDeletionCounts {
+  users: number;
+  customers: number;
+  vehicles: number;
+  invoices: number;
+  paymentsReceived: number;
+  jobCards: number;
+  inspections: number;
+  expenses: number;
+}
+
+/** `POST /organizations/me/deletion/request-code`. */
+export interface BusinessDeletionCode {
+  sentTo: string;
+  expiresInMinutes: number;
+  graceDays: number;
+  willDelete: BusinessDeletionCounts;
+}
+
+export interface ScheduleBusinessDeletionPayload {
+  otp: string;
+  /** The business name, typed out exactly. */
+  confirmName: string;
+  /** Optional, up to 500 characters. */
+  reason?: string;
+}
