@@ -1,5 +1,5 @@
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SectionLoader from "@/components/common/SectionLoader";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { CreateExpensePayload } from "@/shared/interface/expense";
@@ -9,6 +9,16 @@ import { ExpenseForm } from "../components/ExpenseForm";
 export function EditExpenseTemplate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  // Set when opened from a job card's expense tab: back there afterwards,
+  // as creating one from there does.
+  const [searchParams] = useSearchParams();
+  const fromJobCardId = searchParams.get("jobCardId") ?? "";
+  const backPath = fromJobCardId
+    ? RouteConstants.jobCards.detail.generate(
+        { id: fromJobCardId },
+        { tab: "expenses" },
+      )
+    : RouteConstants.expenses.base.path;
   const { data, isLoading } = useGetExpenseByIdQuery(id ?? "");
   const { mutateAsync: updateExpense, isPending } = useUpdateExpenseMutation();
 
@@ -21,7 +31,7 @@ export function EditExpenseTemplate() {
 
   const handleSubmit = async (payload: CreateExpensePayload) => {
     await updateExpense({ id: expense.id, payload });
-    navigate(RouteConstants.expenses.base.path);
+    navigate(backPath);
   };
 
   return (
@@ -40,11 +50,7 @@ export function EditExpenseTemplate() {
             Update the expense details
           </Text>
         </Box>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(RouteConstants.expenses.base.path)}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate(backPath)}>
           Cancel
         </Button>
       </Flex>
@@ -53,7 +59,7 @@ export function EditExpenseTemplate() {
         expense={expense}
         isSubmitting={isPending}
         onSubmit={handleSubmit}
-        onCancel={() => navigate(RouteConstants.expenses.base.path)}
+        onCancel={() => navigate(backPath)}
       />
     </Stack>
   );
