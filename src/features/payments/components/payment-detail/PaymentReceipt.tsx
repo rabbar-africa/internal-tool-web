@@ -8,10 +8,7 @@ import { Link } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import rabbarLogo from "@/assets/logo.png";
-import {
-  RABBAR_JOBCARD_DISPLAY,
-  RABBAR_JOBCARD_URL,
-} from "@/shared/constants/brand";
+import { RABBAR_SITE_DISPLAY, RABBAR_SITE_URL } from "@/shared/constants/brand";
 
 const toNum = (v: string | null | undefined) => Number(v ?? 0) || 0;
 const formatDate = (v?: string) => (v ? moment(v).format("DD MMM YYYY") : "—");
@@ -319,11 +316,11 @@ export function PaymentReceipt({ payment }: PaymentReceiptProps) {
             </Flex>
             <Text asChild fontSize="11px" color="primary.400" fontWeight="600">
               <a
-                href={RABBAR_JOBCARD_URL}
+                href={RABBAR_SITE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {RABBAR_JOBCARD_DISPLAY}
+                {RABBAR_SITE_DISPLAY}
               </a>
             </Text>
           </Flex>
