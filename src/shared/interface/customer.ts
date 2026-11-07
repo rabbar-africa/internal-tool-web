@@ -146,3 +146,60 @@ export interface CustomerStatement {
   /** For whoever is sending it: these never appear on the PDF. */
   warnings: { unlinkedInvoices: number; sameNameCustomers: number };
 }
+
+// ─── Erasing a customer (they asked to be forgotten) ────────────────────────
+
+/** `GET /clients/:id/erase-impact`: what erasing would do. */
+export interface CustomerEraseImpact {
+  customer: { id: string; name: string };
+  /** Deleted for good. */
+  erase: {
+    customer: number;
+    vehicles: number;
+    paperwork: number;
+    reminders: number;
+    files: number;
+  };
+  /** Kept, with the customer's details removed. */
+  anonymise: {
+    jobCards: number;
+    inspections: number;
+    invoiceAddresses: number;
+  };
+  /** Kept as they are, because tax law requires them. */
+  keep: { invoices: number; paymentsReceived: number };
+  /** Records carrying the same name but not linked, so left alone. */
+  warnings: {
+    unlinkedSameName: {
+      invoices: number;
+      jobCards: number;
+      inspections: number;
+    };
+  };
+}
+
+export interface EraseCustomerPayload {
+  /** The customer's name; case and extra spaces don't matter. */
+  confirmName: string;
+  /** Optional; must not name the customer. */
+  reason?: string;
+}
+
+/** What erasing actually did. */
+export interface CustomerErasureResult {
+  erasureId: string;
+  erasedAt: string;
+  erased: {
+    customer: number;
+    vehicles: number;
+    paperwork: number;
+    reminders: number;
+  };
+  anonymised: {
+    jobCards: number;
+    inspections: number;
+    invoiceAddresses: number;
+  };
+  kept: { invoices: number; paymentsReceived: number };
+  files: { deleted: number; notFound: number; skipped: number; failed: number };
+}

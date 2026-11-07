@@ -29,8 +29,4 @@ export const describeCounts = (counts: BusinessDeletionCounts) =>
     })
     .join(", ");
 
-/** The same leniency the server allows: case and spacing don't matter. */
-export const sameName = (a: string, b: string) => {
-  const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
-  return normalize(a) === normalize(b);
-};
+export { sameName } from "@/utils/string-formatter";
