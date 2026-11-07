@@ -1,8 +1,22 @@
 import { useRef, useState } from "react";
-import { Box, Button, Flex, Grid, Image, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Image,
+  Link as ChakraLink,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { CustomInput } from "@/components/input";
+import { CustomCheckbox, CustomInput } from "@/components/input";
+import {
+  DATA_PROCESSING_URL,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/shared/constants/legal";
 import { EyeIcon, EyeOff } from "@/assets/custom";
 import { useRegisterMutation } from "../../api";
 import { useUploadOrganizationLogo } from "@/features/settings/api";
@@ -33,6 +47,10 @@ const validationSchema = Yup.object({
   promoCode: Yup.string()
     .trim()
     .max(32, "Promo codes are at most 32 characters"),
+  acceptTerms: Yup.boolean().oneOf(
+    [true],
+    "Please accept the Terms, Privacy Policy and Data Processing Terms to continue",
+  ),
 });
 
 // Derive a URL-safe slug from the org name, with a random fallback.
@@ -85,6 +103,8 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
       ownerLastName: "",
       ownerPassword: "",
       promoCode: "",
+      // Never pre-ticked: acceptance has to be the owner's own action.
+      acceptTerms: false,
     },
     validationSchema,
     validateOnChange: false,
@@ -105,6 +125,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         ownerPassword: values.ownerPassword,
         ownerPhone: values.phone.trim(),
         promoCode: values.promoCode.trim().toUpperCase() || undefined,
+        acceptTerms: true,
       };
 
       try {
@@ -417,6 +438,30 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
           )}
         </Box>
 
+        <CustomCheckbox
+          checked={formik.values.acceptTerms}
+          onCheckedChange={(e: { checked: boolean | "indeterminate" }) =>
+            formik.setFieldValue("acceptTerms", e.checked === true)
+          }
+          // Only while unticked: with validateOnChange off, the error from the
+          // last submit lingers after ticking and would keep the box red.
+          error={
+            formik.submitCount > 0 &&
+            !formik.values.acceptTerms &&
+            formik.errors.acceptTerms
+              ? formik.errors.acceptTerms
+              : undefined
+          }
+        >
+          I agree to Rabbar's{" "}
+          <LegalLink href={TERMS_URL}>Terms of Service</LegalLink>,{" "}
+          <LegalLink href={PRIVACY_URL}>Privacy Policy</LegalLink> and{" "}
+          <LegalLink href={DATA_PROCESSING_URL}>
+            Data Processing Terms
+          </LegalLink>
+          .
+        </CustomCheckbox>
+
         <Button
           type="submit"
           variant="accent"
@@ -428,5 +473,23 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         </Button>
       </Stack>
     </form>
+  );
+}
+
+/** Opens a legal page in a new tab, so the half-filled form isn't lost. */
+function LegalLink({ href, children }: { href: string; children: string }) {
+  return (
+    <ChakraLink
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      color="primary.300"
+      fontWeight="600"
+      textDecoration="underline"
+      // Following the link must not also tick or untick the box.
+      onClick={(e) => e.stopPropagation()}
+    >
+      {children}
+    </ChakraLink>
   );
 }

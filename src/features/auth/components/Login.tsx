@@ -53,13 +53,13 @@ export function Login() {
           Welcome back
         </Text>
         <Text mt="0.625rem" fontSize="0.9375rem" color="gray.300">
-          Sign in to pick up where your workshop left off.
+          Sign in to pick up where your business left off.
         </Text>
 
         <chakra.form mt="2.25rem" onSubmit={formik.handleSubmit}>
           <CustomInput
             label="Email"
-            placeholder="you@workshop.com"
+            placeholder="you@business.com"
             required={true}
             disabled={loginMutation.isPending}
             error={formik.touched.email ? formik.errors.email : undefined}
@@ -148,10 +148,10 @@ export function Login() {
             mt="1.75rem"
             color="gray.300"
           >
-            New to Jobcard?{" "}
+            New to Rabbar?{" "}
             <Text asChild color="primary.300" fontWeight="600">
               <Link to={RouteConstants.auth.signup.path}>
-                Create a workshop
+                Create an account
               </Link>
             </Text>
           </Text>

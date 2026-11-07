@@ -8,6 +8,9 @@ import type {
 import { type GetOrganizationDetailsResponse } from "@/shared/interface/response";
 import type {
   BankOption,
+  BusinessDeletionCode,
+  BusinessDeletionStatus,
+  ScheduleBusinessDeletionPayload,
   ResolvedBankAccount,
   CreateOrgAddressPayload,
   CreateOrgBankAccountPayload,
@@ -316,4 +319,38 @@ export const resolveBankAccount = async (
     params: { accountNumber, bankCode },
   });
   return response.data?.data ?? response.data;
+};
+
+// ─── Deleting the business (owner only) ─────────────────────────────────────
+
+export const getBusinessDeletionStatus = async () => {
+  const response = await axios.get<ApiResponse<BusinessDeletionStatus>>(
+    "/organizations/me/deletion",
+  );
+  return response.data;
+};
+
+/** Emails the owner a 6-digit code, and says what deleting would remove. */
+export const requestBusinessDeletionCode = async () => {
+  const response = await axios.post<ApiResponse<BusinessDeletionCode>>(
+    "/organizations/me/deletion/request-code",
+  );
+  return response.data;
+};
+
+/** Schedules the deletion for after the grace period. */
+export const scheduleBusinessDeletion = async (
+  payload: ScheduleBusinessDeletionPayload,
+) => {
+  const response = await axios.post<
+    ApiResponse<{ scheduledFor: string; graceDays: number }>
+  >("/organizations/me/deletion", payload);
+  return response.data;
+};
+
+export const cancelBusinessDeletion = async () => {
+  const response = await axios.delete<ApiResponse<{ cancelled: boolean }>>(
+    "/organizations/me/deletion",
+  );
+  return response.data;
 };

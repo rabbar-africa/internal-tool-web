@@ -4,6 +4,9 @@ import type {
   CustomerStatement,
   CustomerStatementParams,
   ICustomer,
+  CustomerEraseImpact,
+  CustomerErasureResult,
+  EraseCustomerPayload,
 } from "@/shared/interface/customer";
 import { downloadPdf } from "@/utils/download-pdf";
 import { axios } from "@/lib/axios";
@@ -127,3 +130,29 @@ export const downloadCustomerStatementPdf = (
     params,
     `work-history-${params.from}-to-${params.to}.pdf`,
   );
+
+/** For duplicates and mistakes: their records stay, unlinked, with the name copied on them. */
+export const deleteCustomer = async (id: string) => {
+  const response = await axios.delete(`/clients/${id}`);
+  return response.data;
+};
+
+/** What erasing the customer would delete, strip of their details, and keep. */
+export const getCustomerEraseImpact = async (id: string) => {
+  const response = await axios.get<ApiResponse<CustomerEraseImpact>>(
+    `/clients/${id}/erase-impact`,
+  );
+  return response.data;
+};
+
+/** For a customer who asked to be forgotten. Can't be undone. */
+export const eraseCustomer = async (
+  id: string,
+  payload: EraseCustomerPayload,
+) => {
+  const response = await axios.post<ApiResponse<CustomerErasureResult>>(
+    `/clients/${id}/erase`,
+    payload,
+  );
+  return response.data;
+};

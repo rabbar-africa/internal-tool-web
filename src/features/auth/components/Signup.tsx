@@ -61,7 +61,7 @@ export function Signup() {
           letterSpacing="-0.02em"
           color="primary.500"
         >
-          Set up your workshop
+          Set up your business
         </Text>
         <Text mt="0.625rem" fontSize="0.9375rem" color="gray.300">
           Two minutes to get going. Bank and address details are optional and

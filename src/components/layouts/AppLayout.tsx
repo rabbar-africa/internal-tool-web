@@ -5,6 +5,7 @@ import { Sidebar } from "./SideBar";
 import { NavBar } from "./NavBar";
 import SectionLoader from "../common/SectionLoader";
 import { BillingBanner } from "@/features/billing/components/BillingBanner";
+import { BusinessDeletionBanner } from "@/features/settings/components/delete-business/BusinessDeletionBanner";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [isMobileNavOpen, setMobileNavOpen] = useState(false);
@@ -23,6 +24,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <Stack gap={0} flex="1" minHeight={0} minWidth={0} position="relative">
           <NavBar onMenuToggle={() => setMobileNavOpen(true)} />
+          <BusinessDeletionBanner />
           <BillingBanner />
           <Box flex="1" overflow="auto" overscrollBehavior="contain">
             <UserDashboardContainer pt={"1.75rem"}>
