@@ -21,10 +21,7 @@ import type { IOrganization } from "@/shared/interface/common";
 import type { IPaymentReceived } from "@/shared/interface/payment";
 import { pdfColors as c } from "./colors";
 import rabbarLogo from "@/assets/logo.png";
-import {
-  RABBAR_JOBCARD_DISPLAY,
-  RABBAR_JOBCARD_URL,
-} from "@/shared/constants/brand";
+import { RABBAR_SITE_DISPLAY, RABBAR_SITE_URL } from "@/shared/constants/brand";
 // Reuse the Poppins registration from the invoice PDF (same brand font).
 import { registerPdfFonts } from "@/features/invoices/components/invoice-detail/pdf/registerFonts";
 
@@ -383,8 +380,8 @@ export function PaymentReceiptDocument({
               <Text style={styles.brandPoweredBy}>Powered by</Text>
               <Image src={rabbarLogo} style={styles.brandFooterLogo} />
             </View>
-            <Link src={RABBAR_JOBCARD_URL} style={styles.brandFooterLink}>
-              {RABBAR_JOBCARD_DISPLAY}
+            <Link src={RABBAR_SITE_URL} style={styles.brandFooterLink}>
+              {RABBAR_SITE_DISPLAY}
             </Link>
           </View>
         ) : null}

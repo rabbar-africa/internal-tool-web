@@ -5,6 +5,10 @@ import RequirePermission from "@/routes/RequirePermission";
 import { BillingSettingsRoutes } from "@/features/billing/routes";
 
 const { Settings } = lazyImport(() => import("../pages/Settings"), "Settings");
+const { DeleteBusinessPage } = lazyImport(
+  () => import("../pages/DeleteBusinessPage"),
+  "DeleteBusinessPage",
+);
 const { GeneralConfigPage } = lazyImport(
   () => import("../pages/GeneralConfigPage"),
   "GeneralConfigPage",
@@ -85,6 +89,10 @@ export const SettingsRoutes: RouteObject[] = [
   {
     path: settings.taxes.path,
     element: <TaxesPage />,
+  },
+  {
+    path: settings.deleteBusiness.path,
+    element: <DeleteBusinessPage />,
   },
   {
     path: settings.invoiceTemplates.path,

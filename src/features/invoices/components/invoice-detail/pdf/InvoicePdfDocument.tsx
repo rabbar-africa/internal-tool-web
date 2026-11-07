@@ -15,10 +15,7 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import rabbarLogo from "@/assets/logo.png";
-import {
-  RABBAR_JOBCARD_DISPLAY,
-  RABBAR_JOBCARD_URL,
-} from "@/shared/constants/brand";
+import { RABBAR_SITE_DISPLAY, RABBAR_SITE_URL } from "@/shared/constants/brand";
 import moment from "moment";
 import { formatMoney } from "@/hooks/useFormatMoney";
 import type { IOrganization } from "@/shared/interface/common";
@@ -570,8 +567,8 @@ export function InvoicePdfDocument({
               <Text style={s.brandPoweredBy}>Powered by</Text>
               <Image src={rabbarLogo} style={s.brandFooterLogo} />
             </View>
-            <Link src={RABBAR_JOBCARD_URL} style={s.brandFooterLink}>
-              {RABBAR_JOBCARD_DISPLAY}
+            <Link src={RABBAR_SITE_URL} style={s.brandFooterLink}>
+              {RABBAR_SITE_DISPLAY}
             </Link>
           </View>
         ) : null}

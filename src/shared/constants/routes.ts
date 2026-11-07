@@ -177,6 +177,7 @@ const settings = {
     "/settings/invoice-templates/:id/edit" as const,
   ),
   transactionSeries: defineRoute("/settings/transaction-series" as const),
+  deleteBusiness: defineRoute("/settings/delete-business" as const),
   profileSettings: defineRoute("/settings/profile" as const),
   accountSettings: defineRoute("/settings/account" as const),
   teamManagement: defineRoute("/settings/team-management" as const),

@@ -74,7 +74,7 @@ export function WhatsAppAssistantBanner() {
           {/* Right padding keeps the copy clear of the dismiss button. */}
           <Box pr={{ base: "8", md: "10" }}>
             <Text fontSize="0.9375rem" fontWeight="600" color="gray.500">
-              Run your workshop from WhatsApp
+              Run your business from WhatsApp
             </Text>
             <Text
               fontSize="0.8125rem"
