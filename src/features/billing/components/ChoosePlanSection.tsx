@@ -346,7 +346,7 @@ export function ChoosePlanSection({
             ? "Change or renew your plan"
             : "Upgrade your plan"
         }
-        subtitle="Pick the plan that fits your workshop. You'll see what you'd pay before you pay anything."
+        subtitle="Pick the plan that fits your business. You'll see what you'd pay before you pay anything."
       />
 
       {isLoading ? (

@@ -47,7 +47,7 @@ export function CreateExpenseTemplate() {
             Add Expense
           </Text>
           <Text textStyle="small-regular" color="gray.300" mt="1">
-            Record a cost incurred by the workshop
+            Record a cost incurred by the business
           </Text>
         </Box>
         <Button variant="outline" size="sm" onClick={() => navigate(backPath)}>
