@@ -12,6 +12,8 @@ import { UserCirclePlus } from "@/assets/custom/UserCirclePlus";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
 import { CheckCircle } from "@/assets/custom/CheckCircle";
 import { usePermissions } from "@/hooks/usePermissions";
+import { TrashIcon } from "@/assets/custom/TrashIcon";
+import { useBusinessDeletionStatusQuery } from "../api/query";
 import { SettingsCard, type SettingsCardItem } from "./SettingsCard";
 
 const { settings } = RouteConstants;
@@ -127,13 +129,33 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
 
 export function SettingsPage() {
   const { hasAny } = usePermissions();
+  // The owner alone may delete the business, so only they see the way in.
+  const { data: deletion } = useBusinessDeletionStatusQuery();
+  const ownerGroups: SettingsGroup[] = deletion?.data?.canRequest
+    ? [
+        {
+          title: "Danger zone",
+          items: [
+            {
+              title: "Delete Business",
+              description:
+                "Delete your business and all its data, after a 14-day wait you can cancel.",
+              icon: TrashIcon,
+              href: settings.deleteBusiness.path,
+            },
+          ],
+        },
+      ]
+    : [];
 
   // A card the user can't act on is noise — and the route would bounce them
   // straight back anyway.
-  const groups = SETTINGS_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => !item.anyOf || hasAny(item.anyOf)),
-  })).filter((group) => group.items.length > 0);
+  const groups = [...SETTINGS_GROUPS, ...ownerGroups]
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.anyOf || hasAny(item.anyOf)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <Stack gap="8">
