@@ -13,10 +13,14 @@ import {
   updateVehicle,
   deleteVehicle,
   type CreateVehiclePayload,
+  deleteCustomer,
+  getCustomerEraseImpact,
+  eraseCustomer,
 } from "./service";
 import type {
   CreateCustomerPayload,
   CustomerStatementParams,
+  EraseCustomerPayload,
 } from "@/shared/interface/customer";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { invalidates } from "@/shared/constants/query-invalidations";
@@ -133,4 +137,46 @@ export const useDownloadCustomerStatementMutation = () =>
       clientId: string;
       params: CustomerStatementParams;
     }) => downloadCustomerStatementPdf(clientId, params),
+  });
+
+// Their invoices, job cards, payments and vehicles lose the link (and, when
+// erased, their details), so everything showing them refreshes.
+const REMOVED_CUSTOMER_INVALIDATIONS = [
+  ...invalidates.customer,
+  ...invalidates.vehicle,
+  [customQueryKey.paperwork.getAll],
+  [customQueryKey.reminders.getAll],
+  [customQueryKey.reminders.upcoming],
+  [customQueryKey.analytics.dashboard],
+];
+
+export const useDeleteCustomerMutation = () =>
+  useMutation({
+    mutationFn: (id: string) => deleteCustomer(id),
+    meta: {
+      successMessage: "Customer deleted",
+      invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS,
+    },
+  });
+
+export const useGetCustomerEraseImpactQuery = (id: string, enabled = true) =>
+  useQuery({
+    queryKey: [customQueryKey.customers.eraseImpact, id],
+    queryFn: () => getCustomerEraseImpact(id),
+    enabled: Boolean(id) && enabled,
+    // What's about to be erased must be what's there now.
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+export const useEraseCustomerMutation = () =>
+  useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: EraseCustomerPayload;
+    }) => eraseCustomer(id, payload),
+    meta: { invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS },
   });

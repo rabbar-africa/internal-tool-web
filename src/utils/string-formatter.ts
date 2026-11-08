@@ -87,3 +87,12 @@ export function pascalToCapitalized(str?: string | null): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
+
+/**
+ * Whether a typed name matches the real one, for "type the name to confirm":
+ * capitals and extra spaces don't matter, as on the server.
+ */
+export const sameName = (typed: string, actual: string) => {
+  const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+  return normalize(typed) === normalize(actual);
+};

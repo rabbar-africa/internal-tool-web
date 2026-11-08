@@ -32,6 +32,10 @@ import {
   updateOrganizationTemplate,
   updateOrganizationTransactionSeries,
   uploadOrganizationLogo,
+  cancelBusinessDeletion,
+  getBusinessDeletionStatus,
+  requestBusinessDeletionCode,
+  scheduleBusinessDeletion,
 } from "./service";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { BILLING_OVERVIEW_KEY } from "@/features/billing/api/query";
@@ -45,6 +49,7 @@ import type {
   TxnSeriesModule,
   UpdateOrgConfigPayload,
   UpsertOrgTransactionSeriesPayload,
+  ScheduleBusinessDeletionPayload,
 } from "@/shared/interface/settings";
 
 const orgKeys = customQueryKey.organizations;
@@ -432,4 +437,45 @@ export const useResolveBankAccountQuery = (
     queryFn: () => resolveBankAccount(accountNumber, bankCode as string),
     enabled: Boolean(bankCode) && /^\d{10}$/.test(accountNumber),
     staleTime: Infinity,
+  });
+
+// ─── Deleting the business ──────────────────────────────────────────────────
+
+const DELETION_KEY = [customQueryKey.organizations.deletion] as const;
+
+/**
+ * Whether a deletion is scheduled, for the banner every page shows, and
+ * whether this user is the owner, who alone may request or cancel one.
+ */
+export const useBusinessDeletionStatusQuery = (enabled = true) =>
+  useQuery({
+    queryKey: DELETION_KEY,
+    queryFn: getBusinessDeletionStatus,
+    enabled,
+  });
+
+export const useRequestBusinessDeletionCodeMutation = () =>
+  useMutation({
+    mutationFn: requestBusinessDeletionCode,
+    // A 409 means one was scheduled meanwhile: show it.
+    meta: { invalidatesQueryKeys: [DELETION_KEY] },
+  });
+
+// Scheduling pauses automatic renewal, and cancelling restores it.
+const DELETION_INVALIDATIONS = [DELETION_KEY, BILLING_OVERVIEW_KEY];
+
+export const useScheduleBusinessDeletionMutation = () =>
+  useMutation({
+    mutationFn: (payload: ScheduleBusinessDeletionPayload) =>
+      scheduleBusinessDeletion(payload),
+    meta: { invalidatesQueryKeys: DELETION_INVALIDATIONS },
+  });
+
+export const useCancelBusinessDeletionMutation = () =>
+  useMutation({
+    mutationFn: cancelBusinessDeletion,
+    meta: {
+      successMessage: "Deletion cancelled. Your business stays.",
+      invalidatesQueryKeys: DELETION_INVALIDATIONS,
+    },
   });

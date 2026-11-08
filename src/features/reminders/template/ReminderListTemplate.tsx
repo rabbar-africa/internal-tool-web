@@ -246,7 +246,7 @@ export function ReminderListTemplate() {
               <Text textStyle="small-regular" color="gray.300">
                 {activeType
                   ? `${reminderTypeLabel(activeType)} reminders`
-                  : "Every reminder across the workshop"}
+                  : "Every reminder across the business"}
               </Text>
             </Box>
           </Flex>

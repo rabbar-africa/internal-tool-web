@@ -1,9 +1,11 @@
 import { Button, type ButtonProps } from "@chakra-ui/react";
 import { useCheckoutMutation } from "../api/query";
-import type { PlanTier } from "../api/types";
+import type { BillingInterval, PlanTier } from "../api/types";
 
 interface PayNowButtonProps extends Omit<ButtonProps, "onClick"> {
   planTier: PlanTier;
+  /** How they renew; the API charges a month when it's left out. */
+  billingInterval?: BillingInterval;
 }
 
 /**
@@ -12,6 +14,7 @@ interface PayNowButtonProps extends Omit<ButtonProps, "onClick"> {
  */
 export function PayNowButton({
   planTier,
+  billingInterval,
   children = "Pay now",
   ...props
 }: PayNowButtonProps) {
@@ -24,7 +27,13 @@ export function PayNowButton({
       variant="accent"
       loading={isPending || redirecting}
       loadingText="Opening payment…"
-      onClick={() => mutate({ planTier, saveCard: false })}
+      onClick={() =>
+        mutate({
+          planTier,
+          saveCard: false,
+          ...(billingInterval ? { billingInterval } : {}),
+        })
+      }
       {...props}
     >
       {children}

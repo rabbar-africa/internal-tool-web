@@ -9,6 +9,7 @@ import {
   TONE_STYLES,
   describeDue,
 } from "../utils/copy";
+import { renewalInterval } from "../utils/interval";
 import { PayNowButton } from "./PayNowButton";
 
 /**
@@ -67,6 +68,7 @@ export function BillingBanner() {
           {canPay && (
             <PayNowButton
               planTier={renewalPlanTier}
+              billingInterval={renewalInterval(overview)}
               flexShrink={0}
               w={{ base: "full", md: "auto" }}
               px="2rem"

@@ -52,6 +52,11 @@ export interface RegisterPayload {
   ownerPhone?: string;
   /** Optional — without one, the back office's auto-apply code (if any) is used. */
   promoCode?: string;
+  /**
+   * The owner ticked "I agree to the Terms, Privacy Policy and Data
+   * Processing Terms". The API refuses a signup without it.
+   */
+  acceptTerms: true;
 }
 
 export type RegisterResponse = LoginResponse;

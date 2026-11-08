@@ -1,9 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 import { Box, Button, Flex, Tabs, Text } from "@chakra-ui/react";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import moment from "moment";
-import { CustomTable, type TableAction } from "@/components/table";
+import {
+  CustomTable,
+  SelectionActionBar,
+  type TableAction,
+} from "@/components/table";
+import ConsentDialog from "@/components/common/ConsentDialog";
+import { toaster } from "@/components/ui";
+import { TrashIcon } from "@/assets/custom/TrashIcon";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useDeleteExpensesBulkMutation } from "@/features/expenses/api/query";
 import Status from "@/components/common/Status";
 import { PlusIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -302,6 +311,32 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   );
   const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
 
+  // Expenses ticked on the Expenses tab, by id, for deleting together.
+  const { canDelete } = usePermissions();
+  const [expenseSelection, setExpenseSelection] = useState<RowSelectionState>(
+    {},
+  );
+  const [confirmDeleteExpenses, setConfirmDeleteExpenses] = useState(false);
+  const { mutateAsync: deleteExpenses, isPending: isDeletingExpenses } =
+    useDeleteExpensesBulkMutation();
+  const selectedExpenses = useMemo(
+    () => jobCard.expenses.filter((expense) => expenseSelection[expense.id]),
+    [jobCard.expenses, expenseSelection],
+  );
+
+  const handleDeleteExpenses = async () => {
+    const result = await deleteExpenses(
+      selectedExpenses.map((expense) => expense.id),
+    );
+    const deleted = result.data?.deleted ?? 0;
+    toaster.create({
+      type: "success",
+      description: `${deleted} ${deleted === 1 ? "expense" : "expenses"} deleted`,
+    });
+    setExpenseSelection({});
+    setConfirmDeleteExpenses(false);
+  };
+
   // The job card only carries each record's account id, so name them here.
   const { accounts } = useAccountOptions({ includeCash: true });
   const accountName = useCallback(
@@ -429,7 +464,13 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
       label: "Edit",
       value: "edit",
       onClick: (expense) =>
-        navigate(RouteConstants.expenses.edit.generate({ id: expense.id })),
+        navigate(
+          RouteConstants.expenses.edit.generate(
+            { id: expense.id },
+            // So saving brings them back to this job card.
+            { jobCardId: jobCard.id },
+          ),
+        ),
     },
   ];
 
@@ -473,7 +514,11 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
       >
         <Tabs.Root
           value={activeTab}
-          onValueChange={({ value }) => setActiveTab(value as TabValue)}
+          onValueChange={({ value }) => {
+            setActiveTab(value as TabValue);
+            // Ticks belong to the Expenses tab; leaving it drops them.
+            setExpenseSelection({});
+          }}
         >
           <Tabs.List
             px="6"
@@ -612,6 +657,11 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
               columns={expenseTableColumns}
               enableActions
               actions={expenseActions}
+              enableRowSelection={canDelete("expenses")}
+              rowSelection={expenseSelection}
+              onRowSelectionChange={setExpenseSelection}
+              getRowId={(row) => row.id}
+              showSelectionSummary={false}
               tableScrollAreaProps={scrollAreaProps}
             />
           </Tabs.Content>
@@ -665,6 +715,38 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
         open={attachFileOpen}
         onClose={() => setAttachFileOpen(false)}
         jobCardId={jobCard.id}
+      />
+
+      <SelectionActionBar
+        count={activeTab === "expenses" ? selectedExpenses.length : 0}
+        onClear={() => setExpenseSelection({})}
+      >
+        <Button
+          size="sm"
+          variant="outline"
+          borderColor="error.300"
+          color="error.300"
+          _hover={{ bg: "error.50" }}
+          onClick={() => setConfirmDeleteExpenses(true)}
+        >
+          <TrashIcon boxSize="3.5" />
+          Delete ({selectedExpenses.length})
+        </Button>
+      </SelectionActionBar>
+
+      <ConsentDialog
+        open={confirmDeleteExpenses}
+        onOpenChange={({ open }) => {
+          if (!open && !isDeletingExpenses) setConfirmDeleteExpenses(false);
+        }}
+        heading={`Delete ${selectedExpenses.length} ${
+          selectedExpenses.length === 1 ? "expense" : "expenses"
+        }?`}
+        note={`${formatCurrency(
+          selectedExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0),
+        )} in total. They will no longer count against this job's profit.`}
+        handleSubmit={() => void handleDeleteExpenses()}
+        isLoading={isDeletingExpenses}
       />
     </>
   );

@@ -6,13 +6,13 @@ import whiteLogo from "@/assets/white-logo.png";
 
 /**
  * Proof points on the brand panel. Kept in step with the marketing site's
- * Jobcard hero (rabbar.africa/jobcard) so signing in feels like the same
- * product the visitor just read about.
+ * hero (rabbar.africa) so signing in feels like the same product the visitor
+ * just read about.
  */
 const HIGHLIGHTS = [
-  "Job cards and photo-backed inspections, worked from the phone in your pocket",
-  "AI-drafted customer advisories your technician edits before they go out",
-  "A straight answer to which car actually made you money",
+  "A digital job card for every job, with the profit on it when it's done",
+  "Invoices and receipts from a single WhatsApp message",
+  "Branded vehicle inspection reports and paperwork expiry tracking",
 ];
 
 /** The pill badge from the marketing hero, reused in both breakpoints. */
@@ -30,10 +30,10 @@ function ProductBadge() {
       py="1"
     >
       <Text fontSize="13px" fontWeight="600" color="secondary.300">
-        Jobcard
+        Rabbar Africa
       </Text>
       <Text fontSize="13px" color="whiteAlpha.700">
-        by Rabbar Africa
+        Job cards, invoices and inspection reports
       </Text>
     </Flex>
   );
@@ -97,11 +97,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             letterSpacing="-0.02em"
             color="white"
           >
-            Run your workshop off your phone, not a{" "}
+            Run every job on a job card.{" "}
             <Text as="span" color="secondary.300">
-              carbon-copy pad
+              Get paid on WhatsApp.
             </Text>
-            .
           </Text>
 
           <Stack gap="3.5" mt="2.25rem">
@@ -174,11 +173,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             color="white"
             maxW="22rem"
           >
-            Run your workshop off your phone, not a{" "}
+            Run every job on a job card.{" "}
             <Text as="span" color="secondary.300">
-              carbon-copy pad
+              Get paid on WhatsApp.
             </Text>
-            .
           </Text>
 
           <Box mt="1.25rem">
