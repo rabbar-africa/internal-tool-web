@@ -6,6 +6,7 @@ import {
   formatPrice,
   formatShortDate,
 } from "./format";
+import { renewalInterval } from "./interval";
 
 /**
  * Plain-language copy for billing. The people reading this are busy
@@ -81,7 +82,9 @@ export function describeDue(
   if (!billing.needsPayment) return null;
 
   const plan = renewalPlanName(overview);
-  const amount = formatPrice(billing.amountDue, billing.currency);
+  const amount = `${formatPrice(billing.amountDue, billing.currency)}${
+    renewalInterval(overview) === "ANNUAL" ? " for a year" : ""
+  }`;
 
   // Checked before the overdue date test: an expired plan's due date is also
   // in the past, but it needs the "you're on Starter now" message instead.

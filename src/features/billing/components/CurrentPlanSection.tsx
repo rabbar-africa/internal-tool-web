@@ -1,6 +1,9 @@
 import { Badge, Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { SectionTitle } from "@/features/settings/components/SectionTitle";
-import { useResumeSubscriptionMutation } from "../api/query";
+import {
+  useBillingIntervalMutation,
+  useResumeSubscriptionMutation,
+} from "../api/query";
 import type { BillingOverview } from "../api/types";
 import {
   ASK_ADMIN_NOTE,
@@ -11,7 +14,14 @@ import {
   describeStatus,
   isPaidPlan,
 } from "../utils/copy";
-import { formatPrice } from "../utils/format";
+import { formatLongDate, formatPrice } from "../utils/format";
+import {
+  describeAnnualSaving,
+  describePlanPrice,
+  describeRenewalPrice,
+  renewalInterval,
+  sellsYearly,
+} from "../utils/interval";
 import { PayNowButton } from "./PayNowButton";
 
 interface CurrentPlanSectionProps {
@@ -26,10 +36,43 @@ export function CurrentPlanSection({
   const { plan, pendingPlan, billing, activePromo } = overview;
   const { mutate: resume, isPending: resuming } =
     useResumeSubscriptionMutation();
+  const { mutate: switchInterval, isPending: switchingInterval } =
+    useBillingIntervalMutation();
 
   const status = describeStatus(overview);
   const statusTone = TONE_STYLES[status.tone];
   const due = describeDue(overview);
+  const interval = renewalInterval(overview);
+  const renewing = pendingPlan ?? plan;
+  const renewsOn =
+    overview.status === "ACTIVE" &&
+    isPaidPlan(plan) &&
+    !overview.cancelAtPeriodEnd &&
+    overview.currentPeriodEnd
+      ? formatLongDate(overview.currentPeriodEnd)
+      : "";
+  // Switching only changes the next renewal, never what's already paid for.
+  const yearlySaving = describeAnnualSaving(
+    {
+      annualSaving: billing.annualSaving ?? renewing.annualSaving,
+      annualMonthsFree: renewing.annualMonthsFree,
+    },
+    renewing.currency,
+  );
+  const intervalSwitch =
+    canManage && isPaidPlan(renewing) && !overview.cancelAtPeriodEnd
+      ? interval === "ANNUAL"
+        ? { to: "MONTHLY" as const, label: "Renew monthly instead" }
+        : sellsYearly({
+              annualPrice: billing.annualPrice ?? renewing.annualPrice,
+            })
+          ? {
+              to: "ANNUAL" as const,
+              label: `Renew yearly instead${yearlySaving ? ` (${yearlySaving.toLowerCase()})` : ""}`,
+            }
+          : null
+      : null;
+
   const hasScheduledChange =
     overview.status === "ACTIVE" &&
     (overview.cancelAtPeriodEnd || Boolean(pendingPlan));
@@ -54,7 +97,16 @@ export function CurrentPlanSection({
       </Flex>
       {isPaidPlan(plan) && (
         <Text fontSize="13px" color="gray.300" mt="0.5">
-          {formatPrice(plan.monthlyPrice, plan.currency)} a month
+          {describePlanPrice(
+            {
+              ...plan,
+              // The summary prices the plan that renews: this one, unless a
+              // downgrade is scheduled.
+              annualPrice:
+                plan.annualPrice ?? (pendingPlan ? null : billing.annualPrice),
+            },
+            interval,
+          )}
         </Text>
       )}
 
@@ -64,7 +116,34 @@ export function CurrentPlanSection({
             {line}
           </Text>
         ))}
+        {renewsOn && (
+          <Text fontSize="14px" color="gray.500" lineHeight="1.6">
+            Renews {renewsOn} — {describeRenewalPrice(overview)}
+          </Text>
+        )}
       </Stack>
+
+      {intervalSwitch && (
+        <Box mt="2">
+          <Button
+            variant="ghost"
+            size="sm"
+            px="0"
+            py="1"
+            h="auto"
+            fontWeight="600"
+            color="primary.300"
+            loading={switchingInterval}
+            onClick={() => switchInterval(intervalSwitch.to)}
+          >
+            {intervalSwitch.label}
+          </Button>
+          <Text fontSize="12px" color="gray.300">
+            Only your next renewal changes. What you&rsquo;ve already paid for
+            stays as it is.
+          </Text>
+        </Box>
+      )}
 
       {hasScheduledChange && canManage && (
         <Button
@@ -124,6 +203,7 @@ export function CurrentPlanSection({
             <>
               <PayNowButton
                 planTier={billing.renewalPlanTier}
+                billingInterval={interval}
                 mt="4"
                 w={{ base: "full", sm: "auto" }}
                 px="2.5rem"

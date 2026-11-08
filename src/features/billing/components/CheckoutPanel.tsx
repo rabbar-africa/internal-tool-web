@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Flex,
+  Link,
   Separator,
   Spinner,
   Stack,
@@ -12,11 +13,14 @@ import { CustomCheckbox } from "@/components/input/CustomCheckBox";
 import { CustomInput } from "@/components/input";
 import { getErrorMessage } from "@/utils/handle-error";
 import { useCheckoutMutation, useCheckoutPreviewQuery } from "../api/query";
-import type { BillingPlan } from "../api/types";
+import type { BillingInterval, BillingPlan } from "../api/types";
 import { formatPrice } from "../utils/format";
+import { describeAnnualSaving } from "../utils/interval";
 
 interface CheckoutPanelProps {
   plan: BillingPlan;
+  /** ANNUAL only for a plan sold by the year. */
+  interval: BillingInterval;
   title: string;
   note: string;
   /** A saved card already exists — don't offer to save another. */
@@ -57,9 +61,34 @@ function PriceRow({
   );
 }
 
+/** Makes the links in an API message clickable, e.g. "talk to us". */
+function MessageWithLinks({ message }: { message: string }) {
+  return (
+    <>
+      {message.split(/(https?:\/\/[^\s]+[^\s.,;:!?)])/).map((part, index) =>
+        /^https?:\/\//.test(part) ? (
+          <Link
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            color="primary.300"
+            textDecoration="underline"
+          >
+            {part}
+          </Link>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 /** Price breakdown, optional promo code, and the Pay button. */
 export function CheckoutPanel({
   plan,
+  interval,
   title,
   note,
   hasCard,
@@ -72,9 +101,11 @@ export function CheckoutPanel({
 
   // The plain price is always priced; the promo one only once a code is applied,
   // so a bad code still leaves a price on screen.
-  const base = useCheckoutPreviewQuery(plan.tier, "");
+  // Promo codes are monthly only: the yearly price is already the discount.
+  const yearly = interval === "ANNUAL";
+  const base = useCheckoutPreviewQuery(plan.tier, "", interval);
   const withCode = useCheckoutPreviewQuery(
-    appliedCode ? plan.tier : null,
+    appliedCode && !yearly ? plan.tier : null,
     appliedCode,
   );
 
@@ -85,7 +116,7 @@ export function CheckoutPanel({
   const checkingCode = Boolean(appliedCode) && withCode.isFetching;
   const promoError =
     appliedCode && withCode.isError ? getErrorMessage(withCode.error) : null;
-  const codeAccepted = Boolean(appliedCode && withCode.data);
+  const codeAccepted = Boolean(!yearly && appliedCode && withCode.data);
   const preview = codeAccepted ? withCode.data : base.data;
 
   const applyPromo = (event: FormEvent) => {
@@ -102,6 +133,7 @@ export function CheckoutPanel({
     checkout.mutate(
       {
         planTier: plan.tier,
+        billingInterval: interval,
         ...(codeAccepted ? { promoCode: appliedCode } : {}),
         saveCard: hasCard ? false : saveCard,
       },
@@ -113,6 +145,12 @@ export function CheckoutPanel({
     );
 
   const isFree = preview != null && preview.amount <= 0;
+  const saving =
+    yearly && preview ? describeAnnualSaving(preview, preview.currency) : null;
+  // e.g. paying for a different plan during a paid year: the API says why.
+  const checkoutError = checkout.isError
+    ? getErrorMessage(checkout.error)
+    : null;
 
   return (
     <Box
@@ -138,9 +176,14 @@ export function CheckoutPanel({
         ) : preview ? (
           <Stack gap="2">
             <PriceRow
-              label={`${preview.plan.name} plan`}
+              label={`${preview.plan.name} plan${yearly ? ", 1 year" : ""}`}
               value={formatPrice(preview.listPrice, preview.currency)}
             />
+            {saving && (
+              <Text fontSize="12px" color="success.300" fontWeight="600">
+                {saving} compared with paying monthly.
+              </Text>
+            )}
             {preview.discountAmount > 0 && (
               <PriceRow
                 label={
@@ -152,7 +195,7 @@ export function CheckoutPanel({
                 color="success.300"
               />
             )}
-            {preview.periodMonths > 1 && (
+            {preview.periodMonths > 1 && !yearly && (
               <Text fontSize="12px" color="gray.400">
                 Covers {preview.periodMonths} months.
               </Text>
@@ -172,80 +215,84 @@ export function CheckoutPanel({
         )}
       </Box>
 
-      <Box mt="4">
-        {!showPromo && !appliedCode ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            px="0"
-            py="1"
-            h="auto"
-            fontWeight="600"
-            onClick={() => setShowPromo(true)}
-          >
-            Have a promo code?
-          </Button>
-        ) : (
-          <form onSubmit={applyPromo} noValidate>
-            <Flex gap="2" align="flex-end">
-              <Box flex="1">
-                <CustomInput
-                  label="Promo code"
-                  name="promoCode"
-                  value={promoInput}
-                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                  placeholder="e.g. WELCOME50"
-                  inputProps={{
-                    bg: "white",
-                    maxLength: 32,
-                    autoComplete: "off",
-                    autoCapitalize: "characters",
-                    "aria-invalid": promoError ? true : undefined,
-                    "aria-describedby": "promo-code-status",
-                  }}
-                />
-              </Box>
-              <Button
-                type="submit"
-                variant="outline"
-                h="2.5rem"
-                py="0"
-                disabled={!promoInput.trim()}
-                loading={checkingCode}
-              >
-                Apply
-              </Button>
-            </Flex>
-            <Box id="promo-code-status" aria-live="polite" mt="1.5">
-              {promoError && (
-                <Text fontSize="13px" color="error.300">
-                  {promoError}
-                </Text>
-              )}
-              {codeAccepted && (
-                <Flex align="center" gap="2" wrap="wrap">
-                  <Text fontSize="13px" color="success.300" fontWeight="600">
-                    Code {appliedCode} applied.
+      {!yearly && (
+        <Box mt="4">
+          {!showPromo && !appliedCode ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              px="0"
+              py="1"
+              h="auto"
+              fontWeight="600"
+              onClick={() => setShowPromo(true)}
+            >
+              Have a promo code?
+            </Button>
+          ) : (
+            <form onSubmit={applyPromo} noValidate>
+              <Flex gap="2" align="flex-end">
+                <Box flex="1">
+                  <CustomInput
+                    label="Promo code"
+                    name="promoCode"
+                    value={promoInput}
+                    onChange={(e) =>
+                      setPromoInput(e.target.value.toUpperCase())
+                    }
+                    placeholder="e.g. WELCOME50"
+                    inputProps={{
+                      bg: "white",
+                      maxLength: 32,
+                      autoComplete: "off",
+                      autoCapitalize: "characters",
+                      "aria-invalid": promoError ? true : undefined,
+                      "aria-describedby": "promo-code-status",
+                    }}
+                  />
+                </Box>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  h="2.5rem"
+                  py="0"
+                  disabled={!promoInput.trim()}
+                  loading={checkingCode}
+                >
+                  Apply
+                </Button>
+              </Flex>
+              <Box id="promo-code-status" aria-live="polite" mt="1.5">
+                {promoError && (
+                  <Text fontSize="13px" color="error.300">
+                    {promoError}
                   </Text>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    px="0"
-                    py="0"
-                    h="auto"
-                    fontSize="13px"
-                    onClick={removePromo}
-                  >
-                    Remove
-                  </Button>
-                </Flex>
-              )}
-            </Box>
-          </form>
-        )}
-      </Box>
+                )}
+                {codeAccepted && (
+                  <Flex align="center" gap="2" wrap="wrap">
+                    <Text fontSize="13px" color="success.300" fontWeight="600">
+                      Code {appliedCode} applied.
+                    </Text>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      px="0"
+                      py="0"
+                      h="auto"
+                      fontSize="13px"
+                      onClick={removePromo}
+                    >
+                      Remove
+                    </Button>
+                  </Flex>
+                )}
+              </Box>
+            </form>
+          )}
+        </Box>
+      )}
 
       {!hasCard && !isFree && (
         <Box mt="4">
@@ -271,8 +318,23 @@ export function CheckoutPanel({
       >
         {isFree
           ? "Activate for free"
-          : `Pay ${formatPrice(preview?.amount ?? plan.monthlyPrice, preview?.currency ?? plan.currency)}`}
+          : `Pay ${formatPrice(
+              preview?.amount ??
+                (yearly ? plan.annualPrice : plan.monthlyPrice),
+              preview?.currency ?? plan.currency,
+            )}`}
       </Button>
+      {checkoutError && (
+        <Text
+          fontSize="13px"
+          color="error.300"
+          mt="2"
+          role="alert"
+          wordBreak="break-word"
+        >
+          <MessageWithLinks message={checkoutError} />
+        </Text>
+      )}
       {!isFree && (
         <Text fontSize="12px" color="gray.400" mt="2" textAlign="center">
           Next, choose bank transfer, USSD or card on Paystack's secure page.

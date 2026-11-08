@@ -40,3 +40,6 @@ chakra-config.json
 # Claude Code local settings (personal permission allowlist, etc.)
 .claude/settings.json
 .claude/settings.local.json
+
+# Internal backend contracts and notes, kept local only
+docs/

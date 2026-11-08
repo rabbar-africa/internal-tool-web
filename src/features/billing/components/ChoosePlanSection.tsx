@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Badge, Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Grid,
+  SegmentGroup,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { CheckIcon } from "@/assets/custom/CheckIcon";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import SectionLoader from "@/components/common/SectionLoader";
@@ -10,10 +19,22 @@ import {
   useChangePlanMutation,
   useResumeSubscriptionMutation,
 } from "../api/query";
-import type { BillingOverview, BillingPlan, PlanTier } from "../api/types";
+import type {
+  BillingInterval,
+  BillingOverview,
+  BillingPlan,
+  PlanTier,
+} from "../api/types";
 import { isInPaidPeriod, isPaidPlan } from "../utils/copy";
 import { isTierAbove } from "../utils/tiers";
 import { formatLongDate, formatPrice } from "../utils/format";
+import {
+  describeAnnualSaving,
+  describePlanPrice,
+  intervalFor,
+  renewalInterval,
+  sellsYearly,
+} from "../utils/interval";
 import { CheckoutPanel } from "./CheckoutPanel";
 
 type PlanAction =
@@ -29,8 +50,10 @@ type PlanAction =
 function planActionFor(
   target: BillingPlan,
   overview: BillingOverview,
+  interval: BillingInterval,
 ): PlanAction {
   const current = overview.plan;
+  const period = intervalFor(target, interval) === "ANNUAL" ? "year" : "month";
   const inPaidPeriod = isInPaidPeriod(overview);
   const end = formatLongDate(overview.currentPeriodEnd);
 
@@ -69,7 +92,7 @@ function planActionFor(
     }
     return {
       kind: "schedule",
-      note: `You keep ${current.name} until ${end}, then switch to ${target.name} at ${formatPrice(target.monthlyPrice, target.currency)} a month. Nothing to pay today.`,
+      note: `You keep ${current.name} until ${end}, then switch to ${target.name} at ${describePlanPrice(target, renewalInterval(overview))}. Nothing to pay today.`,
       buttonLabel: `Switch to ${target.name} on ${end}`,
     };
   }
@@ -77,8 +100,8 @@ function planActionFor(
   if (inPaidPeriod && target.tier === current.tier) {
     return {
       kind: "checkout",
-      title: "Pay for another month",
-      note: `Paying now adds another month after ${end}.`,
+      title: `Pay for another ${period}`,
+      note: `Paying now adds another ${period} after ${end}.`,
     };
   }
 
@@ -127,6 +150,7 @@ function planRows(plan: BillingPlan) {
 
 interface PlanCardProps {
   plan: BillingPlan;
+  interval: BillingInterval;
   selected: boolean;
   /** Worth drawing the eye to: an upgrade from the plan they're on. */
   highlighted: boolean;
@@ -139,6 +163,7 @@ interface PlanCardProps {
 
 function PlanCard({
   plan,
+  interval,
   selected,
   highlighted,
   buttonLabel,
@@ -149,6 +174,8 @@ function PlanCard({
   const [expanded, setExpanded] = useState(false);
   const rows = planRows(plan);
   const visible = expanded ? rows : rows.slice(0, PREVIEW_ROWS);
+  const yearly = intervalFor(plan, interval) === "ANNUAL";
+  const saving = yearly ? describeAnnualSaving(plan, plan.currency) : null;
 
   return (
     <Flex
@@ -179,16 +206,31 @@ function PlanCard({
           fontWeight="700"
           color="primary.500"
         >
-          {isPaidPlan(plan)
-            ? formatPrice(plan.monthlyPrice, plan.currency)
-            : "Free"}
+          {!isPaidPlan(plan)
+            ? "Free"
+            : formatPrice(
+                yearly ? plan.annualPrice : plan.monthlyPrice,
+                plan.currency,
+              )}
         </Text>
         {isPaidPlan(plan) && (
           <Text fontSize="13px" color="gray.300">
-            / month
+            / {yearly ? "year" : "month"}
           </Text>
         )}
       </Flex>
+      {saving ? (
+        <Text fontSize="12px" color="success.300" fontWeight="600" mt="1">
+          {saving}
+        </Text>
+      ) : (
+        interval === "ANNUAL" &&
+        isPaidPlan(plan) && (
+          <Text fontSize="12px" color="gray.300" mt="1">
+            Paid monthly only
+          </Text>
+        )
+      )}
 
       {plan.description && (
         <Text fontSize="13px" color="gray.400" lineHeight="1.5" mt="2">
@@ -222,16 +264,13 @@ function PlanCard({
           ))}
           {rows.length > PREVIEW_ROWS && (
             <Box>
-              <Button
-                variant="ghost"
-                size="xs"
-                px="0"
+              <Box
                 color="primary.300"
-                aria-expanded={expanded}
+                cursor="pointer"
                 onClick={() => setExpanded((open) => !open)}
               >
                 {expanded ? "See less" : "See more"}
-              </Button>
+              </Box>
             </Box>
           )}
         </Stack>
@@ -258,7 +297,7 @@ function PlanCard({
           color="gray.400"
           onClick={renew}
         >
-          Pay for another month
+          Pay for another {yearly ? "year" : "month"}
         </Button>
       )}
     </Flex>
@@ -278,6 +317,10 @@ export function ChoosePlanSection({
   const { data: plans, isLoading } = useBillingPlansQuery();
   const [selected, setSelected] = useState<PlanTier | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
+  // Starts on how they pay now, so a renewal is priced the way it'll be charged.
+  const [interval, setBillingInterval] = useState<BillingInterval>(() =>
+    renewalInterval(overview),
+  );
 
   const changePlan = useChangePlanMutation();
   const cancel = useCancelSubscriptionMutation();
@@ -302,8 +345,11 @@ export function ChoosePlanSection({
     }
   }, [selected]);
 
+  const anyYearly = sortedPlans.some(sellsYearly);
   const selectedPlan = sortedPlans.find((p) => p.tier === selected) ?? null;
-  const action = selectedPlan ? planActionFor(selectedPlan, overview) : null;
+  const action = selectedPlan
+    ? planActionFor(selectedPlan, overview, interval)
+    : null;
   const inPaidPeriod = isInPaidPeriod(overview);
   const end = formatLongDate(overview.currentPeriodEnd);
   const lapsed =
@@ -333,7 +379,7 @@ export function ChoosePlanSection({
     if (plan.tier === selected) return "Selected";
     if (isActivePlan(plan)) return "Active plan";
     if (plan.tier === overview.plan.tier) return "Renew plan";
-    return planActionFor(plan, overview).kind === "scheduled"
+    return planActionFor(plan, overview, interval).kind === "scheduled"
       ? "Scheduled"
       : "Select plan";
   };
@@ -349,6 +395,31 @@ export function ChoosePlanSection({
         subtitle="Pick the plan that fits your business. You'll see what you'd pay before you pay anything."
       />
 
+      {anyYearly && (
+        <Flex align="center" gap="3" wrap="wrap" mb="4">
+          <SegmentGroup.Root
+            size="sm"
+            value={interval}
+            onValueChange={({ value }) =>
+              value && setBillingInterval(value as BillingInterval)
+            }
+          >
+            <SegmentGroup.Indicator bg="white" shadow="sm" />
+            <SegmentGroup.Items
+              items={[
+                { value: "MONTHLY", label: "Monthly" },
+                { value: "ANNUAL", label: "Yearly" },
+              ]}
+              px="4"
+              cursor="pointer"
+            />
+          </SegmentGroup.Root>
+          <Text fontSize="13px" color="success.300" fontWeight="600">
+            Pay yearly and save
+          </Text>
+        </Flex>
+      )}
+
       {isLoading ? (
         <SectionLoader h="8rem" />
       ) : (
@@ -363,6 +434,7 @@ export function ChoosePlanSection({
             <PlanCard
               key={plan.id}
               plan={plan}
+              interval={interval}
               selected={plan.tier === selected}
               highlighted={isTierAbove(plan.tier, overview.effectiveTier)}
               buttonLabel={buttonLabelFor(plan)}
@@ -393,8 +465,9 @@ export function ChoosePlanSection({
 
           {action.kind === "checkout" && (
             <CheckoutPanel
-              key={selectedPlan.tier}
+              key={`${selectedPlan.tier}-${intervalFor(selectedPlan, interval)}`}
               plan={selectedPlan}
+              interval={intervalFor(selectedPlan, interval)}
               title={action.title}
               note={action.note}
               hasCard={Boolean(overview.card)}

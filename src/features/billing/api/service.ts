@@ -2,6 +2,7 @@ import { axios } from "@/lib/axios";
 import { QUERY_PATH } from "@/shared/constants/query-paths";
 import { type ApiResponse } from "@/shared/interface/api";
 import type {
+  BillingInterval,
   BillingOverview,
   BillingPlan,
   CheckoutPayload,
@@ -66,6 +67,19 @@ export const billingService = {
     const response = await axios.patch<ApiResponse<BillingOverview>>(
       billing.autoRenew,
       { autoRenew },
+    );
+    return response.data.data;
+  },
+
+  /**
+   * How the next renewal is charged. The period already paid for is untouched.
+   */
+  setBillingInterval: async (
+    billingInterval: BillingInterval,
+  ): Promise<BillingOverview> => {
+    const response = await axios.patch<ApiResponse<BillingOverview>>(
+      billing.billingInterval,
+      { billingInterval },
     );
     return response.data.data;
   },
