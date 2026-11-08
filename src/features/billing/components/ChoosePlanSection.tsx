@@ -9,6 +9,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { useSearchParams } from "react-router-dom";
 import { CheckIcon } from "@/assets/custom/CheckIcon";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import SectionLoader from "@/components/common/SectionLoader";
@@ -315,12 +316,20 @@ export function ChoosePlanSection({
   canManage,
 }: ChoosePlanSectionProps) {
   const { data: plans, isLoading } = useBillingPlansQuery();
-  const [selected, setSelected] = useState<PlanTier | null>(null);
+  // `?planTier=&billingInterval=` opens that plan's checkout: signup sends
+  // people here when it couldn't start their payment itself.
+  const [searchParams] = useSearchParams();
+  const [selected, setSelected] = useState<PlanTier | null>(
+    () => (searchParams.get("planTier") as PlanTier | null) || null,
+  );
   const [confirmStop, setConfirmStop] = useState(false);
   // Starts on how they pay now, so a renewal is priced the way it'll be charged.
-  const [interval, setBillingInterval] = useState<BillingInterval>(() =>
-    renewalInterval(overview),
-  );
+  const [interval, setBillingInterval] = useState<BillingInterval>(() => {
+    const asked = searchParams.get("billingInterval");
+    return asked === "ANNUAL" || asked === "MONTHLY"
+      ? asked
+      : renewalInterval(overview);
+  });
 
   const changePlan = useChangePlanMutation();
   const cancel = useCancelSubscriptionMutation();
@@ -343,7 +352,8 @@ export function ChoosePlanSection({
         block: "nearest",
       });
     }
-  }, [selected]);
+    // Also once the plans load: a plan picked from the URL has no panel before.
+  }, [selected, sortedPlans.length]);
 
   const anyYearly = sortedPlans.some(sellsYearly);
   const selectedPlan = sortedPlans.find((p) => p.tier === selected) ?? null;
