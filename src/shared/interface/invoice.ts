@@ -177,6 +177,8 @@ export interface IInvoiceResponse {
   broughtForwardTotal?: number;
   /** `balance` + `broughtForwardTotal` — what the customer actually owes now. */
   totalDueNow?: number;
+  /** The quote this invoice was made from. */
+  quotation?: { id: string; quotationNumber: string; date: string } | null;
 }
 
 /**

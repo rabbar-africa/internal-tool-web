@@ -62,6 +62,11 @@ export const customQueryKey = {
     outstanding: "get-invoice-outstanding",
     deleteImpact: "get-invoice-delete-impact",
   },
+  quotations: {
+    getAll: "get-all-quotations",
+    getById: "get-quotation-by-id",
+    summary: "get-quotation-summary",
+  },
   inspections: {
     getAll: "get-all-inspections",
     getById: "get-inspection-by-id",

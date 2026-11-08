@@ -8,6 +8,7 @@
 export type ExportModuleKey =
   | "customers"
   | "invoices"
+  | "quotations"
   | "payments_received"
   | "expenses"
   | "job_cards"

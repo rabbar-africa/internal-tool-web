@@ -44,6 +44,7 @@ import { LinkInvoiceModal } from "./LinkInvoiceModal";
 import { LinkInspectionModal } from "./LinkInspectionModal";
 import { AttachFileModal } from "./AttachFileModal";
 import { RecordExpenseModal } from "./RecordExpenseModal";
+import { QuotationsTable } from "@/features/quotations/components/QuotationsTable";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
@@ -270,7 +271,13 @@ const fileColumns: ColumnDef<JobCardFile>[] = [
   },
 ];
 
-type TabValue = "invoices" | "payments" | "inspections" | "expenses" | "files";
+type TabValue =
+  | "invoices"
+  | "quotes"
+  | "payments"
+  | "inspections"
+  | "expenses"
+  | "files";
 
 const PAYMENT_CSV_HEADERS = {
   paymentNumber: "Payment #",
@@ -311,8 +318,9 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   );
   const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
 
+  const { canDelete, has } = usePermissions();
+  const canReadQuotes = has("read:quotations");
   // Expenses ticked on the Expenses tab, by id, for deleting together.
-  const { canDelete } = usePermissions();
   const [expenseSelection, setExpenseSelection] = useState<RowSelectionState>(
     {},
   );
@@ -530,6 +538,11 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             <Tabs.Trigger value="invoices" fontSize="13px">
               Invoices ({jobCard.invoices.length})
             </Tabs.Trigger>
+            {canReadQuotes && (
+              <Tabs.Trigger value="quotes" fontSize="13px">
+                Quotes ({jobCard.quotations?.length ?? 0})
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="payments" fontSize="13px">
               Payments ({jobCard.payments.length})
             </Tabs.Trigger>
@@ -574,6 +587,15 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
               tableScrollAreaProps={scrollAreaProps}
             />
           </Tabs.Content>
+
+          {canReadQuotes && (
+            <Tabs.Content value="quotes" px="4" pb="4" pt="3">
+              <QuotationsTable
+                filter={{ jobCardId: jobCard.id }}
+                newQuoteParams={{ jobCardId: jobCard.id }}
+              />
+            </Tabs.Content>
+          )}
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
             <Flex justify="flex-end" mb="3">

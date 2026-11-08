@@ -50,6 +50,13 @@ const invoices = {
   costs: defineRoute("/invoices/:id/costs" as const),
 } as const;
 
+const quotations = {
+  base: defineRoute("/quotations" as const),
+  create: defineRoute("/quotations/create" as const),
+  detail: defineRoute("/quotations/:id" as const),
+  edit: defineRoute("/quotations/:id/edit" as const),
+} as const;
+
 const payments = {
   base: defineRoute("/payments" as const),
   create: defineRoute("/payments/create" as const),
@@ -200,6 +207,7 @@ export const RouteConstants = {
   overview,
   inspection,
   invoices,
+  quotations,
   payments,
   customers,
   items,

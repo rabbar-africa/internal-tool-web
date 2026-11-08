@@ -5,6 +5,7 @@ import { RouteError } from "@/components/error/RoutError";
 import { AppLayout } from "@/components/layouts";
 import { InspectionRoutes } from "@/features/inspection/routes";
 import { InvoiceRoutes } from "@/features/invoices/routes";
+import { QuotationRoutes } from "@/features/quotations/routes";
 import { PaymentRoutes } from "@/features/payments/routes";
 import { CustomerRoutes } from "@/features/customers/routes";
 import { PaperworkRoutes } from "@/features/paperwork/routes";
@@ -42,6 +43,7 @@ export const DashboardRoutes: RouteObject = {
     ...DashboardRouteList,
     ...InspectionRoutes,
     ...InvoiceRoutes,
+    ...QuotationRoutes,
     ...PaymentRoutes,
     ...CustomerRoutes,
     ...PaperworkRoutes,
