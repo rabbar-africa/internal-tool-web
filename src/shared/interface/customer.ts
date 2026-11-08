@@ -82,6 +82,8 @@ export interface CreateCustomerPayload {
   firstName: string;
   lastName: string;
   stage: string;
+  /** YYYY-MM-DD, not in the future. Null or "" clears it. */
+  dob?: string | null;
 
   notes?: string;
 }

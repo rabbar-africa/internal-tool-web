@@ -11,6 +11,7 @@ import type {
   CreateCustomerPayload,
   ICustomer,
 } from "@/shared/interface/customer";
+import { dobForUpdate } from "@/utils/date-of-birth";
 import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 import {
   CustomerForm,
@@ -30,8 +31,8 @@ export function EditCustomerTemplate() {
   const detailPath = RouteConstants.customers.detail.generate({ id });
 
   const handleSubmit = async (values: CustomerFormValues) => {
-    await mutateAsync(
-      removeFalsyAndEmptyArrayFields({
+    await mutateAsync({
+      ...(removeFalsyAndEmptyArrayFields({
         displayName: values.displayName,
         firstName: values.firstName,
         lastName: values.lastName,
@@ -43,8 +44,10 @@ export function EditCustomerTemplate() {
         city: values.city || undefined,
         state: values.state || undefined,
         country: values.country,
-      }) as Partial<CreateCustomerPayload>,
-    );
+      }) as Partial<CreateCustomerPayload>),
+      // Outside the cleanup, which would drop the null that clears it.
+      ...dobForUpdate(values.dob, customer?.dob),
+    });
     navigate(detailPath);
   };
 
@@ -62,6 +65,7 @@ export function EditCustomerTemplate() {
     displayName: customer.displayName ?? "",
     email: customer.email ?? "",
     phone: formatPhoneDisplay(customer.phone),
+    dob: customer.dob ?? "",
     type: customer.type ?? "",
     stage: customer.stage ?? "",
     address: customer.address ?? "",

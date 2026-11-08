@@ -2,6 +2,7 @@ import { Box, Grid, Text } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 import type { ICustomer } from "@/shared/interface/customer";
 import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
+import { formatDob } from "@/utils/date-of-birth";
 
 function InfoField({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -84,6 +85,7 @@ export function CustomerInfo({ customer }: CustomerInfoProps) {
         />
         <InfoField label="Company" value={customer.company} />
         <InfoField label="Job Title" value={customer.jobTitle} />
+        <InfoField label="Date of Birth" value={formatDob(customer.dob)} />
         <InfoField label="Address" value={address} />
       </Grid>
     </Box>
