@@ -7,6 +7,9 @@ export type SubscriptionStatus =
   | "CANCELLED"
   | "INACTIVE";
 
+/** How long one payment covers. Leaving it out of a checkout means a month. */
+export type BillingInterval = "MONTHLY" | "ANNUAL";
+
 export type CheckoutStatus = "PENDING" | "SUCCESS" | "FAILED" | "ABANDONED";
 
 export type CheckoutPurpose = "SUBSCRIPTION" | "CARD_SETUP";
@@ -70,6 +73,12 @@ export interface BillingPlan {
   /** Decimal — arrives as a string, e.g. "15000". */
   monthlyPrice: string;
   currency: string;
+  /** Null when the plan isn't sold by the year (Starter, Enterprise). */
+  annualPrice?: number | null;
+  /** What a year saves against 12 monthly payments. */
+  annualSaving?: number | null;
+  /** Null when the saving isn't a whole number of months. */
+  annualMonthsFree?: number | null;
   isActive?: boolean;
   features?: PlanFeatureRow[];
   limits?: PlanLimitRow[];
@@ -102,6 +111,8 @@ export interface BillingPayment {
   /** Free text on the API — PAYSTACK_CARD, PAYSTACK_BANK_TRANSFER, PROMO, … */
   method: string | null;
   reference: string | null;
+  /** 12 for a yearly payment. */
+  periodMonths?: number | null;
 }
 
 export interface BillingSummary {
@@ -120,6 +131,11 @@ export interface BillingSummary {
   graceEndsAt: string | null;
   /** A saved card will be charged automatically. */
   autoCharge: boolean;
+  /** How the plan that renews will be charged. */
+  billingInterval?: BillingInterval;
+  /** For the plan that renews. */
+  annualPrice?: number | null;
+  annualSaving?: number | null;
 }
 
 /** What `GET /subscriptions/me` returns. */
@@ -133,6 +149,8 @@ export interface BillingOverview {
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   autoRenew: boolean;
+  /** What they last paid for, and what the next renewal charges. */
+  billingInterval?: BillingInterval;
   cancelAtPeriodEnd: boolean;
   pastDueSince: string | null;
   failedChargeAttempts: number;
@@ -150,7 +168,9 @@ export interface BillingOverview {
 
 export interface CheckoutPreviewPayload {
   planTier: PlanTier;
+  /** Promo codes are monthly only: the API refuses one with ANNUAL. */
   promoCode?: string;
+  billingInterval?: BillingInterval;
 }
 
 export interface CheckoutPayload extends CheckoutPreviewPayload {
@@ -168,6 +188,11 @@ export interface CheckoutPreview {
   promoDescription: string | null;
   promoCodeId: string | null;
   promoCyclesUsed: number;
+  billingInterval?: BillingInterval;
+  monthlyPrice?: number;
+  annualPrice?: number | null;
+  annualSaving?: number | null;
+  annualMonthsFree?: number | null;
 }
 
 export type CheckoutResult =

@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Text } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Center, Spinner, Text } from "@chakra-ui/react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Head } from "@/components/seo/head";
+import { billingService } from "@/features/billing/api/service";
 import { RouteConstants } from "@/shared/constants/routes";
+import { readSignupPlan, signupPlanName } from "../utils/signup-plan";
 import { SignupStepper } from "./signup/SignupStepper";
 import { OrganizationStep } from "./signup/OrganizationStep";
 import { VerifyEmailStep } from "./signup/VerifyEmailStep";
@@ -19,6 +21,11 @@ const STEPS = [
 export function Signup() {
   const [step, setStep] = useState(1);
   const [ownerEmail, setOwnerEmail] = useState("");
+  // The paid plan picked on the landing page, if any. The URL keeps it
+  // through every step, a reload included.
+  const [searchParams] = useSearchParams();
+  const plan = useMemo(() => readSignupPlan(searchParams), [searchParams]);
+  const [openingPayment, setOpeningPayment] = useState(false);
   const stepperRef = useRef<HTMLDivElement>(null);
   const prevStep = useRef(step);
 
@@ -45,9 +52,37 @@ export function Signup() {
     });
   }, [step]);
 
-  // Hard redirect so ProtectedRoutes re-reads the (now verified) user.
-  const finish = () =>
-    window.location.replace(RouteConstants.overview.base.path);
+  // Hard redirects, so ProtectedRoutes re-reads the (now verified) user.
+  const finish = async () => {
+    if (!plan) {
+      window.location.replace(RouteConstants.overview.base.path);
+      return;
+    }
+    // Straight on to pay for the plan they picked. Paystack sends them back
+    // to the billing page, which shows how the payment went.
+    setOpeningPayment(true);
+    try {
+      const result = await billingService.checkout(plan);
+      if (result.status === "redirect") {
+        window.location.assign(result.authorizationUrl);
+      } else {
+        // A promo covered it: the plan is already active.
+        window.location.replace(RouteConstants.overview.base.path);
+      }
+    } catch {
+      // The account is ready either way: let them pay from the billing page,
+      // with the plan already picked.
+      window.location.replace(
+        RouteConstants.settings.billing.generate(
+          {},
+          {
+            planTier: plan.planTier,
+            billingInterval: plan.billingInterval,
+          },
+        ),
+      );
+    }
+  };
 
   return (
     <>
@@ -67,6 +102,28 @@ export function Signup() {
           Two minutes to get going. Bank and address details are optional and
           can be added later.
         </Text>
+        {plan && (
+          <Box
+            mt="4"
+            px="4"
+            py="3"
+            rounded="lg"
+            bg="secondary.50"
+            borderWidth="1px"
+            borderColor="secondary.100"
+          >
+            <Text fontSize="0.875rem" color="gray.500">
+              <Text as="span" fontWeight="700">
+                {signupPlanName(plan)} plan,{" "}
+                {plan.billingInterval === "ANNUAL"
+                  ? "paid yearly"
+                  : "paid monthly"}
+                .
+              </Text>{" "}
+              Once your account is set up, we&rsquo;ll take you to pay for it.
+            </Text>
+          </Box>
+        )}
 
         <Box ref={stepperRef} mt="2rem" scrollMarginTop="1.25rem">
           <SignupStepper steps={STEPS} current={step} />
@@ -99,7 +156,20 @@ export function Signup() {
               onSkip={() => setStep(4)}
             />
           )}
-          {step === 4 && <AddressStep onCompleted={finish} onSkip={finish} />}
+          {step === 4 &&
+            (openingPayment ? (
+              <Center flexDirection="column" gap="3" py="10">
+                <Spinner color="primary.300" />
+                <Text fontSize="0.875rem" color="gray.400">
+                  Taking you to payment…
+                </Text>
+              </Center>
+            ) : (
+              <AddressStep
+                onCompleted={() => void finish()}
+                onSkip={() => void finish()}
+              />
+            ))}
         </Box>
 
         {step === 1 && (

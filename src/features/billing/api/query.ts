@@ -4,6 +4,7 @@ import { toaster } from "@/components/ui";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { billingService } from "./service";
 import type {
+  BillingInterval,
   BillingOverview,
   CheckoutPayload,
   CheckoutResult,
@@ -44,12 +45,19 @@ export const useBillingPlansQuery = (options?: { enabled?: boolean }) =>
 export const useCheckoutPreviewQuery = (
   planTier: PlanTier | null,
   promoCode: string,
+  billingInterval: BillingInterval = "MONTHLY",
 ) =>
   useQuery({
-    queryKey: [customQueryKey.billing.checkoutPreview, planTier, promoCode],
+    queryKey: [
+      customQueryKey.billing.checkoutPreview,
+      planTier,
+      promoCode,
+      billingInterval,
+    ],
     queryFn: () =>
       billingService.previewCheckout({
         planTier: planTier as PlanTier,
+        billingInterval,
         ...(promoCode ? { promoCode } : {}),
       }),
     enabled: Boolean(planTier && planTier !== "STARTER"),
@@ -113,6 +121,13 @@ export const useAutoRenewMutation = () =>
   useOverviewMutation(
     (autoRenew: boolean) => billingService.setAutoRenew(autoRenew),
     "Automatic renewal updated",
+  );
+
+export const useBillingIntervalMutation = () =>
+  useOverviewMutation(
+    (billingInterval: BillingInterval) =>
+      billingService.setBillingInterval(billingInterval),
+    "Renewal updated",
   );
 
 export const useChangePlanMutation = () =>

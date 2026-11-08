@@ -25,6 +25,7 @@ export const QUERY_PATH = {
     checkout: "/subscriptions/me/checkout",
     card: "/subscriptions/me/card",
     autoRenew: "/subscriptions/me/auto-renew",
+    billingInterval: "/subscriptions/me/billing-interval",
     changePlan: "/subscriptions/me/change-plan",
     cancel: "/subscriptions/me/cancel",
     resume: "/subscriptions/me/resume",

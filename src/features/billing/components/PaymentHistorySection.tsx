@@ -24,13 +24,20 @@ const columns: ColumnDef<BillingPayment>[] = [
     id: "period",
     header: "Covers",
     cell: ({ row }) => {
-      const { periodStart, periodEnd } = row.original;
+      const { periodStart, periodEnd, periodMonths } = row.original;
       return (
-        <Text textStyle="small-regular" color="gray.400" whiteSpace="nowrap">
-          {periodStart && periodEnd
-            ? `${formatShortDate(periodStart)} – ${formatLongDate(periodEnd)}`
-            : "—"}
-        </Text>
+        <Box>
+          <Text textStyle="small-regular" color="gray.400" whiteSpace="nowrap">
+            {periodStart && periodEnd
+              ? `${formatShortDate(periodStart)} – ${formatLongDate(periodEnd)}`
+              : "—"}
+          </Text>
+          {periodMonths === 12 && (
+            <Text fontSize="11px" color="gray.300" fontWeight="600">
+              Yearly
+            </Text>
+          )}
+        </Box>
       );
     },
   },
