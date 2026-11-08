@@ -586,15 +586,6 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
                 scope={exportScope}
               />
             </Flex>
-            {/* <Flex justify="flex-end" mb="3">
-              <Button
-                size="sm"
-                onClick={() => navigate(RouteConstants.payments.create.path)}
-              >
-                <PlusIcon />
-                Record Payment
-              </Button>
-            </Flex> */}
             <CustomTable
               data={jobCard.payments}
               columns={paymentColumns}

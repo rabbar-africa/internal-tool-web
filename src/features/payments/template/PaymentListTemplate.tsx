@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Flex, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { CustomTable, type TableAction } from "@/components/table";
@@ -211,7 +211,7 @@ export function PaymentListTemplate() {
     <Stack gap="6">
       <PageHeader
         title="Payments Received"
-        subtitle="Track all payments received from customers"
+        subtitle="Payments received from customers. To record one, open the invoice it's for and choose Record Payment."
         action={
           <Flex gap="2">
             <ExportMenu
@@ -220,11 +220,6 @@ export function PaymentListTemplate() {
               headers={PAYMENT_CSV_HEADERS}
               module="payments_received"
             />
-            <Button
-              onClick={() => navigate(RouteConstants.payments.create.path)}
-            >
-              Record Payment
-            </Button>
           </Flex>
         }
       />

@@ -7,7 +7,9 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
+import { RouteConstants } from "@/shared/constants/routes";
 import { useCreatePayment } from "@/features/payments/components/create-payment/hooks/useCreatePayment";
 import { PaymentFormHeader } from "@/features/payments/components/create-payment/PaymentFormHeader";
 import { PaymentDetails } from "@/features/payments/components/create-payment/PaymentDetails";
@@ -59,9 +61,7 @@ export function CreatePaymentTemplate() {
             <Text textStyle="small-regular" color="gray.300" mt="1">
               {isEditMode
                 ? "Update the details of this payment"
-                : isPresetMode
-                  ? "Record a payment against this invoice"
-                  : "Record a payment received from a customer"}
+                : "Record a payment against this invoice"}
             </Text>
           </Box>
           <Button
@@ -82,8 +82,18 @@ export function CreatePaymentTemplate() {
           <SectionCard step={1} title="Invoice not found">
             <Text fontSize="13px" color="gray.300">
               We couldn't load the invoice for this payment. It may have been
-              removed. You can record a payment manually instead.
+              removed.
             </Text>
+            <GoToInvoices />
+          </SectionCard>
+        ) : !isPresetMode && !isEditMode ? (
+          /* Payments are recorded against an invoice, never on their own. */
+          <SectionCard step={1} title="Record payments from an invoice">
+            <Text fontSize="13px" color="gray.300">
+              Open the invoice the customer is paying and choose Record Payment
+              from its menu.
+            </Text>
+            <GoToInvoices />
           </SectionCard>
         ) : isPresetMode ? (
           /* ───────────────────────────────────────── Invoice-driven flow ───────────────────────────────── */
@@ -158,7 +168,8 @@ export function CreatePaymentTemplate() {
 
         {!isLoadingPresetInvoice &&
           !isLoadingEditPayment &&
-          !presetInvoiceNotFound && (
+          !presetInvoiceNotFound &&
+          (isPresetMode || isEditMode) && (
             <Flex justify="flex-end" gap="3">
               <Button
                 variant="outline"
@@ -179,5 +190,18 @@ export function CreatePaymentTemplate() {
           )}
       </Stack>
     </form>
+  );
+}
+
+function GoToInvoices() {
+  const navigate = useNavigate();
+  return (
+    <Button
+      size="sm"
+      mt="4"
+      onClick={() => navigate(RouteConstants.invoices.base.path)}
+    >
+      Go to Invoices
+    </Button>
   );
 }

@@ -30,8 +30,10 @@ import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetOrganizationTaxes } from "@/features/settings/api";
 import {
   useGetAllCustomersQuery,
+  useGetCustomerByIdQuery,
   useGetVehiclesByClientQuery,
 } from "@/features/customers/api";
+import { useGetJobCardByIdQuery } from "@/features/job-cards/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
 import {
@@ -496,6 +498,28 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceQuery.data, invoiceQuery.isFetching, isEdit, isInvoiceApplied]);
+
+  // Raised from a job card: start on the job's customer and vehicle, once, and
+  // only if nobody has picked a customer yet. A walk-in job card has no saved
+  // customer, so there is nothing to fill in.
+  const jobCardQuery = useGetJobCardByIdQuery(isEdit ? "" : jobCardId);
+  const jobCard = jobCardQuery.data?.data;
+  const jobClientQuery = useGetCustomerByIdQuery(jobCard?.clientId ?? "");
+  const jobClient = jobClientQuery.data?.data as ICustomer | undefined;
+  const jobCardAppliedRef = useRef(false);
+  useEffect(() => {
+    if (isEdit || jobCardAppliedRef.current || !jobCard || !jobClient) return;
+    jobCardAppliedRef.current = true;
+    if (formik.values.customerId) return;
+    setCustomerCache((prev) => ({ ...prev, [jobClient.id]: jobClient }));
+    formik.setFieldValue("customerId", jobClient.id);
+    formik.setFieldValue("customer", {
+      name: jobClient.displayName,
+      email: jobClient.email ?? "",
+    });
+    if (jobCard.vehicleId) formik.setFieldValue("vehicleId", jobCard.vehicleId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, jobCard, jobClient]);
 
   const carry = useInvoiceCarryForward({
     isEdit,
