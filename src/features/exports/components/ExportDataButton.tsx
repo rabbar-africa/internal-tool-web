@@ -24,7 +24,7 @@ export function ExportDataButton({
 
   return (
     <>
-      <Button h="auto" {...buttonProps} onClick={() => setOpen(true)}>
+      <Button {...buttonProps} onClick={() => setOpen(true)}>
         {children}
       </Button>
       <AdvancedExportDrawer

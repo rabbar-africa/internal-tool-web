@@ -35,8 +35,8 @@ export interface ExportColumn {
 export interface ExportFilter {
   key: string;
   label: string;
-  /** `enum`: one of `options`. `id`: a record's id. `text`: free text. */
-  type: "enum" | "id" | "text";
+  /** `enum`: one of `options`. `id`: a record's id. `date`: YYYY-MM-DD. `text`: free text. */
+  type: "enum" | "id" | "date" | "text";
   options?: string[];
 }
 
@@ -80,10 +80,30 @@ export interface CreateExportPayload {
   from?: string;
   to?: string;
   filters?: Record<string, string>;
+  /** Only these records, e.g. the rows ticked in a list. Never empty. */
+  ids?: string[];
+  /** Column keys to include; the file keeps the module's order. All if omitted. */
+  columns?: string[];
   decimalFormat?: string;
   fileFormat: ExportFileFormat;
   includePii: boolean;
   password?: string;
+}
+
+export type ServerExportRequest = Pick<
+  CreateExportPayload,
+  "filters" | "ids" | "columns"
+>;
+
+/** A list whose "current view" export is built by the server. */
+export interface ServerExportView {
+  /** The list's own filters, so the file matches it across every page. */
+  filters: Record<string, string>;
+  /** Ticked rows; when there are any, only they are exported. */
+  selectedIds: string[];
+  columns: string[];
+  /** How many rows the list has, across every page. */
+  total: number;
 }
 
 export interface ExportResult {

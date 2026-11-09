@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Flex, Grid, Link, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
 import { toaster } from "@/components/ui";
+import { DownloadSimple } from "@/assets/custom";
 import { TrashIcon } from "@/assets/custom/TrashIcon";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -18,12 +19,12 @@ import { DateField } from "@/components/input/DateField";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TruncatedText } from "@/components/common/TruncatedText";
 import { ExportMenu } from "@/features/exports/components";
+import { useServerExport } from "@/features/exports/hooks/useServerExport";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import { useUrlState } from "@/hooks/useUrlState";
 import {
-  EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_OPTIONS,
   type Expense,
 } from "@/shared/interface/expense";
@@ -161,19 +162,20 @@ const columns: ColumnDef<Expense>[] = [
   },
 ];
 
-// exportToCSV writes columns in the order of each row's keys.
-const CSV_HEADERS = {
-  name: "Item",
-  vehicle: "Vehicle",
-  plateNumber: "Plate Number",
-  amount: "Amount (₦)",
-  date: "Date",
-  paidThrough: "Paid From",
-  expenseNumber: "Expense #",
-  category: "Category",
-  jobNumber: "Job Card",
-  invoiceNumber: "Invoice",
-} as const;
+// What the export has always held, as column keys from GET /exports/modules.
+const EXPORT_COLUMNS = [
+  "name",
+  "customerName",
+  "vehicle",
+  "vehicleRegistration",
+  "amount",
+  "date",
+  "paidThrough",
+  "expenseNumber",
+  "category",
+  "jobNumber",
+  "invoiceNumber",
+];
 
 const FILTER_SCHEMA = {
   page: { defaultValue: 1 },
@@ -196,9 +198,7 @@ export function ExpenseListTemplate() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
 
-  const query = {
-    page: filters.page,
-    limit: filters.limit,
+  const listFilters = {
     ...(filters.search ? { search: filters.search } : {}),
     ...(filters.category ? { category: filters.category } : {}),
     ...(filters.jobCardId ? { jobCardId: filters.jobCardId } : {}),
@@ -212,6 +212,7 @@ export function ExpenseListTemplate() {
     ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
     ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
   };
+  const query = { page: filters.page, limit: filters.limit, ...listFilters };
   const { data, isLoading, isFetching } = useGetExpensesQuery(query);
 
   const { canDelete } = usePermissions();
@@ -234,21 +235,13 @@ export function ExpenseListTemplate() {
     [expenses, rowSelection],
   );
 
-  const csvData = expenses.map((expense) => ({
-    name: expense.name,
-    vehicle: vehicleName(expense.vehicle),
-    plateNumber: expense.vehicle?.registrationNumber ?? "",
-    amount: expense.amount,
-    // A plain YYYY-MM-DD, which spreadsheets read as a date.
-    date: expense.date.slice(0, 10),
-    paidThrough: expense.paidThroughAccount
-      ? formatAccountLabel(expense.paidThroughAccount)
-      : "",
-    expenseNumber: expense.expenseNumber,
-    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
-    jobNumber: expense.jobCard?.jobNumber ?? "",
-    invoiceNumber: expense.invoice?.invoiceNumber ?? "",
-  }));
+  const { run: runExport, isPending: isExporting } =
+    useServerExport("expenses");
+  const exportSelected = () =>
+    runExport({
+      ids: selectedExpenses.map((expense) => expense.id),
+      columns: EXPORT_COLUMNS,
+    });
 
   const tableActions: TableAction<Expense>[] = [
     // Only on expenses linked to one; the job card follows the invoice's.
@@ -330,10 +323,13 @@ export function ExpenseListTemplate() {
           action={
             <Flex gap="2">
               <ExportMenu
-                data={csvData}
-                filename="expenses"
-                headers={CSV_HEADERS}
                 module="expenses"
+                serverView={{
+                  filters: listFilters,
+                  selectedIds: selectedExpenses.map((expense) => expense.id),
+                  columns: EXPORT_COLUMNS,
+                  total: meta?.total ?? 0,
+                }}
               />
               <Button
                 variant="outline"
@@ -497,8 +493,7 @@ export function ExpenseListTemplate() {
               loading={isLoading}
               enableActions
               actions={tableActions}
-              // Deleting is the only bulk action so far.
-              enableRowSelection={canDelete("expenses")}
+              enableRowSelection
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
               getRowId={(row) => row.id}
@@ -544,14 +539,25 @@ export function ExpenseListTemplate() {
         <Button
           size="sm"
           variant="outline"
-          borderColor="error.300"
-          color="error.300"
-          _hover={{ bg: "error.50" }}
-          onClick={() => setConfirmBulkDelete(true)}
+          loading={isExporting}
+          onClick={exportSelected}
         >
-          <TrashIcon boxSize="3.5" />
-          Delete ({selectedExpenses.length})
+          <DownloadSimple boxSize="3.5" />
+          Export ({selectedExpenses.length})
         </Button>
+        {canDelete("expenses") && (
+          <Button
+            size="sm"
+            variant="outline"
+            borderColor="error.300"
+            color="error.300"
+            _hover={{ bg: "error.50" }}
+            onClick={() => setConfirmBulkDelete(true)}
+          >
+            <TrashIcon boxSize="3.5" />
+            Delete ({selectedExpenses.length})
+          </Button>
+        )}
       </SelectionActionBar>
 
       <ConsentDialog

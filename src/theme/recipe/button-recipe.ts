@@ -3,10 +3,11 @@ import { defineRecipe } from "@chakra-ui/react";
 export const buttonRecipe = defineRecipe({
   base: {
     borderRadius: ".625rem",
-    fontSize: { base: ".875rem", lg: "1rem" },
+    fontSize: ".875rem",
     fontWeight: "400",
     backgroundColor: "primary",
-    py: { base: "1.125rem", lg: "1.625rem" },
+    // No vertical padding here: buttons are border-box, so any `py` becomes a
+    // minimum height and silently overrides the `h` set by each size.
     px: { base: "1.25rem" },
     _loading: {
       opacity: 0.6,
@@ -144,14 +145,13 @@ export const buttonRecipe = defineRecipe({
         fontSize: "0.875rem",
       },
       md: {
-        h: { base: "0", md: "3.25rem" },
+        h: "2.5rem",
         fontSize: ".875rem",
-        py: "1.125rem",
       },
       lg: {
-        // h: '3.25rem',
+        h: "2.75rem",
         px: "2rem",
-        fontSize: "5rem",
+        fontSize: "1rem",
       },
     },
   },

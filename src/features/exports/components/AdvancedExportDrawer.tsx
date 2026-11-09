@@ -20,7 +20,6 @@ import { CustomCheckbox } from "@/components/input/CustomCheckBox";
 import { CustomInput } from "@/components/input/CustomInput";
 import { DateField } from "@/components/input/DateField";
 import { EyeIcon, EyeOff, InfoIcon } from "@/assets/custom";
-import { toaster } from "@/components/ui";
 import type {
   CreateExportPayload,
   ExportCatalog,
@@ -30,6 +29,7 @@ import type {
   ExportScope,
 } from "@/shared/interface/export";
 import { useCreateExportMutation } from "../api";
+import { announceExport } from "../utils/announce-export";
 
 // The backend's rule; it says why in `catalog.passwordRule`.
 const PASSWORD_PATTERN =
@@ -175,25 +175,7 @@ function ExportForm({
         ...(values.password ? { password: values.password } : {}),
       };
 
-      const result = await createExport(payload);
-      if (result.truncated) {
-        toaster.create({
-          type: "warning",
-          description: `Only the first ${result.rows.toLocaleString()} rows were exported.`,
-        });
-      } else if (result.rows === 0) {
-        toaster.create({
-          type: "info",
-          description: "Nothing matched, so the file only has headings.",
-        });
-      } else {
-        toaster.create({
-          type: "success",
-          description: `Exported ${result.rows.toLocaleString()} ${
-            result.rows === 1 ? "row" : "rows"
-          }.`,
-        });
-      }
+      announceExport(await createExport(payload));
       onDone();
     },
   });
