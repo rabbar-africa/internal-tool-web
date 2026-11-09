@@ -9,28 +9,33 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { Link, useRouteError } from "react-router-dom";
-import { isChunkLoadError, reloadForNewDeploy } from "../../utils/chunk-reload";
+import {
+  isChunkLoadError,
+  isReloadingForNewDeploy,
+  reloadForNewDeploy,
+} from "../../utils/chunk-reload";
 
 export const RouteError = () => {
   const error: any = useRouteError();
 
-  // Decide during render, not in an effect: an effect runs after paint, so the
-  // error UI would flash before the reload could replace it.
-  const [isStale] = useState(
-    () =>
-      isChunkLoadError(error?.statusText) || isChunkLoadError(error?.message),
-  );
+  // Starts on the loader, and shows the error only once it is known to be a
+  // real one: a stale deploy must never put the error screen up, even briefly.
   const [showError, setShowError] = useState(false);
 
   useEffect(() => {
-    if (isStale && !reloadForNewDeploy()) {
-      // Reload already attempted and it did not help, so fall through to the
-      // real error UI rather than looping.
-      setShowError(true);
-    }
-  }, [isStale]);
+    // The page is already being replaced, whatever this error says.
+    if (isReloadingForNewDeploy()) return;
 
-  if (isStale && !showError) {
+    const isStale =
+      isChunkLoadError(error?.statusText) || isChunkLoadError(error?.message);
+    // A false reload means it already reloaded and that did not help, so show
+    // the error rather than looping.
+    if (isStale && reloadForNewDeploy()) return;
+
+    setShowError(true);
+  }, [error]);
+
+  if (!showError) {
     return (
       <Flex h="100vh" w="full" justifyContent="center" alignItems="center">
         <Spinner size="xl" color="primary" />
