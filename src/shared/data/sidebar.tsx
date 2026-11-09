@@ -63,6 +63,14 @@ export const sideBarGroups: SideBarGroup[] = [
         paths: [RouteConstants.invoices.base.path],
       },
       {
+        name: "Quotes",
+        icon: FileTextIcon,
+        href: RouteConstants.quotations.base.path,
+        slug: "quotations",
+        paths: [RouteConstants.quotations.base.path],
+        permission: "read:quotations",
+      },
+      {
         name: "Payments",
         icon: Money,
         href: RouteConstants.payments.base.path,

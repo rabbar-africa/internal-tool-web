@@ -15,7 +15,10 @@ import { customQueryKey as k } from "./query-keys";
 
 type QueryKeys = readonly (readonly unknown[])[];
 
-/** The invoices themselves, and the expenses that point at their lines. */
+/**
+ * The invoices themselves, the expenses that point at their lines, and the
+ * quotes they were made from (a deleted or voided invoice can be made again).
+ */
 const INVOICE_RECORDS = [
   [k.invoices.getAll],
   [k.invoices.getById],
@@ -23,6 +26,23 @@ const INVOICE_RECORDS = [
   [k.expenses.getAll],
   [k.expenses.getById],
   [k.expenses.invoiceCosts],
+  [k.quotations.getAll],
+  [k.quotations.getById],
+] as const;
+
+/** Schedules for costs that come round again. */
+const RECURRING_EXPENSES = [
+  [k.recurringExpenses.getAll],
+  [k.recurringExpenses.getById],
+  [k.recurringExpenses.summary],
+] as const;
+
+/** Quotes, and the job cards and customers that list them. They hold no money. */
+const QUOTATION_RECORDS = [
+  [k.quotations.getAll],
+  [k.quotations.getById],
+  [k.quotations.summary],
+  [k.jobCards.getById],
 ] as const;
 
 /** Everything worked out from what's been billed and paid. */
@@ -77,6 +97,29 @@ export const invalidates = {
   /** Created, edited, written off, recalculated, deleted, or a balance carried. */
   invoice: join(INVOICE_RECORDS, RECEIVABLES),
   invoiceCreated: join(INVOICE_RECORDS, RECEIVABLES, NUMBER_SERIES),
+
+  /** Edits, pauses and stops: only the schedules change. */
+  recurringExpense: join(RECURRING_EXPENSES),
+  /**
+   * Creating (when it starts today), resuming and "Record now" may record an
+   * expense, which moves the expense list, the account and the numbering.
+   */
+  recurringExpenseRecorded: join(
+    RECURRING_EXPENSES,
+    COSTS,
+    ACCOUNTS,
+    NUMBER_SERIES,
+  ),
+
+  quotation: join(QUOTATION_RECORDS),
+  quotationCreated: join(QUOTATION_RECORDS, NUMBER_SERIES),
+  /** Making the invoice is a new invoice as well as a changed quote. */
+  quotationConverted: join(
+    QUOTATION_RECORDS,
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    NUMBER_SERIES,
+  ),
 
   /** Payments move invoice balances and the account they were paid into. */
   payment: join(INVOICE_RECORDS, RECEIVABLES, ACCOUNTS),

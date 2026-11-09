@@ -37,6 +37,8 @@ interface InvoiceFooterProps {
   totals: Totals;
   /** The organization's active taxes, for the whole-job tax picker. */
   taxes: IOrgTax[];
+  /** What the form makes, for its wording. */
+  documentLabel?: "invoice" | "quote";
 }
 
 /**
@@ -47,10 +49,14 @@ interface InvoiceFooterProps {
 function AmountToPay({
   formik,
   totals,
+  documentLabel,
 }: {
   formik: FormikProps<CreateInvoiceFormValues>;
   totals: Totals;
+  documentLabel: "invoice" | "quote";
 }) {
+  // A quote asks for no payment, so it's just the total it should come to.
+  const isQuote = documentLabel === "quote";
   const { formatMoney } = useFormatMoney();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -83,7 +89,7 @@ function AmountToPay({
       setError(
         result.reason === "above-total"
           ? `That's more than the total with no discount (${formatMoney(result.limit)}).`
-          : `The lowest this invoice can go is ${formatMoney(result.limit)}.`,
+          : `The lowest this ${documentLabel} can go is ${formatMoney(result.limit)}.`,
       );
       return;
     }
@@ -105,7 +111,7 @@ function AmountToPay({
     return (
       <Stack gap="2" pt="3">
         <CustomNumberInput
-          label="Amount to pay (₦)"
+          label={isQuote ? "Total (₦)" : "Amount to pay (₦)"}
           placeholder="0.00"
           min={0}
           allowNegative={false}
@@ -153,7 +159,7 @@ function AmountToPay({
         color="primary.300"
         onClick={() => setOpen(true)}
       >
-        Set amount to pay
+        {isQuote ? "Set the total" : "Set amount to pay"}
       </Button>
       {stillApplied && (
         <Text fontSize="12px" color="gray.400" mt="1">
@@ -167,7 +173,13 @@ function AmountToPay({
   );
 }
 
-export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
+export function InvoiceFooter({
+  formik,
+  totals,
+  taxes,
+  documentLabel = "invoice",
+}: InvoiceFooterProps) {
+  const isQuote = documentLabel === "quote";
   const { formatMoney } = useFormatMoney();
   const { hasFeature } = usePlanAccess();
   const { subtotal, entityDiscount, taxVal, adjustmentVal, total } = totals;
@@ -190,7 +202,7 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
       <Stack gap="4">
         <CustomTextArea
           label="Customer Notes"
-          placeholder="Add a note for your customer (visible on the invoice)"
+          placeholder={`Add a note for your customer (visible on the ${documentLabel})`}
           rows={4}
           name="notes"
           value={formik.values.notes}
@@ -199,7 +211,11 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
         />
         <CustomTextArea
           label="Terms & Conditions"
-          placeholder="Enter any terms and conditions"
+          placeholder={
+            isQuote
+              ? "Leave empty for the standard quote wording: valid until the date shown, prices may change if costs change"
+              : "Enter any terms and conditions"
+          }
           rows={4}
           name="terms"
           disabled={!hasFeature("invoiceTerms")}
@@ -226,7 +242,7 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
           borderColor="gray.75"
         >
           <Text fontSize="13px" fontWeight="600" color="gray.500">
-            Invoice Summary
+            {isQuote ? "Quote Summary" : "Invoice Summary"}
           </Text>
         </Box>
 
@@ -346,7 +362,11 @@ export function InvoiceFooter({ formik, totals, taxes }: InvoiceFooterProps) {
             </Text>
           )}
 
-          <AmountToPay formik={formik} totals={totals} />
+          <AmountToPay
+            formik={formik}
+            totals={totals}
+            documentLabel={documentLabel}
+          />
         </Stack>
       </Box>
     </Grid>

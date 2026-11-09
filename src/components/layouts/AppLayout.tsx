@@ -43,7 +43,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <Portal>
           <Drawer.Backdrop />
           <Drawer.Positioner>
-            <Drawer.Content p={0} bg="#293885" maxW="259px" w="259px">
+            <Drawer.Content p={0} bg="#293885" maxW="240px" w="240px">
               <Drawer.Body p={0}>
                 <Sidebar mobile onNavigate={() => setMobileNavOpen(false)} />
               </Drawer.Body>

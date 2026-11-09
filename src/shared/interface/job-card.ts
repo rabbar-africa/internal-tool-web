@@ -132,12 +132,27 @@ export interface JobCardClient {
   email: string | null;
 }
 
+/** A quote on the job card. Not part of the job's money figures. */
+export interface JobCardQuotation {
+  id: string;
+  quotationNumber: string;
+  status: string;
+  displayStatus: string;
+  date: string;
+  expiryDate: string | null;
+  total: string;
+  customerName: string | null;
+  invoice: { id: string; invoiceNumber: string; status: string } | null;
+}
+
 export interface JobCardDetail extends JobCard {
   client: JobCardClient | null;
   vehicle: JobCardVehicle | null;
   files: JobCardFile[];
   inspections: JobCardInspection[];
   invoices: JobCardInvoice[];
+  /** Newest first. Older APIs leave it out. */
+  quotations?: JobCardQuotation[];
   payments: JobCardPayment[];
   expenses: Expense[];
   financials: JobCardFinancials;

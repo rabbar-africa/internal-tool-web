@@ -66,6 +66,7 @@ function Impact({ impact }: { impact: CustomerEraseImpact }) {
     count(erase.paperwork, "document (paperwork)", "documents (paperwork)"),
     count(erase.reminders, "reminder", "reminders"),
     count(erase.files, "file", "files"),
+    count(erase.quotations ?? 0, "quote", "quotes"),
   ]);
   const work = listOf([
     count(anonymise.jobCards, "job card", "job cards"),
@@ -80,6 +81,7 @@ function Impact({ impact }: { impact: CustomerEraseImpact }) {
     count(unlinked.invoices, "invoice", "invoices"),
     count(unlinked.jobCards, "job card", "job cards"),
     count(unlinked.inspections, "inspection", "inspections"),
+    count(unlinked.quotations ?? 0, "quote", "quotes"),
   ]);
 
   return (

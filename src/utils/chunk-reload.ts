@@ -4,6 +4,13 @@ const RELOAD_KEY = "chunk-reload-at";
 // rather than stale, and reloading again would just spin.
 const RELOAD_COOLDOWN_MS = 10_000;
 
+// A reload takes a moment to replace the page. Lives in memory on purpose, so
+// the page it brings in starts with this false.
+let reloading = false;
+
+/** True from when a reload has been asked for until the page is replaced. */
+export const isReloadingForNewDeploy = () => reloading;
+
 /**
  * Vite emits hashed chunk filenames, so a redeploy replaces the files the
  * currently-open tab expects. The next lazy route it tries to load 404s. Each
@@ -37,6 +44,7 @@ export function reloadForNewDeploy(): boolean {
     // showing the error, and without storage we cannot detect a loop anyway.
   }
 
+  reloading = true;
   window.location.reload();
   return true;
 }

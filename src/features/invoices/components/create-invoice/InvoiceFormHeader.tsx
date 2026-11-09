@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Box, Flex, Grid, IconButton, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
-import { SearchCombobox } from "@/components/input/SearchCombobox";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
 import type { CreateInvoiceFormValues } from "@/shared/interface/invoice";
@@ -15,8 +14,7 @@ import {
 import type { ICustomer } from "@/shared/interface/customer";
 import type { Vehicle } from "@/features/customers/api/service";
 import { InvoiceNumberConfigModal } from "./InvoiceNumberConfigModal";
-import { AddNewCustomerModal } from "./AddNewCustomerModal";
-import { AddVehicleModal } from "@/features/customers/components/customer-detail/AddVehicleModal";
+import { CustomerVehicleSection } from "./CustomerVehicleSection";
 import {
   useGetOrganizationTemplates,
   useGetOrganizationTransactionSeries,
@@ -73,7 +71,6 @@ export function InvoiceFormHeader({
         ];
   }, [templatesData]);
   const [showConfig, setShowConfig] = useState(false);
-  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
   const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
   const isAutoInvoiceNumber = useMemo(
@@ -90,131 +87,20 @@ export function InvoiceFormHeader({
         gap={{ base: "6", md: "10" }}
         p={{ base: "4", md: "6" }}
       >
-        {/* Left: Customer & Vehicle */}
-        <Stack gap="4">
-          <Box maxW={{ base: "15rem", lg: "unset" }}>
-            <SearchCombobox
-              label="Select Customer"
-              required
-              options={customerOptions}
-              placeholder="Search customer..."
-              value={formik.values.customerId || undefined}
-              onChange={(val, option) => {
-                formik.setFieldValue("customerId", val);
-                formik.setFieldValue("customer", {
-                  name: option.label,
-                  email: option.subLabel ?? "",
-                });
-                formik.setFieldValue("vehicleId", "");
-              }}
-              onSearchChange={onCustomerSearch}
-              searchDebounceMs={400}
-              serverSearch
-              isLoading={isSearchingCustomers}
-              error={
-                formik.touched.customerId && formik.errors.customerId
-                  ? String(formik.errors.customerId)
-                  : undefined
-              }
-              footerAction={{
-                label: "Add Customer",
-                onClick: () => setAddCustomerOpen(true),
-              }}
-            />
-          </Box>
-
-          <Box maxW={{ base: "15rem", lg: "unset" }}>
-            <SearchCombobox
-              label="Select Vehicle"
-              options={vehicleOptions}
-              placeholder={
-                !formik.values.customerId
-                  ? "Select a customer first"
-                  : vehiclesLoading
-                    ? "Loading vehicles..."
-                    : vehicleOptions.length > 0
-                      ? "Search vehicle..."
-                      : "No vehicles found — add one"
-              }
-              disabled={!formik.values.customerId || vehiclesLoading}
-              value={formik.values.vehicleId || undefined}
-              onChange={(val) => formik.setFieldValue("vehicleId", val)}
-              isLoading={vehiclesLoading}
-              emptyText="No matching vehicles found."
-              footerAction={
-                formik.values.customerId && onOpenAddVehicle
-                  ? {
-                      label: "Add Vehicle",
-                      onClick: onOpenAddVehicle,
-                    }
-                  : undefined
-              }
-            />
-          </Box>
-
-          {selectedCustomer ? (
-            <Box
-              p="3"
-              bg="gray.25"
-              borderWidth="1px"
-              borderColor="gray.75"
-              rounded="md"
-            >
-              <Text
-                fontSize="11px"
-                fontWeight="600"
-                color="gray.300"
-                textTransform="uppercase"
-                letterSpacing="0.05em"
-                mb="2"
-              >
-                Billing Address
-              </Text>
-              <Text fontSize="13px" fontWeight="500" color="gray.500">
-                {selectedCustomer.displayName}
-              </Text>
-              {selectedCustomer.address && (
-                <Text fontSize="13px" color="gray.400">
-                  {selectedCustomer.address}
-                </Text>
-              )}
-              <Text fontSize="13px" color="gray.400">
-                {[selectedCustomer.city, selectedCustomer.state]
-                  .filter(Boolean)
-                  .join(", ")}
-              </Text>
-              {selectedCustomer.country && (
-                <Text fontSize="13px" color="gray.400">
-                  {selectedCustomer.country}
-                </Text>
-              )}
-              {selectedCustomer.email && (
-                <Text fontSize="13px" color="gray.400" mt="1">
-                  {selectedCustomer.email}
-                </Text>
-              )}
-              {selectedCustomer.phone && (
-                <Text fontSize="13px" color="gray.400">
-                  {selectedCustomer.phone}
-                </Text>
-              )}
-            </Box>
-          ) : (
-            <Flex
-              align="center"
-              justify="center"
-              h="100px"
-              borderWidth="1px"
-              borderColor="gray.75"
-              borderStyle="dashed"
-              rounded="md"
-            >
-              <Text fontSize="13px" color="gray.200">
-                Billing address will appear here
-              </Text>
-            </Flex>
-          )}
-        </Stack>
+        <CustomerVehicleSection
+          formik={formik}
+          customerOptions={customerOptions}
+          selectedCustomer={selectedCustomer}
+          onAddNewCustomer={onAddNewCustomer}
+          onCustomerSearch={onCustomerSearch}
+          isSearchingCustomers={isSearchingCustomers}
+          vehicleOptions={vehicleOptions}
+          vehiclesLoading={vehiclesLoading}
+          addVehicleOpen={addVehicleOpen}
+          onOpenAddVehicle={onOpenAddVehicle}
+          onCloseAddVehicle={onCloseAddVehicle}
+          onVehicleSaved={onVehicleSaved}
+        />
 
         {/* Right: Invoice metadata */}
         <Stack gap="4">
@@ -367,29 +253,6 @@ export function InvoiceFormHeader({
         onClose={() => setShowConfig(false)}
         onApplyNumber={(num) => formik.setFieldValue("invoiceNumber", num)}
       />
-
-      <AddNewCustomerModal
-        open={addCustomerOpen}
-        onClose={() => setAddCustomerOpen(false)}
-        onSave={(customer) => {
-          onAddNewCustomer(customer);
-          formik.setFieldValue("customerId", customer.id);
-          formik.setFieldValue("customer", {
-            name: customer.displayName,
-            email: customer.email ?? "",
-          });
-          setAddCustomerOpen(false);
-        }}
-      />
-
-      {onCloseAddVehicle && (
-        <AddVehicleModal
-          open={addVehicleOpen}
-          onClose={onCloseAddVehicle}
-          clientId={formik.values.customerId}
-          onVehicleSaved={onVehicleSaved}
-        />
-      )}
     </>
   );
 }

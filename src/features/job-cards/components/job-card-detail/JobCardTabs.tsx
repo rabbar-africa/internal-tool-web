@@ -10,6 +10,7 @@ import {
 } from "@/components/table";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { toaster } from "@/components/ui";
+import { DownloadSimple } from "@/assets/custom";
 import { TrashIcon } from "@/assets/custom/TrashIcon";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDeleteExpensesBulkMutation } from "@/features/expenses/api/query";
@@ -18,6 +19,7 @@ import { PlusIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import { ExportMenu, jobCardExportScope } from "@/features/exports/components";
+import { useServerExport } from "@/features/exports/hooks/useServerExport";
 import {
   EXPENSE_CATEGORY_LABELS,
   PAYMENT_MODE_LABELS,
@@ -44,6 +46,7 @@ import { LinkInvoiceModal } from "./LinkInvoiceModal";
 import { LinkInspectionModal } from "./LinkInspectionModal";
 import { AttachFileModal } from "./AttachFileModal";
 import { RecordExpenseModal } from "./RecordExpenseModal";
+import { QuotationsTable } from "@/features/quotations/components/QuotationsTable";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
@@ -270,7 +273,13 @@ const fileColumns: ColumnDef<JobCardFile>[] = [
   },
 ];
 
-type TabValue = "invoices" | "payments" | "inspections" | "expenses" | "files";
+type TabValue =
+  | "invoices"
+  | "quotes"
+  | "payments"
+  | "inspections"
+  | "expenses"
+  | "files";
 
 const PAYMENT_CSV_HEADERS = {
   paymentNumber: "Payment #",
@@ -282,22 +291,23 @@ const PAYMENT_CSV_HEADERS = {
   status: "Status",
 } as const;
 
-// exportToCSV writes columns in the order of each row's keys.
-const EXPENSE_CSV_HEADERS = {
-  name: "Item",
-  vehicle: "Vehicle",
-  plateNumber: "Plate Number",
-  amount: "Amount",
-  date: "Date",
-  paidFrom: "Paid From",
-  expenseNumber: "Expense #",
-  category: "Category",
-  invoiceNumber: "Invoice",
-  vendorName: "Supplier",
-  quantity: "Quantity",
-  unitCost: "Unit Cost",
-  mode: "How It Was Paid",
-} as const;
+// Column keys from GET /exports/modules.
+const EXPENSE_EXPORT_COLUMNS = [
+  "name",
+  "customerName",
+  "vehicle",
+  "vehicleRegistration",
+  "amount",
+  "date",
+  "paidThrough",
+  "expenseNumber",
+  "category",
+  "invoiceNumber",
+  "vendorName",
+  "quantity",
+  "unitCost",
+  "paymentMode",
+];
 
 const modeLabel = (mode?: string | null) =>
   mode ? (PAYMENT_MODE_LABELS[mode as PaymentModeDto] ?? mode) : "";
@@ -311,8 +321,9 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   );
   const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
 
+  const { canDelete, has } = usePermissions();
+  const canReadQuotes = has("read:quotations");
   // Expenses ticked on the Expenses tab, by id, for deleting together.
-  const { canDelete } = usePermissions();
   const [expenseSelection, setExpenseSelection] = useState<RowSelectionState>(
     {},
   );
@@ -323,6 +334,9 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     () => jobCard.expenses.filter((expense) => expenseSelection[expense.id]),
     [jobCard.expenses, expenseSelection],
   );
+
+  const { run: runExpenseExport, isPending: isExportingExpenses } =
+    useServerExport("expenses");
 
   const handleDeleteExpenses = async () => {
     const result = await deleteExpenses(
@@ -369,37 +383,6 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     paidInto: accountName(payment.depositToAccountId),
     referenceNumber: payment.referenceNumber ?? "",
     status: payment.status,
-  }));
-  // This endpoint doesn't work out a vehicle per expense, so it's the job's,
-  // or the copy the job card keeps if the vehicle record has gone.
-  const jobVehicleName = (
-    jobCard.vehicle
-      ? [jobCard.vehicle.year, jobCard.vehicle.make, jobCard.vehicle.model]
-      : [jobCard.vehicleYear, jobCard.vehicleMake, jobCard.vehicleModel]
-  )
-    .filter(Boolean)
-    .join(" ");
-  const jobPlateNumber =
-    jobCard.vehicle?.registrationNumber ??
-    jobCard.vehicleRegistrationNumber ??
-    "";
-  const expensesCsv = jobCard.expenses.map((expense) => ({
-    name: expense.name,
-    vehicle: jobVehicleName,
-    plateNumber: jobPlateNumber,
-    amount: expense.amount,
-    // A plain YYYY-MM-DD, which spreadsheets read as a date.
-    date: expense.date.slice(0, 10),
-    paidFrom: accountName(expense.paidThroughAccountId),
-    expenseNumber: expense.expenseNumber,
-    category: EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category,
-    invoiceNumber:
-      jobCard.invoices.find((invoice) => invoice.id === expense.invoiceId)
-        ?.invoiceNumber ?? "",
-    vendorName: expense.vendorName ?? "",
-    quantity: expense.quantity,
-    unitCost: expense.unitCost,
-    mode: modeLabel(expense.paymentMode),
   }));
   // A void invoice's work isn't happening, so nothing to cost against it.
   const exportScope = jobCardExportScope(jobCard.id, jobCard.jobNumber);
@@ -530,6 +513,11 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             <Tabs.Trigger value="invoices" fontSize="13px">
               Invoices ({jobCard.invoices.length})
             </Tabs.Trigger>
+            {canReadQuotes && (
+              <Tabs.Trigger value="quotes" fontSize="13px">
+                Quotes ({jobCard.quotations?.length ?? 0})
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="payments" fontSize="13px">
               Payments ({jobCard.payments.length})
             </Tabs.Trigger>
@@ -575,6 +563,15 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             />
           </Tabs.Content>
 
+          {canReadQuotes && (
+            <Tabs.Content value="quotes" px="4" pb="4" pt="3">
+              <QuotationsTable
+                filter={{ jobCardId: jobCard.id }}
+                newQuoteParams={{ jobCardId: jobCard.id }}
+              />
+            </Tabs.Content>
+          )}
+
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
             <Flex justify="flex-end" mb="3">
               <ExportMenu
@@ -586,15 +583,6 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
                 scope={exportScope}
               />
             </Flex>
-            {/* <Flex justify="flex-end" mb="3">
-              <Button
-                size="sm"
-                onClick={() => navigate(RouteConstants.payments.create.path)}
-              >
-                <PlusIcon />
-                Record Payment
-              </Button>
-            </Flex> */}
             <CustomTable
               data={jobCard.payments}
               columns={paymentColumns}
@@ -633,11 +621,14 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             <Flex justify="flex-end" gap="2" mb="3" wrap="wrap">
               <ExportMenu
                 size="sm"
-                data={expensesCsv}
-                filename={`${jobCard.jobNumber}-expenses`}
-                headers={EXPENSE_CSV_HEADERS}
                 module="expenses"
                 scope={exportScope}
+                serverView={{
+                  filters: { jobCardId: jobCard.id },
+                  selectedIds: selectedExpenses.map((expense) => expense.id),
+                  columns: EXPENSE_EXPORT_COLUMNS,
+                  total: jobCard.expenses.length,
+                }}
               />
               <Button
                 size="sm"
@@ -657,7 +648,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
               columns={expenseTableColumns}
               enableActions
               actions={expenseActions}
-              enableRowSelection={canDelete("expenses")}
+              enableRowSelection
               rowSelection={expenseSelection}
               onRowSelectionChange={setExpenseSelection}
               getRowId={(row) => row.id}
@@ -724,14 +715,30 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
         <Button
           size="sm"
           variant="outline"
-          borderColor="error.300"
-          color="error.300"
-          _hover={{ bg: "error.50" }}
-          onClick={() => setConfirmDeleteExpenses(true)}
+          loading={isExportingExpenses}
+          onClick={() =>
+            runExpenseExport({
+              ids: selectedExpenses.map((expense) => expense.id),
+              columns: EXPENSE_EXPORT_COLUMNS,
+            })
+          }
         >
-          <TrashIcon boxSize="3.5" />
-          Delete ({selectedExpenses.length})
+          <DownloadSimple boxSize="3.5" />
+          Export ({selectedExpenses.length})
         </Button>
+        {canDelete("expenses") && (
+          <Button
+            size="sm"
+            variant="outline"
+            borderColor="error.300"
+            color="error.300"
+            _hover={{ bg: "error.50" }}
+            onClick={() => setConfirmDeleteExpenses(true)}
+          >
+            <TrashIcon boxSize="3.5" />
+            Delete ({selectedExpenses.length})
+          </Button>
+        )}
       </SelectionActionBar>
 
       <ConsentDialog

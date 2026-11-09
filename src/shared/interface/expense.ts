@@ -9,6 +9,9 @@ export type ExpenseCategory =
   | "LABOR"
   | "TOWING"
   | "FEES"
+  | "RENT"
+  | "SALARIES"
+  | "UTILITIES"
   | "OTHER";
 
 /**
@@ -64,6 +67,10 @@ export interface Expense {
   /** Set when it covers several items bought for one price; then `invoiceLineItem` is null. */
   sharedLines?: Array<{ id: string; name: string }>;
   vehicle?: ExpenseVehicle | null;
+  /** The schedule that recorded it; null for one recorded by hand. */
+  recurringExpense?: { id: string; name: string } | null;
+  /** "RECURRING" when a schedule recorded it. */
+  source?: string | null;
 }
 
 export interface CreateExpensePayload {
@@ -112,6 +119,8 @@ export interface IGetExpenseFilter extends IBaseFilter {
   category?: string;
   paidThroughAccountId?: string;
   invoiceId?: string;
+  /** Only the expenses one schedule recorded. */
+  recurringExpenseId?: string;
 }
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
@@ -121,6 +130,9 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   LABOR: "Labor",
   TOWING: "Towing",
   FEES: "Fees",
+  RENT: "Rent",
+  SALARIES: "Salaries",
+  UTILITIES: "Utilities",
   OTHER: "Other",
 };
 

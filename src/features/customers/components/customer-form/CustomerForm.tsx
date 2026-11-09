@@ -14,6 +14,7 @@ import { CustomInput } from "@/components/input/CustomInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import type { CustomerType } from "@/shared/interface/customer";
 import { phoneField } from "@/utils/phone";
+import { dobField, todayIso } from "@/utils/date-of-birth";
 
 export interface CustomerFormValues {
   firstName: string;
@@ -21,6 +22,8 @@ export interface CustomerFormValues {
   displayName: string;
   email: string;
   phone: string;
+  /** YYYY-MM-DD, or "" for none. */
+  dob: string;
   type: string;
   stage: string;
   address: string;
@@ -35,6 +38,7 @@ export const DEFAULT_CUSTOMER_FORM_VALUES: CustomerFormValues = {
   displayName: "",
   email: "",
   phone: "",
+  dob: "",
   type: "individual",
   stage: "CUSTOMER",
   address: "",
@@ -121,6 +125,7 @@ export function CustomerForm({
     initialValues,
     validationSchema: validationSchema.shape({
       phone: phoneField(initialValues.phone),
+      dob: dobField(initialValues.dob),
     }),
     onSubmit,
   });
@@ -279,6 +284,19 @@ export function CustomerForm({
                   error={
                     touched.phone && errors.phone ? errors.phone : undefined
                   }
+                />
+              </Grid>
+
+              <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="4">
+                <CustomInput
+                  label="Date of Birth"
+                  type="date"
+                  name="dob"
+                  value={values.dob}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.dob && errors.dob ? errors.dob : undefined}
+                  inputProps={{ max: todayIso() }}
                 />
               </Grid>
             </Stack>

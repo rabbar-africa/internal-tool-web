@@ -22,6 +22,7 @@ export function CreateCustomerTemplate() {
         lastName: values.lastName,
         email: values.email,
         phone: values.phone,
+        dob: values.dob || undefined,
         type: values.type,
         stage: values.stage,
         address: values.address || undefined,

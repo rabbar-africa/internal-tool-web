@@ -50,6 +50,13 @@ const invoices = {
   costs: defineRoute("/invoices/:id/costs" as const),
 } as const;
 
+const quotations = {
+  base: defineRoute("/quotations" as const),
+  create: defineRoute("/quotations/create" as const),
+  detail: defineRoute("/quotations/:id" as const),
+  edit: defineRoute("/quotations/:id/edit" as const),
+} as const;
+
 const payments = {
   base: defineRoute("/payments" as const),
   create: defineRoute("/payments/create" as const),
@@ -76,6 +83,10 @@ const expenses = {
   base: defineRoute("/expenses" as const),
   create: defineRoute("/expenses/create" as const),
   bulk: defineRoute("/expenses/bulk" as const),
+  recurring: defineRoute("/expenses/recurring" as const),
+  recurringCreate: defineRoute("/expenses/recurring/create" as const),
+  recurringDetail: defineRoute("/expenses/recurring/:id" as const),
+  recurringEdit: defineRoute("/expenses/recurring/:id/edit" as const),
   edit: defineRoute("/expenses/:id/edit" as const),
 } as const;
 
@@ -200,6 +211,7 @@ export const RouteConstants = {
   overview,
   inspection,
   invoices,
+  quotations,
   payments,
   customers,
   items,

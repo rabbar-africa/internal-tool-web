@@ -18,10 +18,18 @@ import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
 import { CaretRight } from "@/assets/custom/CaretRight";
 
-const ACTIVE_TEXT = "white";
-const IDLE_TEXT = "rgba(255,255,255,0.7)";
-const ACTIVE_BG = "rgba(255,255,255,0.15)";
-const HOVER_BG = "rgba(255,255,255,0.1)";
+const IDLE_TEXT = "rgba(255,255,255,0.68)";
+const IDLE_ICON = "rgba(255,255,255,0.5)";
+// Well apart, so a hovered row never looks half selected.
+const HOVER_BG = "rgba(255,255,255,0.06)";
+const ACTIVE_BG = "rgba(255,255,255,0.13)";
+const DIVIDER = "rgba(255,255,255,0.1)";
+/** The logo's lime, used for one thing only: "you are here". */
+const ACCENT = "secondary.300";
+
+// Where the guide line under a group's icon sits, from the sidebar's edge.
+const GUIDE_LEFT = 27;
+const SUB_ROW_LEFT = GUIDE_LEFT + 8;
 
 interface SidebarProps {
   mobile?: boolean;
@@ -35,8 +43,10 @@ function NavRow({
   label,
   icon: Icon,
   active = false,
+  currentGroup = false,
   indented = false,
   iconOnly = false,
+  smallIcon = false,
   ariaCurrent,
   ariaExpanded,
   onClick,
@@ -44,50 +54,92 @@ function NavRow({
 }: {
   label: string;
   icon?: SideBarItem["icon"];
+  /** The page you are on: the only row that gets a fill. */
   active?: boolean;
-  /** A page inside an open group: lines up under its heading's text. */
+  /** A heading whose group holds the page you are on: emphasis, no fill. */
+  currentGroup?: boolean;
+  /** A page inside a group: sits to the right of the guide line. */
   indented?: boolean;
   iconOnly?: boolean;
+  /** For a caret, narrow beside the other icons: keeps the label in line. */
+  smallIcon?: boolean;
   ariaCurrent?: boolean;
   ariaExpanded?: boolean;
   onClick: () => void;
   children?: React.ReactNode;
 }) {
-  const color = active ? ACTIVE_TEXT : IDLE_TEXT;
+  const here = active || currentGroup;
   return (
     <Flex
       as="button"
+      position="relative"
       alignItems="center"
       flexShrink={0}
-      w="100%"
+      w={indented ? `calc(100% - ${SUB_ROW_LEFT + 8}px)` : "calc(100% - 16px)"}
+      ml={indented ? `${SUB_ROW_LEFT}px` : "2"}
+      mr="2"
+      mt="2px"
+      rounded="md"
       textAlign="left"
-      height={indented ? "38px" : "44px"}
-      paddingLeft={iconOnly ? "0" : indented ? "57px" : "21px"}
-      paddingRight={iconOnly ? "0" : "16px"}
+      // Roomier below lg, where the sidebar is a drawer tapped with a finger.
+      height={
+        indented ? { base: "36px", lg: "32px" } : { base: "40px", lg: "36px" }
+      }
+      paddingLeft={iconOnly ? "0" : "10px"}
+      paddingRight={iconOnly ? "0" : "10px"}
       justifyContent={iconOnly ? "center" : "flex-start"}
       cursor="pointer"
       bgColor={active ? ACTIVE_BG : "transparent"}
-      // Always there, so turning active doesn't nudge the text sideways.
-      borderLeft={iconOnly ? "none" : "3px solid"}
-      borderColor={active ? "white" : "transparent"}
+      color={here ? "white" : IDLE_TEXT}
       title={iconOnly ? label : undefined}
       aria-label={iconOnly ? label : undefined}
       aria-current={ariaCurrent ? "page" : undefined}
       aria-expanded={ariaExpanded}
-      _hover={{ bgColor: active ? ACTIVE_BG : HOVER_BG }}
-      _focusVisible={{ outline: "2px solid white", outlineOffset: "-2px" }}
+      // On the guide line, level with the page you are on.
+      _before={
+        indented && active
+          ? {
+              content: '""',
+              position: "absolute",
+              left: "-8px",
+              top: "0",
+              bottom: "0",
+              w: "2px",
+              bg: ACCENT,
+            }
+          : undefined
+      }
+      _hover={{ bgColor: active ? ACTIVE_BG : HOVER_BG, color: "white" }}
+      _focusVisible={{ outline: "2px solid white", outlineOffset: "1px" }}
+      transition="background-color 0.12s ease, color 0.12s ease"
       onClick={onClick}
     >
-      {Icon && <Icon width="22px" height="22px" color={color} flexShrink={0} />}
+      {Icon &&
+        (smallIcon ? (
+          <Icon
+            width="6px"
+            height="11px"
+            mx={iconOnly ? "0" : "6px"}
+            color={IDLE_ICON}
+            flexShrink={0}
+          />
+        ) : (
+          <Icon
+            width="18px"
+            height="18px"
+            color={here ? ACCENT : IDLE_ICON}
+            flexShrink={0}
+          />
+        ))}
       {!iconOnly && (
         <Text
           flex="1"
           minW={0}
-          fontSize={indented ? "13.5px" : "14px"}
-          fontWeight={active ? "500" : "400"}
+          truncate
+          fontSize="14px"
+          fontWeight={here ? "600" : indented ? "400" : "500"}
           lineHeight="20px"
-          ml={Icon ? "14px" : "0"}
-          color={color}
+          ml={Icon ? "10px" : "0"}
         >
           {label}
         </Text>
@@ -180,21 +232,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <Box
-      width={collapsed ? "72px" : "259px"}
-      minW={collapsed ? "72px" : "259px"}
+      width={collapsed ? "56px" : "240px"}
+      minW={collapsed ? "56px" : "240px"}
       height="100%"
       maxH={mobile ? "unset" : "100vh"}
       bg="primary.500"
       display="flex"
       flexDirection="column"
-      borderRight={mobile ? "none" : "1px solid rgba(255,255,255,0.1)"}
       transition="width 0.2s ease, min-width 0.2s ease"
     >
       {/* Logo area */}
       <Box
-        bg="white"
-        py="1.5rem"
-        pl={collapsed ? "0" : "24px"}
+        // Lines up with the top bar beside it.
+        h="64px"
+        borderBottom={`1px solid ${DIVIDER}`}
+        pl={collapsed ? "0" : "18px"}
         display="flex"
         alignItems="center"
         justifyContent={collapsed ? "center" : "flex-start"}
@@ -205,12 +257,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Image
             src={rabbarIcon}
             alt="Rabbar"
-            w="36px"
-            h="36px"
+            w="28px"
+            h="28px"
             objectFit="contain"
           />
         ) : (
-          <Logo w={"10rem"} />
+          <Logo color="white" w={"7.25rem"} />
         )}
       </Box>
 
@@ -218,8 +270,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <Flex
         as="nav"
         aria-label="Main"
-        pt="1rem"
-        pb="0.5rem"
+        pt="2"
+        pb="2"
         flexDirection="column"
         flex="1"
         minH={0}
@@ -237,9 +289,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={group.name}
                 role="group"
                 aria-label={group.name}
-                mt="2"
-                pt="2"
-                borderTop="1px solid rgba(255,255,255,0.15)"
+                mt="1.5"
+                pt="1"
+                borderTop={`1px solid ${DIVIDER}`}
               >
                 {group.items.map((item) => (
                   <NavRow
@@ -257,50 +309,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }
 
           const open = openGroups.includes(group.name);
+          const isCurrentGroup = group.name === activeGroup;
           return (
-            <Box key={group.name} mt="1">
+            <Box key={group.name}>
               <NavRow
                 label={group.name}
                 icon={group.icon}
-                // Closed over the current page: still show where you are.
-                active={!open && group.name === activeGroup}
+                currentGroup={isCurrentGroup}
                 ariaExpanded={open}
                 onClick={() => toggleGroup(group.name)}
               >
                 <CaretRight
-                  width="7px"
-                  height="12px"
+                  width="5px"
+                  height="9px"
                   flexShrink={0}
-                  color={IDLE_TEXT}
+                  color={IDLE_ICON}
                   transform={open ? "rotate(90deg)" : "rotate(0deg)"}
                   transition="transform 0.15s ease"
                 />
               </NavRow>
-              {open &&
-                group.items.map((item) => (
-                  <NavRow
-                    key={item.name}
-                    label={item.name}
-                    active={isActive(item)}
-                    ariaCurrent={isActive(item)}
-                    indented
-                    onClick={() => go(item)}
-                  >
-                    {item.planFeature && !hasFeature(item.planFeature) && (
-                      <PlanBadge
-                        feature={item.planFeature}
-                        ml="2"
-                        flexShrink={0}
-                      />
-                    )}
-                  </NavRow>
-                ))}
+              {open && (
+                <Box
+                  position="relative"
+                  _before={{
+                    content: '""',
+                    position: "absolute",
+                    left: `${GUIDE_LEFT}px`,
+                    top: "2px",
+                    bottom: "0",
+                    w: "1px",
+                    bg: DIVIDER,
+                  }}
+                >
+                  {group.items.map((item) => (
+                    <NavRow
+                      key={item.name}
+                      label={item.name}
+                      active={isActive(item)}
+                      ariaCurrent={isActive(item)}
+                      indented
+                      onClick={() => go(item)}
+                    >
+                      {item.planFeature && !hasFeature(item.planFeature) && (
+                        <PlanBadge
+                          feature={item.planFeature}
+                          ml="2"
+                          flexShrink={0}
+                        />
+                      )}
+                    </NavRow>
+                  ))}
+                </Box>
+              )}
             </Box>
           );
         })}
       </Flex>
 
-      <Box flexShrink={0} py="1" borderTop="1px solid rgba(255,255,255,0.15)">
+      <Box flexShrink={0} pt="1" pb="2" borderTop={`1px solid ${DIVIDER}`}>
         {topLevelRow(sideBarFooter)}
         {/* Collapse toggle — desktop only */}
         {!mobile && (
@@ -308,6 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             label={collapsed ? "Expand sidebar" : "Collapse"}
             icon={collapsed ? CaretRight : CaretLeft}
             iconOnly={collapsed}
+            smallIcon
             onClick={() => onToggleCollapse?.()}
           />
         )}

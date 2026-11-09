@@ -79,6 +79,11 @@ const FEATURE_PITCH: Record<
     body: (plan) =>
       `Upgrade to ${plan} to print terms & conditions on your invoices.`,
   },
+  recurringExpenses: {
+    title: "Record rent, salaries and other regular costs automatically.",
+    body: (plan) =>
+      `Upgrade to ${plan} to set a cost up once and have it recorded on every date it's due.`,
+  },
   defaultVat: {
     title: "Stop adding VAT by hand.",
     body: (plan) =>

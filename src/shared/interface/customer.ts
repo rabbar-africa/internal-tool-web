@@ -82,6 +82,8 @@ export interface CreateCustomerPayload {
   firstName: string;
   lastName: string;
   stage: string;
+  /** YYYY-MM-DD, not in the future. Null or "" clears it. */
+  dob?: string | null;
 
   notes?: string;
 }
@@ -159,6 +161,8 @@ export interface CustomerEraseImpact {
     paperwork: number;
     reminders: number;
     files: number;
+    /** Quotes aren't tax records, so they go too. Older APIs leave it out. */
+    quotations?: number;
   };
   /** Kept, with the customer's details removed. */
   anonymise: {
@@ -174,6 +178,7 @@ export interface CustomerEraseImpact {
       invoices: number;
       jobCards: number;
       inspections: number;
+      quotations?: number;
     };
   };
 }

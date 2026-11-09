@@ -253,7 +253,7 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
                 created (see onSubmit). */}
             <Box>
               <Text fontSize="13px" fontWeight="500" color="gray.500" mb="2">
-                Oganization Logo{" "}
+                Organization Logo{" "}
                 <Text as="span" color="gray.300" fontWeight="400">
                   (optional)
                 </Text>

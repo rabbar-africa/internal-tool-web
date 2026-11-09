@@ -9,6 +9,7 @@ import { InvoicePdfView } from "@/features/invoices/components/invoice-detail/In
 import { ConnectedPayments } from "@/features/invoices/components/invoice-detail/ConnectedPayments";
 import { InvoiceCostsPanel } from "@/features/invoices/components/invoice-detail/InvoiceCostsPanel";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
+import { MadeFromQuote } from "@/features/invoices/components/invoice-detail/MadeFromQuote";
 
 export function InvoiceDetailTemplate() {
   const { formatMoney } = useFormatMoney();
@@ -74,6 +75,8 @@ export function InvoiceDetailTemplate() {
           onDelete={requestDelete}
           isDownloading={isDownloading}
         />
+
+        <MadeFromQuote invoice={invoice} />
 
         <ConnectedPayments
           payments={payments}

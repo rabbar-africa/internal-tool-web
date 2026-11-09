@@ -19,6 +19,7 @@ export type PermissionSubject =
   | "checklists"
   | "items"
   | "invoices"
+  | "quotations"
   | "payments_received"
   | "technicians"
   | "job_cards"

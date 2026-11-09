@@ -1,5 +1,11 @@
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import {
+  Link as RouterLink,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import { repeatStateFrom } from "@/features/recurring-expenses/utils/repeat";
 import SectionLoader from "@/components/common/SectionLoader";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { CreateExpensePayload } from "@/shared/interface/expense";
@@ -49,10 +55,46 @@ export function EditExpenseTemplate() {
           <Text textStyle="small-regular" color="gray.300" mt="1">
             Update the expense details
           </Text>
+          {expense.recurringExpense && (
+            <Text fontSize="13px" color="gray.400" mt="1">
+              Recorded by{" "}
+              <Link asChild color="primary.300">
+                <RouterLink
+                  to={RouteConstants.expenses.recurringDetail.generate({
+                    id: expense.recurringExpense.id,
+                  })}
+                >
+                  🔁 {expense.recurringExpense.name}
+                </RouterLink>
+              </Link>
+            </Text>
+          )}
         </Box>
-        <Button variant="outline" size="sm" onClick={() => navigate(backPath)}>
-          Cancel
-        </Button>
+        <Flex gap="2" wrap="wrap">
+          {/* Overheads only: a job's costs don't repeat on a schedule. */}
+          {!expense.recurringExpense &&
+            !expense.jobCardId &&
+            !expense.invoiceId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  navigate(RouteConstants.expenses.recurringCreate.path, {
+                    state: repeatStateFrom(expense),
+                  })
+                }
+              >
+                🔁 Make this repeat
+              </Button>
+            )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(backPath)}
+          >
+            Cancel
+          </Button>
+        </Flex>
       </Flex>
 
       <ExpenseForm

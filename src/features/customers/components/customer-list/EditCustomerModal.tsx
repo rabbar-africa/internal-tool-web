@@ -6,6 +6,7 @@ import { CustomSelect } from "@/components/input/CustomSelect";
 import { useUpdateCustomerMutation } from "../../api/query";
 import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 import { phoneField } from "@/utils/phone";
+import { dobField, dobForUpdate, todayIso } from "@/utils/date-of-birth";
 import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
 
 interface CustomerRow {
@@ -15,6 +16,7 @@ interface CustomerRow {
   displayName: string;
   email: string | null;
   phone: string | null;
+  dob?: string | null;
   stage: string;
   address: string | null;
   city: string | null;
@@ -63,6 +65,7 @@ export function EditCustomerModal({
       displayName: customer.displayName ?? "",
       email: customer.email ?? "",
       phone: formatPhoneDisplay(customer.phone),
+      dob: customer.dob ?? "",
       stage: customer.stage ?? "",
       address: customer.address ?? "",
       city: customer.city ?? "",
@@ -71,10 +74,11 @@ export function EditCustomerModal({
     },
     validationSchema: validationSchema.shape({
       phone: phoneField(formatPhoneDisplay(customer.phone)),
+      dob: dobField(customer.dob),
     }),
     onSubmit: async (values) => {
-      await mutateAsync(
-        removeFalsyAndEmptyArrayFields({
+      await mutateAsync({
+        ...removeFalsyAndEmptyArrayFields({
           firstName: values.firstName,
           lastName: values.lastName,
           displayName: values.displayName,
@@ -86,7 +90,9 @@ export function EditCustomerModal({
           state: values.state || undefined,
           country: values.country,
         }),
-      );
+        // Outside the cleanup, which would drop the null that clears it.
+        ...dobForUpdate(values.dob, customer.dob),
+      });
       onClose();
     },
   });
@@ -237,6 +243,21 @@ export function EditCustomerModal({
                       }
                     />
                   </Grid>
+
+                  <CustomInput
+                    label="Date of Birth"
+                    type="date"
+                    name="dob"
+                    value={formik.values.dob}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.dob && formik.errors.dob
+                        ? formik.errors.dob
+                        : undefined
+                    }
+                    inputProps={{ max: todayIso() }}
+                  />
 
                   <CustomInput
                     label="Street Address"

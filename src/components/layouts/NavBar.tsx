@@ -36,7 +36,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
 
   return (
     <Flex
-      height="80px"
+      height="64px"
       width="100%"
       bg="white"
       alignItems="center"

@@ -4,6 +4,8 @@ import { RouteConstants } from "@/shared/constants/routes";
 import type { CreateExpensePayload } from "@/shared/interface/expense";
 import { useCreateExpenseMutation } from "../api/query";
 import { ExpenseForm } from "../components/ExpenseForm";
+import { toaster } from "@/components/ui";
+import { repeatStateFrom } from "@/features/recurring-expenses/utils/repeat";
 
 export function CreateExpenseTemplate() {
   const navigate = useNavigate();
@@ -20,7 +22,22 @@ export function CreateExpenseTemplate() {
     : RouteConstants.expenses.base.path;
 
   const handleSubmit = async (payload: CreateExpensePayload) => {
-    await createExpense(payload);
+    const { data: saved } = await createExpense(payload);
+    // An overhead (no job card or invoice) may well come round again.
+    if (saved && !saved.jobCardId && !saved.invoiceId) {
+      toaster.create({
+        type: "info",
+        description: "Does this come round again, like rent or a salary?",
+        action: {
+          label: "Make this repeat",
+          onClick: () =>
+            navigate(RouteConstants.expenses.recurringCreate.path, {
+              state: repeatStateFrom(saved),
+            }),
+        },
+        duration: 10_000,
+      });
+    }
     // A linked invoice decides the job card server-side, so `payload` may not
     // name one even when they arrived from a job card.
     const returnJobCardId = payload.jobCardId ?? jobCardId;

@@ -32,10 +32,18 @@ import {
   vehicleToCsvRow,
 } from "./columns";
 import { AddVehicleModal } from "./AddVehicleModal";
+import { usePermissions } from "@/hooks/usePermissions";
+import { QuotationsTable } from "@/features/quotations/components/QuotationsTable";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
-const TAB_VALUES = ["invoices", "vehicles", "payments", "job-cards"] as const;
+const TAB_VALUES = [
+  "invoices",
+  "quotes",
+  "vehicles",
+  "payments",
+  "job-cards",
+] as const;
 const DEFAULT_TAB = "invoices";
 
 interface CustomerTabsProps {
@@ -67,6 +75,8 @@ export function CustomerTabs({
   onAddVehicle,
 }: CustomerTabsProps) {
   const navigate = useNavigate();
+  const { has } = usePermissions();
+  const canReadQuotes = has("read:quotations");
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceColumns = useInvoiceListColumns();
   const exportScope = customerExportScope(clientId, customerName);
@@ -145,6 +155,11 @@ export function CustomerTabs({
             <Tabs.Trigger value="invoices" fontSize="13px">
               Invoices ({invoices.length})
             </Tabs.Trigger>
+            {canReadQuotes && (
+              <Tabs.Trigger value="quotes" fontSize="13px">
+                Quotes
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="vehicles" fontSize="13px">
               Vehicles ({vehicles.length})
             </Tabs.Trigger>
@@ -212,6 +227,15 @@ export function CustomerTabs({
               tableScrollAreaProps={scrollAreaProps}
             />
           </Tabs.Content>
+
+          {canReadQuotes && (
+            <Tabs.Content value="quotes" px="4" pb="4" pt="3">
+              <QuotationsTable
+                filter={{ customerId: clientId }}
+                newQuoteParams={{ customerId: clientId }}
+              />
+            </Tabs.Content>
+          )}
 
           <Tabs.Content value="payments" px="4" pb="4" pt="3">
             <Flex justify="flex-end" mb="3">

@@ -30,8 +30,10 @@ import { useGetItemListSimpleQuery } from "@/features/items/api";
 import { useGetOrganizationTaxes } from "@/features/settings/api";
 import {
   useGetAllCustomersQuery,
+  useGetCustomerByIdQuery,
   useGetVehiclesByClientQuery,
 } from "@/features/customers/api";
+import { useGetJobCardByIdQuery } from "@/features/job-cards/api";
 import type { Vehicle } from "@/features/customers/api/service";
 import { useInvoiceCarryForward } from "./useInvoiceCarryForward";
 import {
@@ -45,7 +47,19 @@ import {
 import { formatTransactionSeries } from "@/utils/string-formatter";
 import { accountFieldForSave } from "@/features/settings/components/account-details/AccountSelect";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
-import { termsFromDates } from "@/features/invoices/utils/payment-terms";
+import {
+  addDays,
+  termsFromDates,
+} from "@/features/invoices/utils/payment-terms";
+import {
+  useCreateQuotationMutation,
+  useGetQuotationByIdQuery,
+  useUpdateQuotationMutation,
+} from "@/features/quotations/api/query";
+import type {
+  CreateQuotationPayload,
+  IQuotation,
+} from "@/shared/interface/quotation";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -135,6 +149,60 @@ export function mapInvoiceToFormValues(
   };
 }
 
+/** Days a new quote is valid for, as the API defaults it. */
+export const DEFAULT_QUOTE_VALIDITY_DAYS = 30;
+
+/**
+ * A quote in the same form shape. A quote has no due date, so `dueDate`
+ * holds its "Valid until" date, with "" for a quote that never expires.
+ */
+export function mapQuotationToFormValues(
+  quote: IQuotation,
+): CreateInvoiceFormValues {
+  return {
+    invoiceNumber: quote.quotationNumber ?? "",
+    customerId: quote.customerId ?? "",
+    vehicleId: quote.vehicleId ?? "",
+    taxId: quote.taxId ?? "",
+    bankAccountId: "",
+    templateId: quote.templateId ?? "",
+    customer: {
+      name: quote.customerName ?? quote.client?.displayName ?? "",
+      email: quote.client?.email ?? "",
+    },
+    referenceNumber: quote.referenceNumber ?? "",
+    date: quote.date ? quote.date.split("T")[0] : today,
+    dueDate: quote.expiryDate ? quote.expiryDate.split("T")[0] : "",
+    notes: quote.notes ?? "",
+    terms: quote.terms ?? "",
+    discount: quote.discount ?? "0",
+    discountType: (quote.discountType as DiscountType) || "entityLevel",
+    adjustment: quote.adjustment ?? "",
+    adjustmentDescription: quote.adjustmentDescription ?? "Adjustment",
+    isDiscountBeforeTax: quote.isDiscountBeforeTax ?? true,
+    lineItems: (quote.lineItems ?? []).map((li) => ({
+      id: li.id,
+      itemId: li.itemId ?? "",
+      name: li.name ?? "",
+      description: li.description ?? "",
+      quantity: String(li.quantity ?? "1"),
+      rate: String(li.rate ?? "0"),
+      discount: li.discount ?? "0%",
+      unit: li.unit ?? "",
+    })),
+    // Not sent for quotes: their status moves only through the quote's buttons.
+    status: InvoiceStatusDto.DRAFT,
+  };
+}
+
+const quoteDefaultValues: CreateInvoiceFormValues = {
+  ...defaultValues,
+  dueDate: addDays(today, DEFAULT_QUOTE_VALIDITY_DAYS) ?? "",
+  // Empty prints the standard quote wording; the invoice terms say payment is due.
+  terms: "",
+  status: InvoiceStatusDto.DRAFT,
+};
+
 const validationSchema = Yup.object({
   invoiceNumber: Yup.string().required("Invoice number is required"),
   customerId: Yup.string().required("Customer is required"),
@@ -151,6 +219,13 @@ const validationSchema = Yup.object({
     )
     .min(1, "Add at least one line item")
     .required(),
+});
+
+/** As the invoice's, but "Valid until" may be empty: the quote never expires. */
+const quoteValidationSchema = validationSchema.shape({
+  invoiceNumber: Yup.string().required("Quote number is required"),
+  date: Yup.string().required("Quote date is required"),
+  dueDate: Yup.string().optional(),
 });
 
 /** The first thing stopping the invoice saving, in the order the form reads. */
@@ -178,11 +253,18 @@ function firstInvoiceError(
 
 export interface UseInvoiceFormOptions {
   mode?: "create" | "edit";
+  /**
+   * What the form makes. A quote has the invoice's fields less the money ones
+   * (due date, payment terms, bank account, old balances), and `dueDate`
+   * holds its "Valid until" date.
+   */
+  document?: "invoice" | "quotation";
 }
 
 export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const mode = options?.mode ?? "create";
   const isEdit = mode === "edit";
+  const isQuote = options?.document === "quotation";
   const { id = "" } = useParams<{ id: string }>();
   // Present when arriving from a job card's invoice tab — links on create.
   const [searchParams] = useSearchParams();
@@ -195,9 +277,16 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const { mutateAsync, isPending: isCreating } = useCreateInvoiceMutation();
   const { mutateAsync: updateAsync, isPending: isUpdating } =
     useUpdateInvoiceMutation();
+  const { mutateAsync: createQuoteAsync, isPending: isCreatingQuote } =
+    useCreateQuotationMutation();
+  const { mutateAsync: updateQuoteAsync, isPending: isUpdatingQuote } =
+    useUpdateQuotationMutation();
 
   // Only fetched in edit mode (query is disabled when id is empty).
-  const invoiceQuery = useGetInvoiceByIdQuery(isEdit ? id : "");
+  const invoiceQuery = useGetInvoiceByIdQuery(isEdit && !isQuote ? id : "");
+  const quoteQuery = useGetQuotationByIdQuery(isEdit && isQuote ? id : "");
+  // Whichever document this form edits.
+  const documentQuery = isQuote ? quoteQuery : invoiceQuery;
 
   // Item search with debounce (server-side, mirrors the customer search below).
   const [debouncedItemSearch, setDebouncedItemSearch] = useState("");
@@ -252,9 +341,54 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   );
 
   const formik = useFormik<CreateInvoiceFormValues>({
-    initialValues: defaultValues,
-    validationSchema,
+    initialValues: isQuote ? quoteDefaultValues : defaultValues,
+    validationSchema: isQuote ? quoteValidationSchema : validationSchema,
     onSubmit: async (values) => {
+      if (isQuote) {
+        const quotePayload: CreateQuotationPayload = {
+          quotationNumber: values.invoiceNumber,
+          referenceNumber: values.referenceNumber,
+          customerId: values.customerId,
+          vehicleId: values.vehicleId || null,
+          taxId: values.taxId || null,
+          templateId: values.templateId || null,
+          customer: values.customer,
+          date: values.date,
+          // Empty: the quote never expires.
+          expiryDate: values.dueDate || null,
+          notes: values.notes,
+          terms: values.terms,
+          lineItems: values.lineItems.map((li, idx) => ({
+            itemOrder: idx + 1,
+            ...(li.itemId ? { itemId: li.itemId } : {}),
+            name: li.name,
+            description: li.description,
+            rate: li.rate,
+            quantity: li.quantity,
+            discount: li.discount,
+            ...(li.unit ? { unit: li.unit } : {}),
+          })),
+          isDiscountBeforeTax: values.isDiscountBeforeTax,
+          discount: values.discount,
+          discountType: values.discountType,
+          adjustment: values.adjustment,
+          adjustmentDescription: values.adjustmentDescription,
+          ...(!isEdit && jobCardId ? { jobCardId } : {}),
+        };
+        if (isEdit) {
+          await updateQuoteAsync({ id, payload: quotePayload });
+          navigate(RouteConstants.quotations.detail.generate({ id }));
+          return;
+        }
+        const created = await createQuoteAsync(quotePayload);
+        navigate(
+          RouteConstants.quotations.detail.generate({
+            id: created?.data?.id ?? "",
+          }),
+        );
+        return;
+      }
+
       const terms = termsFromDates(values.date, values.dueDate);
 
       const payload: CreateInvoicePayload = {
@@ -451,9 +585,10 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
 
   // Derive the next invoice number from the active INVOICE transaction series.
   const { data: txnSeriesData } = useGetOrganizationTransactionSeries();
+  const seriesModule = isQuote ? "ESTIMATE" : "INVOICE";
   const seriesInvoiceNumber = useMemo(() => {
     const invoiceSeries = (txnSeriesData?.data ?? []).find(
-      (s) => s.module === "INVOICE" && s.isActive,
+      (s) => s.module === seriesModule && s.isActive,
     );
     if (!invoiceSeries) return "";
     return formatTransactionSeries({
@@ -463,7 +598,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       padding: invoiceSeries.padding,
       number: invoiceSeries.nextNumber,
     });
-  }, [txnSeriesData?.data]);
+  }, [txnSeriesData?.data, seriesModule]);
 
   // `useInvoiceCarryForward` needs the customer id off `formik.values`, so it
   // can only run once the form exists — this ref lets `onSubmit` (which fires
@@ -482,10 +617,20 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // waited out: filling from it would edit, and save over, an old invoice.
   const [isInvoiceApplied, setIsInvoiceApplied] = useState(false);
   useEffect(() => {
-    const invoice = invoiceQuery.data?.data;
-    if (!isEdit || isInvoiceApplied || !invoice || invoiceQuery.isFetching) {
+    if (!isEdit || isInvoiceApplied || documentQuery.isFetching) return;
+    if (isQuote) {
+      const quote = quoteQuery.data?.data;
+      if (!quote) return;
+      setIsInvoiceApplied(true);
+      formik.setValues(mapQuotationToFormValues(quote));
+      if (quote.client) {
+        const client = quote.client as unknown as ICustomer;
+        setCustomerCache((prev) => ({ ...prev, [client.id]: client }));
+      }
       return;
     }
+    const invoice = invoiceQuery.data?.data;
+    if (!invoice) return;
     setIsInvoiceApplied(true);
     formik.setValues(mapInvoiceToFormValues(invoice));
     if (invoice.client) {
@@ -495,12 +640,51 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoiceQuery.data, invoiceQuery.isFetching, isEdit, isInvoiceApplied]);
-
-  const carry = useInvoiceCarryForward({
+  }, [
+    invoiceQuery.data,
+    quoteQuery.data,
+    documentQuery.isFetching,
     isEdit,
-    invoiceId: isEdit ? id : "",
-    customerId: formik.values.customerId,
+    isInvoiceApplied,
+  ]);
+
+  // Started from a job card (?jobCardId=) or a customer (?customerId=, and
+  // maybe ?vehicleId=): begin on that customer and vehicle, once, and only if
+  // nobody has picked a customer yet. A walk-in job card has no saved
+  // customer, so there is nothing to fill in.
+  const jobCardQuery = useGetJobCardByIdQuery(isEdit ? "" : jobCardId);
+  const jobCard = jobCardQuery.data?.data;
+  const startCustomerId = isEdit
+    ? ""
+    : jobCardId
+      ? (jobCard?.clientId ?? "")
+      : (searchParams.get("customerId") ?? "");
+  const startVehicleId = jobCardId
+    ? jobCard?.vehicleId
+    : searchParams.get("vehicleId");
+  const startClientQuery = useGetCustomerByIdQuery(startCustomerId);
+  const startClient = startClientQuery.data?.data as ICustomer | undefined;
+  const startAppliedRef = useRef(false);
+  useEffect(() => {
+    if (isEdit || startAppliedRef.current || !startClient) return;
+    startAppliedRef.current = true;
+    if (formik.values.customerId) return;
+    setCustomerCache((prev) => ({ ...prev, [startClient.id]: startClient }));
+    formik.setFieldValue("customerId", startClient.id);
+    formik.setFieldValue("customer", {
+      name: startClient.displayName,
+      email: startClient.email ?? "",
+    });
+    if (startVehicleId) formik.setFieldValue("vehicleId", startVehicleId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, startClient]);
+
+  // Quotes hold no money, so they carry no old balances: given no invoice or
+  // customer, the hook fetches nothing.
+  const carry = useInvoiceCarryForward({
+    isEdit: isEdit && !isQuote,
+    invoiceId: isEdit && !isQuote ? id : "",
+    customerId: isQuote ? "" : formik.values.customerId,
     serverCarried: invoiceQuery.data?.data?.broughtForward ?? [],
   });
 
@@ -619,14 +803,25 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   // user has already typed their own.
   const appliedTermsRef = useRef(false);
   useEffect(() => {
-    if (isEdit || appliedTermsRef.current || !defaultTerms || !canUseTerms)
+    if (
+      isEdit ||
+      isQuote ||
+      appliedTermsRef.current ||
+      !defaultTerms ||
+      !canUseTerms
+    )
       return;
     appliedTermsRef.current = true;
     if (!formik.values.terms) formik.setFieldValue("terms", defaultTerms);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultTerms]);
 
-  const handleCancel = () => navigate(RouteConstants.invoices.base.path);
+  const handleCancel = () =>
+    navigate(
+      isQuote
+        ? RouteConstants.quotations.base.path
+        : RouteConstants.invoices.base.path,
+    );
 
   useEffect(() => {
     if (itemsData?.length > 0) {
@@ -646,7 +841,9 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     isLoadingInvoice:
       isEdit &&
       !isInvoiceApplied &&
-      (invoiceQuery.isLoading || invoiceQuery.isFetching),
+      (documentQuery.isLoading || documentQuery.isFetching),
+    /** The quote being edited, for the header's status checks. */
+    quote: isQuote ? quoteQuery.data?.data : undefined,
     formik,
     handleSubmit,
     addLineItem,
@@ -658,7 +855,11 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     taxes,
     selectedTax,
     getLineAmount,
-    isPending: isEdit ? isUpdating : isCreating || carry.isFlushing,
+    isPending: isQuote
+      ? isCreatingQuote || isUpdatingQuote
+      : isEdit
+        ? isUpdating
+        : isCreating || carry.isFlushing,
     handleCancel,
 
     // Carry-forward ("bring past unpaid balance")

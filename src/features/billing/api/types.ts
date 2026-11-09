@@ -21,6 +21,8 @@ export type PlanFeature =
   | "noRabbarBranding"
   | "invoiceTerms"
   | "defaultVat"
+  | "recurringExpenses"
+  | "dailyRecurringExpenses"
   | (string & {});
 
 /** Counted entitlements. */
