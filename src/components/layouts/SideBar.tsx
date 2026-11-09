@@ -28,7 +28,7 @@ const DIVIDER = "rgba(255,255,255,0.1)";
 const ACCENT = "secondary.300";
 
 // Where the guide line under a group's icon sits, from the sidebar's edge.
-const GUIDE_LEFT = 26;
+const GUIDE_LEFT = 27;
 const SUB_ROW_LEFT = GUIDE_LEFT + 8;
 
 interface SidebarProps {
@@ -83,7 +83,7 @@ function NavRow({
       textAlign="left"
       // Roomier below lg, where the sidebar is a drawer tapped with a finger.
       height={
-        indented ? { base: "36px", lg: "30px" } : { base: "40px", lg: "34px" }
+        indented ? { base: "36px", lg: "32px" } : { base: "40px", lg: "36px" }
       }
       paddingLeft={iconOnly ? "0" : "10px"}
       paddingRight={iconOnly ? "0" : "10px"}
@@ -119,14 +119,14 @@ function NavRow({
           <Icon
             width="6px"
             height="11px"
-            mx={iconOnly ? "0" : "5.5px"}
+            mx={iconOnly ? "0" : "6px"}
             color={IDLE_ICON}
             flexShrink={0}
           />
         ) : (
           <Icon
-            width="17px"
-            height="17px"
+            width="18px"
+            height="18px"
             color={here ? ACCENT : IDLE_ICON}
             flexShrink={0}
           />
@@ -136,13 +136,9 @@ function NavRow({
           flex="1"
           minW={0}
           truncate
-          fontSize={
-            indented
-              ? { base: "13.5px", lg: "12.5px" }
-              : { base: "14px", lg: "13px" }
-          }
+          fontSize="14px"
           fontWeight={here ? "600" : indented ? "400" : "500"}
-          lineHeight="18px"
+          lineHeight="20px"
           ml={Icon ? "10px" : "0"}
         >
           {label}
@@ -236,8 +232,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <Box
-      width={collapsed ? "56px" : "224px"}
-      minW={collapsed ? "56px" : "224px"}
+      width={collapsed ? "56px" : "240px"}
+      minW={collapsed ? "56px" : "240px"}
       height="100%"
       maxH={mobile ? "unset" : "100vh"}
       bg="primary.500"
@@ -266,7 +262,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             objectFit="contain"
           />
         ) : (
-          <Logo color="white" w={"6.75rem"} />
+          <Logo color="white" w={"7.25rem"} />
         )}
       </Box>
 

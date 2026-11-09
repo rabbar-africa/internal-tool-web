@@ -42,6 +42,13 @@ export function ExpenseTabs({ active }: { active: "all" | "recurring" }) {
             borderBottomWidth="2px"
             borderColor={isActive ? "primary.300" : "transparent"}
             _hover={{ color: "primary.300", textDecoration: "none" }}
+            // Chakra's Link rings on any focus; only the keyboard needs it.
+            focusRing="none"
+            _focusVisible={{
+              outline: "2px solid",
+              outlineColor: "primary.300",
+              outlineOffset: "-2px",
+            }}
           >
             <RouterLink to={tab.to}>{tab.label}</RouterLink>
           </Link>
