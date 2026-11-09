@@ -83,6 +83,10 @@ const expenses = {
   base: defineRoute("/expenses" as const),
   create: defineRoute("/expenses/create" as const),
   bulk: defineRoute("/expenses/bulk" as const),
+  recurring: defineRoute("/expenses/recurring" as const),
+  recurringCreate: defineRoute("/expenses/recurring/create" as const),
+  recurringDetail: defineRoute("/expenses/recurring/:id" as const),
+  recurringEdit: defineRoute("/expenses/recurring/:id/edit" as const),
   edit: defineRoute("/expenses/:id/edit" as const),
 } as const;
 

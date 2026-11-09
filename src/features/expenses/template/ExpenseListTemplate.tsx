@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Flex, Grid, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, Link, Stack, Text } from "@chakra-ui/react";
 import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
 import { toaster } from "@/components/ui";
 import { TrashIcon } from "@/assets/custom/TrashIcon";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { ExpenseTabs } from "@/features/recurring-expenses/components/ExpenseTabs";
 import moment from "moment";
 import {
   CustomTable,
@@ -69,6 +70,24 @@ const columns: ColumnDef<Expense>[] = [
           <TruncatedText lines={1} fontSize="12px" color="gray.300">
             {row.original.description}
           </TruncatedText>
+        )}
+        {row.original.recurringExpense && (
+          <Link
+            asChild
+            fontSize="12px"
+            color="primary.300"
+            w="fit-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <RouterLink
+              to={RouteConstants.expenses.recurringDetail.generate({
+                id: row.original.recurringExpense.id,
+              })}
+              title="Recorded by a recurring expense"
+            >
+              🔁 {row.original.recurringExpense.name}
+            </RouterLink>
+          </Link>
         )}
       </Stack>
     ),
@@ -164,6 +183,8 @@ const FILTER_SCHEMA = {
   jobCardId: { defaultValue: "" },
   // Set by an invoice's "View expenses"; cleared from the banner.
   invoiceId: { defaultValue: "" },
+  // Set by a recurring expense's "See all"; cleared from the banner.
+  recurringExpenseId: { defaultValue: "" },
   paidThroughAccountId: { defaultValue: "" },
   dateFrom: { defaultValue: "" },
   dateTo: { defaultValue: "" },
@@ -182,6 +203,9 @@ export function ExpenseListTemplate() {
     ...(filters.category ? { category: filters.category } : {}),
     ...(filters.jobCardId ? { jobCardId: filters.jobCardId } : {}),
     ...(filters.invoiceId ? { invoiceId: filters.invoiceId } : {}),
+    ...(filters.recurringExpenseId
+      ? { recurringExpenseId: filters.recurringExpenseId }
+      : {}),
     ...(filters.paidThroughAccountId
       ? { paidThroughAccountId: filters.paidThroughAccountId }
       : {}),
@@ -244,6 +268,17 @@ export function ExpenseListTemplate() {
       onClick: (expense) =>
         navigate(
           RouteConstants.jobCards.detail.generate({ id: expense.jobCardId! }),
+        ),
+    },
+    {
+      label: "View schedule",
+      value: "view-schedule",
+      hidden: (expense) => !expense.recurringExpense,
+      onClick: (expense) =>
+        navigate(
+          RouteConstants.expenses.recurringDetail.generate({
+            id: expense.recurringExpense!.id,
+          }),
         ),
     },
     {
@@ -314,6 +349,8 @@ export function ExpenseListTemplate() {
             </Flex>
           }
         />
+
+        <ExpenseTabs active="all" />
 
         <Box
           pt={{ base: "1.25rem", md: "2rem" }}
@@ -420,6 +457,32 @@ export function ExpenseListTemplate() {
                 variant="ghost"
                 color="primary.300"
                 onClick={() => setFilters({ invoiceId: "", page: 1 })}
+              >
+                Show all
+              </Button>
+            </Flex>
+          )}
+
+          {filters.recurringExpenseId && (
+            <Flex
+              align="center"
+              gap="2"
+              mb="3"
+              px="3"
+              py="2"
+              bg="primary.50"
+              rounded="md"
+              flexWrap="wrap"
+            >
+              <Text textStyle="small-regular" color="gray.500">
+                Showing what{" "}
+                {expenses[0]?.recurringExpense?.name ?? "one schedule"} recorded
+              </Text>
+              <Button
+                size="xs"
+                variant="ghost"
+                color="primary.300"
+                onClick={() => setFilters({ recurringExpenseId: "", page: 1 })}
               >
                 Show all
               </Button>

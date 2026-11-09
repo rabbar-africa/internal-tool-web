@@ -30,6 +30,13 @@ const INVOICE_RECORDS = [
   [k.quotations.getById],
 ] as const;
 
+/** Schedules for costs that come round again. */
+const RECURRING_EXPENSES = [
+  [k.recurringExpenses.getAll],
+  [k.recurringExpenses.getById],
+  [k.recurringExpenses.summary],
+] as const;
+
 /** Quotes, and the job cards and customers that list them. They hold no money. */
 const QUOTATION_RECORDS = [
   [k.quotations.getAll],
@@ -90,6 +97,19 @@ export const invalidates = {
   /** Created, edited, written off, recalculated, deleted, or a balance carried. */
   invoice: join(INVOICE_RECORDS, RECEIVABLES),
   invoiceCreated: join(INVOICE_RECORDS, RECEIVABLES, NUMBER_SERIES),
+
+  /** Edits, pauses and stops: only the schedules change. */
+  recurringExpense: join(RECURRING_EXPENSES),
+  /**
+   * Creating (when it starts today), resuming and "Record now" may record an
+   * expense, which moves the expense list, the account and the numbering.
+   */
+  recurringExpenseRecorded: join(
+    RECURRING_EXPENSES,
+    COSTS,
+    ACCOUNTS,
+    NUMBER_SERIES,
+  ),
 
   quotation: join(QUOTATION_RECORDS),
   quotationCreated: join(QUOTATION_RECORDS, NUMBER_SERIES),

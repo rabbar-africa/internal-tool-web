@@ -62,6 +62,11 @@ export const customQueryKey = {
     outstanding: "get-invoice-outstanding",
     deleteImpact: "get-invoice-delete-impact",
   },
+  recurringExpenses: {
+    getAll: "get-all-recurring-expenses",
+    getById: "get-recurring-expense-by-id",
+    summary: "get-recurring-expense-summary",
+  },
   quotations: {
     getAll: "get-all-quotations",
     getById: "get-quotation-by-id",
