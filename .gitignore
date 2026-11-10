@@ -43,3 +43,4 @@ chakra-config.json
 
 # Internal backend contracts and notes, kept local only
 docs/
+brag-output*
