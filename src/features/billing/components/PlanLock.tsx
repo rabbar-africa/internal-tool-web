@@ -191,9 +191,9 @@ export function PlanLimitNotice({
   const copy = LIMIT_COPY[limit];
   const nameOf = (count: number) =>
     copy ? (count === 1 ? copy.one : copy.many) : limit;
-  const monthly = usage.per === "month";
-  const where = monthly
-    ? "this month"
+  const resets = usage.per !== "total";
+  const where = resets
+    ? `this ${usage.per}`
     : isOnFreePlan
       ? "on your free plan"
       : "on your plan";
@@ -205,11 +205,16 @@ export function PlanLimitNotice({
   } else if (usage.limit === 1) {
     title = `Your plan includes just 1 ${nameOf(1)}, and it's in use.`;
   } else {
-    title = `You've used all ${usage.limit} ${nameOf(usage.limit)} ${where}.`;
+    title = `You've used all ${usage.limit.toLocaleString("en-NG")} ${nameOf(usage.limit)} ${where}.`;
   }
 
-  // A monthly allowance comes back by itself, whatever else is on offer.
-  const refill = monthly ? "More are available on the 1st." : undefined;
+  // A monthly or yearly allowance comes back by itself, whatever else is on offer.
+  const refill =
+    usage.per === "month"
+      ? "More are available on the 1st."
+      : usage.per === "year"
+        ? "More are available on 1 January."
+        : undefined;
   let body = refill;
   if (canUpgrade) {
     const phrase = upgradePlan?.limits?.find(

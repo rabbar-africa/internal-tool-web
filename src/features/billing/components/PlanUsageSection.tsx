@@ -27,8 +27,8 @@ function UsageMeter({ label, usage }: { label: string; usage: LimitUsage }) {
         </Text>
         <Text fontSize="12px" color={full ? "error.300" : "gray.400"}>
           {limit === null
-            ? `${used} (no limit)`
-            : `${used} of ${limit}${per === "month" ? " this month" : ""}`}
+            ? `${used.toLocaleString("en-NG")} (no limit)`
+            : `${used.toLocaleString("en-NG")} of ${limit.toLocaleString("en-NG")}${per === "total" ? "" : ` this ${per}`}`}
         </Text>
       </Stack>
       <Box h="6px" rounded="full" bg="gray.75" overflow="hidden">

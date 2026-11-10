@@ -36,7 +36,8 @@ export type PlanLimit =
   | "paperwork"
   | (string & {});
 
-export type LimitPeriod = "total" | "month";
+/** `month` resets on the 1st, `year` on 1 January (Lagos time). */
+export type LimitPeriod = "total" | "month" | "year";
 
 /** How much of a limit is used. `limit`/`remaining` are null with no cap. */
 export interface LimitUsage {
@@ -62,7 +63,7 @@ export interface PlanLimitRow {
   label: string;
   max: number | null;
   per: LimitPeriod;
-  /** "15 invoices", "100 invoices a month", "Unlimited customers". */
+  /** "15 invoices", "100 invoices a month", "30,000 invoices a year". */
   phrase: string;
   comingSoon: boolean;
 }
