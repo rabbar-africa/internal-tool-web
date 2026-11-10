@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router-dom";
+import { guarded } from "@/routes/RequirePermission";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
@@ -12,12 +13,12 @@ const { CreateItemPage } = lazyImport(
 );
 
 export const ItemRoutes: RouteObject[] = [
-  {
+  guarded("items", {
     path: RouteConstants.items.base.path,
     element: <ItemListPage />,
-  },
-  {
+  }),
+  guarded("itemCreate", {
     path: RouteConstants.items.create.path,
     element: <CreateItemPage />,
-  },
+  }),
 ];

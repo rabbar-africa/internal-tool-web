@@ -321,8 +321,15 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   );
   const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
 
-  const { canDelete, has } = usePermissions();
+  const { canDelete, has, can } = usePermissions();
   const canReadQuotes = has("read:quotations");
+  // A job's expenses add up to its profit, so they follow the `finance` view
+  // rule; the API sends null in their place otherwise.
+  const showExpenses = can("finance") && jobCard.expenses !== null;
+  const expenses = useMemo(() => jobCard.expenses ?? [], [jobCard.expenses]);
+  // A link to ?tab=expenses from someone who can't see them lands on invoices.
+  const currentTab =
+    activeTab === "expenses" && !showExpenses ? "invoices" : activeTab;
   // Expenses ticked on the Expenses tab, by id, for deleting together.
   const [expenseSelection, setExpenseSelection] = useState<RowSelectionState>(
     {},
@@ -331,8 +338,8 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
   const { mutateAsync: deleteExpenses, isPending: isDeletingExpenses } =
     useDeleteExpensesBulkMutation();
   const selectedExpenses = useMemo(
-    () => jobCard.expenses.filter((expense) => expenseSelection[expense.id]),
-    [jobCard.expenses, expenseSelection],
+    () => expenses.filter((expense) => expenseSelection[expense.id]),
+    [expenses, expenseSelection],
   );
 
   const { run: runExpenseExport, isPending: isExportingExpenses } =
@@ -496,7 +503,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
         overflow="hidden"
       >
         <Tabs.Root
-          value={activeTab}
+          value={currentTab}
           onValueChange={({ value }) => {
             setActiveTab(value as TabValue);
             // Ticks belong to the Expenses tab; leaving it drops them.
@@ -524,9 +531,11 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             <Tabs.Trigger value="inspections" fontSize="13px">
               Inspections ({jobCard.inspections.length})
             </Tabs.Trigger>
-            <Tabs.Trigger value="expenses" fontSize="13px">
-              Expenses ({jobCard.expenses.length})
-            </Tabs.Trigger>
+            {showExpenses && (
+              <Tabs.Trigger value="expenses" fontSize="13px">
+                Expenses ({expenses.length})
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="files" fontSize="13px">
               Files ({jobCard.files.length})
             </Tabs.Trigger>
@@ -617,45 +626,47 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             />
           </Tabs.Content>
 
-          <Tabs.Content value="expenses" px="4" pb="4" pt="3">
-            <Flex justify="flex-end" gap="2" mb="3" wrap="wrap">
-              <ExportMenu
-                size="sm"
-                module="expenses"
-                scope={exportScope}
-                serverView={{
-                  filters: { jobCardId: jobCard.id },
-                  selectedIds: selectedExpenses.map((expense) => expense.id),
-                  columns: EXPENSE_EXPORT_COLUMNS,
-                  total: jobCard.expenses.length,
-                }}
+          {showExpenses && (
+            <Tabs.Content value="expenses" px="4" pb="4" pt="3">
+              <Flex justify="flex-end" gap="2" mb="3" wrap="wrap">
+                <ExportMenu
+                  size="sm"
+                  module="expenses"
+                  scope={exportScope}
+                  serverView={{
+                    filters: { jobCardId: jobCard.id },
+                    selectedIds: selectedExpenses.map((expense) => expense.id),
+                    columns: EXPENSE_EXPORT_COLUMNS,
+                    total: expenses.length,
+                  }}
+                />
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    // With nothing invoiced yet there's nothing to ask.
+                    costableInvoices.length
+                      ? setRecordExpenseOpen(true)
+                      : recordOtherExpense()
+                  }
+                >
+                  <PlusIcon />
+                  Add Expense
+                </Button>
+              </Flex>
+              <CustomTable
+                data={expenses}
+                columns={expenseTableColumns}
+                enableActions
+                actions={expenseActions}
+                enableRowSelection
+                rowSelection={expenseSelection}
+                onRowSelectionChange={setExpenseSelection}
+                getRowId={(row) => row.id}
+                showSelectionSummary={false}
+                tableScrollAreaProps={scrollAreaProps}
               />
-              <Button
-                size="sm"
-                onClick={() =>
-                  // With nothing invoiced yet there's nothing to ask.
-                  costableInvoices.length
-                    ? setRecordExpenseOpen(true)
-                    : recordOtherExpense()
-                }
-              >
-                <PlusIcon />
-                Add Expense
-              </Button>
-            </Flex>
-            <CustomTable
-              data={jobCard.expenses}
-              columns={expenseTableColumns}
-              enableActions
-              actions={expenseActions}
-              enableRowSelection
-              rowSelection={expenseSelection}
-              onRowSelectionChange={setExpenseSelection}
-              getRowId={(row) => row.id}
-              showSelectionSummary={false}
-              tableScrollAreaProps={scrollAreaProps}
-            />
-          </Tabs.Content>
+            </Tabs.Content>
+          )}
 
           <Tabs.Content value="files" px="4" pb="4" pt="3">
             <Flex justify="flex-end" mb="3">

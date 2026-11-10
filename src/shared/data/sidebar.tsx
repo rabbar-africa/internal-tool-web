@@ -13,7 +13,7 @@ import { GearIcon } from "@/assets/custom/GearIcon";
 import { ShieldCheckIcon } from "@/assets/custom/ShieldCheckIcon";
 import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 import { ArrowLeftRightIcon } from "@/assets/custom/ArrowLeftRightIcon";
-import type { PermissionInput } from "@/utils/permissions";
+import type { PageKey } from "@/shared/constants/access";
 
 export interface SideBarItem {
   name: string;
@@ -21,8 +21,12 @@ export interface SideBarItem {
   href: string;
   slug: string;
   paths: string[];
-  /** Hidden unless the user holds it. */
-  permission?: PermissionInput;
+  /**
+   * The page it opens, from PAGE_ACCESS: hidden unless the user may open it,
+   * so the sidebar and the route guard can't disagree. Leave it off only for
+   * pages everyone has.
+   */
+  page?: PageKey;
   /** Still shown without it, badged, so people see what upgrading gives them. */
   planFeature?: string;
 }
@@ -54,6 +58,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.customers.base.path,
         slug: "customers",
         paths: [RouteConstants.customers.base.path],
+        page: "customers",
       },
       {
         name: "Invoices",
@@ -61,6 +66,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.invoices.base.path,
         slug: "invoices",
         paths: [RouteConstants.invoices.base.path],
+        page: "invoices",
       },
       {
         name: "Quotes",
@@ -68,7 +74,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.quotations.base.path,
         slug: "quotations",
         paths: [RouteConstants.quotations.base.path],
-        permission: "read:quotations",
+        page: "quotations",
       },
       {
         name: "Payments",
@@ -76,6 +82,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.payments.base.path,
         slug: "payments",
         paths: [RouteConstants.payments.base.path],
+        page: "payments",
       },
       {
         name: "Items & Services",
@@ -83,6 +90,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.items.base.path,
         slug: "items",
         paths: [RouteConstants.items.base.path],
+        page: "items",
       },
     ],
   },
@@ -97,6 +105,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.jobCards.base.path,
         slug: "job-cards",
         paths: [RouteConstants.jobCards.base.path],
+        page: "jobCards",
       },
       {
         name: "Inspections",
@@ -104,6 +113,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.inspection.base.path,
         slug: "inspection",
         paths: [RouteConstants.inspection.base.path],
+        page: "inspections",
       },
       {
         name: "Technicians",
@@ -111,6 +121,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.technicians.base.path,
         slug: "technicians",
         paths: [RouteConstants.technicians.base.path],
+        page: "technicians",
       },
       {
         name: "Reminders",
@@ -118,6 +129,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.reminders.base.path,
         slug: "reminders",
         paths: [RouteConstants.reminders.base.path],
+        page: "reminders",
         planFeature: "reminders",
       },
       {
@@ -126,6 +138,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.paperwork.base.path,
         slug: "paperwork",
         paths: [RouteConstants.paperwork.base.path],
+        page: "paperwork",
       },
     ],
   },
@@ -140,6 +153,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.expenses.base.path,
         slug: "expenses",
         paths: [RouteConstants.expenses.base.path],
+        page: "expenses",
       },
       {
         name: "Banking",
@@ -148,7 +162,7 @@ export const sideBarGroups: SideBarGroup[] = [
         slug: "banking",
         // Transfers and statements.
         paths: ["/banking"],
-        permission: "read:banking",
+        page: "banking",
       },
       {
         name: "Reports",
@@ -156,6 +170,7 @@ export const sideBarGroups: SideBarGroup[] = [
         href: RouteConstants.reports.base.path,
         slug: "reports",
         paths: [RouteConstants.reports.base.path],
+        page: "reports",
       },
     ],
   },

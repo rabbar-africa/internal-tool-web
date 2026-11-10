@@ -4,11 +4,11 @@ import type { IOrganization } from "./common";
 export type PermissionAction = "create" | "read" | "update" | "delete";
 
 /**
- * The resources the API guards. Listed for autocomplete; the trailing
- * `(string & {})` keeps a subject the backend adds later from breaking the
- * build before this union catches up.
+ * The resources the API guards, as the backend's PERMISSION_SUBJECTS lists
+ * them. `src/shared/constants/access.ts` is typed against this strict union,
+ * so a misspelt subject there fails to compile.
  */
-export type PermissionSubject =
+export type KnownPermissionSubject =
   | "users"
   | "roles"
   | "permissions"
@@ -26,7 +26,14 @@ export type PermissionSubject =
   | "expenses"
   | "reminders"
   | "banking"
-  | (string & {});
+  | "paperwork";
+
+/**
+ * A subject as it arrives from the API. The trailing `(string & {})` keeps a
+ * subject the backend adds later from breaking the build before
+ * `KnownPermissionSubject` catches up.
+ */
+export type PermissionSubject = KnownPermissionSubject | (string & {});
 
 /** A permission as it appears on the user's flattened `permissions` array. */
 export interface IPermission {

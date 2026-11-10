@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import type { PermissionInput } from "@/utils/permissions";
+import type { PageKey } from "@/shared/constants/access";
 
 export interface SettingsCardItem {
   title: string;
@@ -9,10 +9,10 @@ export interface SettingsCardItem {
   icon: ComponentType<any>;
   href: string;
   /**
-   * Hides the card unless the user holds one of these. Omit for cards
-   * everyone in the organization may open.
+   * The page it opens, from PAGE_ACCESS: hidden unless the user may open it.
+   * Omit for cards everyone in the organization may open.
    */
-  anyOf?: PermissionInput[];
+  page?: PageKey;
 }
 
 export function SettingsCard({

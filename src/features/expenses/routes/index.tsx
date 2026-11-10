@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router-dom";
+import { guarded } from "@/routes/RequirePermission";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
@@ -20,20 +21,23 @@ const { EditExpensePage } = lazyImport(
 );
 
 export const ExpenseRoutes: RouteObject[] = [
-  {
+  guarded("expenses", {
     path: RouteConstants.expenses.base.path,
     element: <ExpenseListPage />,
-  },
-  {
-    path: RouteConstants.expenses.create.path,
-    element: <CreateExpensePage />,
-  },
-  {
-    path: RouteConstants.expenses.bulk.path,
-    element: <BulkExpensePage />,
-  },
-  {
+  }),
+  guarded(
+    "expenseCreate",
+    {
+      path: RouteConstants.expenses.create.path,
+      element: <CreateExpensePage />,
+    },
+    {
+      path: RouteConstants.expenses.bulk.path,
+      element: <BulkExpensePage />,
+    },
+  ),
+  guarded("expenseEdit", {
     path: RouteConstants.expenses.edit.path,
     element: <EditExpensePage />,
-  },
+  }),
 ];

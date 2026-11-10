@@ -101,7 +101,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
           "Invite people, manage members, and control who is still active.",
         icon: UserCirclePlus,
         href: settings.teamManagement.path,
-        anyOf: ["read:users"],
+        page: "team",
       },
       {
         title: "Roles & Permissions",
@@ -109,7 +109,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
           "Create roles and choose exactly what each one is allowed to do.",
         icon: ShieldCheckIcon,
         href: settings.roles.path,
-        anyOf: ["read:roles"],
+        page: "roles",
       },
     ],
   },
@@ -128,7 +128,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
 ];
 
 export function SettingsPage() {
-  const { hasAny } = usePermissions();
+  const { canAccess } = usePermissions();
   // The owner alone may delete the business, so only they see the way in.
   const { data: deletion } = useBusinessDeletionStatusQuery();
   const ownerGroups: SettingsGroup[] = deletion?.data?.canRequest
@@ -153,7 +153,7 @@ export function SettingsPage() {
   const groups = [...SETTINGS_GROUPS, ...ownerGroups]
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.anyOf || hasAny(item.anyOf)),
+      items: group.items.filter((item) => !item.page || canAccess(item.page)),
     }))
     .filter((group) => group.items.length > 0);
 

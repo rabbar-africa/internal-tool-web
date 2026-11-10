@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
-import RequirePermission from "@/routes/RequirePermission";
+import { guarded } from "@/routes/RequirePermission";
 
 const { RecurringExpenseListPage } = lazyImport(
   () => import("../pages/RecurringExpenseListPage"),
@@ -22,35 +22,23 @@ const { RecurringExpenseDetailPage } = lazyImport(
 
 /** Expenses → Recurring. Permissions are the expenses' own. */
 export const RecurringExpenseRoutes: RouteObject[] = [
-  {
-    element: <RequirePermission permissions={["read:expenses"]} />,
-    children: [
-      {
-        path: RouteConstants.expenses.recurring.path,
-        element: <RecurringExpenseListPage />,
-      },
-      {
-        path: RouteConstants.expenses.recurringDetail.path,
-        element: <RecurringExpenseDetailPage />,
-      },
-    ],
-  },
-  {
-    element: <RequirePermission permissions={["create:expenses"]} />,
-    children: [
-      {
-        path: RouteConstants.expenses.recurringCreate.path,
-        element: <CreateRecurringExpensePage />,
-      },
-    ],
-  },
-  {
-    element: <RequirePermission permissions={["update:expenses"]} />,
-    children: [
-      {
-        path: RouteConstants.expenses.recurringEdit.path,
-        element: <EditRecurringExpensePage />,
-      },
-    ],
-  },
+  guarded(
+    "expenses",
+    {
+      path: RouteConstants.expenses.recurring.path,
+      element: <RecurringExpenseListPage />,
+    },
+    {
+      path: RouteConstants.expenses.recurringDetail.path,
+      element: <RecurringExpenseDetailPage />,
+    },
+  ),
+  guarded("expenseCreate", {
+    path: RouteConstants.expenses.recurringCreate.path,
+    element: <CreateRecurringExpensePage />,
+  }),
+  guarded("expenseEdit", {
+    path: RouteConstants.expenses.recurringEdit.path,
+    element: <EditRecurringExpensePage />,
+  }),
 ];

@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
-import RequirePermission from "@/routes/RequirePermission";
+import { guarded } from "@/routes/RequirePermission";
 import { BillingSettingsRoutes } from "@/features/billing/routes";
 
 const { Settings } = lazyImport(() => import("../pages/Settings"), "Settings");
@@ -98,14 +98,18 @@ export const SettingsRoutes: RouteObject[] = [
     path: settings.invoiceTemplates.path,
     element: <InvoiceTemplatesPage />,
   },
-  {
-    path: settings.createInvoiceTemplate.path,
-    element: <InvoiceTemplateEditorPage />,
-  },
-  {
-    path: settings.editInvoiceTemplate.path,
-    element: <InvoiceTemplateEditorPage />,
-  },
+  // Templates can be viewed by anyone; the editor only saves.
+  guarded(
+    "invoiceTemplateEdit",
+    {
+      path: settings.createInvoiceTemplate.path,
+      element: <InvoiceTemplateEditorPage />,
+    },
+    {
+      path: settings.editInvoiceTemplate.path,
+      element: <InvoiceTemplateEditorPage />,
+    },
+  ),
   {
     path: settings.transactionSeries.path,
     element: <TransactionSeriesPage />,
@@ -114,22 +118,12 @@ export const SettingsRoutes: RouteObject[] = [
   ...BillingSettingsRoutes,
   // Team and role screens are gated: only users who can read the underlying
   // module get past the route, mirroring the API's own permission guard.
-  {
-    element: <RequirePermission permissions={["read:users"]} />,
-    children: [
-      {
-        path: settings.teamManagement.path,
-        element: <TeamManagementPage />,
-      },
-    ],
-  },
-  {
-    element: <RequirePermission permissions={["read:roles"]} />,
-    children: [
-      {
-        path: settings.roles.path,
-        element: <RolesPage />,
-      },
-    ],
-  },
+  guarded("team", {
+    path: settings.teamManagement.path,
+    element: <TeamManagementPage />,
+  }),
+  guarded("roles", {
+    path: settings.roles.path,
+    element: <RolesPage />,
+  }),
 ];

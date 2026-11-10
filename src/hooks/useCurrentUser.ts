@@ -41,11 +41,11 @@ export function useCurrentUser() {
   );
 
   /** True only when the user holds every permission listed. */
-  const userHasPermission = (required: PermissionInput[]) =>
+  const userHasPermission = (required: readonly PermissionInput[]) =>
     checkAllPermissions(userData, required);
 
   /** True when the user holds at least one of the permissions listed. */
-  const userHasAnyPermission = (required: PermissionInput[]) =>
+  const userHasAnyPermission = (required: readonly PermissionInput[]) =>
     checkAnyPermission(userData, required);
 
   /** Single check — `can("read", "invoices")` or `can("read:invoices")`. */

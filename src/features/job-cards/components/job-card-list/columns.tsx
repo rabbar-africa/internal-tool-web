@@ -110,7 +110,7 @@ export const jobCardColumns: ColumnDef<JobCard>[] = [
       const invoiced = row.original.financials?.invoicedTotal;
       return (
         <Text textStyle="small-regular" color="gray.500" fontWeight="500">
-          {invoiced === undefined ? "—" : formatCurrency(invoiced)}
+          {invoiced == null ? "—" : formatCurrency(invoiced)}
         </Text>
       );
     },
