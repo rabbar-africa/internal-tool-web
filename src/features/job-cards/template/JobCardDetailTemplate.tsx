@@ -3,6 +3,7 @@ import { Box, Button, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import SectionLoader from "@/components/common/SectionLoader";
+import { PermissionGate } from "@/components/common/PermissionGate";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
@@ -137,7 +138,12 @@ export function JobCardDetailTemplate() {
           rootProps={{ size: "sm", w: "auto" }}
           controlProps={{ w: "185px" }}
         />
-        <JobCardFinancialsCards financials={jobCard.financials} />
+        {/* Profit is for the `finance` view rule; the API nulls it otherwise. */}
+        {jobCard.financials && (
+          <PermissionGate rule="finance">
+            <JobCardFinancialsCards financials={jobCard.financials} />
+          </PermissionGate>
+        )}
 
         <JobCardInfo jobCard={jobCard} />
 

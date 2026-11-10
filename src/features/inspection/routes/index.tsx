@@ -1,4 +1,5 @@
 import { lazyImport } from "@/utils/lazyImports";
+import { guarded } from "@/routes/RequirePermission";
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 
@@ -23,20 +24,23 @@ const { EditInspectionPage } = lazyImport(
 );
 
 export const InspectionRoutes: RouteObject[] = [
-  {
-    path: RouteConstants.inspection.base.path,
-    element: <ViewAllReportsPage />,
-  },
-  {
+  guarded(
+    "inspections",
+    {
+      path: RouteConstants.inspection.base.path,
+      element: <ViewAllReportsPage />,
+    },
+    {
+      path: RouteConstants.inspection.inspectionDetails.path,
+      element: <InspectionDetailPage />,
+    },
+  ),
+  guarded("inspectionCreate", {
     path: RouteConstants.inspection.createInspection.path,
     element: <GenerateInspectionPage />,
-  },
-  {
-    path: RouteConstants.inspection.inspectionDetails.path,
-    element: <InspectionDetailPage />,
-  },
-  {
+  }),
+  guarded("inspectionEdit", {
     path: RouteConstants.inspection.edit.path,
     element: <EditInspectionPage />,
-  },
+  }),
 ];

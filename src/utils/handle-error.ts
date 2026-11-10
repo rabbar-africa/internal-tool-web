@@ -16,6 +16,24 @@ export function getPlanLock(
   return { message: data.message, canUpgrade: Boolean(data.canUpgrade) };
 }
 
+/**
+ * A 403 from the API's PermissionsGuard: the user's roles don't allow this.
+ * Other 403s (only the owner may delete the business, an inactive account)
+ * carry their own message and aren't this.
+ */
+export function isPermissionDenied(error: any): boolean {
+  const { status, data } = error?.response ?? {};
+  return (
+    status === 403 &&
+    typeof data?.message === "string" &&
+    data.message.startsWith("You do not have the required permissions")
+  );
+}
+
+/** What to tell a user their role doesn't allow something. */
+export const PERMISSION_DENIED_MESSAGE =
+  "Your role doesn't allow this. Ask an admin on your team if you need it.";
+
 export function getErrorMessage(error: any) {
   const response = error?.response;
   if (response) {

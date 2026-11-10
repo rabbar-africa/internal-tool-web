@@ -12,28 +12,34 @@ export interface DashboardPeriod {
   to: string;
 }
 
+/**
+ * Each section is null when the caller's roles don't cover it: the API leaves
+ * it out rather than send numbers the screen must hide (revenue needs
+ * `read:payments_received`, invoice figures `read:invoices`, expenses and
+ * profit `read:expenses`, job cards `read:job_cards`, customers `read:clients`).
+ */
 export interface DashboardSummary {
   /** Confirmed payments received in the period. */
-  revenueCollected: number;
+  revenueCollected: number | null;
   /** Invoice totals in the period (excludes VOID/DELETED). */
-  invoiced: number;
-  invoiceCount: number;
+  invoiced: number | null;
+  invoiceCount: number | null;
   /** Unpaid balances (SENT/OVERDUE/PARTIALLY_PAID), all-time. */
-  outstandingReceivables: number;
+  outstandingReceivables: number | null;
   /** Past due date with a remaining balance. */
-  overdue: { amount: number; count: number };
+  overdue: { amount: number; count: number } | null;
   /** Expenses recorded in the period. */
-  expenses: number;
-  expenseCount: number;
+  expenses: number | null;
+  expenseCount: number | null;
   /** Revenue collected minus expenses for the period. */
-  netProfit: number;
+  netProfit: number | null;
   /** Job cards not yet closed/delivered. */
-  openJobCards: number;
+  openJobCards: number | null;
   /** Job cards created in the period. */
-  jobCardsCreated: number;
-  totalCustomers: number;
+  jobCardsCreated: number | null;
+  totalCustomers: number | null;
   /** Clients created in the period. */
-  newCustomers: number;
+  newCustomers: number | null;
 }
 
 export interface InvoiceStatusBreakdownItem {
@@ -63,13 +69,16 @@ export interface TopDebtor {
   daysOverdue: number;
 }
 
-/** Chart-ready monthly bucket — fixed buckets, zero-filled by the API. */
+/**
+ * Chart-ready monthly bucket — fixed buckets, zero-filled by the API. A field
+ * is null for every month when the caller can't see it (see DashboardSummary).
+ */
 export interface RevenueTrendPoint {
   month: string;
-  collected: number;
-  invoiced: number;
-  expenses: number;
-  profit: number;
+  collected: number | null;
+  invoiced: number | null;
+  expenses: number | null;
+  profit: number | null;
 }
 
 export interface RecentInvoice {
@@ -111,12 +120,12 @@ export interface DashboardAnalytics {
   currency: string;
   period: DashboardPeriod;
   summary: DashboardSummary;
-  invoiceStatusBreakdown: InvoiceStatusBreakdownItem[];
-  jobCardStatusBreakdown: JobCardStatusBreakdownItem[];
-  expensesByCategory: ExpenseCategoryItem[];
-  topDebtors: TopDebtor[];
+  invoiceStatusBreakdown: InvoiceStatusBreakdownItem[] | null;
+  jobCardStatusBreakdown: JobCardStatusBreakdownItem[] | null;
+  expensesByCategory: ExpenseCategoryItem[] | null;
+  topDebtors: TopDebtor[] | null;
   trend: RevenueTrendPoint[];
-  recentInvoices: RecentInvoice[];
-  recentPayments: RecentPayment[];
-  recentJobCards: RecentJobCard[];
+  recentInvoices: RecentInvoice[] | null;
+  recentPayments: RecentPayment[] | null;
+  recentJobCards: RecentJobCard[] | null;
 }

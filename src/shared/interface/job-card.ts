@@ -66,8 +66,11 @@ export interface JobCard {
     expenses: number;
     files: number;
   };
-  /** The job's money so far; the list sends it as well as the detail. */
-  financials?: JobCardFinancials;
+  /**
+   * The job's money so far; the list sends it as well as the detail. Null when
+   * the caller can't read expenses (the `finance` view rule): profit is hidden.
+   */
+  financials?: JobCardFinancials | null;
 }
 
 export interface JobCardFinancials {
@@ -154,8 +157,9 @@ export interface JobCardDetail extends JobCard {
   /** Newest first. Older APIs leave it out. */
   quotations?: JobCardQuotation[];
   payments: JobCardPayment[];
-  expenses: Expense[];
-  financials: JobCardFinancials;
+  /** Null when the caller can't read expenses: they'd reveal the profit. */
+  expenses: Expense[] | null;
+  financials: JobCardFinancials | null;
 }
 
 export interface CreateJobCardPayload {

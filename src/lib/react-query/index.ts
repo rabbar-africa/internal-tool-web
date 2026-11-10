@@ -1,9 +1,14 @@
 import { toaster } from "@/components/ui/toaster";
-import { getErrorMessage, getPlanLock } from "@/utils/handle-error";
+import {
+  getErrorMessage,
+  getPlanLock,
+  isPermissionDenied,
+  PERMISSION_DENIED_MESSAGE,
+} from "@/utils/handle-error";
 import { getToken } from "@/utils/persistToken";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { RouteConstants } from "@/shared/constants/routes";
-import { MutationCache, QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import type {
   UseQueryOptions,
   UseMutationOptions,
@@ -44,8 +49,34 @@ const defaultOptions: DefaultOptions = {
   },
 };
 
+/**
+ * A permission refusal means the screen was drawn from stale permissions (an
+ * admin changed the user's role), so fetch them again and let the UI redraw.
+ * At most every 10s: a page firing several refused requests at once needs
+ * one refresh, not several racing ones.
+ */
+let lastPermissionRefresh = 0;
+function refreshPermissions() {
+  const now = Date.now();
+  if (now - lastPermissionRefresh < 10_000) return;
+  lastPermissionRefresh = now;
+  queryClient.invalidateQueries({ queryKey: [customQueryKey.user.getMe] });
+}
+
 export const queryClient = new QueryClient({
   defaultOptions,
+  // Reads stay quiet on a refusal (the page shows its own empty or error
+  // state); they only refresh the permissions behind it.
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (
+        isPermissionDenied(error) &&
+        query.queryKey[0] !== customQueryKey.user.getMe
+      ) {
+        refreshPermissions();
+      }
+    },
+  }),
   mutationCache: new MutationCache({
     onSuccess: (_data, _variables, _context, mutation) => {
       // console.log('in global config success');
@@ -60,10 +91,16 @@ export const queryClient = new QueryClient({
     onError: (error) => {
       // console.log('in global config error');
 
+      // Refused by the role: say so plainly, and redraw from fresh permissions.
+      const denied = isPermissionDenied(error);
+      if (denied) refreshPermissions();
+
       // Refused by the plan: say why, and offer the way out if there is one.
       const planLock = getPlanLock(error);
       toaster.create({
-        description: planLock?.message ?? getErrorMessage(error),
+        description: denied
+          ? PERMISSION_DENIED_MESSAGE
+          : (planLock?.message ?? getErrorMessage(error)),
         type: "error",
         ...(planLock?.canUpgrade
           ? {

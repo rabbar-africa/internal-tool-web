@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
-import RequirePermission from "@/routes/RequirePermission";
+import { guarded } from "@/routes/RequirePermission";
 
 const { InvoiceListPage } = lazyImport(
   () => import("../pages/InvoiceListPage"),
@@ -26,29 +26,27 @@ const { RecordInvoiceCostsPage } = lazyImport(
 );
 
 export const InvoiceRoutes: RouteObject[] = [
-  {
-    path: RouteConstants.invoices.base.path,
-    element: <InvoiceListPage />,
-  },
-  {
+  guarded(
+    "invoices",
+    {
+      path: RouteConstants.invoices.base.path,
+      element: <InvoiceListPage />,
+    },
+    {
+      path: RouteConstants.invoices.detail.path,
+      element: <InvoiceDetailPage />,
+    },
+  ),
+  guarded("invoiceCreate", {
     path: RouteConstants.invoices.create.path,
     element: <CreateInvoicePage />,
-  },
-  {
+  }),
+  guarded("invoiceEdit", {
     path: RouteConstants.invoices.edit.path,
     element: <EditInvoicePage />,
-  },
-  {
-    path: RouteConstants.invoices.detail.path,
-    element: <InvoiceDetailPage />,
-  },
-  {
-    element: <RequirePermission permissions={["create:expenses"]} />,
-    children: [
-      {
-        path: RouteConstants.invoices.costs.path,
-        element: <RecordInvoiceCostsPage />,
-      },
-    ],
-  },
+  }),
+  guarded("invoiceCosts", {
+    path: RouteConstants.invoices.costs.path,
+    element: <RecordInvoiceCostsPage />,
+  }),
 ];

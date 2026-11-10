@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { ExportMenu } from "@/features/exports/components";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useJobCardList } from "../components/job-card-list/useJobCardList";
 import {
   JOB_CARD_CSV_HEADERS,
@@ -17,6 +18,11 @@ import { JobCardFilters } from "../components/job-card-list/JobCardFilters";
 export function JobCardListTemplate() {
   const navigate = useNavigate();
   const { isAtLimit } = usePlanAccess();
+  const { can } = usePermissions();
+  // The money column follows the `finance` view rule; the API nulls it too.
+  const columns = can("finance")
+    ? jobCardColumns
+    : jobCardColumns.filter((column) => column.id !== "invoicedTotal");
   const {
     jobCards,
     meta,
@@ -106,7 +112,7 @@ export function JobCardListTemplate() {
             <CustomTable
               stickyHeader
               data={jobCards}
-              columns={jobCardColumns}
+              columns={columns}
               loading={isLoading}
               enableActions
               actions={tableActions}

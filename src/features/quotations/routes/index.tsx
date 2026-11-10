@@ -1,7 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
-import RequirePermission from "@/routes/RequirePermission";
+import { guarded } from "@/routes/RequirePermission";
 
 const { QuotationListPage } = lazyImport(
   () => import("../pages/QuotationListPage"),
@@ -21,35 +21,23 @@ const { QuotationDetailPage } = lazyImport(
 );
 
 export const QuotationRoutes: RouteObject[] = [
-  {
-    element: <RequirePermission permissions={["read:quotations"]} />,
-    children: [
-      {
-        path: RouteConstants.quotations.base.path,
-        element: <QuotationListPage />,
-      },
-      {
-        path: RouteConstants.quotations.detail.path,
-        element: <QuotationDetailPage />,
-      },
-    ],
-  },
-  {
-    element: <RequirePermission permissions={["create:quotations"]} />,
-    children: [
-      {
-        path: RouteConstants.quotations.create.path,
-        element: <CreateQuotationPage />,
-      },
-    ],
-  },
-  {
-    element: <RequirePermission permissions={["update:quotations"]} />,
-    children: [
-      {
-        path: RouteConstants.quotations.edit.path,
-        element: <EditQuotationPage />,
-      },
-    ],
-  },
+  guarded(
+    "quotations",
+    {
+      path: RouteConstants.quotations.base.path,
+      element: <QuotationListPage />,
+    },
+    {
+      path: RouteConstants.quotations.detail.path,
+      element: <QuotationDetailPage />,
+    },
+  ),
+  guarded("quotationCreate", {
+    path: RouteConstants.quotations.create.path,
+    element: <CreateQuotationPage />,
+  }),
+  guarded("quotationEdit", {
+    path: RouteConstants.quotations.edit.path,
+    element: <EditQuotationPage />,
+  }),
 ];

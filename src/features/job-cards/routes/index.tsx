@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router-dom";
+import { guarded } from "@/routes/RequirePermission";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
@@ -20,20 +21,23 @@ const { JobCardDetailPage } = lazyImport(
 );
 
 export const JobCardRoutes: RouteObject[] = [
-  {
-    path: RouteConstants.jobCards.base.path,
-    element: <JobCardListPage />,
-  },
-  {
+  guarded(
+    "jobCards",
+    {
+      path: RouteConstants.jobCards.base.path,
+      element: <JobCardListPage />,
+    },
+    {
+      path: RouteConstants.jobCards.detail.path,
+      element: <JobCardDetailPage />,
+    },
+  ),
+  guarded("jobCardCreate", {
     path: RouteConstants.jobCards.create.path,
     element: <CreateJobCardPage />,
-  },
-  {
+  }),
+  guarded("jobCardEdit", {
     path: RouteConstants.jobCards.edit.path,
     element: <EditJobCardPage />,
-  },
-  {
-    path: RouteConstants.jobCards.detail.path,
-    element: <JobCardDetailPage />,
-  },
+  }),
 ];

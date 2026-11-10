@@ -117,6 +117,11 @@ export function useGetCurrentUserQuery(options?: { enabled?: boolean }) {
     queryFn: () => authService.getCurrentUser(),
     enabled: options?.enabled ?? true,
     retry: false,
+    // The user's roles decide what the app shows, and an admin can change them
+    // at any time: check again when the tab regains focus, at most a minute
+    // after the last check, rather than the default five.
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
   });
 }
 

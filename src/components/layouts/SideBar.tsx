@@ -165,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { has } = usePermissions();
+  const { canAccess } = usePermissions();
   const { hasFeature } = usePlanAccess();
 
   const collapsed = !mobile && isCollapsed;
@@ -176,11 +176,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         .map((group) => ({
           ...group,
           items: group.items.filter(
-            (item) => !item.permission || has(item.permission),
+            (item) => !item.page || canAccess(item.page),
           ),
         }))
         .filter((group) => group.items.length > 0),
-    [has],
+    [canAccess],
   );
 
   const isActive = (item: SideBarItem) =>

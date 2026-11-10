@@ -82,7 +82,7 @@ export function hasFullAccess(user?: IUser | null): boolean {
 /** True when the user holds every one of `required`. Empty means no gate. */
 export function checkAllPermissions(
   user: IUser | null | undefined,
-  required: PermissionInput[],
+  required: readonly PermissionInput[],
 ): boolean {
   if (!required.length) return true;
   if (hasFullAccess(user)) return true;
@@ -98,7 +98,7 @@ export function checkAllPermissions(
 /** True when the user holds at least one of `required`. */
 export function checkAnyPermission(
   user: IUser | null | undefined,
-  required: PermissionInput[],
+  required: readonly PermissionInput[],
 ): boolean {
   if (!required.length) return true;
   if (hasFullAccess(user)) return true;

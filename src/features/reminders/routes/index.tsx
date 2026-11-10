@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router-dom";
+import { guarded } from "@/routes/RequirePermission";
 import { RouteConstants } from "@/shared/constants/routes";
 import { lazyImport } from "@/utils/lazyImports";
 
@@ -20,14 +21,23 @@ const { ScheduleServicePage } = lazyImport(
 );
 
 export const ReminderRoutes: RouteObject[] = [
-  { path: RouteConstants.reminders.base.path, element: <ReminderListPage /> },
-  {
-    path: RouteConstants.reminders.create.path,
-    element: <CreateReminderPage />,
-  },
-  {
-    path: RouteConstants.reminders.scheduleService.path,
-    element: <ScheduleServicePage />,
-  },
-  { path: RouteConstants.reminders.edit.path, element: <EditReminderPage /> },
+  guarded("reminders", {
+    path: RouteConstants.reminders.base.path,
+    element: <ReminderListPage />,
+  }),
+  guarded(
+    "reminderCreate",
+    {
+      path: RouteConstants.reminders.create.path,
+      element: <CreateReminderPage />,
+    },
+    {
+      path: RouteConstants.reminders.scheduleService.path,
+      element: <ScheduleServicePage />,
+    },
+  ),
+  guarded("reminderEdit", {
+    path: RouteConstants.reminders.edit.path,
+    element: <EditReminderPage />,
+  }),
 ];

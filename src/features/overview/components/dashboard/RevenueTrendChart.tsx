@@ -5,17 +5,51 @@ import { DashboardCard } from "./DashboardCard";
 import { CHART, formatCompact, monthLabel } from "./chart-theme";
 import type { RevenueTrendPoint } from "../../interface";
 
+type TrendKey = Exclude<keyof RevenueTrendPoint, "month">;
+
+/** Every line the chart can draw, in legend order. */
+const LINES: { key: TrendKey; name: string; color: string }[] = [
+  { key: "collected", name: "Collected", color: CHART.collected },
+  { key: "invoiced", name: "Invoiced", color: CHART.invoiced },
+  { key: "expenses", name: "Expenses", color: CHART.expenses },
+  { key: "profit", name: "Profit", color: CHART.profit },
+];
+
 interface RevenueTrendChartProps {
   data: RevenueTrendPoint[];
+  /** The lines the user may see; the API also nulls the ones they can't. */
+  visible: Record<TrendKey, boolean>;
   currency?: string;
+}
+
+/** Whether any line would be drawn, so the dashboard can drop the card. */
+export function hasTrendLines(
+  data: RevenueTrendPoint[] | null | undefined,
+  visible: Record<TrendKey, boolean>,
+) {
+  return linesFor(data ?? [], visible).length > 0;
+}
+
+function linesFor(
+  data: RevenueTrendPoint[],
+  visible: Record<TrendKey, boolean>,
+) {
+  return LINES.filter(
+    (line) =>
+      visible[line.key] &&
+      data.length > 0 &&
+      data.every((point) => point[line.key] !== null),
+  );
 }
 
 export function RevenueTrendChart({
   data,
+  visible,
   currency = "NGN",
 }: RevenueTrendChartProps) {
-  const hasData = data.some(
-    (d) => d.collected > 0 || d.invoiced > 0 || d.expenses > 0,
+  const lines = linesFor(data, visible);
+  const hasData = data.some((point) =>
+    lines.some((line) => (point[line.key] ?? 0) !== 0),
   );
 
   const options: ApexOptions = {
@@ -26,7 +60,7 @@ export function RevenueTrendChart({
       parentHeightOffset: 0,
       animations: { speed: 400 },
     },
-    colors: [CHART.collected, CHART.invoiced, CHART.expenses, CHART.profit],
+    colors: lines.map((line) => line.color),
     dataLabels: { enabled: false },
     stroke: { curve: "smooth", width: 2 },
     fill: {
@@ -70,17 +104,15 @@ export function RevenueTrendChart({
     },
   };
 
-  const series = [
-    { name: "Collected", data: data.map((d) => d.collected) },
-    { name: "Invoiced", data: data.map((d) => d.invoiced) },
-    { name: "Expenses", data: data.map((d) => d.expenses) },
-    { name: "Profit", data: data.map((d) => d.profit) },
-  ];
+  const series = lines.map((line) => ({
+    name: line.name,
+    data: data.map((point) => point[line.key] ?? 0),
+  }));
 
   return (
     <DashboardCard
       title="Revenue Trend"
-      subtitle="Collected, invoiced, expenses & profit"
+      subtitle={listNames(lines.map((line) => line.name))}
     >
       {hasData ? (
         <ReactApexChart
@@ -99,4 +131,12 @@ export function RevenueTrendChart({
       )}
     </DashboardCard>
   );
+}
+
+/** ["Collected", "Invoiced", "Expenses"] → "Collected, invoiced & expenses". */
+function listNames(names: string[]): string {
+  const lower = names.map((name, i) => (i === 0 ? name : name.toLowerCase()));
+  return lower.length < 2
+    ? (lower[0] ?? "")
+    : `${lower.slice(0, -1).join(", ")} & ${lower[lower.length - 1]}`;
 }
