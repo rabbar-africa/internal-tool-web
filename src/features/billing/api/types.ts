@@ -208,8 +208,19 @@ export type CheckoutResult =
     }
   | { status: "activated"; subscription: unknown };
 
-/** What `GET /billing/pay/:token` returns for the public pay page. */
+/**
+ * What `GET /billing/pay/:token` returns for the public pay page. Two kinds of
+ * link share the page: RENEWAL, the "Pay now" link in billing emails (pays for
+ * the plan on file), and PLAN, a link Rabbar support made for one plan.
+ */
 export interface PayLinkSummary {
+  kind?: "RENEWAL" | "PLAN";
+  /** ANNUAL: a year at once (`periodMonths` is 12). */
+  billingInterval?: BillingInterval;
+  /** PLAN only: the end of the last day the link works. */
+  expiresAt?: string;
+  /** PLAN only: whoever pays works in the WhatsApp bot. */
+  onWhatsapp?: boolean;
   organizationName: string;
   plan: { tier: PlanTier; name: string };
   status: SubscriptionStatus;
@@ -230,4 +241,6 @@ export interface CheckoutStatusResult {
   currency: string;
   plan: { tier: PlanTier; name: string } | null;
   currentPeriodEnd: string | null;
+  /** The payer works in the WhatsApp bot: send them back to the chat. */
+  onWhatsapp?: boolean;
 }
