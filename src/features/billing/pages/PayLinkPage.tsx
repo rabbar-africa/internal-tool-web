@@ -1,6 +1,6 @@
 import { Box, Button, Stack, Text } from "@chakra-ui/react";
 import type { AxiosError } from "axios";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import SectionLoader from "@/components/common/SectionLoader";
 import { Head } from "@/components/seo/head";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -9,10 +9,22 @@ import { getToken } from "@/utils/persistToken";
 import { usePayFromLinkMutation, usePayLinkQuery } from "../api/query";
 import type { PayLinkSummary } from "../api/types";
 import { BillingMessage } from "../components/BillingMessage";
+import { ReturnActions } from "../components/ReturnActions";
 import { PAYMENT_OPTIONS_NOTE } from "../utils/copy";
 import { formatLongDate, formatPrice } from "../utils/format";
 
 function describeLinkStatus(summary: PayLinkSummary) {
+  // A link from Rabbar support for one plan: often a move up from Starter,
+  // so nothing about the plan they are on now.
+  if (summary.kind === "PLAN") {
+    const until = formatLongDate(summary.expiresAt);
+    return [
+      `Pay to put ${summary.organizationName} on ${summary.plan.name}. It switches on as soon as your payment comes through.`,
+      until ? `This link works until ${until}.` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
   const end = formatLongDate(summary.currentPeriodEnd);
   switch (summary.status) {
     case "PAST_DUE":
@@ -30,9 +42,17 @@ function describeLinkStatus(summary: PayLinkSummary) {
   }
 }
 
+/** What the amount pays for, under the price. */
+function coverLabel(summary: PayLinkSummary): string {
+  if (summary.billingInterval === "ANNUAL") return "For 1 year";
+  if (summary.periodMonths > 1) return `Covers ${summary.periodMonths} months`;
+  // A renewal says nothing for a month, as before; a support link spells it out.
+  return summary.kind === "PLAN" ? "For 1 month" : "";
+}
+
 /**
- * `/billing/pay/:token` — the "Pay now" link from billing emails. Works
- * without logging in.
+ * `/billing/pay/:token` — the "Pay now" link from billing emails, and payment
+ * links Rabbar support makes for one plan. Works without logging in.
  */
 export function PayLinkPage() {
   const { token = "" } = useParams<{ token: string }>();
@@ -43,24 +63,26 @@ export function PayLinkPage() {
   const activated = pay.isSuccess && pay.data?.status === "activated";
 
   const isLoggedIn = Boolean(getToken()?.accessToken);
-  const billingAction = (
-    <Button asChild variant="accent" w="full">
-      <Link
-        to={
-          isLoggedIn
-            ? RouteConstants.settings.billing.path
-            : RouteConstants.auth.login.path
-        }
-      >
-        {isLoggedIn ? "Go to my billing page" : "Log in to pay"}
-      </Link>
-    </Button>
+  const billingActions = (onWhatsapp?: boolean) => (
+    <ReturnActions
+      onWhatsapp={onWhatsapp}
+      to={
+        isLoggedIn
+          ? RouteConstants.settings.billing.path
+          : RouteConstants.auth.login.path
+      }
+      label={isLoggedIn ? "Go to my billing page" : "Log in"}
+    />
   );
 
   if (isLoading) return <SectionLoader h="12rem" />;
 
   if (error || !summary) {
-    const notFound = (error as AxiosError | null)?.response?.status === 404;
+    const status = (error as AxiosError | null)?.response?.status;
+    const notFound = status === 404;
+    // A link from Rabbar support that expired or was cancelled; the message
+    // says to ask for a new one.
+    const gone = status === 410;
     return (
       <>
         <Head title="Payment link" />
@@ -69,14 +91,18 @@ export function PayLinkPage() {
           title={
             notFound
               ? "This payment link has already been used"
-              : "We couldn't open this payment link"
+              : gone
+                ? "This payment link no longer works"
+                : "We couldn't open this payment link"
           }
           body={
             notFound
-              ? "Each link only works once. Log in to pay from your billing page."
+              ? "Each link only works once. If you've already paid, your plan is already on."
               : getErrorMessage(error) || "Please try again in a moment."
           }
-          actions={billingAction}
+          // Only support's links can expire or be cancelled, and nearly all
+          // of those go to people who work in WhatsApp.
+          actions={billingActions(gone ? true : undefined)}
         />
       </>
     );
@@ -90,7 +116,7 @@ export function PayLinkPage() {
           tone="success"
           title="You're all set"
           body={`Your ${summary.plan.name} plan is active. Nothing to pay.`}
-          actions={billingAction}
+          actions={billingActions(summary.onWhatsapp)}
         />
       </>
     );
@@ -132,9 +158,9 @@ export function PayLinkPage() {
         >
           {amount}
         </Text>
-        {summary.periodMonths > 1 && (
+        {coverLabel(summary) && (
           <Text fontSize="13px" color="gray.400">
-            Covers {summary.periodMonths} months
+            {coverLabel(summary)}
           </Text>
         )}
         {summary.promoDescription && (

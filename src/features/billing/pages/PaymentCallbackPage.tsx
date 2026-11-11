@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@chakra-ui/react";
 import type { AxiosError } from "axios";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@/lib/react-query";
 import { Head } from "@/components/seo/head";
 import { RouteConstants } from "@/shared/constants/routes";
 import { getToken } from "@/utils/persistToken";
 import { BILLING_OVERVIEW_KEY, useCheckoutStatusQuery } from "../api/query";
 import { BillingMessage } from "../components/BillingMessage";
+import { ReturnActions } from "../components/ReturnActions";
 import { formatLongDate } from "../utils/format";
 
 const POLL_INTERVAL_MS = 3_000;
@@ -64,10 +65,14 @@ function PublicPaymentStatus({ reference }: { reference: string }) {
     }
   }, [succeeded, queryClient]);
 
+  // Most people here paid a link from WhatsApp and have never logged in.
+  const onWhatsapp = data?.onWhatsapp;
   const actions = (
-    <Button asChild variant="accent" w="full">
-      <Link to={RouteConstants.auth.login.path}>Log in</Link>
-    </Button>
+    <ReturnActions
+      onWhatsapp={onWhatsapp}
+      to={RouteConstants.auth.login.path}
+      label="Log in"
+    />
   );
 
   const notFound =
@@ -110,11 +115,14 @@ function PublicPaymentStatus({ reference }: { reference: string }) {
         <BillingMessage
           tone="success"
           title="Payment received"
-          body={
+          body={[
             plan && until
               ? `Your ${plan} plan is active until ${until}.`
-              : "Your plan is active. Thank you!"
-          }
+              : "Your plan is active. Thank you!",
+            onWhatsapp ? "Go back to WhatsApp and carry on." : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           actions={actions}
         />
       </>
@@ -128,7 +136,11 @@ function PublicPaymentStatus({ reference }: { reference: string }) {
         <BillingMessage
           tone="error"
           title="Your payment didn't go through"
-          body="You can try again from your billing page, by bank transfer, USSD or card."
+          body={
+            onWhatsapp
+              ? "Open the payment link again to try once more, by bank transfer, USSD or card."
+              : "You can try again from your billing page, by bank transfer, USSD or card."
+          }
           actions={actions}
         />
       </>
@@ -146,7 +158,9 @@ function PublicPaymentStatus({ reference }: { reference: string }) {
         body={
           isCardCheck
             ? "This can take a minute. You can close this page; we'll email you once your card is saved."
-            : "Bank transfers can take a minute. You can close this page; we'll email you once it's confirmed."
+            : onWhatsapp
+              ? "Bank transfers can take a minute. You can go back to WhatsApp: your plan switches on by itself once it's confirmed, and we'll email you."
+              : "Bank transfers can take a minute. You can close this page; we'll email you once it's confirmed."
         }
         actions={
           <>
