@@ -215,7 +215,12 @@ export function PlanLimitNotice({
       : usage.per === "year"
         ? "More are available on 1 January."
         : undefined;
-  let body = refill;
+  // Starter's invoices: 15, then 3 a month. Say so before the 15 run out.
+  const after =
+    usage.stage === "start" && usage.then
+      ? `After that, ${usage.then.max.toLocaleString("en-NG")} free every ${usage.then.per}.`
+      : undefined;
+  let body = [after, refill].filter(Boolean).join(" ") || undefined;
   if (canUpgrade) {
     const phrase = upgradePlan?.limits?.find(
       (row) => row.key === limit,
@@ -227,7 +232,7 @@ export function PlanLimitNotice({
       upgradePlan && phrase
         ? `${upgradePlan.name} gives you ${lowerPhrase}${why}, all for ${formatPrice(upgradePlan.monthlyPrice, upgradePlan.currency)} a month.`
         : `Upgrade${why}.`;
-    body = refill ? `${refill} ${pitch}` : pitch;
+    body = body ? `${body} ${pitch}` : pitch;
   }
 
   return (
