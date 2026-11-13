@@ -173,6 +173,18 @@ export const invalidates = {
    */
   jobCard: join(JOB_CARDS, INVOICE_RECORDS, RECEIVABLES),
   jobCardCreated: join(JOB_CARDS, [[k.analytics.dashboard]], NUMBER_SERIES),
+  /**
+   * Its invoices lose the link, and it may take its expenses (money out of an
+   * account) and inspections with it.
+   */
+  jobCardDeleted: join(
+    JOB_CARDS,
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    COSTS,
+    ACCOUNTS,
+    INSPECTIONS,
+  ),
   /** Files and the like, seen only on the job card. */
   jobCardDetail: JOB_CARDS,
   jobCardInspection: join(JOB_CARDS, INSPECTIONS),
@@ -188,6 +200,26 @@ export const invalidates = {
     JOB_CARDS,
   ),
   customerCreated: [[k.customers.getAll]],
+  /**
+   * Everything of the merged customer moves to the kept one: their money,
+   * work, vehicles, reminders and paperwork all show a different customer.
+   */
+  customerMerged: join(
+    [
+      [k.customers.getAll],
+      [k.customers.getById],
+      [k.customers.stats],
+      [k.customers.statement],
+    ],
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    QUOTATION_RECORDS,
+    JOB_CARDS,
+    INSPECTIONS,
+    [[k.vehicles.getAll], [k.vehicles.getByClient], [k.vehicles.getById]],
+    [[k.reminders.getAll], [k.reminders.upcoming]],
+    [[k.paperwork.getAll], [k.paperwork.getById]],
+  ),
 
   /** Vehicles show on job cards, inspections and expenses. */
   vehicle: join(

@@ -290,3 +290,65 @@ export const jobCardVehicleLabel = (
 ): string => {
   return [jobCardVehicleShortLabel(jobCard)].filter(Boolean).join(" • ");
 };
+
+// ─── Deleting: GET /job-cards/:id/delete-impact ─────────────────────────────
+
+/**
+ * What deleting a job card would touch, shown before anyone confirms. The API
+ * decides what is allowed; the modal only shows it. See the web app's
+ * docs/frontend-delete-options.md.
+ */
+export interface JobCardDeleteBlock {
+  reason: "HAS_MONEY_RECORDS";
+  message: string;
+  invoices: { id: string; invoiceNumber: string; status: string }[];
+  payments: { id: string; paymentNumber: string; status: string }[];
+}
+
+export interface JobCardDeleteImpact {
+  jobCard: { id: string; jobNumber: string; status: JobCardStatus };
+  /** Set when an issued invoice or a payment is on the job: no delete. */
+  blocked: JobCardDeleteBlock | null;
+  /** Not deleted. Drafts and void ones are unlinked, never deleted. */
+  invoices: {
+    id: string;
+    invoiceNumber: string;
+    status: string;
+    total: number;
+    balance: number;
+    issued: boolean;
+  }[];
+  payments: {
+    id: string;
+    paymentNumber: string;
+    status: string;
+    date?: string;
+    amount: number;
+  }[];
+  expenses: {
+    /** Spent on the job directly: kept as general spending unless deleted. */
+    direct: {
+      id: string;
+      expenseNumber: string | null;
+      name: string;
+      amount: number;
+      date: string;
+    }[];
+    /** On one of its invoices: they follow the invoice, never touched here. */
+    viaInvoice: number;
+  };
+  /** Kept as part of the vehicle's history unless deleted. */
+  inspections: { id: string; jobCode: string; status: string }[];
+  quotations: { id: string; quotationNumber: string; status: string }[];
+  creditNotes: { id: string; creditNoteNumber: string; status: string }[];
+  /** Always deleted with the job. */
+  files: number;
+  technicians: number;
+  canCancel: boolean;
+  can: { deleteExpenses: boolean; deleteInspections: boolean };
+}
+
+export interface DeleteJobCardOptions {
+  deleteExpenses?: boolean;
+  deleteInspections?: boolean;
+}

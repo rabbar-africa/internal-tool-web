@@ -43,6 +43,8 @@ export const customQueryKey = {
     stats: "get-customer-stats",
     statement: "get-customer-statement",
     eraseImpact: "get-customer-erase-impact",
+    deleteImpact: "get-customer-delete-impact",
+    mergePreview: "get-customer-merge-preview",
   },
   vehicles: {
     getAll: "get-all-vehicles",
@@ -95,6 +97,7 @@ export const customQueryKey = {
     getAll: "get-all-job-cards",
     getById: "get-job-card-by-id",
     financials: "get-job-card-financials",
+    deleteImpact: "get-job-card-delete-impact",
   },
   technicians: {
     getAll: "get-all-technicians",

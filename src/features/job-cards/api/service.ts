@@ -5,8 +5,10 @@ import type {
   AssignTechnicianPayload,
   AttachJobCardFilePayload,
   CreateJobCardPayload,
+  DeleteJobCardOptions,
   IGetJobCardFilter,
   JobCard,
+  JobCardDeleteImpact,
   JobCardDetail,
   JobCardFile,
   JobCardFinancials,
@@ -68,8 +70,25 @@ export const updateJobCardStatus = async (
   return response.data;
 };
 
-export const deleteJobCard = async (id: string): Promise<void> => {
-  await axios.delete(`/job-cards/${id}`);
+/** What deleting would touch, and whether it's allowed at all. */
+export const getJobCardDeleteImpact = async (id: string) => {
+  const response = await axios.get<ApiResponse<JobCardDeleteImpact>>(
+    `/job-cards/${id}/delete-impact`,
+  );
+  return response.data;
+};
+
+export const deleteJobCard = async (
+  id: string,
+  options: DeleteJobCardOptions = {},
+): Promise<void> => {
+  // Query params: a request body on DELETE is not reliably delivered.
+  await axios.delete(`/job-cards/${id}`, {
+    params: {
+      ...(options.deleteExpenses ? { deleteExpenses: true } : {}),
+      ...(options.deleteInspections ? { deleteInspections: true } : {}),
+    },
+  });
 };
 
 // ── Technician assignment ────────────────────────────────────────────────────

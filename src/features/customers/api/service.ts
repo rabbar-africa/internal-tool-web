@@ -7,6 +7,9 @@ import type {
   CustomerEraseImpact,
   CustomerErasureResult,
   EraseCustomerPayload,
+  CustomerDeleteImpact,
+  CustomerMergePreview,
+  CustomerMergeResult,
 } from "@/shared/interface/customer";
 import { downloadPdf } from "@/utils/download-pdf";
 import { axios } from "@/lib/axios";
@@ -131,9 +134,40 @@ export const downloadCustomerStatementPdf = (
     `work-history-${params.from}-to-${params.to}.pdf`,
   );
 
+/** What deleting the customer would touch, and whether it's allowed at all. */
+export const getCustomerDeleteImpact = async (id: string) => {
+  const response = await axios.get<ApiResponse<CustomerDeleteImpact>>(
+    `/clients/${id}/delete-impact`,
+  );
+  return response.data;
+};
+
 /** For duplicates and mistakes: their records stay, unlinked, with the name copied on them. */
-export const deleteCustomer = async (id: string) => {
-  const response = await axios.delete(`/clients/${id}`);
+export const deleteCustomer = async (
+  id: string,
+  options: { deleteVehicles?: boolean } = {},
+) => {
+  const response = await axios.delete(`/clients/${id}`, {
+    params: options.deleteVehicles ? { deleteVehicles: true } : {},
+  });
+  return response.data;
+};
+
+/** What merging `id` into `intoId` would move and fill in. */
+export const getCustomerMergePreview = async (id: string, intoId: string) => {
+  const response = await axios.get<ApiResponse<CustomerMergePreview>>(
+    `/clients/${id}/merge-preview`,
+    { params: { intoId } },
+  );
+  return response.data;
+};
+
+/** Everything of `id` moves to `intoId`, and `id` is deleted. */
+export const mergeCustomer = async (id: string, intoId: string) => {
+  const response = await axios.post<ApiResponse<CustomerMergeResult>>(
+    `/clients/${id}/merge`,
+    { intoId },
+  );
   return response.data;
 };
 

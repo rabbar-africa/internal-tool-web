@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { CustomTable } from "@/components/table";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ExportMenu } from "@/features/exports/components";
-import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useJobCardList } from "../components/job-card-list/useJobCardList";
+import { DeleteJobCardDialog } from "../components/DeleteJobCardDialog";
 import {
   JOB_CARD_CSV_HEADERS,
   jobCardColumns,
@@ -40,9 +40,7 @@ export function JobCardListTemplate() {
     navigateToDetail,
 
     pendingDelete,
-    confirmDelete,
-    cancelDelete,
-    isDeleting,
+    closeDelete,
   } = useJobCardList();
 
   return (
@@ -133,15 +131,10 @@ export function JobCardListTemplate() {
         </Box>
       </Stack>
 
-      <ConsentDialog
-        open={Boolean(pendingDelete)}
-        onOpenChange={({ open }) => {
-          if (!open) cancelDelete();
-        }}
-        heading={`Delete job card ${pendingDelete?.jobNumber ?? ""}?`}
-        note="Linked invoices, inspections and payments will be unlinked, not deleted."
-        handleSubmit={confirmDelete}
-        isLoading={isDeleting}
+      <DeleteJobCardDialog
+        target={pendingDelete}
+        onClose={closeDelete}
+        onDeleted={closeDelete}
       />
     </>
   );

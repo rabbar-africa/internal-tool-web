@@ -16,6 +16,9 @@ import {
   deleteCustomer,
   getCustomerEraseImpact,
   eraseCustomer,
+  getCustomerDeleteImpact,
+  getCustomerMergePreview,
+  mergeCustomer,
 } from "./service";
 import type {
   CreateCustomerPayload,
@@ -150,12 +153,47 @@ const REMOVED_CUSTOMER_INVALIDATIONS = [
   [customQueryKey.analytics.dashboard],
 ];
 
+export const useGetCustomerDeleteImpactQuery = (id: string) =>
+  useQuery({
+    queryKey: [customQueryKey.customers.deleteImpact, id],
+    queryFn: () => getCustomerDeleteImpact(id),
+    enabled: Boolean(id),
+    // An invoice may have been made since this was last opened.
+    staleTime: 0,
+    gcTime: 0,
+  });
+
 export const useDeleteCustomerMutation = () =>
   useMutation({
-    mutationFn: (id: string) => deleteCustomer(id),
+    mutationFn: ({
+      id,
+      deleteVehicles,
+    }: {
+      id: string;
+      deleteVehicles?: boolean;
+    }) => deleteCustomer(id, { deleteVehicles }),
     meta: {
       successMessage: "Customer deleted",
       invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS,
+    },
+  });
+
+export const useGetCustomerMergePreviewQuery = (id: string, intoId: string) =>
+  useQuery({
+    queryKey: [customQueryKey.customers.mergePreview, id, intoId],
+    queryFn: () => getCustomerMergePreview(id, intoId),
+    enabled: Boolean(id) && Boolean(intoId),
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+export const useMergeCustomerMutation = () =>
+  useMutation({
+    mutationFn: ({ id, intoId }: { id: string; intoId: string }) =>
+      mergeCustomer(id, intoId),
+    meta: {
+      successMessage: "Customers merged",
+      invalidatesQueryKeys: invalidates.customerMerged,
     },
   });
 

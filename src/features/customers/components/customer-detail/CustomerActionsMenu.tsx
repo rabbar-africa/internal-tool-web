@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { IconButton, Menu, Portal, Stack, Text } from "@chakra-ui/react";
-import ConsentDialog from "@/components/common/ConsentDialog";
-import { useDeleteCustomerMutation } from "../../api/query";
 import { EraseCustomerDialog } from "./EraseCustomerDialog";
+import { DeleteCustomerDialog } from "./DeleteCustomerDialog";
+import { MergeCustomerDialog } from "./MergeCustomerDialog";
 import { useNavigate } from "react-router-dom";
 import { ThreeDotsIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -14,24 +14,24 @@ interface CustomerActionsMenuProps {
   customer: ICustomer;
 }
 
+type RemoveDialog = "delete" | "merge" | "erase" | null;
+
 /** Card-level actions for a customer: edit, add a reminder, work history. */
 export function CustomerActionsMenu({ customer }: CustomerActionsMenuProps) {
   const navigate = useNavigate();
-  const { canRead, canDelete } = usePermissions();
+  const { canRead, canUpdate, canDelete } = usePermissions();
   const [workHistoryOpen, setWorkHistoryOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [eraseOpen, setEraseOpen] = useState(false);
-  const { mutateAsync: deleteCustomer, isPending: isDeleting } =
-    useDeleteCustomerMutation();
+  // One at a time: the blocked delete hands over to merge or erase.
+  const [dialog, setDialog] = useState<RemoveDialog>(null);
+  const close = () => setDialog(null);
+  const canMerge = canUpdate("clients") && canDelete("clients");
+  const name =
+    customer.displayName ||
+    `${customer.firstName ?? ""} ${customer.lastName ?? ""}`.trim() ||
+    "this customer";
 
-  // Either way the customer is gone, so their page is too.
+  // Deleted or erased, the customer is gone, so their page is too.
   const leave = () => navigate(RouteConstants.customers.base.path);
-
-  const handleDelete = async () => {
-    await deleteCustomer(customer.id);
-    setConfirmDelete(false);
-    leave();
-  };
 
   const handleEdit = () => {
     navigate(RouteConstants.customers.edit.generate({ id: customer.id }));
@@ -86,24 +86,41 @@ export function CustomerActionsMenu({ customer }: CustomerActionsMenuProps) {
                   Work history
                 </Menu.Item>
               )}
-              {canDelete("clients") && (
+              {canMerge && (
                 <>
                   <Menu.Separator borderColor="gray.50" />
                   <Menu.Item
-                    value="delete"
-                    onClick={() => setConfirmDelete(true)}
+                    value="merge"
+                    onClick={() => setDialog("merge")}
                     _hover={{ bg: "gray.50" }}
                   >
                     <Stack gap="0" py="1">
-                      <Text>Delete customer</Text>
+                      <Text>Merge into another customer…</Text>
                       <Text fontSize="12px" color="gray.300">
-                        For duplicates and mistakes
+                        For duplicates
+                      </Text>
+                    </Stack>
+                  </Menu.Item>
+                </>
+              )}
+              {canDelete("clients") && (
+                <>
+                  {!canMerge && <Menu.Separator borderColor="gray.50" />}
+                  <Menu.Item
+                    value="delete"
+                    onClick={() => setDialog("delete")}
+                    _hover={{ bg: "gray.50" }}
+                  >
+                    <Stack gap="0" py="1">
+                      <Text>Delete customer…</Text>
+                      <Text fontSize="12px" color="gray.300">
+                        For mistakes, before any invoice
                       </Text>
                     </Stack>
                   </Menu.Item>
                   <Menu.Item
                     value="erase"
-                    onClick={() => setEraseOpen(true)}
+                    onClick={() => setDialog("erase")}
                     _hover={{ bg: "gray.50" }}
                   >
                     <Stack gap="0" py="1">
@@ -119,21 +136,32 @@ export function CustomerActionsMenu({ customer }: CustomerActionsMenuProps) {
           </Menu.Positioner>
         </Portal>
       </Menu.Root>
-      <ConsentDialog
-        open={confirmDelete}
-        onOpenChange={({ open }) => {
-          if (!open && !isDeleting) setConfirmDelete(false);
-        }}
-        heading={`Delete ${customer.displayName}?`}
-        note="For duplicates and mistakes. Their invoices, payments, job cards and vehicles stay, no longer linked, and their name stays copied on them. Their paperwork is deleted. If they asked to be forgotten, use Erase customer instead."
-        handleSubmit={() => void handleDelete()}
-        isLoading={isDeleting}
-      />
+      {dialog === "delete" && (
+        <DeleteCustomerDialog
+          customerId={customer.id}
+          customerName={name}
+          onClose={close}
+          onDeleted={leave}
+          onMerge={() => setDialog("merge")}
+          onErase={() => setDialog("erase")}
+        />
+      )}
 
-      {eraseOpen && (
+      {dialog === "merge" && (
+        <MergeCustomerDialog
+          customerId={customer.id}
+          customerName={name}
+          onClose={close}
+          onMerged={(keptId) =>
+            navigate(RouteConstants.customers.detail.generate({ id: keptId }))
+          }
+        />
+      )}
+
+      {dialog === "erase" && (
         <EraseCustomerDialog
           customerId={customer.id}
-          onClose={() => setEraseOpen(false)}
+          onClose={close}
           onErased={leave}
         />
       )}
