@@ -16,8 +16,10 @@ import { customQueryKey as k } from "./query-keys";
 type QueryKeys = readonly (readonly unknown[])[];
 
 /**
- * The invoices themselves, the expenses that point at their lines, and the
- * quotes they were made from (a deleted or voided invoice can be made again).
+ * The invoices themselves, the expenses that point at their lines, the quotes
+ * they were made from (a deleted or voided invoice can be made again), and the
+ * credit notes made from them or applied to them (deleting an invoice hands
+ * its applied credit back; editing one changes what's left to credit).
  */
 const INVOICE_RECORDS = [
   [k.invoices.getAll],
@@ -28,6 +30,18 @@ const INVOICE_RECORDS = [
   [k.expenses.invoiceCosts],
   [k.quotations.getAll],
   [k.quotations.getById],
+  [k.creditNotes.getAll],
+  [k.creditNotes.getById],
+  [k.creditNotes.draft],
+  [k.creditNotes.customerCredit],
+] as const;
+
+/** Credit notes, and the customer credit they add up to. */
+const CREDIT_NOTE_RECORDS = [
+  [k.creditNotes.getAll],
+  [k.creditNotes.getById],
+  [k.creditNotes.draft],
+  [k.creditNotes.customerCredit],
 ] as const;
 
 /** Schedules for costs that come round again. */
@@ -121,6 +135,25 @@ export const invalidates = {
     NUMBER_SERIES,
   ),
 
+  /**
+   * Every credit note write moves invoice balances and what the customer owes:
+   * applying lowers a balance, voiding or removing an application raises it.
+   */
+  creditNote: join(CREDIT_NOTE_RECORDS, INVOICE_RECORDS, RECEIVABLES),
+  creditNoteCreated: join(
+    CREDIT_NOTE_RECORDS,
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    NUMBER_SERIES,
+  ),
+  /** A refund is money out of an account, so its statement moves too. */
+  creditNoteRefund: join(
+    CREDIT_NOTE_RECORDS,
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    ACCOUNTS,
+  ),
+
   /** Payments move invoice balances and the account they were paid into. */
   payment: join(INVOICE_RECORDS, RECEIVABLES, ACCOUNTS),
   paymentCreated: join(INVOICE_RECORDS, RECEIVABLES, ACCOUNTS, NUMBER_SERIES),
@@ -140,6 +173,18 @@ export const invalidates = {
    */
   jobCard: join(JOB_CARDS, INVOICE_RECORDS, RECEIVABLES),
   jobCardCreated: join(JOB_CARDS, [[k.analytics.dashboard]], NUMBER_SERIES),
+  /**
+   * Its invoices lose the link, and it may take its expenses (money out of an
+   * account) and inspections with it.
+   */
+  jobCardDeleted: join(
+    JOB_CARDS,
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    COSTS,
+    ACCOUNTS,
+    INSPECTIONS,
+  ),
   /** Files and the like, seen only on the job card. */
   jobCardDetail: JOB_CARDS,
   jobCardInspection: join(JOB_CARDS, INSPECTIONS),
@@ -155,6 +200,26 @@ export const invalidates = {
     JOB_CARDS,
   ),
   customerCreated: [[k.customers.getAll]],
+  /**
+   * Everything of the merged customer moves to the kept one: their money,
+   * work, vehicles, reminders and paperwork all show a different customer.
+   */
+  customerMerged: join(
+    [
+      [k.customers.getAll],
+      [k.customers.getById],
+      [k.customers.stats],
+      [k.customers.statement],
+    ],
+    INVOICE_RECORDS,
+    RECEIVABLES,
+    QUOTATION_RECORDS,
+    JOB_CARDS,
+    INSPECTIONS,
+    [[k.vehicles.getAll], [k.vehicles.getByClient], [k.vehicles.getById]],
+    [[k.reminders.getAll], [k.reminders.upcoming]],
+    [[k.paperwork.getAll], [k.paperwork.getById]],
+  ),
 
   /** Vehicles show on job cards, inspections and expenses. */
   vehicle: join(

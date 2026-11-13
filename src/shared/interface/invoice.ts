@@ -45,6 +45,25 @@ export interface IInvoiceDeleteImpact {
   carriedOnto: { id: string; invoiceNumber: string } | null;
   /** Older invoices brought forward onto this one. */
   carries: Array<{ id: string; invoiceNumber: string }>;
+  /**
+   * Credit notes made from this invoice (void ones left out). They stay, and
+   * still name it: their credit can go on another invoice or be refunded.
+   */
+  creditNotes?: Array<{
+    id: string;
+    creditNoteNumber: string;
+    date: string;
+    status: string;
+    total: number;
+    balance: number;
+  }>;
+  /** Credit applied here. It goes back to its credit notes as open credit. */
+  creditsApplied?: Array<{
+    id: string;
+    amount: number;
+    date: string;
+    creditNote: { id: string; creditNoteNumber: string };
+  }>;
   /** What this person may also delete. */
   can: { deletePayments: boolean; deleteExpenses: boolean };
 }
@@ -86,6 +105,25 @@ export interface InvoiceCarry {
   carriedInvoiceId: string;
   createdAt: string;
   carriedInvoice: CarriedInvoice;
+}
+
+/** A credit note made from an invoice, as the invoice's detail lists it. */
+export interface InvoiceCreditNoteRef {
+  id: string;
+  creditNoteNumber: string;
+  date: string;
+  status: "DRAFT" | "OPEN" | "CLOSED" | "VOID";
+  reason?: string;
+  total: string;
+  balance: string;
+}
+
+/** Credit applied to an invoice, from any of the customer's credit notes. */
+export interface InvoiceCreditApplication {
+  id: string;
+  amount: string;
+  date: string;
+  creditNote: { id: string; creditNoteNumber: string };
 }
 
 export interface IInvoiceResponse {
@@ -132,6 +170,15 @@ export interface IInvoiceResponse {
   roundOff: string;
   total: string;
   balance: string;
+  /**
+   * Credit applied to this invoice from credit notes (any of the customer's).
+   * Total − payments − credited = balance. Older APIs leave it out.
+   */
+  creditedAmount?: string;
+  /** Credit notes made from this invoice. */
+  creditNotes?: InvoiceCreditNoteRef[];
+  /** Credit applied to this invoice, from any note. */
+  creditApplications?: InvoiceCreditApplication[];
   adjustmentDescription: string;
   notes: string;
   terms: string;

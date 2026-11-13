@@ -45,8 +45,26 @@ export interface LimitUsage {
   limit: number | null;
   remaining: number | null;
   per: LimitPeriod;
+  /**
+   * A start then an allowance (Starter's invoices: 15, then 3 a month): which
+   * applies now. `used`/`limit`/`remaining`/`per` are for that one, so `per`
+   * turns from "total" to "month" once the 15 are used.
+   */
+  stage?: "start" | "then";
+  /** With `stage`: what comes after the start, each month or year. */
+  then?: LimitAfter;
+  /** With `stage`: made in all. */
+  totalUsed?: number;
+  /** With `stage`: the size of the start (15). */
+  startLimit?: number;
   /** Templates only: the allowance is per type, so check the type on screen. */
   byDocumentType?: Record<string, number>;
+}
+
+/** The allowance after a starting total. */
+export interface LimitAfter {
+  max: number;
+  per: "month" | "year";
 }
 
 /** A row of what a plan includes, ready to print. */
@@ -63,7 +81,9 @@ export interface PlanLimitRow {
   label: string;
   max: number | null;
   per: LimitPeriod;
-  /** "15 invoices", "100 invoices a month", "30,000 invoices a year". */
+  /** After a "total" start: what comes each month or year, for good. */
+  then?: LimitAfter | null;
+  /** "15 invoices", "100 invoices a month", "15 invoices, then 3 a month". */
   phrase: string;
   comingSoon: boolean;
 }

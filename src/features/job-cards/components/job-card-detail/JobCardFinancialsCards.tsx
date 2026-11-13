@@ -16,6 +16,8 @@ export function JobCardFinancialsCards({
   financials,
 }: JobCardFinancialsCardsProps) {
   const isProfitable = financials.profit >= 0;
+  const credited = financials.credited ?? 0;
+  const refunded = financials.refunded ?? 0;
 
   return (
     <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="4">
@@ -23,12 +25,22 @@ export function JobCardFinancialsCards({
         label="Invoiced"
         value={formatCurrency(financials.invoicedTotal)}
         icon={<FileTextIcon color="primary.300" />}
+        trendValue={
+          credited > 0
+            ? `After ${formatCurrency(credited)} credited`
+            : undefined
+        }
       />
       <StatCard
         label="Collected"
         value={formatCurrency(financials.collected)}
         icon={<CheckCircle color="green.500" />}
         iconBg="green.50"
+        trendValue={
+          refunded > 0
+            ? `After ${formatCurrency(refunded)} refunded`
+            : undefined
+        }
       />
       <StatCard
         label="Outstanding"

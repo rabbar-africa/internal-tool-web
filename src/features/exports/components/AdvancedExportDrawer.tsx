@@ -48,6 +48,8 @@ interface ExportFormValues {
   decimalFormat: string;
   fileFormat: ExportFileFormat;
   includePii: boolean;
+  /** Extra tabs ticked, by key; only sent for XLS/XLSX. */
+  extraSheets: string[];
   password: string;
 }
 
@@ -130,6 +132,7 @@ function ExportForm({
       decimalFormat: catalog.defaultDecimalFormat,
       fileFormat: catalog.fileFormats[0]?.key ?? "csv",
       includePii: false,
+      extraSheets: [],
       password: "",
     },
     validationSchema: Yup.object({
@@ -172,6 +175,10 @@ function ExportForm({
         decimalFormat: values.decimalFormat,
         fileFormat: values.fileFormat,
         includePii: values.includePii,
+        // A CSV has no tabs, so the API refuses extra sheets on one.
+        ...(values.fileFormat !== "csv" && values.extraSheets.length
+          ? { extraSheets: values.extraSheets }
+          : {}),
         ...(values.password ? { password: values.password } : {}),
       };
 
@@ -190,6 +197,8 @@ function ExportForm({
     (f) => f.type === "enum" && f.options?.length,
   );
   const hasPii = variant?.columns.some((c) => c.pii) ?? false;
+  const extraSheets = variant?.extraSheets ?? [];
+  const isCsv = values.fileFormat === "csv";
   const fileFormat = catalog.fileFormats.find(
     (f) => f.key === values.fileFormat,
   );
@@ -211,6 +220,7 @@ function ExportForm({
       filters: {},
       useScope: Boolean(scopeFor(scope, next.key)),
       includePii: false,
+      extraSheets: [],
     });
   };
 
@@ -258,7 +268,14 @@ function ExportForm({
               <Box mt="4">
                 <RadioList
                   value={values.variant}
-                  onChange={(value) => setFieldValue("variant", value)}
+                  onChange={(value) =>
+                    // Each variant offers its own tabs.
+                    formik.setValues({
+                      ...values,
+                      variant: value,
+                      extraSheets: [],
+                    })
+                  }
                   items={module.variants.map((v) => ({
                     value: v.key,
                     label: v.label,
@@ -384,6 +401,43 @@ function ExportForm({
               }))}
             />
           </Box>
+
+          {extraSheets.length > 0 && (
+            <Box>
+              <SectionLabel>Extra tabs</SectionLabel>
+              <Stack gap="3">
+                {extraSheets.map((sheet) => (
+                  <Box key={sheet.key}>
+                    <CustomCheckbox
+                      checked={!isCsv && values.extraSheets.includes(sheet.key)}
+                      disabled={isCsv}
+                      onCheckedChange={(e: { checked: boolean }) =>
+                        setFieldValue(
+                          "extraSheets",
+                          e.checked
+                            ? [...values.extraSheets, sheet.key]
+                            : values.extraSheets.filter(
+                                (key) => key !== sheet.key,
+                              ),
+                        )
+                      }
+                      label={`Add a ${sheet.label} tab`}
+                    />
+                    {sheet.description && (
+                      <Text fontSize="12px" color="gray.300" mt="1" pl="6">
+                        {sheet.description}
+                      </Text>
+                    )}
+                  </Box>
+                ))}
+                {isCsv && (
+                  <Text fontSize="12px" color="gray.400">
+                    A CSV file has no tabs. Choose XLS or XLSX to add them.
+                  </Text>
+                )}
+              </Stack>
+            </Box>
+          )}
 
           {hasPii && (
             <CustomCheckbox

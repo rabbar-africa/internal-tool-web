@@ -5,6 +5,7 @@ import {
   createJobCard,
   deleteJobCard,
   getJobCardById,
+  getJobCardDeleteImpact,
   getJobCardFinancials,
   getJobCards,
   linkJobCardInspection,
@@ -20,6 +21,7 @@ import type {
   AssignTechnicianPayload,
   AttachJobCardFilePayload,
   CreateJobCardPayload,
+  DeleteJobCardOptions,
   IGetJobCardFilter,
   JobCardStatus,
   UpdateJobCardPayload,
@@ -92,12 +94,28 @@ export const useUpdateJobCardStatusMutation = () =>
     },
   });
 
+export const useGetJobCardDeleteImpactQuery = (id: string) =>
+  useQuery({
+    queryKey: [customQueryKey.jobCards.deleteImpact, id],
+    queryFn: () => getJobCardDeleteImpact(id),
+    enabled: Boolean(id),
+    // Money may have been added since this was last opened: always ask afresh.
+    staleTime: 0,
+    gcTime: 0,
+  });
+
 export const useDeleteJobCardMutation = () =>
   useMutation({
-    mutationFn: (id: string) => deleteJobCard(id),
+    mutationFn: ({
+      id,
+      options,
+    }: {
+      id: string;
+      options?: DeleteJobCardOptions;
+    }) => deleteJobCard(id, options),
     meta: {
       successMessage: "Job card deleted",
-      invalidatesQueryKeys: invalidates.jobCard,
+      invalidatesQueryKeys: invalidates.jobCardDeleted,
     },
   });
 

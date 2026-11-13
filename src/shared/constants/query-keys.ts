@@ -43,6 +43,8 @@ export const customQueryKey = {
     stats: "get-customer-stats",
     statement: "get-customer-statement",
     eraseImpact: "get-customer-erase-impact",
+    deleteImpact: "get-customer-delete-impact",
+    mergePreview: "get-customer-merge-preview",
   },
   vehicles: {
     getAll: "get-all-vehicles",
@@ -72,6 +74,15 @@ export const customQueryKey = {
     getById: "get-quotation-by-id",
     summary: "get-quotation-summary",
   },
+  creditNotes: {
+    getAll: "get-all-credit-notes",
+    getById: "get-credit-note-by-id",
+    /** An invoice's credit note form: its lines and what's left to credit. */
+    draft: "get-credit-note-draft",
+    preview: "get-credit-note-preview",
+    /** A customer's open credit: credit notes and unused payments. */
+    customerCredit: "get-customer-credit",
+  },
   inspections: {
     getAll: "get-all-inspections",
     getById: "get-inspection-by-id",
@@ -86,6 +97,7 @@ export const customQueryKey = {
     getAll: "get-all-job-cards",
     getById: "get-job-card-by-id",
     financials: "get-job-card-financials",
+    deleteImpact: "get-job-card-delete-impact",
   },
   technicians: {
     getAll: "get-all-technicians",

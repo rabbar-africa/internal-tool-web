@@ -57,6 +57,14 @@ const quotations = {
   edit: defineRoute("/quotations/:id/edit" as const),
 } as const;
 
+const creditNotes = {
+  base: defineRoute("/credit-notes" as const),
+  /** `?invoiceId=` picks the invoice; without it the page asks for one. */
+  create: defineRoute("/credit-notes/create" as const),
+  detail: defineRoute("/credit-notes/:id" as const),
+  edit: defineRoute("/credit-notes/:id/edit" as const),
+} as const;
+
 const payments = {
   base: defineRoute("/payments" as const),
   create: defineRoute("/payments/create" as const),
@@ -212,6 +220,7 @@ export const RouteConstants = {
   inspection,
   invoices,
   quotations,
+  creditNotes,
   payments,
   customers,
   items,

@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUrlState } from "@/hooks/useUrlState";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { TableAction } from "@/components/table";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { JobCard } from "@/shared/interface/job-card";
-import { useDeleteJobCardMutation, useGetJobCardsQuery } from "../../api/query";
+import { useGetJobCardsQuery } from "../../api/query";
 import { toCsvRow } from "./columns";
 
 const FILTER_SCHEMA = {
@@ -20,9 +21,8 @@ export function useJobCardList() {
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<JobCard | null>(null);
-
-  const { mutateAsync: deleteJobCard, isPending: isDeleting } =
-    useDeleteJobCardMutation();
+  const { canDelete } = usePermissions();
+  const mayDelete = canDelete("job_cards");
 
   const { data, isLoading, isFetching } = useGetJobCardsQuery({
     page: filters.page,
@@ -51,22 +51,20 @@ export function useJobCardList() {
         onClick: (jobCard) =>
           navigate(RouteConstants.jobCards.edit.generate({ id: jobCard.id })),
       },
-      {
-        label: "Delete",
-        value: "delete",
-        variant: "destructive",
-        separator: true,
-        onClick: (jobCard) => setPendingDelete(jobCard),
-      },
+      ...(mayDelete
+        ? [
+            {
+              label: "Delete",
+              value: "delete",
+              variant: "destructive" as const,
+              separator: true,
+              onClick: (jobCard: JobCard) => setPendingDelete(jobCard),
+            },
+          ]
+        : []),
     ],
-    [navigate],
+    [navigate, mayDelete],
   );
-
-  const confirmDelete = async () => {
-    if (!pendingDelete) return;
-    await deleteJobCard(pendingDelete.id);
-    setPendingDelete(null);
-  };
 
   return {
     jobCards,
@@ -86,8 +84,6 @@ export function useJobCardList() {
       navigate(RouteConstants.jobCards.detail.generate({ id: jobCard.id })),
 
     pendingDelete,
-    confirmDelete,
-    cancelDelete: () => setPendingDelete(null),
-    isDeleting,
+    closeDelete: () => setPendingDelete(null),
   };
 }

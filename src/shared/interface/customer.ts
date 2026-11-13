@@ -54,10 +54,19 @@ export interface ClientStatsPaymentRef {
 export interface ClientStats {
   clientId: string;
   currency: string;
-  /** LTV — confirmed money actually collected (excl. soft-deleted payments). */
+  /**
+   * LTV — confirmed money actually collected (excl. soft-deleted payments),
+   * less what was refunded on credit notes.
+   */
   lifetimeValue: number;
-  /** Sum of invoice totals (excl. VOID/DELETED). */
+  /** Sum of invoice totals (excl. VOID/DELETED), net of credit notes. */
   totalInvoiced: number;
+  /** Credit notes made for them. Older APIs leave these out. */
+  credited?: number;
+  /** Credit paid back to them. */
+  refunded?: number;
+  /** Open credit notes plus payments not applied to any invoice. */
+  availableCredit?: number;
   invoiceCount: number;
   paidInvoiceCount: number;
   /** totalInvoiced / invoiceCount. */
@@ -84,6 +93,8 @@ export interface CreateCustomerPayload {
   stage: string;
   /** YYYY-MM-DD, not in the future. Null or "" clears it. */
   dob?: string | null;
+  /** "ACTIVE" or "INACTIVE". */
+  status?: string;
 
   notes?: string;
 }
@@ -133,10 +144,15 @@ export interface CustomerStatement {
       billed: number;
       paid: number;
       writtenOff: number;
+      /** Credit notes in the period: they come off what's owed. */
+      credited?: number;
+      /** Credit paid back to them: it puts what's owed up again. */
+      refunded?: number;
       closingBalance: number;
     };
     transactions: Array<{
-      kind: "INVOICE" | "PAYMENT" | "WRITE_OFF";
+      /** CREDIT_NOTE rows sit in the paid column, REFUND rows in billed. */
+      kind: "INVOICE" | "PAYMENT" | "CREDIT_NOTE" | "REFUND" | "WRITE_OFF";
       date: string;
       document: string;
       details: string | null;
@@ -207,4 +223,95 @@ export interface CustomerErasureResult {
   };
   kept: { invoices: number; paymentsReceived: number };
   files: { deleted: number; notFound: number; skipped: number; failed: number };
+}
+
+// ─── Deleting: GET /clients/:id/delete-impact ──────────────────────────────
+
+export type CustomerDeleteAlternative = "merge" | "deactivate" | "erase";
+
+export interface CustomerMoneyCounts {
+  invoices: number;
+  payments: number;
+  creditNotes: number;
+}
+
+/** Any invoice, payment or credit note: the customer can't be deleted. */
+export interface CustomerDeleteBlock {
+  code: "CUSTOMER_HAS_RECORDS";
+  message: string;
+  counts: CustomerMoneyCounts;
+  alternatives: CustomerDeleteAlternative[];
+}
+
+export interface CustomerDeleteVehicle {
+  id: string;
+  registrationNumber: string | null;
+  make: string | null;
+  model: string | null;
+  archived: boolean;
+  hasHistory: boolean;
+}
+
+export interface CustomerDeleteImpact {
+  customer: { id: string; displayName: string | null; status: string | null };
+  blocked: CustomerDeleteBlock | null;
+  money: CustomerMoneyCounts;
+  /** Unlinked, keeping their own copy of the name. */
+  quotations: number;
+  jobCards: number;
+  inspections: number;
+  /** Always deleted. */
+  reminders: number;
+  /** Deleted, with their files. */
+  paperwork: { count: number; files: number };
+  vehicles: {
+    /** Kept without an owner, still found by plate. */
+    withHistory: CustomerDeleteVehicle[];
+    /** No records: kept too, unless `deleteVehicles`. */
+    bare: CustomerDeleteVehicle[];
+  };
+  can: { deleteVehicles: boolean };
+}
+
+// ─── Merging: GET /clients/:id/merge-preview, POST /clients/:id/merge ──────
+
+export interface CustomerMergeSide {
+  id: string;
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  company: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+/** What moves from the merged customer to the kept one. */
+export interface CustomerMergeCounts {
+  invoices: number;
+  paymentsReceived: number;
+  creditNotes: number;
+  quotations: number;
+  inspectionReports: number;
+  jobCards: number;
+  vehicles: number;
+  reminders: number;
+  paperwork: number;
+}
+
+export interface CustomerMergePreview {
+  /** The one that goes. */
+  merged: CustomerMergeSide;
+  /** The one kept. */
+  into: CustomerMergeSide;
+  moves: CustomerMergeCounts;
+  /** The kept customer's blanks, filled from the merged one. */
+  fills: Record<string, unknown>;
+}
+
+export interface CustomerMergeResult {
+  customer: ICustomer;
+  mergedId: string;
+  moved: CustomerMergeCounts;
+  filled: string[];
+  followUpsDropped: number;
 }

@@ -77,6 +77,14 @@ export const sideBarGroups: SideBarGroup[] = [
         page: "quotations",
       },
       {
+        name: "Credit Notes",
+        icon: FileTextIcon,
+        href: RouteConstants.creditNotes.base.path,
+        slug: "credit-notes",
+        paths: [RouteConstants.creditNotes.base.path],
+        page: "creditNotes",
+      },
+      {
         name: "Payments",
         icon: Money,
         href: RouteConstants.payments.base.path,

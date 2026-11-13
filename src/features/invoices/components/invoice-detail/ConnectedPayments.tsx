@@ -12,7 +12,7 @@ interface ConnectedPaymentsProps {
 }
 
 /** Amount a given payment applied to this specific invoice. */
-function appliedToInvoice(payment: IPaymentReceived, invoiceId: string) {
+export function appliedToInvoice(payment: IPaymentReceived, invoiceId: string) {
   const allocation = payment.allocations?.find(
     (a) => a.invoiceId === invoiceId,
   );

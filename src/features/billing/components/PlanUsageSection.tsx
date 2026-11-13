@@ -38,8 +38,26 @@ function UsageMeter({ label, usage }: { label: string; usage: LimitUsage }) {
           bg={limit === null ? "transparent" : barColor}
         />
       </Box>
+      {allowanceNote(usage, label) && (
+        <Text fontSize="12px" color="gray.400" mt="1">
+          {allowanceNote(usage, label)}
+        </Text>
+      )}
     </Box>
   );
+}
+
+/**
+ * Under a start-then bar (Starter's invoices: 15, then 3 a month): what comes
+ * after the start, or, once it is used, why the bar now counts the month.
+ */
+function allowanceNote(usage: LimitUsage, label: string): string | null {
+  const { stage, then, startLimit } = usage;
+  if (!stage || !then) return null;
+  const every = `${then.max.toLocaleString("en-NG")} free every ${then.per}`;
+  if (stage === "start") return `Then ${every}.`;
+  const start = startLimit ? `${startLimit.toLocaleString("en-NG")} ` : "";
+  return `Your ${start}free ${label.toLowerCase()} are used: now ${every}, more on ${then.per === "year" ? "1 January" : "the 1st"}.`;
 }
 
 /**

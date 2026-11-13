@@ -125,27 +125,17 @@ function planActionFor(
 const PREVIEW_ROWS = 4;
 
 /**
- * What a plan includes, as the API words it. Never built up by hand here. What
- * exists comes first, so the preview never leads with something not built yet.
+ * What a plan includes, as the API words it. Never built up by hand here.
+ * Rows the API marks as not built yet are left off the card.
  */
 function planRows(plan: BillingPlan) {
-  const rows = [
-    ...(plan.limits ?? []).map((row) => ({
-      key: `limit-${row.key}`,
-      text: row.phrase,
-      comingSoon: row.comingSoon,
-    })),
-    ...(plan.features ?? [])
-      .filter((row) => row.included)
-      .map((row) => ({
-        key: `feature-${row.key}`,
-        text: row.label,
-        comingSoon: row.comingSoon,
-      })),
-  ];
   return [
-    ...rows.filter((row) => !row.comingSoon),
-    ...rows.filter((row) => row.comingSoon),
+    ...(plan.limits ?? [])
+      .filter((row) => !row.comingSoon)
+      .map((row) => ({ key: `limit-${row.key}`, text: row.phrase })),
+    ...(plan.features ?? [])
+      .filter((row) => row.included && !row.comingSoon)
+      .map((row) => ({ key: `feature-${row.key}`, text: row.label })),
   ];
 }
 
@@ -247,19 +237,10 @@ function PlanCard({
                 boxSize="1rem"
                 mt="0.125rem"
                 flexShrink={0}
-                color={row.comingSoon ? "gray.200" : "primary.300"}
+                color="primary.300"
               />
-              <Text
-                fontSize="13px"
-                lineHeight="1.4"
-                color={row.comingSoon ? "gray.300" : "gray.500"}
-              >
+              <Text fontSize="13px" lineHeight="1.4" color="gray.500">
                 {row.text}
-                {row.comingSoon && (
-                  <Badge size="xs" variant="subtle" ml="2">
-                    Coming soon
-                  </Badge>
-                )}
               </Text>
             </Flex>
           ))}

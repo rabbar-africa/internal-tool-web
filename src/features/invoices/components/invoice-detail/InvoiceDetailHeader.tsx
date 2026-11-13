@@ -9,11 +9,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 import moment from "moment";
+import { useNavigate } from "react-router-dom";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import Status from "@/components/ui/Status";
 import { ThreeDotsIcon } from "@/assets/custom/ThreeDotsIcon";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
+import { useNewCreditNoteAction } from "./InvoiceCredits";
 
 interface InvoiceDetailHeaderProps {
   invoice: IInvoiceResponse;
@@ -48,6 +50,9 @@ export function InvoiceDetailHeader({
   isDownloading,
 }: InvoiceDetailHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  // Issued invoices only, for roles that can make credit notes.
+  const showNewCreditNote = useNewCreditNoteAction(invoice);
   const status = invoice.status?.toLowerCase();
   const hasBalance = Number(invoice.balance ?? 0) > 0;
   const showRecordPayment = status !== "paid";
@@ -127,6 +132,19 @@ export function InvoiceDetailHeader({
                     onClick={handleSync(onRecordPayment)}
                   >
                     Record Payment
+                  </Menu.Item>
+                )}
+
+                {showNewCreditNote && (
+                  <Menu.Item
+                    value="new-credit-note"
+                    onClick={handleSync(() =>
+                      navigate(
+                        `${RouteConstants.creditNotes.create.path}?invoiceId=${invoice.id}`,
+                      ),
+                    )}
+                  >
+                    New credit note
                   </Menu.Item>
                 )}
 

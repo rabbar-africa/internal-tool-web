@@ -140,6 +140,18 @@ function StatementPreview({ statement }: { statement: CustomerStatement }) {
           />
           <FigureRow label="Billed" value={money(account.summary.billed)} />
           <FigureRow label="Paid" value={money(account.summary.paid)} />
+          {(account.summary.credited ?? 0) > 0 && (
+            <FigureRow
+              label="Credited"
+              value={money(account.summary.credited ?? 0)}
+            />
+          )}
+          {(account.summary.refunded ?? 0) > 0 && (
+            <FigureRow
+              label="Refunded"
+              value={money(account.summary.refunded ?? 0)}
+            />
+          )}
           {account.summary.writtenOff > 0 && (
             <FigureRow
               label="Written off"

@@ -34,12 +34,14 @@ import {
 import { AddVehicleModal } from "./AddVehicleModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import { QuotationsTable } from "@/features/quotations/components/QuotationsTable";
+import { CustomerCreditNotes } from "./CustomerCreditNotes";
 
 const scrollAreaProps = { maxW: { base: "xl", lg: "7xl" } };
 
 const TAB_VALUES = [
   "invoices",
   "quotes",
+  "credit-notes",
   "vehicles",
   "payments",
   "job-cards",
@@ -77,6 +79,7 @@ export function CustomerTabs({
   const navigate = useNavigate();
   const { has } = usePermissions();
   const canReadQuotes = has("read:quotations");
+  const canReadCreditNotes = has("read:credit_notes");
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceColumns = useInvoiceListColumns();
   const exportScope = customerExportScope(clientId, customerName);
@@ -114,11 +117,16 @@ export function CustomerTabs({
   };
 
   const sectionParam = searchParams.get("section");
-  const activeTab = TAB_VALUES.includes(
-    sectionParam as (typeof TAB_VALUES)[number],
-  )
-    ? (sectionParam as string)
-    : DEFAULT_TAB;
+  // A link to a tab this role can't see lands on the default one.
+  const hiddenTabs: string[] = [
+    ...(canReadQuotes ? [] : ["quotes"]),
+    ...(canReadCreditNotes ? [] : ["credit-notes"]),
+  ];
+  const activeTab =
+    TAB_VALUES.includes(sectionParam as (typeof TAB_VALUES)[number]) &&
+    !hiddenTabs.includes(sectionParam as string)
+      ? (sectionParam as string)
+      : DEFAULT_TAB;
 
   const handleTabChange = (value: string) => {
     setSearchParams(
@@ -158,6 +166,11 @@ export function CustomerTabs({
             {canReadQuotes && (
               <Tabs.Trigger value="quotes" fontSize="13px">
                 Quotes
+              </Tabs.Trigger>
+            )}
+            {canReadCreditNotes && (
+              <Tabs.Trigger value="credit-notes" fontSize="13px">
+                Credit Notes
               </Tabs.Trigger>
             )}
             <Tabs.Trigger value="vehicles" fontSize="13px">
@@ -234,6 +247,12 @@ export function CustomerTabs({
                 filter={{ customerId: clientId }}
                 newQuoteParams={{ customerId: clientId }}
               />
+            </Tabs.Content>
+          )}
+
+          {canReadCreditNotes && (
+            <Tabs.Content value="credit-notes" px="4" pb="4" pt="3">
+              <CustomerCreditNotes customerId={clientId} />
             </Tabs.Content>
           )}
 

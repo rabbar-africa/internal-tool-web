@@ -9,6 +9,7 @@ export type ExportModuleKey =
   | "customers"
   | "invoices"
   | "quotations"
+  | "credit_notes"
   | "payments_received"
   | "expenses"
   | "job_cards"
@@ -46,6 +47,18 @@ export interface ExportVariant {
   label: string;
   description: string | null;
   columns: ExportColumn[];
+  /**
+   * More tabs this variant can add to an XLS/XLSX file (never a CSV), e.g. the
+   * customers' vehicles. Only those the person may export are listed; each is
+   * added only when named in `extraSheets`. Older APIs leave it out.
+   */
+  extraSheets?: ExportExtraSheet[];
+}
+
+export interface ExportExtraSheet {
+  key: string;
+  label: string;
+  description: string | null;
 }
 
 export interface ExportModule {
@@ -87,6 +100,8 @@ export interface CreateExportPayload {
   decimalFormat?: string;
   fileFormat: ExportFileFormat;
   includePii: boolean;
+  /** Keys from the variant's `extraSheets`. XLS/XLSX only: a CSV is a 400. */
+  extraSheets?: string[];
   password?: string;
 }
 

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import SectionLoader from "@/components/common/SectionLoader";
 import { PermissionGate } from "@/components/common/PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomInput } from "@/components/input/CustomInput";
@@ -14,10 +15,10 @@ import {
   type JobCardStatus,
 } from "@/shared/interface/job-card";
 import {
-  useDeleteJobCardMutation,
   useGetJobCardByIdQuery,
   useUpdateJobCardStatusMutation,
 } from "../api/query";
+import { DeleteJobCardDialog } from "../components/DeleteJobCardDialog";
 import {
   JobCardPriorityBadge,
   JobCardStatusBadge,
@@ -31,6 +32,7 @@ export function JobCardDetailTemplate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { canDelete } = usePermissions();
   const [pendingStatus, setPendingStatus] = useState<JobCardStatus | null>(
     null,
   );
@@ -39,8 +41,6 @@ export function JobCardDetailTemplate() {
   const { data, isLoading } = useGetJobCardByIdQuery(id ?? "");
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } =
     useUpdateJobCardStatusMutation();
-  const { mutateAsync: deleteJobCard, isPending: isDeleting } =
-    useDeleteJobCardMutation();
 
   const jobCard = data?.data;
 
@@ -64,11 +64,6 @@ export function JobCardDetailTemplate() {
     });
     setPendingStatus(null);
     setClosedAt("");
-  };
-
-  const handleDelete = async () => {
-    await deleteJobCard(jobCard.id);
-    navigate(RouteConstants.jobCards.base.path);
   };
 
   return (
@@ -114,16 +109,18 @@ export function JobCardDetailTemplate() {
             >
               Edit
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              colorPalette="red"
-              color="error.300"
-              borderColor="error.300"
-              onClick={() => setDeleteOpen(true)}
-            >
-              Delete
-            </Button>
+            {canDelete("job_cards") && (
+              <Button
+                size="sm"
+                variant="outline"
+                colorPalette="red"
+                color="error.300"
+                borderColor="error.300"
+                onClick={() => setDeleteOpen(true)}
+              >
+                Delete
+              </Button>
+            )}
           </Flex>
         </Flex>
         <CustomSelect
@@ -192,13 +189,10 @@ export function JobCardDetailTemplate() {
         )}
       </ConsentDialog>
 
-      <ConsentDialog
-        open={deleteOpen}
-        onOpenChange={({ open }) => setDeleteOpen(open)}
-        heading={`Delete job card ${jobCard.jobNumber}?`}
-        note="Linked invoices, inspections and payments will be unlinked, not deleted."
-        handleSubmit={handleDelete}
-        isLoading={isDeleting}
+      <DeleteJobCardDialog
+        target={deleteOpen ? jobCard : null}
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={() => navigate(RouteConstants.jobCards.base.path)}
       />
     </>
   );
