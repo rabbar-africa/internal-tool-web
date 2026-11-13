@@ -54,10 +54,19 @@ export interface ClientStatsPaymentRef {
 export interface ClientStats {
   clientId: string;
   currency: string;
-  /** LTV — confirmed money actually collected (excl. soft-deleted payments). */
+  /**
+   * LTV — confirmed money actually collected (excl. soft-deleted payments),
+   * less what was refunded on credit notes.
+   */
   lifetimeValue: number;
-  /** Sum of invoice totals (excl. VOID/DELETED). */
+  /** Sum of invoice totals (excl. VOID/DELETED), net of credit notes. */
   totalInvoiced: number;
+  /** Credit notes made for them. Older APIs leave these out. */
+  credited?: number;
+  /** Credit paid back to them. */
+  refunded?: number;
+  /** Open credit notes plus payments not applied to any invoice. */
+  availableCredit?: number;
   invoiceCount: number;
   paidInvoiceCount: number;
   /** totalInvoiced / invoiceCount. */
@@ -133,10 +142,15 @@ export interface CustomerStatement {
       billed: number;
       paid: number;
       writtenOff: number;
+      /** Credit notes in the period: they come off what's owed. */
+      credited?: number;
+      /** Credit paid back to them: it puts what's owed up again. */
+      refunded?: number;
       closingBalance: number;
     };
     transactions: Array<{
-      kind: "INVOICE" | "PAYMENT" | "WRITE_OFF";
+      /** CREDIT_NOTE rows sit in the paid column, REFUND rows in billed. */
+      kind: "INVOICE" | "PAYMENT" | "CREDIT_NOTE" | "REFUND" | "WRITE_OFF";
       date: string;
       document: string;
       details: string | null;

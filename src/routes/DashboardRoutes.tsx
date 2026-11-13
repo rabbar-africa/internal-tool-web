@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layouts";
 import { InspectionRoutes } from "@/features/inspection/routes";
 import { InvoiceRoutes } from "@/features/invoices/routes";
 import { QuotationRoutes } from "@/features/quotations/routes";
+import { CreditNoteRoutes } from "@/features/credit-notes/routes";
 import { PaymentRoutes } from "@/features/payments/routes";
 import { CustomerRoutes } from "@/features/customers/routes";
 import { PaperworkRoutes } from "@/features/paperwork/routes";
@@ -46,6 +47,7 @@ export const DashboardRoutes: RouteObject = {
     ...InspectionRoutes,
     ...InvoiceRoutes,
     ...QuotationRoutes,
+    ...CreditNoteRoutes,
     ...PaymentRoutes,
     ...CustomerRoutes,
     ...PaperworkRoutes,

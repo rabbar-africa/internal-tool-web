@@ -57,6 +57,14 @@ export const PAGE_ACCESS = {
   quotationCreate: ["create:quotations"],
   quotationEdit: ["update:quotations"],
 
+  creditNotes: ["read:credit_notes"],
+  creditNoteCreate: ["create:credit_notes"],
+  creditNoteEdit: ["update:credit_notes"],
+  // Actions on a credit note rather than pages: a refund is money out of an
+  // account, so it needs banking as well (the API's guard is the same).
+  creditNoteRefund: ["update:credit_notes", "create:banking"],
+  creditNoteRefundDelete: ["update:credit_notes", "delete:banking"],
+
   payments: ["read:payments_received"],
   paymentCreate: ["create:payments_received"],
 

@@ -72,6 +72,15 @@ export const customQueryKey = {
     getById: "get-quotation-by-id",
     summary: "get-quotation-summary",
   },
+  creditNotes: {
+    getAll: "get-all-credit-notes",
+    getById: "get-credit-note-by-id",
+    /** An invoice's credit note form: its lines and what's left to credit. */
+    draft: "get-credit-note-draft",
+    preview: "get-credit-note-preview",
+    /** A customer's open credit: credit notes and unused payments. */
+    customerCredit: "get-customer-credit",
+  },
   inspections: {
     getAll: "get-all-inspections",
     getById: "get-inspection-by-id",

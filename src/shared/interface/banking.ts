@@ -50,7 +50,9 @@ export type StatementEntryKind =
   | "BANK_CHARGE"
   | "EXPENSE"
   | "TRANSFER_IN"
-  | "TRANSFER_OUT";
+  | "TRANSFER_OUT"
+  /** Credit paid back to a customer: money out ("Refund to Mr Bayo"). */
+  | "REFUND";
 
 export interface StatementLine {
   kind: StatementEntryKind;
@@ -148,6 +150,14 @@ export interface BusinessStatement {
     paymentCount: number;
     owedAtEnd: number;
     salesBeforeTax: number;
+    /** Credit notes in the period, and the VAT that went back on them. */
+    credited: number;
+    creditNoteCount: number;
+    vatCredited: number;
+    /** Credit paid back to customers. */
+    refunded: number;
+    /** Invoiced less credited. */
+    netSales: number;
   };
   spending: {
     byCategory: Array<{

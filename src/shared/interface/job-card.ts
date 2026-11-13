@@ -74,8 +74,14 @@ export interface JobCard {
 }
 
 export interface JobCardFinancials {
+  /** Net of credit notes. */
   invoicedTotal: number;
+  /** Net of refunds. */
   collected: number;
+  /** Credit notes on the job's invoices. Older APIs leave these out. */
+  credited?: number;
+  /** Credit paid back on them. */
+  refunded?: number;
   outstanding: number;
   expensesTotal: number;
   profit: number;

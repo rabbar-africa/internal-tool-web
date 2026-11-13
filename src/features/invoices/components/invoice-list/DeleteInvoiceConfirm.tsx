@@ -152,6 +152,8 @@ function DeleteInvoiceContent({
 
   const payments = impact?.payments ?? [];
   const expenses = impact?.expenses ?? [];
+  const creditNotes = impact?.creditNotes ?? [];
+  const creditsApplied = impact?.creditsApplied ?? [];
   const deletable = payments.filter((p) => !p.keptBecause);
   const paymentsGo = deletePayments ? deletable : [];
   const toCredit = sum(
@@ -264,6 +266,42 @@ function DeleteInvoiceContent({
                   : undefined
               }
               effect={expenseEffect}
+            />
+          )}
+
+          {creditsApplied.length > 0 && (
+            <Attached
+              title="Credit applied to this invoice"
+              rows={creditsApplied.map((c) => (
+                <Row
+                  key={c.id}
+                  title={c.creditNote.creditNoteNumber}
+                  detail={day(c.date)}
+                  amount={money(c.amount)}
+                />
+              ))}
+              effect={`${money(sum(creditsApplied.map((c) => c.amount)))} goes back to ${
+                creditsApplied.length === 1
+                  ? "its credit note"
+                  : "their credit notes"
+              } as open credit for the customer.`}
+            />
+          )}
+
+          {creditNotes.length > 0 && (
+            <Attached
+              title="Credit notes made from this invoice"
+              rows={creditNotes.map((cn) => (
+                <Row
+                  key={cn.id}
+                  title={cn.creditNoteNumber}
+                  detail={[day(cn.date), cn.status.toLowerCase()].join(" · ")}
+                  amount={money(cn.total)}
+                />
+              ))}
+              effect={`${
+                creditNotes.length === 1 ? "It stays" : "They stay"
+              } and still name ${target.invoiceNumber}. Any credit left can go on another invoice or be refunded.`}
             />
           )}
 

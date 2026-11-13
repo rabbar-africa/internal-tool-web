@@ -6,7 +6,11 @@ import { useInvoiceDetail } from "@/features/invoices/components/invoice-detail/
 import { InvoiceDetailHeader } from "@/features/invoices/components/invoice-detail/InvoiceDetailHeader";
 import { InvoiceDetailSkeleton } from "@/features/invoices/components/invoice-detail/InvoiceDetailSkeleton";
 import { InvoicePdfView } from "@/features/invoices/components/invoice-detail/InvoicePdfView";
-import { ConnectedPayments } from "@/features/invoices/components/invoice-detail/ConnectedPayments";
+import {
+  ConnectedPayments,
+  appliedToInvoice,
+} from "@/features/invoices/components/invoice-detail/ConnectedPayments";
+import { InvoiceCredits } from "@/features/invoices/components/invoice-detail/InvoiceCredits";
 import { InvoiceCostsPanel } from "@/features/invoices/components/invoice-detail/InvoiceCostsPanel";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
 import { MadeFromQuote } from "@/features/invoices/components/invoice-detail/MadeFromQuote";
@@ -82,6 +86,14 @@ export function InvoiceDetailTemplate() {
           payments={payments}
           invoiceId={invoice.id}
           onViewPayment={viewPayment}
+        />
+
+        <InvoiceCredits
+          invoice={invoice}
+          paid={payments.reduce(
+            (sum, payment) => sum + appliedToInvoice(payment, invoice.id),
+            0,
+          )}
         />
 
         <InvoiceCostsPanel invoiceId={invoice.id} />

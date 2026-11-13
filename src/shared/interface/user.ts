@@ -20,6 +20,7 @@ export type KnownPermissionSubject =
   | "items"
   | "invoices"
   | "quotations"
+  | "credit_notes"
   | "payments_received"
   | "technicians"
   | "job_cards"

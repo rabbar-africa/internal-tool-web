@@ -26,18 +26,26 @@ export function CustomerStats({ stats, isLoading }: CustomerStatsProps) {
 
   const currency = stats.currency ?? "NGN";
   const money = (v: number) => formatCurrency(v, currency);
+  const credited = stats.credited ?? 0;
+  const refunded = stats.refunded ?? 0;
+  const availableCredit = stats.availableCredit ?? 0;
 
   const tiles = [
     {
       label: "Lifetime Value",
       value: money(stats.lifetimeValue),
-      caption: "Collected to date",
+      caption:
+        refunded > 0
+          ? `Collected, after ${money(refunded)} refunded`
+          : "Collected to date",
       accent: "#4F9D77",
     },
     {
       label: "Total Invoiced",
       value: money(stats.totalInvoiced),
-      caption: `${stats.invoiceCount} invoice${stats.invoiceCount === 1 ? "" : "s"}`,
+      caption: `${stats.invoiceCount} invoice${stats.invoiceCount === 1 ? "" : "s"}${
+        credited > 0 ? `, after ${money(credited)} credited` : ""
+      }`,
       accent: "#293885",
     },
     {
@@ -106,6 +114,31 @@ export function CustomerStats({ stats, isLoading }: CustomerStatsProps) {
           </Box>
         ))}
       </Grid>
+
+      {/* Money of theirs the business holds: open credit notes and payments
+          not yet on an invoice. Only shown when there's some. */}
+      {availableCredit > 0 && (
+        <Flex
+          mt="3"
+          align={{ base: "flex-start", sm: "center" }}
+          justify="space-between"
+          direction={{ base: "column", sm: "row" }}
+          gap="1"
+          bg="blue.50"
+          borderWidth="1px"
+          borderColor="blue.100"
+          rounded="lg"
+          px="4"
+          py="2.5"
+        >
+          <Text fontSize="13px" color="blue.800" fontWeight="600">
+            Available credit: {money(availableCredit)}
+          </Text>
+          <Text fontSize="12px" color="blue.700">
+            Open credit notes and payments not yet used on an invoice
+          </Text>
+        </Flex>
+      )}
 
       {(stats.lastInvoice || stats.lastPayment) && (
         <Flex
