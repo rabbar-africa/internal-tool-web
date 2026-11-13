@@ -215,7 +215,7 @@ export function CustomerListTemplate() {
             />
 
             <SearchInput
-              placeholder="Search by name or phone"
+              placeholder="Search by name, phone or plate number"
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val) => setFilters({ search: val, page: 1 })}

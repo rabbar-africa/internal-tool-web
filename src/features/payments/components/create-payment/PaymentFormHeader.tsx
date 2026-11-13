@@ -36,7 +36,7 @@ export function PaymentFormHeader({
         <SearchCombobox
           label="Customer"
           required
-          placeholder="Search customer..."
+          placeholder="Search by name, phone or plate..."
           options={customerOptions}
           value={values.customerId || undefined}
           onChange={(val) => onSelectCustomer(val)}

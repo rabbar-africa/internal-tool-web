@@ -51,7 +51,7 @@ export function CustomerVehicleSection({
             label="Select Customer"
             required
             options={customerOptions}
-            placeholder="Search customer..."
+            placeholder="Search by name, phone or plate..."
             value={formik.values.customerId || undefined}
             onChange={(val, option) => {
               formik.setFieldValue("customerId", val);

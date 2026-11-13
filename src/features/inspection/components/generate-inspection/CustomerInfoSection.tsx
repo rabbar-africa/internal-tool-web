@@ -60,7 +60,7 @@ export function CustomerInfoSection({ form }: { form: InspectionFormApi }) {
             <SearchCombobox
               label="Customer"
               required
-              placeholder="Search by name or phone..."
+              placeholder="Search by name, phone or plate..."
               options={customerOptions}
               value={selectedClientId || undefined}
               onChange={(id) => handleCustomerSelect(id)}
