@@ -40,6 +40,9 @@ export interface BaseFieldProps {
 // Custom Input Component
 export interface CustomInputProps extends BaseFieldProps {
   type?: "text" | "email" | "password" | "tel" | "url" | "date";
+  /** For a date: the earliest and latest day the picker offers (YYYY-MM-DD). */
+  min?: string;
+  max?: string;
   leftElement?: React.ReactNode;
   rightElement?: React.ReactNode;
   labelProps?: FieldLabelProps;

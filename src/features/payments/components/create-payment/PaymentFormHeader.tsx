@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { Grid, Stack } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
 import { CustomInput } from "@/components/input/CustomInput";
@@ -68,6 +69,8 @@ export function PaymentFormHeader({
           <CustomInput
             label="Payment Date"
             type="date"
+            // Money is dated when it happened (the API refuses later days).
+            max={todayIso()}
             required
             name="date"
             value={values.date}

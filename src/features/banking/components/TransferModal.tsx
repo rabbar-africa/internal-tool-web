@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { useMemo } from "react";
 import {
   Button,
@@ -256,6 +257,8 @@ export function TransferModal({
                     <CustomInput
                       label="Date"
                       type="date"
+                      // Money is dated when it happened (the API refuses later days).
+                      max={todayIso()}
                       required
                       name="date"
                       value={values.date}

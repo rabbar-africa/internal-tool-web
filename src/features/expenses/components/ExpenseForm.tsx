@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -417,6 +418,8 @@ export function ExpenseForm({
               <CustomInput
                 label="Expense Date"
                 type="date"
+                // Money is dated when it happened (the API refuses later days).
+                max={todayIso()}
                 required
                 name="date"
                 value={formik.values.date}
