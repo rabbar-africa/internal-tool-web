@@ -111,6 +111,14 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
         href: settings.roles.path,
         page: "roles",
       },
+      {
+        title: "Activity Log",
+        description:
+          "Who created, changed or deleted invoices, payments and other money records.",
+        icon: ListBullets,
+        href: settings.activityLog.path,
+        page: "activityLog",
+      },
     ],
   },
   {

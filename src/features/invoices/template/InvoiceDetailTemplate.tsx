@@ -14,6 +14,7 @@ import { InvoiceCredits } from "@/features/invoices/components/invoice-detail/In
 import { InvoiceCostsPanel } from "@/features/invoices/components/invoice-detail/InvoiceCostsPanel";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
 import { MadeFromQuote } from "@/features/invoices/components/invoice-detail/MadeFromQuote";
+import { RecordHistory } from "@/features/activity/components/RecordHistory";
 
 export function InvoiceDetailTemplate() {
   const { formatMoney } = useFormatMoney();
@@ -99,6 +100,8 @@ export function InvoiceDetailTemplate() {
         <InvoiceCostsPanel invoiceId={invoice.id} />
 
         <InvoicePdfView invoice={invoice} />
+
+        <RecordHistory entityId={invoice.id} entityType="invoice" />
       </Stack>
 
       <DeleteInvoiceConfirm

@@ -99,6 +99,8 @@ export const PAGE_ACCESS = {
   invoiceTemplateEdit: ["update:organization"],
   team: ["read:users"],
   roles: ["read:roles"],
+  // Who did what: owner and admin by default (a decision of 14 Nov 2026).
+  activityLog: ["read:activity_log"],
 } as const satisfies Record<string, readonly AccessPermission[]>;
 
 export type PageKey = keyof typeof PAGE_ACCESS;

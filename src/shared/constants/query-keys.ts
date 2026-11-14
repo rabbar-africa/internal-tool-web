@@ -1,4 +1,7 @@
 export const customQueryKey = {
+  activity: {
+    list: "get-activity",
+  },
   user: {
     getMe: "get-me",
     getOrganizations: "get-my-organizations",
