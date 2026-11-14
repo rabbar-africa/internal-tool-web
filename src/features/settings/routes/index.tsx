@@ -50,6 +50,10 @@ const { TeamManagementPage } = lazyImport(
   () => import("../pages/TeamManagementPage"),
   "TeamManagementPage",
 );
+const { ActivityLogPage } = lazyImport(
+  () => import("../pages/ActivityLogPage"),
+  "ActivityLogPage",
+);
 const { RolesPage } = lazyImport(
   () => import("../pages/RolesPage"),
   "RolesPage",
@@ -125,5 +129,9 @@ export const SettingsRoutes: RouteObject[] = [
   guarded("roles", {
     path: settings.roles.path,
     element: <RolesPage />,
+  }),
+  guarded("activityLog", {
+    path: settings.activityLog.path,
+    element: <ActivityLogPage />,
   }),
 ];

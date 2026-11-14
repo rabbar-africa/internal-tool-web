@@ -70,6 +70,7 @@ export const useDeleteAccountTransferMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteAccountTransfer(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Transfer deleted",
       invalidatesQueryKeys: invalidates.accountTransfer,
     },

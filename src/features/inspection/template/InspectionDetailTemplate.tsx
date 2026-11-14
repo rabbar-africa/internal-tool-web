@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import moment from "moment";
 import { RouteConstants } from "@/shared/constants/routes";
 import SectionLoader from "@/components/common/SectionLoader";
@@ -90,6 +91,10 @@ function FindingStatusBadge({ status }: { status: string }) {
 export function InspectionDetailTemplate() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const leave = useLeaveDeletedRecord(
+    id ?? "",
+    RouteConstants.inspection.base.path,
+  );
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -111,7 +116,7 @@ export function InspectionDetailTemplate() {
   const handleDelete = async () => {
     if (!id) return;
     await deleteInspection(id);
-    navigate(RouteConstants.inspection.base.path);
+    leave();
   };
 
   const handleDownload = async (variant: InspectionPdfVariant) => {

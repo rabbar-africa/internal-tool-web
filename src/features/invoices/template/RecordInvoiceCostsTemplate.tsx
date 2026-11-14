@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { useMemo, useRef, useState } from "react";
 import {
   Badge,
@@ -370,6 +371,8 @@ export function RecordInvoiceCostsTemplate() {
           <CustomInput
             label="Date"
             type="date"
+            // Money is dated when it happened (the API refuses later days).
+            max={todayIso()}
             required
             value={date}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>

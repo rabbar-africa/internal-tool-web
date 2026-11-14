@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Badge,
   Box,
@@ -21,6 +22,8 @@ import {
 } from "../../api/query";
 
 export function JobCardTechnicians({ jobCard }: { jobCard: JobCardDetail }) {
+  // Assigning is an update to the job card: shown only to those who may.
+  const mayUpdate = usePermissions().canUpdate("job_cards");
   const [selectedId, setSelectedId] = useState("");
   const [isLead, setIsLead] = useState(false);
 
@@ -104,51 +107,55 @@ export function JobCardTechnicians({ jobCard }: { jobCard: JobCardDetail }) {
                 </Badge>
               )}
             </HStack>
-            <IconButton
-              aria-label="Unassign technician"
-              size="xs"
-              variant="ghost"
-              colorPalette="red"
-              onClick={() =>
-                unassignTechnician({
-                  jobCardId: jobCard.id,
-                  technicianId: assignment.technicianId,
-                })
-              }
-            >
-              <XIcon />
-            </IconButton>
+            {mayUpdate && (
+              <IconButton
+                aria-label="Unassign technician"
+                size="xs"
+                variant="ghost"
+                colorPalette="red"
+                onClick={() =>
+                  unassignTechnician({
+                    jobCardId: jobCard.id,
+                    technicianId: assignment.technicianId,
+                  })
+                }
+              >
+                <XIcon />
+              </IconButton>
+            )}
           </Flex>
         ))}
       </Stack>
 
-      <Stack gap="3">
-        <CustomSelect
-          placeholder="Select technician to assign..."
-          options={availableOptions}
-          loading={isLoading}
-          value={selectedId ? [selectedId] : undefined}
-          onChange={(opt: { value: string[] }) =>
-            setSelectedId(opt?.value?.[0] ?? "")
-          }
-        />
-        <Flex justify="space-between" align="center" gap="3">
-          <CustomCheckbox
-            label="Assign as lead"
-            checked={isLead}
-            onCheckedChange={({ checked }) => setIsLead(checked === true)}
+      {mayUpdate && (
+        <Stack gap="3">
+          <CustomSelect
+            placeholder="Select technician to assign..."
+            options={availableOptions}
+            loading={isLoading}
+            value={selectedId ? [selectedId] : undefined}
+            onChange={(opt: { value: string[] }) =>
+              setSelectedId(opt?.value?.[0] ?? "")
+            }
           />
-          <Button
-            size="sm"
-            onClick={handleAssign}
-            disabled={!selectedId}
-            loading={isAssigning}
-            loadingText="Assigning..."
-          >
-            Assign
-          </Button>
-        </Flex>
-      </Stack>
+          <Flex justify="space-between" align="center" gap="3">
+            <CustomCheckbox
+              label="Assign as lead"
+              checked={isLead}
+              onCheckedChange={({ checked }) => setIsLead(checked === true)}
+            />
+            <Button
+              size="sm"
+              onClick={handleAssign}
+              disabled={!selectedId}
+              loading={isAssigning}
+              loadingText="Assigning..."
+            >
+              Assign
+            </Button>
+          </Flex>
+        </Stack>
+      )}
     </Box>
   );
 }

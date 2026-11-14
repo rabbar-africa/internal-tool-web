@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Box,
   Button,
@@ -74,6 +75,8 @@ export function JobCardForm({
   onSubmit,
   onCancel,
 }: JobCardFormProps) {
+  // "Add Vehicle" only for roles that may create one (QA bug #10).
+  const mayAddVehicle = usePermissions().canCreate("vehicles");
   const {
     isEdit,
     formik,
@@ -169,10 +172,11 @@ export function JobCardForm({
                 onChange={handleVehicleChange}
                 isLoading={vehiclesLoading}
                 emptyText="No matching vehicles."
-                footerAction={{
-                  label: "Add Vehicle",
-                  onClick: openAddVehicle,
-                }}
+                footerAction={
+                  mayAddVehicle
+                    ? { label: "Add Vehicle", onClick: openAddVehicle }
+                    : undefined
+                }
               />
             ) : (
               <Text textStyle="small-regular" color="gray.300">
@@ -232,8 +236,14 @@ export function JobCardForm({
                   type="date"
                   name="promisedDate"
                   value={formik.values.promisedDate}
+                  min={formik.values.openedAt || undefined}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.promisedDate && formik.errors.promisedDate
+                      ? formik.errors.promisedDate
+                      : undefined
+                  }
                 />
                 {isEdit && (
                   <CustomInput

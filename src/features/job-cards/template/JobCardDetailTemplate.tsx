@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import SectionLoader from "@/components/common/SectionLoader";
 import { PermissionGate } from "@/components/common/PermissionGate";
@@ -31,8 +32,14 @@ import { JobCardTabs } from "../components/job-card-detail/JobCardTabs";
 export function JobCardDetailTemplate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const leave = useLeaveDeletedRecord(
+    id ?? "",
+    RouteConstants.jobCards.base.path,
+  );
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { canDelete } = usePermissions();
+  // Buttons a role can't use aren't shown (QA bug #10): the API refuses them.
+  const { canDelete, canUpdate } = usePermissions();
+  const mayUpdate = canUpdate("job_cards");
   const [pendingStatus, setPendingStatus] = useState<JobCardStatus | null>(
     null,
   );
@@ -98,17 +105,19 @@ export function JobCardDetailTemplate() {
           </Box>
 
           <Flex gap="2" align="center" wrap="wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                navigate(
-                  RouteConstants.jobCards.edit.generate({ id: jobCard.id }),
-                )
-              }
-            >
-              Edit
-            </Button>
+            {mayUpdate && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  navigate(
+                    RouteConstants.jobCards.edit.generate({ id: jobCard.id }),
+                  )
+                }
+              >
+                Edit
+              </Button>
+            )}
             {canDelete("job_cards") && (
               <Button
                 size="sm"
@@ -123,18 +132,21 @@ export function JobCardDetailTemplate() {
             )}
           </Flex>
         </Flex>
-        <CustomSelect
-          placeholder="Change status..."
-          options={JOB_CARD_STATUS_OPTIONS}
-          disabled={isUpdatingStatus}
-          value={[jobCard.status]}
-          onChange={(opt: { value: string[] }) => {
-            const status = opt?.value?.[0] as JobCardStatus | undefined;
-            if (status && status !== jobCard.status) setPendingStatus(status);
-          }}
-          rootProps={{ size: "sm", w: "auto" }}
-          controlProps={{ w: "185px" }}
-        />
+        {/* Without update, the badge above still shows the status. */}
+        {mayUpdate && (
+          <CustomSelect
+            placeholder="Change status..."
+            options={JOB_CARD_STATUS_OPTIONS}
+            disabled={isUpdatingStatus}
+            value={[jobCard.status]}
+            onChange={(opt: { value: string[] }) => {
+              const status = opt?.value?.[0] as JobCardStatus | undefined;
+              if (status && status !== jobCard.status) setPendingStatus(status);
+            }}
+            rootProps={{ size: "sm", w: "auto" }}
+            controlProps={{ w: "185px" }}
+          />
+        )}
         {/* Profit is for the `finance` view rule; the API nulls it otherwise. */}
         {jobCard.financials && (
           <PermissionGate rule="finance">
@@ -192,7 +204,7 @@ export function JobCardDetailTemplate() {
       <DeleteJobCardDialog
         target={deleteOpen ? jobCard : null}
         onClose={() => setDeleteOpen(false)}
-        onDeleted={() => navigate(RouteConstants.jobCards.base.path)}
+        onDeleted={leave}
       />
     </>
   );

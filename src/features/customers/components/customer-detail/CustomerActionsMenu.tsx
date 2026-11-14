@@ -4,6 +4,7 @@ import { EraseCustomerDialog } from "./EraseCustomerDialog";
 import { DeleteCustomerDialog } from "./DeleteCustomerDialog";
 import { MergeCustomerDialog } from "./MergeCustomerDialog";
 import { useNavigate } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { ThreeDotsIcon } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { ICustomer } from "@/shared/interface/customer";
@@ -30,8 +31,11 @@ export function CustomerActionsMenu({ customer }: CustomerActionsMenuProps) {
     `${customer.firstName ?? ""} ${customer.lastName ?? ""}`.trim() ||
     "this customer";
 
-  // Deleted or erased, the customer is gone, so their page is too.
-  const leave = () => navigate(RouteConstants.customers.base.path);
+  // Deleted or erased, the customer is gone: back past their pages.
+  const leave = useLeaveDeletedRecord(
+    customer.id,
+    RouteConstants.customers.base.path,
+  );
 
   const handleEdit = () => {
     navigate(RouteConstants.customers.edit.generate({ id: customer.id }));
@@ -152,8 +156,11 @@ export function CustomerActionsMenu({ customer }: CustomerActionsMenuProps) {
           customerId={customer.id}
           customerName={name}
           onClose={close}
+          // In place of this customer's page, which is gone.
           onMerged={(keptId) =>
-            navigate(RouteConstants.customers.detail.generate({ id: keptId }))
+            navigate(RouteConstants.customers.detail.generate({ id: keptId }), {
+              replace: true,
+            })
           }
         />
       )}

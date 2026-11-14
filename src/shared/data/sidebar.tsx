@@ -172,15 +172,15 @@ export const sideBarGroups: SideBarGroup[] = [
         paths: ["/banking"],
         page: "banking",
       },
-      // Hidden until Reports shows real data (it renders mock data today).
-      // {
-      //   name: "Reports",
-      //   icon: ChartBar,
-      //   href: RouteConstants.reports.base.path,
-      //   slug: "reports",
-      //   paths: [RouteConstants.reports.base.path],
-      //   page: "reports",
-      // },
+      {
+        name: "Reports",
+        icon: ChartBar,
+        href: RouteConstants.reports.base.path,
+        slug: "reports",
+        // The home and every report under it.
+        paths: ["/reports"],
+        page: "reports",
+      },
     ],
   },
 ];

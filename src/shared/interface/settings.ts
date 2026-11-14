@@ -280,13 +280,19 @@ export const NUMBER_FORMAT_OPTIONS: { value: string; label: string }[] = [
   { value: "1 234 567.89", label: "1 234 567.89" },
 ];
 
+/**
+ * The payment modes the API knows (`PaymentMode`), in the payment form's
+ * order. POS is a card payment, labelled "Card / POS" (QA bug #15); it used
+ * to be listed here as its own method, which no form offered.
+ */
 export const PAYMENT_METHOD_OPTIONS = [
   "CASH",
   "BANK_TRANSFER",
   "CARD",
-  "CHEQUE",
   "MOBILE_MONEY",
-  "POS",
+  "CHEQUE",
+  "ONLINE",
+  "OTHER",
 ] as const;
 
 export interface IOrgTemplate {

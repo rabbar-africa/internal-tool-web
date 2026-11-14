@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
   Box,
@@ -114,6 +115,8 @@ const LineItemRow = memo(function LineItemRow({
   onItemSearch,
   isSearchingItems,
 }: LineItemRowProps) {
+  // "Add New Item" only for roles that may create one (QA bug #10).
+  const mayAddItem = usePermissions().canCreate("items");
   const { formatMoney } = useFormatMoney();
 
   const handleNameInput = (text: string) => {
@@ -122,10 +125,9 @@ const LineItemRow = memo(function LineItemRow({
       setFieldValue(`lineItems.${idx}.itemId`, "");
     }
   };
-  const addItemAction = {
-    label: "Add New Item",
-    onClick: () => onOpenAddItem(idx),
-  };
+  const addItemAction = mayAddItem
+    ? { label: "Add New Item", onClick: () => onOpenAddItem(idx) }
+    : undefined;
 
   if (isDesktop) {
     return (

@@ -215,6 +215,8 @@ export function ApplyCreditDialog({
                     <CustomInput
                       label="Date applied"
                       type="date"
+                      // Money is dated when it happened (the API refuses later days).
+                      max={todayIso()}
                       value={date}
                       inputProps={{ min: note.date.slice(0, 10) }}
                       onChange={(e) => setDate(e.target.value)}

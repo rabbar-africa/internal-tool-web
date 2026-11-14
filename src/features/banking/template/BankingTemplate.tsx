@@ -25,6 +25,9 @@ import {
 } from "../components/statement/StatementRangePicker";
 import { StatementSummary } from "../components/statement/StatementSummary";
 import { EmailStatementModal } from "../components/statement/EmailStatementModal";
+import { BankAccountModal } from "@/features/settings/components/account-details/BankAccountModal";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { IOrgBankAccount } from "@/shared/interface/settings";
 
 const formatDay = (day: string) => moment(day).format("DD MMM YYYY");
 
@@ -50,9 +53,12 @@ export function BankingTemplate() {
   const { hasFeature } = usePlanAccess();
   const hasBusinessStatement = hasFeature("businessStatement");
 
-  const { data, isLoading, isFetching } = useGetBusinessStatementQuery(range, {
-    enabled: hasBusinessStatement,
-  });
+  const { data, isLoading, isFetching, refetch } = useGetBusinessStatementQuery(
+    range,
+    {
+      enabled: hasBusinessStatement,
+    },
+  );
   const statement = hasBusinessStatement ? data?.data : undefined;
 
   const { accounts, isLoading: accountsLoading } = useAccountOptions({
@@ -70,6 +76,22 @@ export function BankingTemplate() {
           })),
     [hasBusinessStatement, statement?.accounts.rows, accounts],
   );
+  // Opening balances are set on the account (QA bug #11): from here too, since
+  // this is where a balance below zero is seen. Needs `update organization`.
+  const mayEditAccounts = usePermissions().canUpdate("organization");
+  const [settingOpening, setSettingOpening] = useState<IOrgBankAccount | null>(
+    null,
+  );
+  const accountOf = (id: string) => accounts.find((a) => a.id === id);
+  const hasOpening = (account?: IOrgBankAccount) =>
+    Boolean(account?.openingBalanceDate) ||
+    Number(account?.openingBalance ?? 0) !== 0;
+  // Below zero with no opening balance: almost always the money that was in
+  // the account before recording started, not an overdraft.
+  const belowZero = rows.filter(
+    (row) => (row.closingBalance ?? 0) < 0 && !hasOpening(accountOf(row.id)),
+  );
+
   const currencyCode = statement?.currencyCode ?? "NGN";
   const money = (amount: number) => formatCurrency(amount, currencyCode);
 
@@ -192,6 +214,13 @@ export function BankingTemplate() {
       value: "email",
       onClick: (row) => setEmailing({ accountId: row.id }),
     },
+    {
+      label: "Set opening balance",
+      value: "opening",
+      separator: true,
+      hidden: (row) => !mayEditAccounts || !accountOf(row.id),
+      onClick: (row) => setSettingOpening(accountOf(row.id) ?? null),
+    },
   ];
 
   const total = statement?.accounts.total;
@@ -281,6 +310,33 @@ export function BankingTemplate() {
           )}
         </Box>
 
+        {belowZero.length > 0 && (
+          <Box
+            role="status"
+            bg="orange.50"
+            borderWidth="1px"
+            borderColor="orange.200"
+            rounded=".625rem"
+            px="4"
+            py="3"
+          >
+            <Text textStyle="small-semibold" color="gray.500">
+              {belowZero.map((row) => row.label).join(", ")}{" "}
+              {belowZero.length === 1 ? "is" : "are"} below zero, with no
+              opening balance set.
+            </Text>
+            <Text textStyle="small-regular" color="gray.400" mt="1">
+              An account's balance here starts from its opening balance: the
+              money in it on the day you started recording in Rabbar. Without
+              one, it counts from zero, so spending from money that was already
+              there shows as a minus.{" "}
+              {mayEditAccounts
+                ? "Set it from the account's menu (Set opening balance), using the figure on your bank statement for that day, or what was in the till."
+                : "Ask an admin to set it in Settings → Account Details."}
+            </Text>
+          </Box>
+        )}
+
         {/* Accounts */}
         <Box
           pt={{ base: "1rem", md: "1.5rem" }}
@@ -321,6 +377,16 @@ export function BankingTemplate() {
           )}
         </Box>
       </Stack>
+
+      <BankAccountModal
+        open={Boolean(settingOpening)}
+        account={settingOpening}
+        onClose={() => {
+          setSettingOpening(null);
+          // The figures above start from the opening balance.
+          void refetch();
+        }}
+      />
 
       <EmailStatementModal
         open={Boolean(emailing)}

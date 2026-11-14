@@ -59,7 +59,7 @@ const today = new Date().toISOString().split("T")[0];
 export const PAYMENT_MODE_OPTIONS = [
   { label: "Cash", value: PaymentModeDto.CASH },
   { label: "Bank Transfer", value: PaymentModeDto.BANK_TRANSFER },
-  { label: "Card", value: PaymentModeDto.CARD },
+  { label: "Card / POS", value: PaymentModeDto.CARD },
   { label: "Mobile Money", value: PaymentModeDto.MOBILE_MONEY },
   { label: "Cheque", value: PaymentModeDto.CHEQUE },
   { label: "Online", value: PaymentModeDto.ONLINE },

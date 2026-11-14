@@ -7,10 +7,25 @@ const { ReportsPage } = lazyImport(
   () => import("../pages/ReportsPage"),
   "ReportsPage",
 );
+const { ReportViewerPage } = lazyImport(
+  () => import("../pages/ReportViewerPage"),
+  "ReportViewerPage",
+);
 
+/**
+ * `read reports` opens the page; each report also needs `read` on what it
+ * shows, which the API applies (its catalog lists only those).
+ */
 export const ReportRoutes: RouteObject[] = [
-  guarded("reports", {
-    path: RouteConstants.reports.base.path,
-    element: <ReportsPage />,
-  }),
+  guarded(
+    "reports",
+    {
+      path: RouteConstants.reports.base.path,
+      element: <ReportsPage />,
+    },
+    {
+      path: RouteConstants.reports.view.path,
+      element: <ReportViewerPage />,
+    },
+  ),
 ];

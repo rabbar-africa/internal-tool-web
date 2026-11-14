@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RecordHistory } from "@/features/activity/components/RecordHistory";
 import {
   Box,
   Center,
@@ -149,6 +150,10 @@ export function PaymentDetailTemplate() {
       </Flex>
 
       <PaymentReceipt payment={payment} />
+
+      <Box mt="6">
+        <RecordHistory entityId={payment.id} entityType="payment" />
+      </Box>
 
       <ConsentDialog
         open={pendingDelete}

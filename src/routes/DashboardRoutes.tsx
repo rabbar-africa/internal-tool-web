@@ -17,8 +17,7 @@ import { BankingRoutes } from "@/features/banking/routes";
 import { JobCardRoutes } from "@/features/job-cards/routes";
 import { TechnicianRoutes } from "@/features/technicians/routes";
 import { ReminderRoutes } from "@/features/reminders/routes";
-// Reports is hidden until it shows real data (it renders mock data today).
-// import { ReportRoutes } from "@/features/reports/routes";
+import { ReportRoutes } from "@/features/reports/routes";
 import { SettingsRoutes } from "@/features/settings/routes";
 
 const { OverviewPage } = lazyImport(
@@ -58,7 +57,7 @@ export const DashboardRoutes: RouteObject = {
     ...JobCardRoutes,
     ...TechnicianRoutes,
     ...ReminderRoutes,
-    // ...ReportRoutes,
+    ...ReportRoutes,
     ...SettingsRoutes,
   ],
 };

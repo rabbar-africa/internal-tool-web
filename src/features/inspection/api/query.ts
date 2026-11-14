@@ -112,6 +112,7 @@ export const useDeleteInspectionMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteInspection(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Inspection deleted successfully",
       invalidatesQueryKeys: invalidates.inspection,
     },

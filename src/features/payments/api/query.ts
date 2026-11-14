@@ -5,6 +5,7 @@ import {
   createPayment,
   updatePayment,
   deletePayment,
+  unapplyPaymentToCredit,
 } from "./service";
 import type {
   CreatePaymentPayload,
@@ -58,7 +59,20 @@ export const useDeletePaymentMutation = () => {
   return useMutation({
     mutationFn: (id: string) => deletePayment(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Payment deleted successfully",
+      invalidatesQueryKeys: invalidates.payment,
+    },
+  });
+};
+
+/** Take one invoice off a payment, keeping the money as customer credit. */
+export const useUnapplyPaymentMutation = () => {
+  return useMutation({
+    mutationFn: ({ id, invoiceId }: { id: string; invoiceId: string }) =>
+      unapplyPaymentToCredit(id, invoiceId),
+    meta: {
+      successMessage: "Payment kept as credit for the customer",
       invalidatesQueryKeys: invalidates.payment,
     },
   });

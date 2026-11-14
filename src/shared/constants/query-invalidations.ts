@@ -105,7 +105,16 @@ const INSPECTIONS = [
   [k.inspections.vehicleHistory],
 ] as const;
 
-const join = (...groups: QueryKeys[]): QueryKeys => groups.flat();
+/**
+ * The activity log and each record's history: every change writes an entry,
+ * so every group below makes them out of date too.
+ */
+const ACTIVITY = [[k.activity.list]] as const;
+
+const join = (...groups: QueryKeys[]): QueryKeys => [
+  ...groups.flat(),
+  ...ACTIVITY,
+];
 
 export const invalidates = {
   /** Created, edited, written off, recalculated, deleted, or a balance carried. */

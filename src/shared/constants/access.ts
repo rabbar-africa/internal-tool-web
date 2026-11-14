@@ -27,11 +27,6 @@ export const VIEW_RULES = {
    * accountant and admins.
    */
   finance: ["read:expenses"],
-  /**
-   * The Reports page: the whole business's books. Follows banking, the
-   * narrower money permission: by default accountant and admins only.
-   */
-  reports: ["read:banking"],
 } as const satisfies Record<string, readonly AccessPermission[]>;
 
 export type ViewRule = keyof typeof VIEW_RULES;
@@ -93,12 +88,16 @@ export const PAGE_ACCESS = {
 
   banking: ["read:banking"],
 
-  reports: VIEW_RULES.reports,
+  // The page; each report also needs `read` on what it shows (the API's
+  // catalog lists only those). Accountant and admins by default.
+  reports: ["read:reports"],
 
   // Settings pages are open to read (D6); these only edit.
   invoiceTemplateEdit: ["update:organization"],
   team: ["read:users"],
   roles: ["read:roles"],
+  // Who did what: owner and admin by default (a decision of 14 Nov 2026).
+  activityLog: ["read:activity_log"],
 } as const satisfies Record<string, readonly AccessPermission[]>;
 
 export type PageKey = keyof typeof PAGE_ACCESS;

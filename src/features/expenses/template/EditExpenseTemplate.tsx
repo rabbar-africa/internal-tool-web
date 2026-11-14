@@ -1,4 +1,5 @@
 import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import { RecordHistory } from "@/features/activity/components/RecordHistory";
 import {
   Link as RouterLink,
   useNavigate,
@@ -103,6 +104,8 @@ export function EditExpenseTemplate() {
         onSubmit={handleSubmit}
         onCancel={() => navigate(backPath)}
       />
+
+      <RecordHistory entityId={expense.id} entityType="expense" />
     </Stack>
   );
 }

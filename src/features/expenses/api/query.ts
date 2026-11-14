@@ -66,6 +66,7 @@ export const useDeleteExpenseMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteExpense(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Expense deleted",
       invalidatesQueryKeys: invalidates.expense,
     },
@@ -125,5 +126,8 @@ export const useRegroupInvoiceCostsMutation = () =>
 export const useDeleteExpensesBulkMutation = () =>
   useMutation({
     mutationFn: (ids: string[]) => deleteExpensesBulk(ids),
-    meta: { invalidatesQueryKeys: invalidates.expense },
+    meta: {
+      deletes: (ids: string[]) => ids,
+      invalidatesQueryKeys: invalidates.expense,
+    },
   });

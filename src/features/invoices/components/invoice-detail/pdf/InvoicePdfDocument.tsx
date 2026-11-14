@@ -1,3 +1,4 @@
+import { termsLabel } from "@/features/invoices/utils/payment-terms";
 /**
  * Invoice PDF, generated in the browser.
  *
@@ -407,8 +408,7 @@ export function InvoicePdfDocument({
                 s={s}
                 label={labels.paymentTerms}
                 value={
-                  invoice.paymentTermsLabel ||
-                  `Net ${invoice.paymentTerms ?? 0}`
+                  invoice.paymentTermsLabel || termsLabel(invoice.paymentTerms)
                 }
               />
             ) : null}

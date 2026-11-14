@@ -13,7 +13,10 @@ import { CustomInput } from "@/components/input/CustomInput";
 import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
-import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
+import {
+  AccountSelect,
+  useAccountOptions,
+} from "@/features/settings/components/account-details/AccountSelect";
 import { PAYMENT_MODE_OPTIONS } from "@/features/payments/components/create-payment/hooks/useCreatePayment";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type {
@@ -48,6 +51,25 @@ export function RefundCreditDialog({
   const [accountId, setAccountId] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const { accounts } = useAccountOptions({ includeCash: true });
+
+  // "Paid by" follows the account (QA bug #15): the till is cash, and a bank
+  // account can't pay out cash, so picking one makes a cash refund a transfer.
+  const pickAccount = (id: string) => {
+    setAccountId(id);
+    const type = accounts.find((a) => a.id === id)?.type;
+    if (type === "CASH") setMode(PaymentModeDto.CASH);
+    else if (type && mode === PaymentModeDto.CASH) {
+      setMode(PaymentModeDto.BANK_TRANSFER);
+    }
+  };
+  // And the other way: a mode change puts back the account it defaults to,
+  // unless the one picked still fits.
+  const pickMode = (next: PaymentModeDto) => {
+    setMode(next);
+    const type = accounts.find((a) => a.id === accountId)?.type;
+    if ((next === PaymentModeDto.CASH) !== (type === "CASH")) setAccountId("");
+  };
 
   // Each opening starts afresh, offering all the credit left.
   useEffect(() => {
@@ -105,6 +127,8 @@ export function RefundCreditDialog({
                   <CustomInput
                     label="Date"
                     type="date"
+                    // Money is dated when it happened (the API refuses later days).
+                    max={todayIso()}
                     value={date}
                     inputProps={{ min: note.date.slice(0, 10) }}
                     onChange={(e) => setDate(e.target.value)}
@@ -120,7 +144,7 @@ export function RefundCreditDialog({
                   options={PAYMENT_MODE_OPTIONS}
                   value={[mode]}
                   onChange={(opt: { value: string[] }) =>
-                    setMode(
+                    pickMode(
                       (opt?.value?.[0] as PaymentModeDto) ??
                         PaymentModeDto.CASH,
                     )
@@ -131,7 +155,7 @@ export function RefundCreditDialog({
                   includeCash
                   isCash={mode === PaymentModeDto.CASH}
                   value={accountId}
-                  onChange={setAccountId}
+                  onChange={pickAccount}
                 />
                 <CustomInput
                   label="Reference"

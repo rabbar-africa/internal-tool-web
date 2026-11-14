@@ -119,6 +119,7 @@ export const useDeleteReminderMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteReminder(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Reminder deleted",
       invalidatesQueryKeys: reminderInvalidations,
     },
