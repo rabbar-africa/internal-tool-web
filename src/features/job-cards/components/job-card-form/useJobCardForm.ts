@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import moment from "moment";
 import type { SearchComboboxOption } from "@/components/input/SearchCombobox";
 import {
   useGetAllCustomersQuery,
@@ -35,10 +36,29 @@ const validationSchema = Yup.object({
     .transform((value, original) => (original === "" ? undefined : value))
     .typeError("Odometer must be a number")
     .min(0, "Odometer cannot be negative"),
+  // The API refuses these too (QA bug #12); here they show on the field.
   odometerOut: Yup.number()
     .transform((value, original) => (original === "" ? undefined : value))
     .typeError("Odometer must be a number")
-    .min(0, "Odometer cannot be negative"),
+    .min(0, "Odometer cannot be negative")
+    .test(
+      "not-below-in",
+      "Odometer out can't be lower than odometer in",
+      function (out) {
+        const odometerIn = Number(this.parent.odometerIn);
+        if (out == null || this.parent.odometerIn === "") return true;
+        return Number.isNaN(odometerIn) || out >= odometerIn;
+      },
+    ),
+  promisedDate: Yup.string().test(
+    "not-before-opened",
+    "The promised date can't be before the opened date",
+    function (promised) {
+      const opened = this.parent.openedAt as string | undefined;
+      // YYYY-MM-DD strings compare as dates.
+      return !promised || !opened || promised >= opened;
+    },
+  ),
 });
 
 interface UseJobCardFormArgs {
@@ -80,7 +100,11 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
       odometerIn: jobCard?.odometerIn != null ? String(jobCard.odometerIn) : "",
       odometerOut:
         jobCard?.odometerOut != null ? String(jobCard.odometerOut) : "",
-      openedAt: jobCard?.openedAt ? jobCard.openedAt.slice(0, 10) : "",
+      // A new job is opened today unless changed. The saved one is shown on
+      // its own day here, not the UTC day of the timestamp.
+      openedAt: jobCard?.openedAt
+        ? moment(jobCard.openedAt).format("YYYY-MM-DD")
+        : moment().format("YYYY-MM-DD"),
       promisedDate: jobCard?.promisedDate
         ? jobCard.promisedDate.slice(0, 10)
         : "",
@@ -111,7 +135,11 @@ export function useJobCardForm({ jobCard, onSubmit }: UseJobCardFormArgs) {
         odometerOut: values.odometerOut
           ? Number(values.odometerOut)
           : undefined,
-        openedAt: values.openedAt || undefined,
+        // Left as today on a new job, the API stamps the time it is opened.
+        openedAt:
+          !isEdit && values.openedAt === moment().format("YYYY-MM-DD")
+            ? undefined
+            : values.openedAt || undefined,
         promisedDate: values.promisedDate || undefined,
         ...(isEdit
           ? values.closedAt

@@ -232,8 +232,14 @@ export function JobCardForm({
                   type="date"
                   name="promisedDate"
                   value={formik.values.promisedDate}
+                  min={formik.values.openedAt || undefined}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.promisedDate && formik.errors.promisedDate
+                      ? formik.errors.promisedDate
+                      : undefined
+                  }
                 />
                 {isEdit && (
                   <CustomInput

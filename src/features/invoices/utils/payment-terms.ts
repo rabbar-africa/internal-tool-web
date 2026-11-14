@@ -6,6 +6,10 @@ export const PAYMENT_TERMS_OPTIONS = [
   { label: "Net 60", value: "60" },
 ];
 
+/** What terms of `days` print as: never "Net 0" (QA bug #16). */
+export const termsLabel = (days: number | null | undefined) =>
+  days && days > 0 ? `Net ${days}` : "Due on Receipt";
+
 /** The dropdown's value for a due date that matches none of the options. */
 export const CUSTOM_TERMS = "custom";
 

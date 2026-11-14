@@ -98,6 +98,22 @@ export function JobCardInfo({ jobCard }: { jobCard: JobCardDetail }) {
             }
           />
           <InfoItem
+            label="Odometer in"
+            value={
+              jobCard.odometerIn != null
+                ? `${jobCard.odometerIn.toLocaleString()} km`
+                : null
+            }
+          />
+          <InfoItem
+            label="Odometer out"
+            value={
+              jobCard.odometerOut != null
+                ? `${jobCard.odometerOut.toLocaleString()} km`
+                : null
+            }
+          />
+          <InfoItem
             label="Closed"
             value={
               jobCard.closedAt

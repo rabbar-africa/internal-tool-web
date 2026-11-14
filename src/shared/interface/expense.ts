@@ -140,10 +140,11 @@ export const EXPENSE_CATEGORY_OPTIONS = (
   Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]
 ).map((value) => ({ label: EXPENSE_CATEGORY_LABELS[value], value }));
 
+/** A POS terminal takes a card, so POS is Card (QA bug #15), not a mode of its own. */
 export const PAYMENT_MODE_LABELS: Record<PaymentModeDto, string> = {
   [PaymentModeDto.CASH]: "Cash",
   [PaymentModeDto.BANK_TRANSFER]: "Bank Transfer",
-  [PaymentModeDto.CARD]: "Card",
+  [PaymentModeDto.CARD]: "Card / POS",
   [PaymentModeDto.MOBILE_MONEY]: "Mobile Money",
   [PaymentModeDto.CHEQUE]: "Cheque",
   [PaymentModeDto.ONLINE]: "Online",
