@@ -78,6 +78,14 @@ export function JobCardInfo({ jobCard }: { jobCard: JobCardDetail }) {
           <InfoItem label="Phone" value={jobCard.customerPhone} />
           <InfoItem label="Vehicle" value={jobCardVehicleLabel(jobCard)} />
           <InfoItem
+            label="Plate number"
+            // The job's own copy, else the linked vehicle's current plate.
+            value={
+              jobCard.vehicleRegistrationNumber ||
+              jobCard.vehicle?.registrationNumber
+            }
+          />
+          <InfoItem
             label="Opened"
             value={moment(jobCard.openedAt).format("DD MMM YYYY")}
           />

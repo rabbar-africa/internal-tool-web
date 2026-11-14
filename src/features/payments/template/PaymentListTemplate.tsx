@@ -160,17 +160,25 @@ const columns: ColumnDef<IPaymentReceived>[] = [
 ];
 
 const FILTER_SCHEMA = {
+  page: { defaultValue: 1 },
+  limit: { defaultValue: 20 },
+  search: { defaultValue: "" },
   depositToAccountId: { defaultValue: "" },
 };
 
 export function PaymentListTemplate() {
   const navigate = useNavigate();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
-  const { data, isLoading } = useGetPaymentsQuery(
-    filters.depositToAccountId
+  const [searchInput, setSearchInput] = useState(filters.search);
+  // The API pages and searches (payment #, reference, customer, plate).
+  const { data, isLoading, isFetching } = useGetPaymentsQuery({
+    page: filters.page,
+    limit: filters.limit,
+    ...(filters.search ? { search: filters.search } : {}),
+    ...(filters.depositToAccountId
       ? { depositToAccountId: filters.depositToAccountId }
-      : undefined,
-  );
+      : {}),
+  });
   const { mutateAsync: deletePayment, isPending: isDeleting } =
     useDeletePaymentMutation();
   const { download: downloadReceipt } = useReceiptPdf();
@@ -179,6 +187,8 @@ export function PaymentListTemplate() {
   );
 
   const payments = (data?.data ?? []) as IPaymentReceived[];
+  const meta = data?.meta;
+  const totalPages = Math.max(meta?.totalPages ?? 1, 1);
 
   const actions: TableAction<IPaymentReceived>[] = [
     {
@@ -256,11 +266,16 @@ export function PaymentListTemplate() {
           >
             <AccountFilterSelect
               value={filters.depositToAccountId}
-              onChange={(id) => setFilters({ depositToAccountId: id })}
+              onChange={(id) => setFilters({ depositToAccountId: id, page: 1 })}
             />
             <SearchInput
               width={{ base: "100%", md: "21rem" }}
-              placeholder="Search by payment # or customer"
+              placeholder="Search by payment #, reference, customer or plate"
+              value={searchInput}
+              onChange={setSearchInput}
+              onSearch={(val) => setFilters({ search: val, page: 1 })}
+              debounceMs={400}
+              loading={isFetching}
             />
           </Flex>
         </Flex>
@@ -280,6 +295,17 @@ export function PaymentListTemplate() {
               )
             }
             tableScrollAreaProps={{ maxW: { base: "xl", lg: "7xl" } }}
+            pagination={{
+              pageIndex: filters.page - 1,
+              pageSize: filters.limit,
+            }}
+            setPagination={({ pageIndex }) =>
+              setFilters({ page: pageIndex + 1 })
+            }
+            pageCount={totalPages}
+            totalItems={meta?.total}
+            hasNextPage={filters.page < totalPages}
+            hasPrevPage={filters.page > 1}
           />
         </Box>
       </Box>
