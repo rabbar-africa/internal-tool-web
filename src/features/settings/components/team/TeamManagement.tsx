@@ -131,7 +131,11 @@ export function TeamManagement() {
               Members ({members.length})
             </Tabs.Trigger>
             <Tabs.Trigger value="invites">
-              Invitations ({pendingInvites.length})
+              {/* The list keeps accepted and cancelled ones too, so the
+                  count says what it counts (QA bug #17). */}
+              {pendingInvites.length === invites.length
+                ? `Invitations (${invites.length})`
+                : `Invitations (${pendingInvites.length} pending)`}
             </Tabs.Trigger>
           </Tabs.List>
 

@@ -21,8 +21,9 @@ export function useJobCardList() {
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<JobCard | null>(null);
-  const { canDelete } = usePermissions();
+  const { canDelete, canUpdate } = usePermissions();
   const mayDelete = canDelete("job_cards");
+  const mayUpdate = canUpdate("job_cards");
 
   const { data, isLoading, isFetching } = useGetJobCardsQuery({
     page: filters.page,
@@ -48,6 +49,8 @@ export function useJobCardList() {
       {
         label: "Edit",
         value: "edit",
+        // Not offered to a role that can't save it (QA bug #10).
+        hidden: () => !mayUpdate,
         onClick: (jobCard) =>
           navigate(RouteConstants.jobCards.edit.generate({ id: jobCard.id })),
       },
@@ -63,7 +66,7 @@ export function useJobCardList() {
           ]
         : []),
     ],
-    [navigate, mayDelete],
+    [navigate, mayDelete, mayUpdate],
   );
 
   return {

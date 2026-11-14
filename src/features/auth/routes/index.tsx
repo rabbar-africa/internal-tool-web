@@ -50,13 +50,12 @@ export const AuthRouteList: RouteObject[] = [
     ),
   },
   // Linked from the invitation email as /auth/accept-invite?token=…
+  // Not public-only: someone signed in (often the admin who sent it, testing
+  // it) was sent to the dashboard with no word (QA bug #13). The page itself
+  // says who is signed in and offers to sign out.
   {
     path: "accept-invite",
-    element: (
-      <PublicOnlyRoute>
-        <AcceptInvite />
-      </PublicOnlyRoute>
-    ),
+    element: <AcceptInvite />,
   },
 ];
 

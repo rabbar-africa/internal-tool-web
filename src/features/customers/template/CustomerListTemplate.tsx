@@ -1,5 +1,6 @@
 import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -117,6 +118,9 @@ const FILTER_SCHEMA = {
 export function CustomerListTemplate() {
   const navigate = useNavigate();
   const { isAtLimit } = usePlanAccess();
+  // Buttons a role can't use aren't shown (QA bug #10): the API refuses them.
+  const { canCreate, canUpdate } = usePermissions();
+  const mayEdit = canUpdate("clients");
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [editCustomer, setEditCustomer] = useState<ICustomer | null>(null);
@@ -134,10 +138,11 @@ export function CustomerListTemplate() {
       {
         label: "Edit",
         value: "edit",
+        hidden: () => !mayEdit,
         onClick: (customer) => setEditCustomer(customer),
       },
     ],
-    [navigate],
+    [navigate, mayEdit],
   );
 
   const { data, isLoading } = useGetAllCustomersQuery({
@@ -174,12 +179,14 @@ export function CustomerListTemplate() {
                 headers={CSV_HEADERS}
                 module="customers"
               />
-              <Button
-                disabled={isAtLimit("customers")}
-                onClick={() => navigate(RouteConstants.customers.create.path)}
-              >
-                Add Customer
-              </Button>
+              {canCreate("clients") && (
+                <Button
+                  disabled={isAtLimit("customers")}
+                  onClick={() => navigate(RouteConstants.customers.create.path)}
+                >
+                  Add Customer
+                </Button>
+              )}
             </Flex>
           }
         />

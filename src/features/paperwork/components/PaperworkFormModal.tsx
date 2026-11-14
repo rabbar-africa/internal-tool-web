@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Button,
   CloseButton,
@@ -42,6 +43,8 @@ export function PaperworkFormModal({
   paperwork,
   lockedClientId,
 }: PaperworkFormModalProps) {
+  // "Add Customer" only for roles that may create one (QA bug #10).
+  const mayAddCustomer = usePermissions().canCreate("clients");
   const {
     formik,
     isEdit,
@@ -109,7 +112,7 @@ export function PaperworkFormModal({
                       isLoading={customersLoading}
                       onChange={selectCustomer}
                       footerAction={
-                        lockedClientId
+                        lockedClientId || !mayAddCustomer
                           ? undefined
                           : {
                               label: "Add Customer",
