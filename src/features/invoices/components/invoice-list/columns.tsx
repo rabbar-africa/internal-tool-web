@@ -99,6 +99,15 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
         header: "Amount Due",
         cell: ({ getValue, row }) => {
           const balance = toNum(getValue());
+          const status = String(row.original.status ?? "").toUpperCase();
+          // A write-off or void also leaves nothing due, but nobody paid it.
+          if (status === "WRITTEN_OFF" || status === "VOID") {
+            return (
+              <Text fontSize="13px" fontWeight="700" color="gray.300">
+                {status === "VOID" ? "—" : "Written off"}
+              </Text>
+            );
+          }
           const isPaid = balance <= 0;
           const isOverdue = isOverdueRow(row.original);
           return (

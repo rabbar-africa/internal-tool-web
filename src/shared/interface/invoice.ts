@@ -14,14 +14,15 @@ export type InvoiceStatus =
 
 /** What has to be removed before an invoice can be deleted. */
 export type InvoiceDeleteBlockerKind =
-  | "PAYMENT"
-  | "CREDIT_APPLIED"
-  | "CREDIT_NOTE"
-  | "CARRIED_ONTO";
+  /** Written off with payments or credit: cancel the write-off first. */
+  "WRITE_OFF" | "PAYMENT" | "CREDIT_APPLIED" | "CREDIT_NOTE" | "CARRIED_ONTO";
 
 export interface InvoiceDeleteBlocker {
   kind: InvoiceDeleteBlockerKind;
-  /** The record to open: payment, credit note, or the newer invoice. */
+  /**
+   * The record to open: payment, credit note, or the newer invoice; for
+   * WRITE_OFF, this invoice (to cancel its write-off).
+   */
   id: string;
   /** PR-…, CN-… or INV-… */
   number: string;

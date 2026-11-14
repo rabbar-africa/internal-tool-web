@@ -68,6 +68,7 @@ export function StatCardsGrid({
     expenseCount,
     overdue,
     revenueCollected,
+    heldAsCredit,
     totalCustomers,
     newCustomers,
   } = summary;
@@ -124,7 +125,11 @@ export function StatCardsGrid({
         icon={<Money width="22px" height="22px" color="#4F9D77" />}
         iconBg="#EBF4EF"
         trend={revenueCollected > 0 ? "up" : "neutral"}
-        trendValue="Payments received this period"
+        trendValue={
+          heldAsCredit
+            ? `Paid on invoices; ${money(heldAsCredit)} more held as customer credit`
+            : "Paid on invoices this period"
+        }
       />
     ),
     visible.customers && totalCustomers !== null && (

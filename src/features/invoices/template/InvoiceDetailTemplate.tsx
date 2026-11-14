@@ -28,6 +28,8 @@ export function InvoiceDetailTemplate() {
     handleRecordPayment,
     handleRecalculate,
     isRecalculating,
+    handleMarkSent,
+    isMarkingSent,
     handleDownloadPdf,
     handleSharePdf,
     canShareFiles,
@@ -73,6 +75,8 @@ export function InvoiceDetailTemplate() {
           onCancelWriteOff={requestCancelWriteOff}
           onRecalculate={handleRecalculate}
           isRecalculating={isRecalculating}
+          onMarkSent={handleMarkSent}
+          isMarkingSent={isMarkingSent}
           onDownloadPdf={handleDownloadPdf}
           onSharePdf={handleSharePdf}
           canShare={canShareFiles}

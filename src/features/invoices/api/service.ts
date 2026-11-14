@@ -165,6 +165,14 @@ export const writeOffInvoice = async (
   return data;
 };
 
+/** Issues a draft. An invoice already issued comes back unchanged. */
+export const markInvoiceAsSent = async (id: string) => {
+  const { data } = await axios.patch<ApiResponse<IInvoiceResponse>>(
+    `/invoices/${id}/send`,
+  );
+  return data;
+};
+
 export const cancelWriteOffInvoice = async (id: string) => {
   const { data } = await axios.patch<ApiResponse<IInvoiceResponse>>(
     `/invoices/${id}/write-off/cancel`,

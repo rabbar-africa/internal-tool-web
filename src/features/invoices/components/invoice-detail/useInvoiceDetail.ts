@@ -6,6 +6,7 @@ import {
   useCancelWriteOffInvoiceMutation,
   useDeleteInvoiceMutation,
   useGetInvoiceByIdQuery,
+  useMarkInvoiceSentMutation,
   useRecalculateInvoiceMutation,
   useWriteOffInvoiceMutation,
 } from "../../api/query";
@@ -28,6 +29,8 @@ export function useInvoiceDetail() {
   } = useCancelWriteOffInvoiceMutation();
   const { mutateAsync: recalculateInvoice, isPending: isRecalculating } =
     useRecalculateInvoiceMutation();
+  const { mutateAsync: markInvoiceSent, isPending: isMarkingSent } =
+    useMarkInvoiceSentMutation();
   const invoice = invoiceData?.data;
 
   // Payments linked to this invoice (via their allocations).
@@ -67,6 +70,11 @@ export function useInvoiceDetail() {
   const handleDownloadPdf = async () => {
     if (!invoice) return;
     await downloadPdf();
+  };
+
+  const handleMarkSent = async () => {
+    if (!invoice) return;
+    await markInvoiceSent(invoice.id);
   };
 
   const handleRecalculate = async () => {
@@ -133,6 +141,9 @@ export function useInvoiceDetail() {
 
     handleRecalculate,
     isRecalculating,
+
+    handleMarkSent,
+    isMarkingSent,
 
     pendingDelete,
     requestDelete,

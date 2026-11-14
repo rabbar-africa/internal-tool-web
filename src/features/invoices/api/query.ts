@@ -5,6 +5,7 @@ import {
   updateInvoice,
   writeOffInvoice,
   cancelWriteOffInvoice,
+  markInvoiceAsSent,
   recalculateInvoice,
   getAllInvoices,
   deleteInvoice,
@@ -76,6 +77,16 @@ export const useWriteOffInvoiceMutation = () => {
       writeOffInvoice(id, payload),
     meta: {
       successMessage: "Invoice written off",
+      invalidatesQueryKeys: invalidates.invoice,
+    },
+  });
+};
+
+export const useMarkInvoiceSentMutation = () => {
+  return useMutation({
+    mutationFn: (id: string) => markInvoiceAsSent(id),
+    meta: {
+      successMessage: "Invoice marked as sent",
       invalidatesQueryKeys: invalidates.invoice,
     },
   });

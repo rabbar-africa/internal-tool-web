@@ -113,6 +113,13 @@ function linkedRecords(
         howTo: blocker.howTo,
       };
       switch (blocker.kind) {
+        case "WRITE_OFF":
+          return {
+            ...base,
+            kindLabel: "Written off",
+            href: RouteConstants.invoices.detail.generate({ id: blocker.id }),
+            detail: "",
+          };
         case "PAYMENT": {
           const p = impact?.payments.find((x) => x.id === blocker.id);
           return {
