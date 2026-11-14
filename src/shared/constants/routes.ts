@@ -166,7 +166,7 @@ const notifications = {
 
 const reports = {
   base: defineRoute("/reports" as const),
-  transactionReports: defineRoute("/reports/transactions" as const),
+  view: defineRoute("/reports/:key" as const),
 } as const;
 
 const support = {

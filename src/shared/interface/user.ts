@@ -28,7 +28,8 @@ export type KnownPermissionSubject =
   | "reminders"
   | "banking"
   | "paperwork"
-  | "activity_log";
+  | "activity_log"
+  | "reports";
 
 /**
  * A subject as it arrives from the API. The trailing `(string & {})` keeps a

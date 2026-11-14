@@ -2,6 +2,10 @@ export const customQueryKey = {
   activity: {
     list: "get-activity",
   },
+  reports: {
+    catalog: "get-report-catalog",
+    run: "run-report",
+  },
   user: {
     getMe: "get-me",
     getOrganizations: "get-my-organizations",
