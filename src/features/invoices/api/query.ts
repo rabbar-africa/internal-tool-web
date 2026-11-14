@@ -20,7 +20,6 @@ import type {
   UpdateInvoicePayload,
   IGetInvoiceFilter,
   CollectInvoicePaymentPayload,
-  DeleteInvoiceOptions,
 } from "@/shared/interface/invoice";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { invalidates } from "@/shared/constants/query-invalidations";
@@ -176,17 +175,12 @@ export const useGetInvoiceDeleteImpactQuery = (id: string) =>
 
 export const useDeleteInvoiceMutation = () => {
   return useMutation({
-    mutationFn: ({
-      id,
-      options,
-    }: {
-      id: string;
-      options?: DeleteInvoiceOptions;
-    }) => deleteInvoice(id, options),
+    mutationFn: (id: string) => deleteInvoice(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Invoice deleted",
-      // Deleting can take its payments and expenses with it.
-      invalidatesQueryKeys: [...invalidates.payment, ...invalidates.expense],
+      // Its expenses are unlinked, and job and customer figures move.
+      invalidatesQueryKeys: [...invalidates.invoice, ...invalidates.expense],
     },
   });
 };

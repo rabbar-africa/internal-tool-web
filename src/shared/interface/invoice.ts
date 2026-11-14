@@ -12,27 +12,74 @@ export type InvoiceStatus =
   | "partial"
   | "cancelled";
 
-/** Why a payment stays when its invoice is deleted, even if asked to delete it. */
-export type PaymentKeptBecause = "OTHER_INVOICES" | "REFUNDED" | "HAS_CREDIT";
+/** What has to be removed before an invoice can be deleted. */
+export type InvoiceDeleteBlockerKind =
+  | "PAYMENT"
+  | "CREDIT_APPLIED"
+  | "CREDIT_NOTE"
+  | "CARRIED_ONTO";
+
+export interface InvoiceDeleteBlocker {
+  kind: InvoiceDeleteBlockerKind;
+  /** The record to open: payment, credit note, or the newer invoice. */
+  id: string;
+  /** PR-…, CN-… or INV-… */
+  number: string;
+  /** CREDIT_APPLIED only: the application to remove from that credit note. */
+  applicationId?: string;
+  /** What to do about it, in plain words. */
+  howTo: string;
+}
+
+/** The 409 from DELETE /invoices/:id, and `blocked` on the impact. */
+export interface InvoiceDeleteBlock {
+  code: "INVOICE_HAS_LINKED_RECORDS";
+  message: string;
+  /** In the order they can be removed. */
+  blockers: InvoiceDeleteBlocker[];
+}
 
 /** What deleting an invoice would touch: GET /invoices/:id/delete-impact. */
 export interface IInvoiceDeleteImpact {
   invoice: {
     id: string;
     invoiceNumber: string;
+    status: string;
     currencyCode?: string;
     jobCard?: { id: string; jobNumber: string } | null;
   };
+  /** False while anything in `blocked` is still linked. */
+  canDelete: boolean;
+  blocked: InvoiceDeleteBlock | null;
   payments: Array<{
     id: string;
     paymentNumber: string;
     date: string;
+    status: string;
     amount: number;
     appliedHere: number;
     account: string | null;
     otherInvoiceNumbers: string[];
-    keptBecause: PaymentKeptBecause | null;
   }>;
+  /** Credit applied to this invoice. */
+  creditsApplied: Array<{
+    id: string;
+    amount: number;
+    date: string;
+    creditNote: { id: string; creditNoteNumber: string };
+  }>;
+  /** Made from this invoice and not void. */
+  creditNotes: Array<{
+    id: string;
+    creditNoteNumber: string;
+    date: string;
+    status: string;
+    total: number;
+    balance: number;
+  }>;
+  /** The newer invoice this one's balance is brought forward onto. */
+  carriedOnto: { id: string; invoiceNumber: string } | null;
+  /** Unlinked when it goes; they keep their job card. Never blocks. */
   expenses: Array<{
     id: string;
     expenseNumber: string;
@@ -41,36 +88,8 @@ export interface IInvoiceDeleteImpact {
     date: string;
     account: string | null;
   }>;
-  /** The newer invoice this one's balance is brought forward onto. */
-  carriedOnto: { id: string; invoiceNumber: string } | null;
-  /** Older invoices brought forward onto this one. */
+  /** Older invoices brought forward onto this one; released when it goes. */
   carries: Array<{ id: string; invoiceNumber: string }>;
-  /**
-   * Credit notes made from this invoice (void ones left out). They stay, and
-   * still name it: their credit can go on another invoice or be refunded.
-   */
-  creditNotes?: Array<{
-    id: string;
-    creditNoteNumber: string;
-    date: string;
-    status: string;
-    total: number;
-    balance: number;
-  }>;
-  /** Credit applied here. It goes back to its credit notes as open credit. */
-  creditsApplied?: Array<{
-    id: string;
-    amount: number;
-    date: string;
-    creditNote: { id: string; creditNoteNumber: string };
-  }>;
-  /** What this person may also delete. */
-  can: { deletePayments: boolean; deleteExpenses: boolean };
-}
-
-export interface DeleteInvoiceOptions {
-  deletePayments?: boolean;
-  deleteExpenses?: boolean;
 }
 
 export interface LineItem {

@@ -9,6 +9,12 @@ import { getToken } from "@/utils/persistToken";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { RouteConstants } from "@/shared/constants/routes";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import {
+  dropUnshown,
+  isAboutDeletedRecord,
+  markDeleted,
+  toIds,
+} from "./deleted-records";
 import type {
   UseQueryOptions,
   UseMutationOptions,
@@ -21,6 +27,12 @@ export type MutationMeta = {
   errorMessage?: string;
   /** Each inner array is one query key, e.g. [['contacts'], ['clients', id]] */
   invalidatesQueryKeys?: readonly (readonly unknown[])[];
+  /**
+   * The id(s) of what this mutation deletes, from its variables. Their
+   * queries are left out of the refresh that follows and dropped from the
+   * cache. See `deleted-records.ts`.
+   */
+  deletes?: (variables: never) => string | readonly string[] | null | undefined;
 };
 
 declare module "@tanstack/react-query" {
@@ -78,8 +90,13 @@ export const queryClient = new QueryClient({
     },
   }),
   mutationCache: new MutationCache({
-    onSuccess: (_data, _variables, _context, mutation) => {
-      // console.log('in global config success');
+    onSuccess: (_data, variables, _context, mutation) => {
+      // Gone for good: never asked for again, and not kept where unseen.
+      const deletedIds = toIds(mutation.meta?.deletes?.(variables as never));
+      if (deletedIds.length) {
+        markDeleted(deletedIds);
+        dropUnshown(queryClient, deletedIds);
+      }
 
       if (mutation.meta?.successMessage) {
         toaster.create({
@@ -149,7 +166,11 @@ export const queryClient = new QueryClient({
         const id = JSON.stringify(queryKey);
         if (seen.has(id)) return;
         seen.add(id);
-        queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
+        queryClient.invalidateQueries({
+          queryKey: queryKey as unknown[],
+          // A deleted record's own queries would only 404.
+          predicate: (query) => !isAboutDeletedRecord(query),
+        });
       });
     },
   }),

@@ -159,6 +159,7 @@ export const useDeleteCreditNoteMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteCreditNote(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Draft credit note deleted",
       invalidatesQueryKeys: invalidates.creditNote,
     },
@@ -225,6 +226,7 @@ export const useDeleteCreditRefundMutation = () => {
       deleteCreditRefund(id, refundId),
     onSuccess: cache,
     meta: {
+      deletes: ({ refundId }: { refundId: string }) => refundId,
       successMessage: "Refund deleted",
       invalidatesQueryKeys: invalidates.creditNoteRefund,
     },

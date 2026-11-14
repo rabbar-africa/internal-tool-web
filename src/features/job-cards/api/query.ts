@@ -114,6 +114,7 @@ export const useDeleteJobCardMutation = () =>
       options?: DeleteJobCardOptions;
     }) => deleteJobCard(id, options),
     meta: {
+      deletes: ({ id }: { id: string }) => id,
       successMessage: "Job card deleted",
       invalidatesQueryKeys: invalidates.jobCardDeleted,
     },

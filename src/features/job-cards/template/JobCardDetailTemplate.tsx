@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import SectionLoader from "@/components/common/SectionLoader";
 import { PermissionGate } from "@/components/common/PermissionGate";
@@ -31,6 +32,10 @@ import { JobCardTabs } from "../components/job-card-detail/JobCardTabs";
 export function JobCardDetailTemplate() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const leave = useLeaveDeletedRecord(
+    id ?? "",
+    RouteConstants.jobCards.base.path,
+  );
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { canDelete } = usePermissions();
   const [pendingStatus, setPendingStatus] = useState<JobCardStatus | null>(
@@ -192,7 +197,7 @@ export function JobCardDetailTemplate() {
       <DeleteJobCardDialog
         target={deleteOpen ? jobCard : null}
         onClose={() => setDeleteOpen(false)}
-        onDeleted={() => navigate(RouteConstants.jobCards.base.path)}
+        onDeleted={leave}
       />
     </>
   );

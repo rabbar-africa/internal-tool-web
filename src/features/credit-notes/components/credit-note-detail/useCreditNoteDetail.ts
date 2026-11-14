@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
 import type {
@@ -29,6 +30,7 @@ type Dialog = "issue" | "apply" | "refund" | "void" | "delete" | null;
 export function useCreditNoteDetail() {
   const navigate = useNavigate();
   const { id = "" } = useParams();
+  const leave = useLeaveDeletedRecord(id, RouteConstants.creditNotes.base.path);
   const { data, isLoading, isError } = useGetCreditNoteByIdQuery(id);
   const note = data?.data;
 
@@ -124,7 +126,7 @@ export function useCreditNoteDetail() {
       if (!note) return;
       await remove.mutateAsync(note.id);
       close();
-      navigate(RouteConstants.creditNotes.base.path);
+      leave();
     },
     isDeleting: remove.isPending,
 

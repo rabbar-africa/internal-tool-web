@@ -106,6 +106,7 @@ export const useDeleteRecurringExpenseMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteRecurringExpense(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Recurring expense deleted",
       // Its expenses stay, but no longer name it.
       invalidatesQueryKeys: invalidates.recurringExpenseRecorded,

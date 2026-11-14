@@ -7,7 +7,6 @@ import type {
   CarriedInvoice,
   InvoiceCarry,
   CollectInvoicePaymentPayload,
-  DeleteInvoiceOptions,
   IInvoiceDeleteImpact,
 } from "@/shared/interface/invoice";
 import type { IPaymentReceived } from "@/shared/interface/payment";
@@ -37,17 +36,12 @@ export const getInvoiceDeleteImpact = async (id: string) => {
   return response.data;
 };
 
-export const deleteInvoice = async (
-  id: string,
-  options: DeleteInvoiceOptions = {},
-): Promise<void> => {
-  // Query params: a request body on DELETE is not reliably delivered.
-  await axios.delete(`/invoices/${id}`, {
-    params: {
-      ...(options.deletePayments ? { deletePayments: true } : {}),
-      ...(options.deleteExpenses ? { deleteExpenses: true } : {}),
-    },
-  });
+/**
+ * Refused (409, InvoiceDeleteBlock) while payments, credit or a newer
+ * invoice are linked to it: those are removed first, from the delete dialog.
+ */
+export const deleteInvoice = async (id: string): Promise<void> => {
+  await axios.delete(`/invoices/${id}`);
 };
 
 export const createInvoice = async (payload: CreateInvoicePayload) => {

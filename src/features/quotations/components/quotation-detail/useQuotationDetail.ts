@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { toaster } from "@/components/ui";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -29,6 +30,7 @@ export interface FromQuoteState {
 export function useQuotationDetail() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const leave = useLeaveDeletedRecord(id, RouteConstants.quotations.base.path);
   const { has } = usePermissions();
 
   const query = useGetQuotationByIdQuery(id);
@@ -111,7 +113,7 @@ export function useQuotationDetail() {
       if (!quote) return;
       await remove.mutateAsync(quote.id);
       setDeleteOpen(false);
-      navigate(RouteConstants.quotations.base.path);
+      leave();
     },
 
     convertOpen,

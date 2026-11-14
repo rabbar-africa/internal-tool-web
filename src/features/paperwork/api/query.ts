@@ -113,6 +113,7 @@ export const useDeletePaperworkMutation = () =>
   useMutation({
     mutationFn: (id: string) => deletePaperwork(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Document deleted",
       invalidatesQueryKeys: invalidateAll,
     },

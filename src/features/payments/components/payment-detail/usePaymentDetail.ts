@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
   useGetPaymentByIdQuery,
@@ -11,6 +12,7 @@ import type { IPaymentReceived } from "@/shared/interface/payment";
 export function usePaymentDetail() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const leave = useLeaveDeletedRecord(id, RouteConstants.payments.base.path);
 
   const { data, isLoading, isError } = useGetPaymentByIdQuery(id);
   const payment = data?.data as IPaymentReceived | undefined;
@@ -50,7 +52,7 @@ export function usePaymentDetail() {
   const confirmDelete = async () => {
     await deletePayment(id);
     setPendingDelete(false);
-    navigate(RouteConstants.payments.base.path);
+    leave();
   };
 
   return {

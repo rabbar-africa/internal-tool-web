@@ -112,6 +112,7 @@ export const useDeleteVehicleMutation = () => {
   return useMutation({
     mutationFn: (id: string) => deleteVehicle(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Vehicle removed",
       invalidatesQueryKeys: invalidates.vehicle,
     },
@@ -173,6 +174,7 @@ export const useDeleteCustomerMutation = () =>
       deleteVehicles?: boolean;
     }) => deleteCustomer(id, { deleteVehicles }),
     meta: {
+      deletes: ({ id }: { id: string }) => id,
       successMessage: "Customer deleted",
       invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS,
     },
@@ -192,6 +194,7 @@ export const useMergeCustomerMutation = () =>
     mutationFn: ({ id, intoId }: { id: string; intoId: string }) =>
       mergeCustomer(id, intoId),
     meta: {
+      deletes: ({ id }: { id: string }) => id,
       successMessage: "Customers merged",
       invalidatesQueryKeys: invalidates.customerMerged,
     },
@@ -216,5 +219,8 @@ export const useEraseCustomerMutation = () =>
       id: string;
       payload: EraseCustomerPayload;
     }) => eraseCustomer(id, payload),
-    meta: { invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS },
+    meta: {
+      deletes: ({ id }: { id: string }) => id,
+      invalidatesQueryKeys: REMOVED_CUSTOMER_INVALIDATIONS,
+    },
   });
