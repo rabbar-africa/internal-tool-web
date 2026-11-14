@@ -7,6 +7,7 @@ export interface DashboardAnalyticsFilter {
   trendMonths?: number;
 }
 
+/** The period the figures cover, as Lagos days (YYYY-MM-DD), both included. */
 export interface DashboardPeriod {
   from: string;
   to: string;

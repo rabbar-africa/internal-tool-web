@@ -47,7 +47,9 @@ export function getPresetFilter(key: PresetKey): DashboardAnalyticsFilter {
   const preset = PRESETS[key];
   const to = new Date();
   const from = new Date();
-  from.setDate(from.getDate() - preset.days);
+  // Both ends count, so "last 30 days" starts 29 days back: 16 Oct – 14 Nov,
+  // not 15 Oct (QA bug #14).
+  from.setDate(from.getDate() - (preset.days - 1));
   return {
     from: toISODate(from),
     to: toISODate(to),

@@ -23,6 +23,18 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useGetDashboardAnalyticsQuery } from "@/features/overview/api";
 import type { DashboardAnalyticsFilter } from "@/features/overview/interface";
 
+/**
+ * The API sends the period as days (YYYY-MM-DD): read as that day here, not
+ * as UTC midnight, which some time zones show as the day before. An older API
+ * sent timestamps; those are read as they are.
+ */
+function asDay(value: string): Date {
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return day
+    ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
+    : new Date(value);
+}
+
 function formatPeriod(orgName: string, from?: string, to?: string): string {
   const fallback = `Financial overview for ${orgName}`;
   if (!from || !to) return fallback;
@@ -31,8 +43,8 @@ function formatPeriod(orgName: string, from?: string, to?: string): string {
     month: "short",
     year: "numeric",
   };
-  const f = new Date(from);
-  const t = new Date(to);
+  const f = asDay(from);
+  const t = asDay(to);
   if (Number.isNaN(f.getTime()) || Number.isNaN(t.getTime())) {
     return fallback;
   }
