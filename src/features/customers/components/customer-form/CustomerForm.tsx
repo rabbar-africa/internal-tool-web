@@ -24,6 +24,8 @@ export interface CustomerFormValues {
   phone: string;
   /** YYYY-MM-DD, or "" for none. */
   dob: string;
+  /** Tax identification number, or "" for none. */
+  taxId: string;
   type: string;
   stage: string;
   address: string;
@@ -39,6 +41,7 @@ export const DEFAULT_CUSTOMER_FORM_VALUES: CustomerFormValues = {
   email: "",
   phone: "",
   dob: "",
+  taxId: "",
   type: "individual",
   stage: "CUSTOMER",
   address: "",
@@ -52,6 +55,10 @@ const validationSchema = Yup.object({
   lastName: Yup.string().required("Last name is required"),
   displayName: Yup.string().required("Display name is required"),
   email: Yup.string().email("Invalid email"),
+  taxId: Yup.string().matches(
+    /^[A-Za-z0-9\s-]*$/,
+    "Only letters, digits and dashes",
+  ),
   type: Yup.string().required("Customer type is required"),
   stage: Yup.string().required("Stage is required"),
   address: Yup.string(),
@@ -298,6 +305,18 @@ export function CustomerForm({
                   error={touched.dob && errors.dob ? errors.dob : undefined}
                   inputProps={{ max: todayIso() }}
                 />
+                <CustomInput
+                  label="TIN (optional)"
+                  name="taxId"
+                  value={values.taxId}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="e.g. 12345678-0001"
+                  helperText="Printed under Bill To on invoices"
+                  error={
+                    touched.taxId && errors.taxId ? errors.taxId : undefined
+                  }
+                />
               </Grid>
             </Stack>
           </Card.Body>
@@ -363,3 +382,7 @@ export function CustomerForm({
     </form>
   );
 }
+
+/** A TIN as the API keeps it: no spaces, upper case. */
+export const cleanCustomerTin = (value: string) =>
+  value.replace(/\s+/g, "").toUpperCase();

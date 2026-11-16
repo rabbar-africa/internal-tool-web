@@ -41,6 +41,10 @@ export interface IRecurringExpense {
   describe: string;
   /** What it costs in an average month. */
   monthlyEquivalent: number;
+  /** VAT on each expense it records, at the tax's rate on the day. */
+  taxId?: string | null;
+  tax?: { id: string; name: string; rate: number } | null;
+  vatClaimable?: boolean;
 }
 
 /** GET /recurring-expenses/:id, and the answer to create and update. */
@@ -93,6 +97,10 @@ export interface CreateRecurringExpensePayload {
   endDate?: string | null;
   /** 1–1000. Not with endDate. */
   maxCount?: number | null;
+  /** Only when VAT-registered; null clears it. */
+  taxId?: string | null;
+  /** Default on. */
+  vatClaimable?: boolean;
 }
 
 export type UpdateRecurringExpensePayload =

@@ -354,6 +354,10 @@ export function InvoicePdfDocument({
             {show.rcNumber && organization?.rcNumber ? (
               <Text style={s.orgLine}>RC: {organization.rcNumber}</Text>
             ) : null}
+            {/* Always when set: VAT invoices need it (matches the API's PDF). */}
+            {organization?.taxId ? (
+              <Text style={s.orgLine}>TIN: {organization.taxId}</Text>
+            ) : null}
             {!show.orgAddress ? null : orgAddress ? (
               <Text style={s.orgLine}>{orgAddress}</Text>
             ) : orgLocation ? (
@@ -392,6 +396,9 @@ export function InvoicePdfDocument({
             <Text style={s.billName}>
               {client?.displayName ?? invoice.customerName ?? "—"}
             </Text>
+            {client?.taxId ? (
+              <Text style={s.billLine}>TIN: {client.taxId}</Text>
+            ) : null}
             {show.billingAddress && billingAddress ? (
               <Text style={s.billLine}>{billingAddress}</Text>
             ) : null}

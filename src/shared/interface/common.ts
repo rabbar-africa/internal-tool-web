@@ -59,6 +59,10 @@ export interface IOrganizationConfig {
   isInclusiveTaxDefault: boolean;
   isDiscountBeforeTaxDefault: boolean;
   defaultPaymentTerms: number;
+  /** The business says it is VAT-registered: VAT on expenses, VAT reports. */
+  vatRegistered?: boolean;
+  /** An ISO date (the day it registered), or null. */
+  vatRegisteredFrom?: string | null;
   allowNegativeStock: boolean;
   requireSignatureOnInspection: boolean;
   allowedPaymentMethods: Array<string>;

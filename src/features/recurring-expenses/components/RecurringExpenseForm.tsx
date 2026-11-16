@@ -17,6 +17,11 @@ import { CustomNumberInput } from "@/components/input/CustomNumberInput";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { CustomTextArea } from "@/components/input/CustomTextArea";
 import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
+import {
+  EMPTY_VAT,
+  ExpenseVatField,
+  useExpenseVat,
+} from "@/features/expenses/components/ExpenseVatField";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import {
@@ -50,6 +55,9 @@ export interface RecurringExpenseFormValues {
   /** "" uses the default account each time. */
   paidThroughAccountId: string;
   notes: string;
+  /** VAT on each expense it records; "" = none (only when VAT-registered). */
+  taxId: string;
+  vatClaimable: boolean;
   every: string;
   unit: RecurrenceUnit;
   startDate: string;
@@ -66,6 +74,8 @@ export const emptyRecurringValues = (): RecurringExpenseFormValues => ({
   paymentMode: "",
   paidThroughAccountId: "",
   notes: "",
+  taxId: "",
+  vatClaimable: true,
   every: "1",
   unit: "MONTH",
   startDate: todayIso(),
@@ -85,6 +95,8 @@ export function scheduleToValues(
     paymentMode: schedule.paymentMode ?? "",
     paidThroughAccountId: schedule.paidThroughAccountId ?? "",
     notes: schedule.notes ?? "",
+    taxId: schedule.tax?.id ?? schedule.taxId ?? "",
+    vatClaimable: schedule.vatClaimable ?? true,
     every: String(schedule.every),
     unit: schedule.unit,
     startDate: schedule.startDate.slice(0, 10),
@@ -123,6 +135,10 @@ export function toCreatePayload(
       ? { paidThroughAccountId: values.paidThroughAccountId }
       : {}),
     ...(values.notes.trim() ? { notes: values.notes.trim() } : {}),
+    // Only offered when VAT-registered, so set only then.
+    ...(values.taxId
+      ? { taxId: values.taxId, vatClaimable: values.vatClaimable }
+      : {}),
   };
 }
 
@@ -148,6 +164,12 @@ export function toUpdatePayload(
     paymentMode: values.paymentMode || null,
     paidThroughAccountId: values.paidThroughAccountId || null,
     notes: values.notes.trim() || null,
+    // A tax left as it was isn't sent: it can't be re-checked once the
+    // business is no longer VAT-registered.
+    ...(values.taxId !== initial.taxId ? { taxId: values.taxId || null } : {}),
+    ...(values.taxId && values.vatClaimable !== initial.vatClaimable
+      ? { vatClaimable: values.vatClaimable }
+      : {}),
   };
 }
 
@@ -256,11 +278,23 @@ export function RecurringExpenseForm({
   const { formatMoney } = useFormatMoney();
   // Once someone picks an account, the payment mode stops choosing it.
   const accountPickedRef = useRef(Boolean(initialValues.paidThroughAccountId));
+  const { registered: vatRegistered } = useExpenseVat();
   const formik = useFormik<RecurringExpenseFormValues>({
     initialValues,
     enableReinitialize: true,
     validationSchema: buildSchema(initialValues.startDate, isEdit),
-    onSubmit,
+    // Not VAT-registered: no VAT is sent (the API refuses it), and an edit
+    // leaves the schedule's as it was.
+    onSubmit: (submitted) =>
+      onSubmit(
+        vatRegistered
+          ? submitted
+          : {
+              ...submitted,
+              taxId: isEdit ? initialValues.taxId : "",
+              vatClaimable: initialValues.vatClaimable,
+            },
+      ),
   });
   const { values, errors, touched, setFieldValue } = formik;
   const showError = (field: keyof RecurringExpenseFormValues) =>
@@ -560,6 +594,20 @@ export function RecurringExpenseForm({
                 setFieldValue("paidThroughAccountId", id);
               }}
               helperText="Left as it is, the default account is used each time"
+            />
+            <ExpenseVatField
+              value={{
+                ...EMPTY_VAT,
+                taxId: values.taxId,
+                vatClaimable: values.vatClaimable,
+              }}
+              onChange={(next) => {
+                setFieldValue("taxId", next.taxId);
+                setFieldValue("vatClaimable", next.vatClaimable);
+              }}
+              amount={Number(values.amount) || 0}
+              perAmount
+              includedOnly
             />
             <Box gridColumn={{ sm: "1 / -1" }}>
               <CustomTextArea

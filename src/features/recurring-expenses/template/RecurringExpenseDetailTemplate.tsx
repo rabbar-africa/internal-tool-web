@@ -308,6 +308,14 @@ export function RecurringExpenseDetailTemplate() {
                   : "—"
               }
             />
+            {schedule.tax && (
+              <Field
+                label="VAT"
+                value={`${schedule.tax.name} ${schedule.tax.rate}%${
+                  schedule.vatClaimable === false ? ", not claimable" : ""
+                }`}
+              />
+            )}
             <Field label="Started" value={formatDay(schedule.startDate)} />
             <Field label="Ends" value={ends} />
             <Field

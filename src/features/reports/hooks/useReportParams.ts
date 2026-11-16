@@ -71,6 +71,14 @@ export function presetRange(preset: Exclude<RangePreset, "custom">): DayRange {
 const isPreset = (value: string | null): value is RangePreset =>
   RANGE_PRESETS.some((p) => p.value === value);
 
+/**
+ * VAT is filed for a finished month, so the VAT reports open on last month
+ * (docs/frontend-vat.md); every other report on this month.
+ */
+const LAST_MONTH_FIRST = new Set(["vat_summary", "vat_return"]);
+const defaultPresetOf = (key: string | undefined): RangePreset =>
+  key && LAST_MONTH_FIRST.has(key) ? "last-month" : "this-month";
+
 /** URL keys that aren't the report's own filters. */
 const PERIOD_KEYS = ["preset", "from", "to", "asOf"] as const;
 
@@ -83,16 +91,19 @@ const PERIOD_KEYS = ["preset", "from", "to", "asOf"] as const;
 export function useReportParams(entry: ReportCatalogEntry | undefined) {
   const [search, setSearch] = useSearchParams();
 
+  const defaultPreset = defaultPresetOf(entry?.key);
   const rawPreset = search.get("preset");
-  const preset: RangePreset = isPreset(rawPreset) ? rawPreset : "this-month";
+  const preset: RangePreset = isPreset(rawPreset) ? rawPreset : defaultPreset;
   const range = useMemo<DayRange>(() => {
     if (preset !== "custom") return presetRange(preset);
-    const fallback = presetRange("this-month");
+    const fallback = presetRange(
+      defaultPreset === "custom" ? "this-month" : defaultPreset,
+    );
     return {
       from: search.get("from") || fallback.from,
       to: search.get("to") || fallback.to,
     };
-  }, [preset, search]);
+  }, [preset, defaultPreset, search]);
   const asOf = search.get("asOf") || today();
 
   const basisOptions = entry?.basis ?? [];
@@ -142,7 +153,7 @@ export function useReportParams(entry: ReportCatalogEntry | undefined) {
 
   const setRange = (next: { preset: RangePreset } & Partial<DayRange>) =>
     update({
-      preset: next.preset === "this-month" ? null : next.preset,
+      preset: next.preset === defaultPreset ? null : next.preset,
       from: next.preset === "custom" ? (next.from ?? range.from) : null,
       to: next.preset === "custom" ? (next.to ?? range.to) : null,
     });

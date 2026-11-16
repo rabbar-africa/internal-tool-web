@@ -7,6 +7,7 @@ import { TrashIcon } from "@/assets/custom/TrashIcon";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ExpenseTabs } from "@/features/recurring-expenses/components/ExpenseTabs";
+import { useExpenseVat } from "../components/ExpenseVatField";
 import moment from "moment";
 import {
   CustomTable,
@@ -131,6 +132,31 @@ const columns: ColumnDef<Expense>[] = [
     ),
   },
   {
+    // Shown only to a VAT-registered business (see `vatColumn` below).
+    id: "vat",
+    header: "VAT",
+    cell: ({ row }) => {
+      const tax = row.original.tax;
+      if (!tax) {
+        return (
+          <Text textStyle="small-regular" color="gray.300">
+            —
+          </Text>
+        );
+      }
+      return (
+        <Stack gap="0">
+          <Text textStyle="small-regular" color="gray.500">
+            {formatCurrency(tax.amount)}
+          </Text>
+          <Text fontSize="11px" color="gray.300">
+            {tax.claimable ? `${tax.name} ${tax.percent}%` : "Not claimable"}
+          </Text>
+        </Stack>
+      );
+    },
+  },
+  {
     accessorKey: "date",
     header: "Date",
     cell: ({ getValue }) => (
@@ -194,6 +220,12 @@ const FILTER_SCHEMA = {
 
 export function ExpenseListTemplate() {
   const navigate = useNavigate();
+  // The VAT column is for a VAT-registered business only.
+  const { registered: vatRegistered } = useExpenseVat();
+  const visibleColumns = useMemo(
+    () => (vatRegistered ? columns : columns.filter((c) => c.id !== "vat")),
+    [vatRegistered],
+  );
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
@@ -489,7 +521,7 @@ export function ExpenseListTemplate() {
             <CustomTable
               stickyHeader
               data={expenses}
-              columns={columns}
+              columns={visibleColumns}
               loading={isLoading}
               enableActions
               actions={tableActions}
