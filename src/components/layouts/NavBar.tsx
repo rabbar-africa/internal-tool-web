@@ -1,4 +1,4 @@
-import { removeToken } from "@/utils/persistToken";
+import { useLogout } from "@/features/auth/api";
 import {
   Avatar,
   // Badge,
@@ -10,7 +10,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { UserDashboardContainer } from "@/components/hoc";
-import { RouteConstants } from "@/shared/constants/routes";
 import { Hamburger } from "@/assets/custom";
 // import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
 // import { SearchInput } from "@/components/input/SearchInput";
@@ -26,10 +25,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
     userOrganization,
     userRoles,
   } = useCurrentUser();
-  const handleLogout = () => {
-    removeToken();
-    window.location.replace(RouteConstants.auth.login.path);
-  };
+  const handleLogout = useLogout();
   const formattedRoles = userRoles?.map((role) =>
     role.toLowerCase().replace(/_/g, " "),
   );
@@ -148,9 +144,8 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
                       cursor={"pointer"}
                       p={".25rem"}
                       onClick={handleLogout}
-                      value="new-txt"
+                      value="log-out"
                     >
-                      {" "}
                       Log Out
                     </Menu.Item>
                   </Menu.Content>

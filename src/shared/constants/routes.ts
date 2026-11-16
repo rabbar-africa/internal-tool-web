@@ -203,6 +203,7 @@ const settings = {
   billing: defineRoute("/settings/billing" as const),
   roles: defineRoute("/settings/roles" as const),
   activityLog: defineRoute("/settings/activity-log" as const),
+  security: defineRoute("/settings/security" as const),
   createTeamMember: defineRoute("/settings/team-management/create" as const),
   editTeamMember: defineRoute("/settings/team-management/:id/edit" as const),
 } as const;
