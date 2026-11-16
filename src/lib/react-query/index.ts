@@ -8,6 +8,8 @@ import {
 import { getToken } from "@/utils/persistToken";
 import { customQueryKey } from "@/shared/constants/query-keys";
 import { RouteConstants } from "@/shared/constants/routes";
+import type { IUser } from "@/shared/interface/user";
+import { mayOpenPage } from "@/utils/permissions";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import {
   dropUnshown,
@@ -67,6 +69,16 @@ const defaultOptions: DefaultOptions = {
  * At most every 10s: a page firing several refused requests at once needs
  * one refresh, not several racing ones.
  */
+/**
+ * Whether the signed-in user may open Plan & Billing, from the cached
+ * profile: the toasts live outside React, so they can't use the hook.
+ */
+const mayOpenBilling = () =>
+  mayOpenPage(
+    queryClient.getQueryData<IUser>([customQueryKey.user.getMe]),
+    "billing",
+  );
+
 let lastPermissionRefresh = 0;
 function refreshPermissions() {
   const now = Date.now();
@@ -119,7 +131,7 @@ export const queryClient = new QueryClient({
           ? PERMISSION_DENIED_MESSAGE
           : (planLock?.message ?? getErrorMessage(error)),
         type: "error",
-        ...(planLock?.canUpgrade
+        ...(planLock?.canUpgrade && mayOpenBilling()
           ? {
               duration: 10_000,
               action: {

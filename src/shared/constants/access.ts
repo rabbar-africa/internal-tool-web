@@ -32,8 +32,16 @@ export const VIEW_RULES = {
 export type ViewRule = keyof typeof VIEW_RULES;
 
 /**
- * What each page needs. The user must hold every permission listed (the API's
- * guard is "all of" too). An empty list means any signed-in user.
+ * A page's rule: every permission listed (the API's guard is "all of" too),
+ * or `{ anyOf }` when one of several is enough.
+ */
+export type PageRule =
+  | readonly AccessPermission[]
+  | { readonly anyOf: readonly AccessPermission[] };
+
+/**
+ * What each page needs. A list means every permission in it; an empty list
+ * means any signed-in user.
  */
 export const PAGE_ACCESS = {
   // Everyone has a dashboard; its widgets gate themselves.
@@ -92,12 +100,21 @@ export const PAGE_ACCESS = {
   // catalog lists only those). Accountant and admins by default.
   reports: ["read:reports"],
 
-  // Settings pages are open to read (D6); these only edit.
+  // Settings (D6, revised 14 Nov 2026): a page appears only to those who can
+  // change what's on it. Every save behind these needs `update organization`.
+  // General config, company profile, logo, addresses, invoice templates,
+  // currencies and auto numbering: owner and admins by default.
+  organizationSettings: ["update:organization"],
   invoiceTemplateEdit: ["update:organization"],
+  // Paying and changing the plan; others are told to ask an admin.
+  billing: ["update:organization"],
+  // Bank accounts and taxes: also whoever handles the money (the accountant),
+  // read-only unless they hold `update organization`.
+  financeSettings: { anyOf: ["update:organization", "read:banking"] },
   team: ["read:users"],
   roles: ["read:roles"],
   // Who did what: owner and admin by default (a decision of 14 Nov 2026).
   activityLog: ["read:activity_log"],
-} as const satisfies Record<string, readonly AccessPermission[]>;
+} as const satisfies Record<string, PageRule>;
 
 export type PageKey = keyof typeof PAGE_ACCESS;
