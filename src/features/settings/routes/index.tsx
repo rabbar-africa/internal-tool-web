@@ -50,6 +50,10 @@ const { TeamManagementPage } = lazyImport(
   () => import("../pages/TeamManagementPage"),
   "TeamManagementPage",
 );
+const { ActivityLogPage } = lazyImport(
+  () => import("../pages/ActivityLogPage"),
+  "ActivityLogPage",
+);
 const { RolesPage } = lazyImport(
   () => import("../pages/RolesPage"),
   "RolesPage",
@@ -62,43 +66,21 @@ export const SettingsRoutes: RouteObject[] = [
     path: settings.base.path,
     element: <Settings />,
   },
-  {
-    path: settings.generalConfig.path,
-    element: <GeneralConfigPage />,
-  },
-  {
-    path: settings.profile.path,
-    element: <CompanyProfile />,
-  },
-  {
-    path: settings.logo.path,
-    element: <Branding />,
-  },
-  {
-    path: settings.addresses.path,
-    element: <AddressesPage />,
-  },
-  {
-    path: settings.currency.path,
-    element: <CurrencyPage />,
-  },
-  {
-    path: settings.accountDetails.path,
-    element: <AccountDetailsPage />,
-  },
-  {
-    path: settings.taxes.path,
-    element: <TaxesPage />,
-  },
-  {
-    path: settings.deleteBusiness.path,
-    element: <DeleteBusinessPage />,
-  },
-  {
-    path: settings.invoiceTemplates.path,
-    element: <InvoiceTemplatesPage />,
-  },
-  // Templates can be viewed by anyone; the editor only saves.
+  // Only for those who can change them (D6, revised 14 Nov 2026): every save
+  // behind these pages needs `update organization`.
+  guarded(
+    "organizationSettings",
+    { path: settings.generalConfig.path, element: <GeneralConfigPage /> },
+    { path: settings.profile.path, element: <CompanyProfile /> },
+    { path: settings.logo.path, element: <Branding /> },
+    { path: settings.addresses.path, element: <AddressesPage /> },
+    { path: settings.currency.path, element: <CurrencyPage /> },
+    { path: settings.invoiceTemplates.path, element: <InvoiceTemplatesPage /> },
+    {
+      path: settings.transactionSeries.path,
+      element: <TransactionSeriesPage />,
+    },
+  ),
   guarded(
     "invoiceTemplateEdit",
     {
@@ -110,12 +92,19 @@ export const SettingsRoutes: RouteObject[] = [
       element: <InvoiceTemplateEditorPage />,
     },
   ),
+  // Bank accounts and taxes: also the accountant, who reads them.
+  guarded(
+    "financeSettings",
+    { path: settings.accountDetails.path, element: <AccountDetailsPage /> },
+    { path: settings.taxes.path, element: <TaxesPage /> },
+  ),
+  // The page itself turns away anyone but the owner.
   {
-    path: settings.transactionSeries.path,
-    element: <TransactionSeriesPage />,
+    path: settings.deleteBusiness.path,
+    element: <DeleteBusinessPage />,
   },
-  // Everyone can see the plan; paying and changing it is gated per control.
-  ...BillingSettingsRoutes,
+  // Paying and changing the plan; others are told to ask an admin.
+  guarded("billing", ...BillingSettingsRoutes),
   // Team and role screens are gated: only users who can read the underlying
   // module get past the route, mirroring the API's own permission guard.
   guarded("team", {
@@ -125,5 +114,9 @@ export const SettingsRoutes: RouteObject[] = [
   guarded("roles", {
     path: settings.roles.path,
     element: <RolesPage />,
+  }),
+  guarded("activityLog", {
+    path: settings.activityLog.path,
+    element: <ActivityLogPage />,
   }),
 ];

@@ -7,6 +7,7 @@ import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 import {
   CustomerForm,
   DEFAULT_CUSTOMER_FORM_VALUES,
+  cleanCustomerTin,
   type CustomerFormValues,
 } from "@/features/customers/components/customer-form/CustomerForm";
 
@@ -23,6 +24,7 @@ export function CreateCustomerTemplate() {
         email: values.email,
         phone: values.phone,
         dob: values.dob || undefined,
+        taxId: cleanCustomerTin(values.taxId) || undefined,
         type: values.type,
         stage: values.stage,
         address: values.address || undefined,

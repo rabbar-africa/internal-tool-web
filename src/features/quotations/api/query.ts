@@ -128,6 +128,7 @@ export const useDeleteQuotationMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteQuotation(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Quote deleted",
       invalidatesQueryKeys: invalidates.quotation,
     },

@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -30,6 +31,15 @@ import {
   accountFieldForSave,
 } from "@/features/settings/components/account-details/AccountSelect";
 import { PaymentModeDto } from "@/shared/interface/payment";
+import {
+  ExpenseVatField,
+  paidAmount,
+  useExpenseVat,
+  vatError,
+  vatFromExpense,
+  vatPayload,
+  type VatValue,
+} from "./ExpenseVatField";
 import {
   EXPENSE_CATEGORY_OPTIONS,
   PAYMENT_MODE_OPTIONS,
@@ -124,6 +134,9 @@ export function ExpenseForm({
           : [],
     [expense?.sharedLines, expense?.invoiceLineItemId],
   );
+  // VAT inside the amount, when the business is VAT-registered.
+  const { registered: vatRegistered, taxes: vatTaxes } = useExpenseVat();
+  const [vat, setVat] = useState<VatValue>(() => vatFromExpense(expense));
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -208,6 +221,7 @@ export function ExpenseForm({
     enableReinitialize: true,
     validationSchema,
     onSubmit: async (values) => {
+      if (vatRegistered && vatError(vat, Number(values.amount) || 0)) return;
       let receipt: Partial<CreateExpensePayload> = {};
       if (receiptFile) {
         setIsUploading(true);
@@ -245,13 +259,25 @@ export function ExpenseForm({
         vendorName: values.vendorName || undefined,
         quantity: values.quantity ? Number(values.quantity) : undefined,
         unitCost: values.unitCost ? Number(values.unitCost) : undefined,
-        amount: values.amount ? Number(values.amount) : undefined,
+        // What was paid: the price, plus VAT when it was typed before VAT.
+        amount: values.amount
+          ? paidAmount(vat, Number(values.amount), {
+              registered: vatRegistered,
+              taxes: vatTaxes,
+            })
+          : undefined,
         paymentMode: values.paymentMode || undefined,
         paidThroughAccountId: accountFieldForSave(
           values.paidThroughAccountId,
           expense ? { original: expense.paidThroughAccountId } : undefined,
         ),
         notes: values.notes || undefined,
+        ...vatPayload(vat, {
+          registered: vatRegistered,
+          original: expense,
+          price: Number(values.amount) || 0,
+          taxes: vatTaxes,
+        }),
         ...receipt,
       });
     },
@@ -407,16 +433,29 @@ export function ExpenseForm({
                 placeholder="0.00"
                 name="amount"
                 value={formik.values.amount}
-                helperText="Auto-calculated (quantity × unit cost)"
+                helperText={
+                  vatRegistered && vat.taxId
+                    ? vat.priceIncludesVat
+                      ? "Quantity × unit cost, VAT included"
+                      : "Quantity × unit cost, before VAT"
+                    : "Auto-calculated (quantity × unit cost)"
+                }
                 error={
                   formik.touched.amount && formik.errors.amount
                     ? formik.errors.amount
                     : undefined
                 }
               />
+              <ExpenseVatField
+                value={vat}
+                onChange={setVat}
+                amount={Number(formik.values.amount) || 0}
+              />
               <CustomInput
                 label="Expense Date"
                 type="date"
+                // Money is dated when it happened (the API refuses later days).
+                max={todayIso()}
                 required
                 name="date"
                 value={formik.values.date}

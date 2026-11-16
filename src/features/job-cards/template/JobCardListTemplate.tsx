@@ -18,7 +18,8 @@ import { JobCardFilters } from "../components/job-card-list/JobCardFilters";
 export function JobCardListTemplate() {
   const navigate = useNavigate();
   const { isAtLimit } = usePlanAccess();
-  const { can } = usePermissions();
+  // A button the role can't use isn't shown (QA bug #10).
+  const { can, canCreate } = usePermissions();
   // The money column follows the `finance` view rule; the API nulls it too.
   const columns = can("finance")
     ? jobCardColumns
@@ -57,12 +58,14 @@ export function JobCardListTemplate() {
                 headers={JOB_CARD_CSV_HEADERS}
                 module="job_cards"
               />
-              <Button
-                disabled={isAtLimit("jobCards")}
-                onClick={() => navigate(RouteConstants.jobCards.create.path)}
-              >
-                New Job Card
-              </Button>
+              {canCreate("job_cards") && (
+                <Button
+                  disabled={isAtLimit("jobCards")}
+                  onClick={() => navigate(RouteConstants.jobCards.create.path)}
+                >
+                  New Job Card
+                </Button>
+              )}
             </Flex>
           }
         />

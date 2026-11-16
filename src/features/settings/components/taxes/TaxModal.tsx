@@ -15,10 +15,20 @@ import * as Yup from "yup";
 import {
   CustomInput,
   CustomNumberInput,
+  CustomSelect,
   CustomSwitch,
 } from "@/components/input";
 import { chakraScrollbarStyle } from "@/shared/constants/styles";
-import type { CreateOrgTaxPayload, IOrgTax } from "@/shared/interface/settings";
+import {
+  ORG_TAX_TYPE_LABELS,
+  type CreateOrgTaxPayload,
+  type IOrgTax,
+  type OrgTaxType,
+} from "@/shared/interface/settings";
+
+const TYPE_OPTIONS = (Object.keys(ORG_TAX_TYPE_LABELS) as OrgTaxType[]).map(
+  (value) => ({ value, label: ORG_TAX_TYPE_LABELS[value] }),
+);
 import { useCreateOrganizationTax, useUpdateOrganizationTax } from "../../api";
 
 interface TaxModalProps {
@@ -51,6 +61,8 @@ export function TaxModal({ open, onClose, tax }: TaxModalProps) {
       rate: tax?.rate ?? 0,
       isCompound: tax?.isCompound ?? false,
       isDefault: tax?.isDefault ?? false,
+      // A new tax is most often VAT; an existing one keeps what it is.
+      type: tax ? (tax.type ?? "OTHER") : "VAT",
     },
     onSubmit: (values) => {
       if (isEdit && tax) {
@@ -121,6 +133,15 @@ export function TaxModal({ open, onClose, tax }: TaxModalProps) {
                         ? (formik.errors.rate as string)
                         : undefined
                     }
+                  />
+                  <CustomSelect
+                    label="Type"
+                    options={TYPE_OPTIONS}
+                    value={[formik.values.type ?? "OTHER"]}
+                    onChange={(opt: { value: string[] }) =>
+                      formik.setFieldValue("type", opt?.value?.[0] ?? "OTHER")
+                    }
+                    helperText="Only VAT is counted in the VAT summary and VAT return."
                   />
                   <CustomSwitch
                     reversed

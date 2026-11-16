@@ -1,3 +1,4 @@
+import { termsLabel } from "@/features/invoices/utils/payment-terms";
 import { Box, Flex, Grid, Image, Stack, Text } from "@chakra-ui/react";
 import moment from "moment";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
@@ -320,7 +321,9 @@ export function InvoicePdfView({
           {show.paymentTerms ? (
             <MetaRow
               label={labels.paymentTerms}
-              value={invoice.paymentTermsLabel || `Net ${invoice.paymentTerms}`}
+              value={
+                invoice.paymentTermsLabel || termsLabel(invoice.paymentTerms)
+              }
               color={primaryColor}
             />
           ) : null}

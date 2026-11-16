@@ -59,6 +59,7 @@ export const useDeleteTechnicianMutation = () =>
   useMutation({
     mutationFn: (id: string) => deleteTechnician(id),
     meta: {
+      deletes: (id: string) => id,
       successMessage: "Technician removed",
       invalidatesQueryKeys: invalidates.technician,
     },

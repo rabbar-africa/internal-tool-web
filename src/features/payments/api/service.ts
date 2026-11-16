@@ -27,6 +27,18 @@ export const deletePayment = async (id: string) => {
   return response.data;
 };
 
+/**
+ * Takes one invoice off a payment and keeps the money as the customer's
+ * credit on that payment (Zoho's "retain as unused credit"). The payment's
+ * amount doesn't change; the invoice is owed that much again.
+ */
+export const unapplyPaymentToCredit = async (id: string, invoiceId: string) => {
+  const response = await axios.delete(
+    `/payments-received/${id}/allocations/${invoiceId}`,
+  );
+  return response.data;
+};
+
 export const updatePayment = async (data: {
   id: string;
   payload: CreatePaymentPayload;

@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { ThreeDotsIcon } from "@/assets/custom/ThreeDotsIcon";
 import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { CustomBreadCrumb } from "@/components/elements/custom-breadcrumb";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { toaster } from "@/components/ui";
@@ -71,6 +72,10 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export function RecurringExpenseDetailTemplate() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const leave = useLeaveDeletedRecord(
+    id,
+    RouteConstants.expenses.recurring.path,
+  );
   const { formatMoney } = useFormatMoney();
   const { has } = usePermissions();
   const { hasFeature } = usePlanAccess();
@@ -303,6 +308,14 @@ export function RecurringExpenseDetailTemplate() {
                   : "—"
               }
             />
+            {schedule.tax && (
+              <Field
+                label="VAT"
+                value={`${schedule.tax.name} ${schedule.tax.rate}%${
+                  schedule.vatClaimable === false ? ", not claimable" : ""
+                }`}
+              />
+            )}
             <Field label="Started" value={formatDay(schedule.startDate)} />
             <Field label="Ends" value={ends} />
             <Field
@@ -449,7 +462,7 @@ export function RecurringExpenseDetailTemplate() {
         handleSubmit={async () => {
           await remove.mutateAsync(schedule.id);
           setConfirm(null);
-          navigate(RouteConstants.expenses.recurring.path);
+          leave();
         }}
       />
     </>

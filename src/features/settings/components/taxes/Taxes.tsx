@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useState } from "react";
@@ -17,16 +18,20 @@ import { ActionButton } from "@/components/common/ActionButton";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { TaxModal } from "./TaxModal";
+import { VatSettings } from "./VatSettings";
 import {
   useDeleteOrganizationTax,
   useGetOrganizationTaxes,
   useUpdateOrganizationTax,
 } from "../../api";
-import type { IOrgTax } from "@/shared/interface/settings";
+import { ORG_TAX_TYPE_LABELS, type IOrgTax } from "@/shared/interface/settings";
 
 export function Taxes() {
   const { data, isLoading } = useGetOrganizationTaxes();
   const { hasFeature } = usePlanAccess();
+  // Taxes are business settings: changing them needs `update organization`,
+  // so other roles see the list without the buttons (QA bug #10).
+  const mayManage = usePermissions().canUpdate("organization");
   const taxes = data?.data ?? [];
   const { mutate: updateTax, isPending: isUpdating } =
     useUpdateOrganizationTax();
@@ -59,15 +64,18 @@ export function Taxes() {
       title="Taxes"
       subtitle="Set up VAT, withholding, and other tax rates used on transactions."
       action={
-        <ActionButton
-          icon={PlusIcon}
-          text="Add Tax"
-          size="sm"
-          onClick={openCreate}
-          iconProps={{ boxSize: "1rem" }}
-        />
+        mayManage ? (
+          <ActionButton
+            icon={PlusIcon}
+            text="Add Tax"
+            size="sm"
+            onClick={openCreate}
+            iconProps={{ boxSize: "1rem" }}
+          />
+        ) : undefined
       }
     >
+      <VatSettings />
       <PlanFeatureNotice feature="defaultVat" mb="4" />
       {isLoading ? (
         <Center py="12">
@@ -88,15 +96,17 @@ export function Taxes() {
           <Text fontSize="14px" color="gray.400" fontWeight="500">
             No taxes configured
           </Text>
-          <ActionButton
-            icon={PlusIcon}
-            text="Add Tax"
-            size="sm"
-            variant="outline"
-            onClick={openCreate}
-            iconProps={{ boxSize: "1rem" }}
-            mt="1"
-          />
+          {mayManage && (
+            <ActionButton
+              icon={PlusIcon}
+              text="Add Tax"
+              size="sm"
+              variant="outline"
+              onClick={openCreate}
+              iconProps={{ boxSize: "1rem" }}
+              mt="1"
+            />
+          )}
         </Center>
       ) : (
         <Stack gap="3">
@@ -120,6 +130,13 @@ export function Taxes() {
                   <Text fontSize="13px" color="gray.400" fontWeight="600">
                     {tax.rate}%
                   </Text>
+                  <Badge
+                    size="sm"
+                    variant="subtle"
+                    colorPalette={tax.type === "VAT" ? "green" : "gray"}
+                  >
+                    {ORG_TAX_TYPE_LABELS[tax.type ?? "OTHER"]}
+                  </Badge>
                   {tax.isDefault && (
                     <Badge size="sm" variant="solid" colorPalette="blue">
                       Default
@@ -137,36 +154,38 @@ export function Taxes() {
                   )}
                 </Flex>
               </Box>
-              <Flex gap="1" flexShrink={0}>
-                {!tax.isDefault && (
+              {mayManage && (
+                <Flex gap="1" flexShrink={0}>
+                  {!tax.isDefault && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      color="primary.300"
+                      disabled={!hasFeature("defaultVat")}
+                      loading={isUpdating}
+                      onClick={() => makeDefault(tax)}
+                    >
+                      Make default
+                    </Button>
+                  )}
                   <Button
                     size="xs"
                     variant="ghost"
-                    color="primary.300"
-                    disabled={!hasFeature("defaultVat")}
-                    loading={isUpdating}
-                    onClick={() => makeDefault(tax)}
+                    color="gray.400"
+                    onClick={() => openEdit(tax)}
                   >
-                    Make default
+                    Edit
                   </Button>
-                )}
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  color="gray.400"
-                  onClick={() => openEdit(tax)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  color="error.300"
-                  onClick={() => setDeleting(tax)}
-                >
-                  Remove
-                </Button>
-              </Flex>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="error.300"
+                    onClick={() => setDeleting(tax)}
+                  >
+                    Remove
+                  </Button>
+                </Flex>
+              )}
             </Flex>
           ))}
         </Stack>

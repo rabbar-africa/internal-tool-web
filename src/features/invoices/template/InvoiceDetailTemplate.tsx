@@ -14,6 +14,7 @@ import { InvoiceCredits } from "@/features/invoices/components/invoice-detail/In
 import { InvoiceCostsPanel } from "@/features/invoices/components/invoice-detail/InvoiceCostsPanel";
 import { WriteOffInvoiceConfirm } from "@/features/invoices/components/invoice-detail/WriteOffInvoiceConfirm";
 import { MadeFromQuote } from "@/features/invoices/components/invoice-detail/MadeFromQuote";
+import { RecordHistory } from "@/features/activity/components/RecordHistory";
 
 export function InvoiceDetailTemplate() {
   const { formatMoney } = useFormatMoney();
@@ -27,6 +28,8 @@ export function InvoiceDetailTemplate() {
     handleRecordPayment,
     handleRecalculate,
     isRecalculating,
+    handleMarkSent,
+    isMarkingSent,
     handleDownloadPdf,
     handleSharePdf,
     canShareFiles,
@@ -72,6 +75,8 @@ export function InvoiceDetailTemplate() {
           onCancelWriteOff={requestCancelWriteOff}
           onRecalculate={handleRecalculate}
           isRecalculating={isRecalculating}
+          onMarkSent={handleMarkSent}
+          isMarkingSent={isMarkingSent}
           onDownloadPdf={handleDownloadPdf}
           onSharePdf={handleSharePdf}
           canShare={canShareFiles}
@@ -99,6 +104,8 @@ export function InvoiceDetailTemplate() {
         <InvoiceCostsPanel invoiceId={invoice.id} />
 
         <InvoicePdfView invoice={invoice} />
+
+        <RecordHistory entityId={invoice.id} entityType="invoice" />
       </Stack>
 
       <DeleteInvoiceConfirm

@@ -22,6 +22,8 @@ import { useRegisterMutation } from "../../api";
 import { useUploadOrganizationLogo } from "@/features/settings/api";
 import type { RegisterPayload } from "../../api/types";
 import { getErrorMessage } from "@/utils/handle-error";
+import { RouteConstants } from "@/shared/constants/routes";
+import { signupError } from "../../utils/signup-errors";
 
 // const CURRENCY_OPTIONS = [
 //   { label: "Nigerian Naira (NGN)", value: "NGN" },
@@ -70,6 +72,11 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
   const [showPassword, setShowPassword] = useState(false);
   // Collapsed by default so the promo field adds nothing to a normal signup.
   const [showPromo, setShowPromo] = useState(false);
+  // Why the last attempt was refused, shown beside the button (QA bug #4).
+  const [submitError, setSubmitError] = useState<{
+    message: string;
+    signIn: boolean;
+  } | null>(null);
   const { mutateAsync, isPending } = useRegisterMutation();
   const { mutateAsync: uploadLogo } = useUploadOrganizationLogo();
 
@@ -128,16 +135,21 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
         acceptTerms: true,
       };
 
+      setSubmitError(null);
       try {
         await mutateAsync(payload);
       } catch (error) {
-        // A bad promo code is the one failure the user can fix right here, so
-        // also show it under the field (the global toast covers the rest).
-        const message = getErrorMessage(error);
-        if (payload.promoCode && /promo|code/i.test(message ?? "")) {
-          setShowPromo(true);
-          setFieldError("promoCode", message);
-        }
+        // Shown under the field it is about and beside the button, as well as
+        // the global toast: the phone field is far above the button.
+        const refusal = signupError(getErrorMessage(error), {
+          hasPromo: Boolean(payload.promoCode),
+        });
+        if (refusal.field === "promoCode") setShowPromo(true);
+        if (refusal.field) setFieldError(refusal.field, refusal.message);
+        setSubmitError({
+          message: refusal.message,
+          signIn: refusal.field === "phone" || refusal.field === "email",
+        });
         return;
       }
 
@@ -461,6 +473,34 @@ export function OrganizationStep({ onCompleted }: OrganizationStepProps) {
           </LegalLink>
           .
         </CustomCheckbox>
+
+        {submitError && (
+          <Box
+            role="alert"
+            bg="red.50"
+            borderWidth="1px"
+            borderColor="red.200"
+            rounded="md"
+            px="3"
+            py="2.5"
+          >
+            <Text fontSize="13px" color="red.600">
+              {submitError.message}
+            </Text>
+            {submitError.signIn && (
+              <ChakraLink
+                href={RouteConstants.auth.login.path}
+                fontSize="13px"
+                fontWeight="600"
+                color="primary.300"
+                textDecoration="underline"
+                mt="1"
+              >
+                Sign in
+              </ChakraLink>
+            )}
+          </Box>
+        )}
 
         <Button
           type="submit"

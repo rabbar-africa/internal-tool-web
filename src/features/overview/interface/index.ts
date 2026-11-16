@@ -7,6 +7,7 @@ export interface DashboardAnalyticsFilter {
   trendMonths?: number;
 }
 
+/** The period the figures cover, as Lagos days (YYYY-MM-DD), both included. */
 export interface DashboardPeriod {
   from: string;
   to: string;
@@ -19,8 +20,15 @@ export interface DashboardPeriod {
  * profit `read:expenses`, job cards `read:job_cards`, customers `read:clients`).
  */
 export interface DashboardSummary {
-  /** Confirmed payments received in the period. */
+  /**
+   * What payments in the period paid invoices with, less credit-note
+   * refunds. An overpayment or advance is customer credit, not revenue.
+   */
   revenueCollected: number | null;
+  /** Every confirmed payment in the period, in full (the payments list). */
+  paymentsReceived?: number | null;
+  /** Of that, what paid no invoice: held as customer credit. */
+  heldAsCredit?: number | null;
   /** Invoice totals in the period (excludes VOID/DELETED). */
   invoiced: number | null;
   invoiceCount: number | null;

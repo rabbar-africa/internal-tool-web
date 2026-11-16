@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useLeaveDeletedRecord } from "@/hooks/useLeaveDeletedRecord";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
   useCancelWriteOffInvoiceMutation,
   useDeleteInvoiceMutation,
   useGetInvoiceByIdQuery,
+  useMarkInvoiceSentMutation,
   useRecalculateInvoiceMutation,
   useWriteOffInvoiceMutation,
 } from "../../api/query";
 import { useGetPaymentsQuery } from "@/features/payments/api";
 import { useInvoicePdf } from "../../hooks/useInvoicePdf";
-import type { DeleteInvoiceOptions } from "@/shared/interface/invoice";
 
 export function useInvoiceDetail() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const leave = useLeaveDeletedRecord(id, RouteConstants.invoices.base.path);
 
   const { data: invoiceData, isLoading, isError } = useGetInvoiceByIdQuery(id);
   const { mutateAsync: deleteInvoice, isPending: isDeleting } =
@@ -27,6 +29,8 @@ export function useInvoiceDetail() {
   } = useCancelWriteOffInvoiceMutation();
   const { mutateAsync: recalculateInvoice, isPending: isRecalculating } =
     useRecalculateInvoiceMutation();
+  const { mutateAsync: markInvoiceSent, isPending: isMarkingSent } =
+    useMarkInvoiceSentMutation();
   const invoice = invoiceData?.data;
 
   // Payments linked to this invoice (via their allocations).
@@ -68,6 +72,11 @@ export function useInvoiceDetail() {
     await downloadPdf();
   };
 
+  const handleMarkSent = async () => {
+    if (!invoice) return;
+    await markInvoiceSent(invoice.id);
+  };
+
   const handleRecalculate = async () => {
     if (!invoice) return;
     await recalculateInvoice(invoice.id);
@@ -86,13 +95,10 @@ export function useInvoiceDetail() {
   const requestDelete = () => setPendingDelete(true);
   const cancelDelete = () => setPendingDelete(false);
 
-  const confirmDelete = async (
-    invoiceId: string,
-    options: DeleteInvoiceOptions,
-  ) => {
-    await deleteInvoice({ id: invoiceId, options });
+  const confirmDelete = async (invoiceId: string) => {
+    await deleteInvoice(invoiceId);
     setPendingDelete(false);
-    navigate(RouteConstants.invoices.base.path);
+    leave();
   };
 
   const requestWriteOff = () => setPendingWriteOff(true);
@@ -135,6 +141,9 @@ export function useInvoiceDetail() {
 
     handleRecalculate,
     isRecalculating,
+
+    handleMarkSent,
+    isMarkingSent,
 
     pendingDelete,
     requestDelete,

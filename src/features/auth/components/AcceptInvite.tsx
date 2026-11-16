@@ -8,6 +8,7 @@ import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff, Lock, Mail, User } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { getErrorMessage } from "@/utils/handle-error";
+import { getToken, removeToken } from "@/utils/persistToken";
 import { useAcceptInviteMutation, useValidateInviteQuery } from "../api";
 
 const acceptSchema = Yup.object({
@@ -21,6 +22,23 @@ const acceptSchema = Yup.object({
     .oneOf([Yup.ref("password")], "Passwords do not match")
     .required("Confirm your password"),
 });
+
+/**
+ * The email in a signed-in session's token. Read from the token, not asked of
+ * the API: an expired session would be signed out on the way, and sent to the
+ * login page with the invitation lost.
+ */
+function tokenEmail(token: string | null | undefined): string | undefined {
+  try {
+    const payload = token?.split(".")[1];
+    if (!payload) return undefined;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const email = (JSON.parse(json) as { email?: unknown }).email;
+    return typeof email === "string" ? email : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /** `workshop_manager` → `Workshop Manager`. */
 const prettyRole = (name: string) =>
@@ -51,6 +69,9 @@ export function AcceptInvite() {
     error,
   } = useValidateInviteQuery(token);
   const acceptMutation = useAcceptInviteMutation();
+  // Someone already signed in on this browser (QA bug #13).
+  const accessToken = getToken()?.accessToken;
+  const signedIn = Boolean(accessToken);
 
   const formik = useFormik({
     initialValues: {
@@ -126,6 +147,62 @@ export function AcceptInvite() {
             </Text>
           </Link>
         </Text>
+      </Shell>
+    );
+  }
+
+  // ── Signed in as someone else ─────────────────────────────────────────────
+
+  if (signedIn) {
+    const signedInAs = tokenEmail(accessToken);
+    const same =
+      signedInAs && signedInAs.toLowerCase() === invite.email.toLowerCase();
+    return (
+      <Shell>
+        <Head title="Invitation" description="Accept your invitation" />
+        <Text textStyle="h4-semibold" color="gray.900" mb="2">
+          You're already signed in
+        </Text>
+        <Text textStyle="small-regular" color="gray.400" mb="2">
+          This invitation is for{" "}
+          <chakra.span fontWeight="600" color="gray.600">
+            {invite.email}
+          </chakra.span>{" "}
+          to join {invite.organizationName}
+          {invite.roles.length
+            ? ` as ${invite.roles.map(prettyRole).join(", ")}`
+            : ""}
+          .
+        </Text>
+        <Text textStyle="small-regular" color="gray.400" mb="6">
+          {same
+            ? "That is the account signed in here. Sign out to accept it."
+            : `This browser is signed in${
+                signedInAs ? ` as ${signedInAs}` : " to another account"
+              }. Sign out to accept the invitation, or go back to your dashboard.`}
+        </Text>
+        <Flex gap="3" direction={{ base: "column", sm: "row" }}>
+          <Button
+            variant="accent"
+            flex="1"
+            onClick={() => {
+              // Reloading keeps the token in the URL and drops every cached
+              // query of the account that was signed in.
+              removeToken();
+              window.location.reload();
+            }}
+          >
+            Sign out and accept
+          </Button>
+          <Link
+            to={RouteConstants.overview.base.path}
+            style={{ flex: 1, display: "flex" }}
+          >
+            <Button variant="outline" flex="1">
+              Back to dashboard
+            </Button>
+          </Link>
+        </Flex>
       </Shell>
     );
   }

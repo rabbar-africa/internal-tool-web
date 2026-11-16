@@ -1,4 +1,9 @@
 import {
+  PAGE_ACCESS,
+  type PageKey,
+  type PageRule,
+} from "@/shared/constants/access";
+import {
   SUPER_ADMIN_ROLE,
   type IPermission,
   type IUser,
@@ -110,3 +115,17 @@ export function checkAnyPermission(
     .map(normalizePermission)
     .some((p) => held.has(toKey(p.action, p.subject)));
 }
+
+/** Whether a user passes a page's rule (PAGE_ACCESS). Usable outside React. */
+export function checkPageRule(
+  user: IUser | null | undefined,
+  rule: PageRule,
+): boolean {
+  return "anyOf" in rule
+    ? checkAnyPermission(user, rule.anyOf)
+    : checkAllPermissions(user, rule);
+}
+
+/** Whether a user may open a page, e.g. for a link outside React. */
+export const mayOpenPage = (user: IUser | null | undefined, page: PageKey) =>
+  checkPageRule(user, PAGE_ACCESS[page]);

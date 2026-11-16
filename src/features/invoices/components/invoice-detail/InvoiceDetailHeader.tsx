@@ -16,6 +16,7 @@ import { ThreeDotsIcon } from "@/assets/custom/ThreeDotsIcon";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { IInvoiceResponse } from "@/shared/interface/invoice";
 import { useNewCreditNoteAction } from "./InvoiceCredits";
+import { invoiceActions } from "../../utils/invoice-actions";
 
 interface InvoiceDetailHeaderProps {
   invoice: IInvoiceResponse;
@@ -25,6 +26,9 @@ interface InvoiceDetailHeaderProps {
   onCancelWriteOff: () => void;
   onRecalculate: () => Promise<void> | void;
   isRecalculating: boolean;
+  /** Issues a draft. */
+  onMarkSent: () => Promise<void> | void;
+  isMarkingSent: boolean;
   onDownloadPdf: () => Promise<void> | void;
   onSharePdf: () => Promise<void> | void;
   /** Whether this device supports the native file share sheet (phones). */
@@ -42,6 +46,8 @@ export function InvoiceDetailHeader({
   onCancelWriteOff,
   onRecalculate,
   isRecalculating,
+  onMarkSent,
+  isMarkingSent,
   onDownloadPdf,
   onSharePdf,
   canShare,
@@ -53,15 +59,9 @@ export function InvoiceDetailHeader({
   const navigate = useNavigate();
   // Issued invoices only, for roles that can make credit notes.
   const showNewCreditNote = useNewCreditNoteAction(invoice);
-  const status = invoice.status?.toLowerCase();
-  const hasBalance = Number(invoice.balance ?? 0) > 0;
-  const showRecordPayment = status !== "paid";
-  // Write-off only makes sense while money is still outstanding and the
-  // invoice isn't already closed/void/written off.
-  const showWriteOff =
-    hasBalance && !["paid", "void", "written_off"].includes(status ?? "");
-  // Reverse a write-off only when the invoice is currently written off.
-  const showCancelWriteOff = status === "written_off";
+  // What each status allows: a draft is issued first, a written-off or void
+  // invoice is closed (cancel the write-off to reopen it).
+  const actions = invoiceActions(invoice);
 
   // Sync action: closes the menu immediately, then runs the handler.
   const handleSync = (handler: () => void) => () => {
@@ -122,11 +122,26 @@ export function InvoiceDetailHeader({
           <Portal>
             <Menu.Positioner>
               <Menu.Content minW="180px">
-                <Menu.Item value="edit" onClick={handleSync(onEdit)}>
-                  Edit
-                </Menu.Item>
+                {actions.markSent && (
+                  <Menu.Item
+                    value="mark-sent"
+                    closeOnSelect={false}
+                    disabled={isMarkingSent}
+                    onSelect={() => {
+                      void handleAsync(onMarkSent)();
+                    }}
+                  >
+                    {isMarkingSent ? "Marking as sent…" : "Mark as sent"}
+                  </Menu.Item>
+                )}
 
-                {showRecordPayment && (
+                {actions.edit && (
+                  <Menu.Item value="edit" onClick={handleSync(onEdit)}>
+                    Edit
+                  </Menu.Item>
+                )}
+
+                {actions.recordPayment && (
                   <Menu.Item
                     value="record-payment"
                     onClick={handleSync(onRecordPayment)}
@@ -148,13 +163,13 @@ export function InvoiceDetailHeader({
                   </Menu.Item>
                 )}
 
-                {showWriteOff && (
+                {actions.writeOff && (
                   <Menu.Item value="write-off" onClick={handleSync(onWriteOff)}>
                     Write off invoice
                   </Menu.Item>
                 )}
 
-                {showCancelWriteOff && (
+                {actions.cancelWriteOff && (
                   <Menu.Item
                     value="cancel-write-off"
                     onClick={handleSync(onCancelWriteOff)}

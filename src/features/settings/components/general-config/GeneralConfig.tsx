@@ -1,3 +1,5 @@
+import { PAYMENT_MODE_LABELS } from "@/shared/interface/expense";
+import { PaymentModeDto } from "@/shared/interface/payment";
 import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import {
@@ -31,13 +33,6 @@ import {
   useGetOrganizationDetails,
   useUpdateOrganizationConfig,
 } from "../../api";
-
-const titleCase = (value: string) =>
-  value
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -189,7 +184,7 @@ export function GeneralConfig() {
                 {PAYMENT_METHOD_OPTIONS.map((method) => (
                   <CustomCheckbox
                     key={method}
-                    label={titleCase(method)}
+                    label={PAYMENT_MODE_LABELS[method as PaymentModeDto]}
                     checked={values.allowedPaymentMethods.includes(method)}
                     onCheckedChange={(e: { checked: boolean }) =>
                       togglePaymentMethod(method, e.checked)

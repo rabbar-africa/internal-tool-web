@@ -8,6 +8,7 @@ import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 import { phoneField } from "@/utils/phone";
 import { dobField, dobForUpdate, todayIso } from "@/utils/date-of-birth";
 import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
+import { cleanCustomerTin } from "../customer-form/CustomerForm";
 
 interface CustomerRow {
   id: string;
@@ -17,6 +18,7 @@ interface CustomerRow {
   email: string | null;
   phone: string | null;
   dob?: string | null;
+  taxId?: string | null;
   stage: string;
   address: string | null;
   city: string | null;
@@ -40,6 +42,10 @@ const validationSchema = Yup.object({
   city: Yup.string(),
   state: Yup.string(),
   country: Yup.string(),
+  taxId: Yup.string().matches(
+    /^[A-Za-z0-9\s-]*$/,
+    "Only letters, digits and dashes",
+  ),
 });
 
 const STAGE_OPTIONS = [
@@ -66,6 +72,7 @@ export function EditCustomerModal({
       email: customer.email ?? "",
       phone: formatPhoneDisplay(customer.phone),
       dob: customer.dob ?? "",
+      taxId: customer.taxId ?? "",
       stage: customer.stage ?? "",
       address: customer.address ?? "",
       city: customer.city ?? "",
@@ -92,6 +99,10 @@ export function EditCustomerModal({
         }),
         // Outside the cleanup, which would drop the null that clears it.
         ...dobForUpdate(values.dob, customer.dob),
+        // "" clears it, so it's sent only when it changed.
+        ...(cleanCustomerTin(values.taxId) !== (customer.taxId ?? "")
+          ? { taxId: cleanCustomerTin(values.taxId) || null }
+          : {}),
       });
       onClose();
     },
@@ -257,6 +268,20 @@ export function EditCustomerModal({
                         : undefined
                     }
                     inputProps={{ max: todayIso() }}
+                  />
+
+                  <CustomInput
+                    label="TIN (optional)"
+                    name="taxId"
+                    value={formik.values.taxId}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="e.g. 12345678-0001"
+                    error={
+                      formik.touched.taxId && formik.errors.taxId
+                        ? formik.errors.taxId
+                        : undefined
+                    }
                   />
 
                   <CustomInput

@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { Box, Card, Flex, HStack, Stack, Text } from "@chakra-ui/react";
 import { SearchCombobox } from "@/components/input/SearchCombobox";
 import type { ICustomer } from "@/shared/interface/customer";
@@ -6,6 +7,8 @@ import { InspectionAddCustomerModal } from "./InspectionAddCustomerModal";
 import type { InspectionFormApi } from "./useInspectionForm";
 
 export function CustomerInfoSection({ form }: { form: InspectionFormApi }) {
+  // "Add" links only for roles that may create those records (QA bug #10).
+  const { canCreate } = usePermissions();
   const {
     formik,
     customerOptions,
@@ -73,10 +76,14 @@ export function CustomerInfoSection({ form }: { form: InspectionFormApi }) {
                   ? errors.clientId
                   : undefined
               }
-              footerAction={{
-                label: "Add New Customer",
-                onClick: () => setAddCustomerOpen(true),
-              }}
+              footerAction={
+                canCreate("clients")
+                  ? {
+                      label: "Add New Customer",
+                      onClick: () => setAddCustomerOpen(true),
+                    }
+                  : undefined
+              }
             />
 
             {/* Vehicle search (only after a customer is selected) */}
@@ -101,10 +108,14 @@ export function CustomerInfoSection({ form }: { form: InspectionFormApi }) {
                     ? errors.vehicleId
                     : undefined
                 }
-                footerAction={{
-                  label: "Add New Vehicle",
-                  onClick: () => setAddVehicleOpen(true),
-                }}
+                footerAction={
+                  canCreate("vehicles")
+                    ? {
+                        label: "Add New Vehicle",
+                        onClick: () => setAddVehicleOpen(true),
+                      }
+                    : undefined
+                }
               />
             )}
           </Stack>

@@ -1,4 +1,5 @@
 import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import { RecordHistory } from "@/features/activity/components/RecordHistory";
 import {
   Link as RouterLink,
   useNavigate,
@@ -7,6 +8,7 @@ import {
 } from "react-router-dom";
 import { repeatStateFrom } from "@/features/recurring-expenses/utils/repeat";
 import SectionLoader from "@/components/common/SectionLoader";
+import { formatCurrency } from "@/utils/calculations";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { CreateExpensePayload } from "@/shared/interface/expense";
 import { useGetExpenseByIdQuery, useUpdateExpenseMutation } from "../api/query";
@@ -55,6 +57,18 @@ export function EditExpenseTemplate() {
           <Text textStyle="small-regular" color="gray.300" mt="1">
             Update the expense details
           </Text>
+          {expense.tax && (
+            <Text fontSize="13px" color="gray.400" mt="1">
+              {formatCurrency(expense.amount)} paid, including{" "}
+              {formatCurrency(expense.tax.amount)} {expense.tax.name}
+              {expense.tax.claimable
+                ? `: it cost the business ${formatCurrency(
+                    expense.netAmount ??
+                      Number(expense.amount) - expense.tax.amount,
+                  )}`
+                : " (not claimable)"}
+            </Text>
+          )}
           {expense.recurringExpense && (
             <Text fontSize="13px" color="gray.400" mt="1">
               Recorded by{" "}
@@ -103,6 +117,8 @@ export function EditExpenseTemplate() {
         onSubmit={handleSubmit}
         onCancel={() => navigate(backPath)}
       />
+
+      <RecordHistory entityId={expense.id} entityType="expense" />
     </Stack>
   );
 }

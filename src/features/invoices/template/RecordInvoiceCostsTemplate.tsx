@@ -1,3 +1,4 @@
+import { todayIso } from "@/utils/date-of-birth";
 import { useMemo, useRef, useState } from "react";
 import {
   Badge,
@@ -34,6 +35,13 @@ import {
   EditCostGroupDialog,
   type GroupableLine,
 } from "../components/record-costs/EditCostGroupDialog";
+import {
+  EMPTY_VAT,
+  ExpenseVatField,
+  paidAmount,
+  useExpenseVat,
+  type VatValue,
+} from "@/features/expenses/components/ExpenseVatField";
 
 interface OtherCostRow {
   key: number;
@@ -116,6 +124,9 @@ export function RecordInvoiceCostsTemplate() {
   const [accountId, setAccountId] = useState("");
   const accountPickedRef = useRef(false);
   const [vendorName, setVendorName] = useState("");
+  // VAT on every cost in this save, worked out on each amount.
+  const { registered: vatRegistered, taxes: vatTaxes } = useExpenseVat();
+  const [vat, setVat] = useState<VatValue>(EMPTY_VAT);
 
   // By row key, so a group has one box however many items it covers.
   const [spentNow, setSpentNow] = useState<Record<string, string>>({});
@@ -277,8 +288,11 @@ export function RecordInvoiceCostsTemplate() {
     );
 
   const save = async () => {
+    // Amounts typed before VAT are saved as paid, VAT added.
+    const paid = (price: number) =>
+      paidAmount(vat, price, { registered: vatRegistered, taxes: vatTaxes });
     const filled = costRows
-      .map((row) => ({ row, amount: toNum(spentNow[row.key] ?? "") }))
+      .map((row) => ({ row, amount: paid(toNum(spentNow[row.key] ?? "")) }))
       .filter(({ amount }) => amount > 0);
     // The API takes a group of 2 or more; one left after an invoice edit is
     // just an item.
@@ -295,7 +309,10 @@ export function RecordInvoiceCostsTemplate() {
         amount,
       }));
     const others = other
-      .map((row) => ({ name: row.name.trim(), amount: toNum(row.amount) }))
+      .map((row) => ({
+        name: row.name.trim(),
+        amount: paid(toNum(row.amount)),
+      }))
       .filter((row) => row.amount > 0);
 
     if (others.some((row) => !row.name)) {
@@ -315,6 +332,9 @@ export function RecordInvoiceCostsTemplate() {
         ...(paymentMode ? { paymentMode } : {}),
         ...(accountId ? { paidThroughAccountId: accountId } : {}),
         ...(vendorName.trim() ? { vendorName: vendorName.trim() } : {}),
+        ...(vatRegistered && vat.taxId
+          ? { taxId: vat.taxId, vatClaimable: vat.vatClaimable }
+          : {}),
         ...(lines.length ? { lines } : {}),
         ...(shared.length ? { shared } : {}),
         ...(others.length ? { other: others } : {}),
@@ -370,6 +390,8 @@ export function RecordInvoiceCostsTemplate() {
           <CustomInput
             label="Date"
             type="date"
+            // Money is dated when it happened (the API refuses later days).
+            max={todayIso()}
             required
             value={date}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -403,6 +425,16 @@ export function RecordInvoiceCostsTemplate() {
             }
             placeholder="e.g. Ladipo Spares"
           />
+          {vatRegistered && (
+            <Box gridColumn="1 / -1">
+              <ExpenseVatField
+                value={vat}
+                onChange={setVat}
+                amount={0}
+                perAmount
+              />
+            </Box>
+          )}
         </Grid>
       </Section>
 

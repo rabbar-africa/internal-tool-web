@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { useState } from "react";
 import { Box, Flex, Stack, Text } from "@chakra-ui/react";
 import type { FormikProps } from "formik";
@@ -41,6 +42,8 @@ export function CustomerVehicleSection({
   onCloseAddVehicle,
   onVehicleSaved,
 }: CustomerVehicleSectionProps) {
+  // "Add" links only for roles that may create those records (QA bug #10).
+  const { canCreate } = usePermissions();
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
   return (
@@ -70,10 +73,14 @@ export function CustomerVehicleSection({
                 ? String(formik.errors.customerId)
                 : undefined
             }
-            footerAction={{
-              label: "Add Customer",
-              onClick: () => setAddCustomerOpen(true),
-            }}
+            footerAction={
+              canCreate("clients")
+                ? {
+                    label: "Add Customer",
+                    onClick: () => setAddCustomerOpen(true),
+                  }
+                : undefined
+            }
           />
         </Box>
 
@@ -96,7 +103,9 @@ export function CustomerVehicleSection({
             isLoading={vehiclesLoading}
             emptyText="No matching vehicles found."
             footerAction={
-              formik.values.customerId && onOpenAddVehicle
+              formik.values.customerId &&
+              onOpenAddVehicle &&
+              canCreate("vehicles")
                 ? {
                     label: "Add Vehicle",
                     onClick: onOpenAddVehicle,

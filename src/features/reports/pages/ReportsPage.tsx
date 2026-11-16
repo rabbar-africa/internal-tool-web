@@ -1,13 +1,13 @@
 import { Head } from "@/components/seo/head";
 import { UserDashboardContainer } from "@/components/hoc";
-import { ReportsTemplate } from "../template/ReportsTemplate";
+import { ReportsHome } from "../components/ReportsHome";
 
 export function ReportsPage() {
   return (
     <>
-      <Head title="Reports" description="Financial reports and analytics" />
+      <Head title="Reports" description="Reports on your business's books" />
       <UserDashboardContainer py="1.5rem">
-        <ReportsTemplate />
+        <ReportsHome />
       </UserDashboardContainer>
     </>
   );

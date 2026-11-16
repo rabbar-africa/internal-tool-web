@@ -11,6 +11,7 @@ import {
   type FlexProps,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { PlanFeature, PlanLimit } from "../api/types";
 import { usePlanAccess } from "../hooks/usePlanAccess";
@@ -105,8 +106,18 @@ export function PlanBadge({
   );
 }
 
+/** Only those who manage billing can upgrade; everyone else is told who can. */
 export function UpgradeButton({ label = "Upgrade" }: { label?: string }) {
   const navigate = useNavigate();
+  const { canAccess, isLoading } = usePermissions();
+  if (isLoading) return null;
+  if (!canAccess("billing")) {
+    return (
+      <Text fontSize="12px" color="gray.400" flexShrink={0}>
+        Ask an admin to upgrade
+      </Text>
+    );
+  }
   return (
     <Button
       size="sm"
