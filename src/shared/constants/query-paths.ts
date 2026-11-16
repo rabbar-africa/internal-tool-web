@@ -9,6 +9,8 @@ export const QUERY_PATH = {
     forgotPassword: "auth/forgot-password",
     resetPassword: "auth/reset-password",
     refreshToken: "auth/refresh-token",
+    logout: "auth/logout",
+    logoutAll: "auth/logout-all",
     getCurrentUser: "auth/me",
     getUserOrganization: "/organizations",
     register: "organizations/register",

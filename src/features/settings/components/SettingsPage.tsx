@@ -24,6 +24,19 @@ interface SettingsGroup {
 }
 
 const SETTINGS_GROUPS: SettingsGroup[] = [
+  // Everyone's own account, whatever their role.
+  {
+    title: "Your account",
+    items: [
+      {
+        title: "Sign-in & security",
+        description:
+          "Sign out of all devices if your account may be in use elsewhere.",
+        icon: ShieldCheckIcon,
+        href: settings.security.path,
+      },
+    ],
+  },
   {
     title: "Organization settings",
     items: [

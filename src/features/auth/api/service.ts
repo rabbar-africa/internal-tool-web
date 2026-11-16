@@ -100,6 +100,14 @@ export const authService = {
     return response.data.data;
   },
 
+  /** Ends every session of this account, this one included. */
+  logoutAll: async () => {
+    const response = await axios.post<ApiResponse<{ signedOut: true }>>(
+      QUERY_PATH.auth.logoutAll,
+    );
+    return response.data.data;
+  },
+
   getCurrentSubscription: async (): Promise<Subscription | null> => {
     const response = await axios.get<ApiResponse<Subscription | null>>(
       QUERY_PATH.auth.getCurrentSubscription,

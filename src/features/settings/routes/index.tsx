@@ -54,6 +54,10 @@ const { ActivityLogPage } = lazyImport(
   () => import("../pages/ActivityLogPage"),
   "ActivityLogPage",
 );
+const { SignInSecurityPage } = lazyImport(
+  () => import("../pages/SignInSecurityPage"),
+  "SignInSecurityPage",
+);
 const { RolesPage } = lazyImport(
   () => import("../pages/RolesPage"),
   "RolesPage",
@@ -98,6 +102,11 @@ export const SettingsRoutes: RouteObject[] = [
     { path: settings.accountDetails.path, element: <AccountDetailsPage /> },
     { path: settings.taxes.path, element: <TaxesPage /> },
   ),
+  // Your own sessions: everyone.
+  {
+    path: settings.security.path,
+    element: <SignInSecurityPage />,
+  },
   // The page itself turns away anyone but the owner.
   {
     path: settings.deleteBusiness.path,

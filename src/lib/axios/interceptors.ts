@@ -4,10 +4,10 @@ import {
   getToken,
   setAccessToken,
   setRefreshToken,
-  removeToken,
 } from "@/utils/persistToken";
 import { QUERY_PATH } from "@/shared/constants/query-paths";
 import { env } from "@/shared/constants/env";
+import { isSessionEnded, leaveToSignIn } from "@/utils/session";
 
 // Extend config to carry the retry flag
 interface RetryableConfig extends InternalAxiosRequestConfig {
@@ -31,10 +31,15 @@ function flushQueue(error: unknown, token: string | null) {
 
 // --- Helpers -----------------------------------------------------------
 
-function logout() {
-  removeToken();
-  window.location.assign(`${window.location.origin}/auth/login`);
+/** Signed out here; the sign-in page says why when the API said so. */
+function logout(reason?: unknown) {
+  leaveToSignIn(reason);
 }
+
+const messageOf = (data: unknown): unknown =>
+  typeof data === "object" && data !== null
+    ? (data as Record<string, unknown>).message
+    : undefined;
 
 function isAuthError(status: number | undefined, data: unknown): boolean {
   if (status !== 401 && status !== 520) return false;
@@ -98,6 +103,19 @@ export async function refreshTokenInterceptor(error: AxiosError) {
   const originalRequest = error.config as RetryableConfig | undefined;
   const { status, data } = error.response ?? {};
 
+  // The session was ended (signed out everywhere, password reset, account
+  // deactivated): a refresh can't bring it back, so leave now. Not on the
+  // sign-in call itself, whose refusal the form shows.
+  if (
+    status === 401 &&
+    isSessionEnded(messageOf(data)) &&
+    !originalRequest?.url?.includes(QUERY_PATH.auth.login)
+  ) {
+    flushQueue(error, null);
+    logout(messageOf(data));
+    return Promise.reject(error);
+  }
+
   // Not an auth error — let it propagate normally
   if (!isAuthError(status, data) || !originalRequest) {
     return Promise.reject(error);
@@ -153,7 +171,7 @@ export async function refreshTokenInterceptor(error: AxiosError) {
     return rawAxios(originalRequest);
   } catch (refreshError) {
     flushQueue(refreshError, null);
-    logout();
+    logout(messageOf((refreshError as AxiosError)?.response?.data));
     return Promise.reject(refreshError);
   } finally {
     isRefreshing = false;

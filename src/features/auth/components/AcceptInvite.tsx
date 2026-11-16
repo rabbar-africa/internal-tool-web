@@ -8,7 +8,8 @@ import { CustomInput } from "@/components/input";
 import { EyeIcon, EyeOff, Lock, Mail, User } from "@/assets/custom";
 import { RouteConstants } from "@/shared/constants/routes";
 import { getErrorMessage } from "@/utils/handle-error";
-import { getToken, removeToken } from "@/utils/persistToken";
+import { getToken } from "@/utils/persistToken";
+import { endThisSession } from "@/utils/session";
 import { useAcceptInviteMutation, useValidateInviteQuery } from "../api";
 
 const acceptSchema = Yup.object({
@@ -185,10 +186,11 @@ export function AcceptInvite() {
           <Button
             variant="accent"
             flex="1"
-            onClick={() => {
-              // Reloading keeps the token in the URL and drops every cached
-              // query of the account that was signed in.
-              removeToken();
+            onClick={async () => {
+              // The other account's session ends on the API too. Reloading
+              // keeps the token in the URL and drops every cached query of
+              // the account that was signed in.
+              await endThisSession();
               window.location.reload();
             }}
           >
