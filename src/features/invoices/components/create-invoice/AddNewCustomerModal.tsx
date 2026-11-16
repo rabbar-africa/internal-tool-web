@@ -115,7 +115,7 @@ export function AddNewCustomerModal({
         dob: null,
         postalCode: null,
         status: "active",
-        emailMarketingConsent: false,
+        emailMarketingConsent: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         ...serverCustomer,

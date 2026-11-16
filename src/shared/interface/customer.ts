@@ -31,7 +31,8 @@ export interface ICustomer {
   address: string | null;
   updatedAt: string;
   createdAt: string;
-  emailMarketingConsent: boolean;
+  /** null = never asked; consent is only ever an active yes (NDPA s.26). */
+  emailMarketingConsent: boolean | null;
   status: CustomerStatus;
   /** Tax identification number, printed under Bill To when set. */
   taxId?: string | null;
