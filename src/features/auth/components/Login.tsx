@@ -8,6 +8,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useLoginMutation } from "../api";
 import { RouteConstants } from "@/shared/constants/routes";
+import { takeSignOutReason } from "@/utils/session";
 
 const loginSchema = Yup.object({
   email: Yup.string()
@@ -19,6 +20,8 @@ const loginSchema = Yup.object({
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  // Why they were signed out, when the API ended the session (read once).
+  const [signedOutBecause] = useState(takeSignOutReason);
   const loginMutation = useLoginMutation();
 
   const formik = useFormik({
@@ -55,6 +58,24 @@ export function Login() {
         <Text mt="0.625rem" fontSize="0.9375rem" color="gray.300">
           Sign in to pick up where your business left off.
         </Text>
+
+        {signedOutBecause && (
+          <Box
+            mt="1.5rem"
+            px="4"
+            py="3"
+            rounded="md"
+            bg="orange.50"
+            borderWidth="1px"
+            borderColor="orange.200"
+            role="status"
+            data-testid="signed-out-reason"
+          >
+            <Text fontSize="0.875rem" color="black">
+              {signedOutBecause}
+            </Text>
+          </Box>
+        )}
 
         <chakra.form mt="2.25rem" onSubmit={formik.handleSubmit}>
           <CustomInput
