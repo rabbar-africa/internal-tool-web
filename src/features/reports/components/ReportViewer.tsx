@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import moment from "moment";
 import { ArrowLeft, Lock } from "@/assets/custom";
+import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { ReportBasis, ReportResult } from "@/shared/interface/report";
 import {
@@ -68,15 +69,22 @@ function Panel({
 
 function UpgradePanel({ message }: { message: string }) {
   const navigate = useNavigate();
+  const mayUpgrade = usePermissions().canAccess("billing");
   return (
     <Panel
       action={
-        <Button
-          size="sm"
-          onClick={() => navigate(RouteConstants.settings.billing.path)}
-        >
-          See plans
-        </Button>
+        mayUpgrade ? (
+          <Button
+            size="sm"
+            onClick={() => navigate(RouteConstants.settings.billing.path)}
+          >
+            See plans
+          </Button>
+        ) : (
+          <Text fontSize="13px" color="gray.400">
+            Ask an admin on your team to upgrade.
+          </Text>
+        )
       }
     >
       <Lock boxSize="5" color="gray.300" />

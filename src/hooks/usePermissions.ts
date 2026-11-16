@@ -9,6 +9,7 @@ import {
 import {
   checkAllPermissions,
   checkAnyPermission,
+  checkPageRule,
   type PermissionInput,
 } from "@/utils/permissions";
 import { useCurrentUser } from "./useCurrentUser";
@@ -62,7 +63,7 @@ export function usePermissions() {
       /** Whether the user passes a view rule, e.g. `can("finance")`. */
       can: (rule: ViewRule) => hasAll(VIEW_RULES[rule]),
       /** Whether the user may open a page, e.g. `canAccess("invoiceCreate")`. */
-      canAccess: (page: PageKey) => hasAll(PAGE_ACCESS[page]),
+      canAccess: (page: PageKey) => checkPageRule(userData, PAGE_ACCESS[page]),
       /** Bypasses every check — platform admin or the org's super_admin. */
       isSuperAdmin,
       isLoading,

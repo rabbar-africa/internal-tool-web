@@ -33,6 +33,8 @@ export interface ICustomer {
   createdAt: string;
   emailMarketingConsent: boolean;
   status: CustomerStatus;
+  /** Tax identification number, printed under Bill To when set. */
+  taxId?: string | null;
 }
 
 export interface ClientStatsInvoiceRef {
@@ -95,6 +97,11 @@ export interface CreateCustomerPayload {
   dob?: string | null;
   /** "ACTIVE" or "INACTIVE". */
   status?: string;
+  /**
+   * Tax identification number: letters, digits and dashes, saved without
+   * spaces in upper case. Null or "" clears it.
+   */
+  taxId?: string | null;
 
   notes?: string;
 }

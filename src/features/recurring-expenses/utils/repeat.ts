@@ -11,6 +11,7 @@ type RepeatSource = Pick<
   | "paymentMode"
   | "paidThroughAccountId"
   | "date"
+  | "tax"
 >;
 
 /**
@@ -28,6 +29,10 @@ export function repeatStateFrom(expense: RepeatSource): RecurringPrefillState {
       vendorName: expense.vendorName ?? "",
       paymentMode: expense.paymentMode ?? "",
       paidThroughAccountId: expense.paidThroughAccountId ?? "",
+      // The same VAT each time, at the rate on the day (a tax deleted since
+      // can't be carried).
+      taxId: expense.tax?.id ?? "",
+      vatClaimable: expense.tax?.claimable ?? true,
       every: "1",
       unit: "MONTH",
       startDate: next < today ? today : next,

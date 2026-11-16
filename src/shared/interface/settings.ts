@@ -138,6 +138,14 @@ export type UpdateOrgCurrencyPayload = Omit<
   isActive?: boolean;
 };
 
+/** Only VAT is counted in the VAT summary and return (docs/frontend-vat.md). */
+export type OrgTaxType = "VAT" | "OTHER";
+
+export const ORG_TAX_TYPE_LABELS: Record<OrgTaxType, string> = {
+  VAT: "VAT",
+  OTHER: "Other",
+};
+
 export interface IOrgTax {
   id: string;
   organizationId?: string;
@@ -146,6 +154,8 @@ export interface IOrgTax {
   isCompound: boolean;
   isDefault: boolean;
   isActive: boolean;
+  /** Absent from an older API: treat as "OTHER". */
+  type?: OrgTaxType;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -155,6 +165,7 @@ export interface CreateOrgTaxPayload {
   rate: number;
   isCompound?: boolean;
   isDefault?: boolean;
+  type?: OrgTaxType;
 }
 
 export type UpdateOrgTaxPayload = CreateOrgTaxPayload & {
@@ -235,6 +246,10 @@ export interface UpdateOrgConfigPayload {
   isInclusiveTaxDefault: boolean;
   isDiscountBeforeTaxDefault: boolean;
   defaultPaymentTerms: number;
+  /** Input VAT on expenses and the VAT reports (docs/frontend-vat.md). */
+  vatRegistered?: boolean;
+  /** YYYY-MM-DD; null clears it. */
+  vatRegisteredFrom?: string | null;
   allowNegativeStock: boolean;
   requireSignatureOnInspection: boolean;
   allowedPaymentMethods: string[];

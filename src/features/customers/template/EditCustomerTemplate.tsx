@@ -15,6 +15,7 @@ import { dobForUpdate } from "@/utils/date-of-birth";
 import { removeFalsyAndEmptyArrayFields } from "@/utils/object-formatter";
 import {
   CustomerForm,
+  cleanCustomerTin,
   type CustomerFormValues,
 } from "@/features/customers/components/customer-form/CustomerForm";
 import { formatPhoneDisplay } from "@/shared/constants/whatsapp";
@@ -47,6 +48,10 @@ export function EditCustomerTemplate() {
       }) as Partial<CreateCustomerPayload>),
       // Outside the cleanup, which would drop the null that clears it.
       ...dobForUpdate(values.dob, customer?.dob),
+      // "" clears it, so it's sent only when it changed.
+      ...(cleanCustomerTin(values.taxId) !== (customer?.taxId ?? "")
+        ? { taxId: cleanCustomerTin(values.taxId) || null }
+        : {}),
     });
     navigate(detailPath);
   };
@@ -66,6 +71,7 @@ export function EditCustomerTemplate() {
     email: customer.email ?? "",
     phone: formatPhoneDisplay(customer.phone),
     dob: customer.dob ?? "",
+    taxId: customer.taxId ?? "",
     type: customer.type ?? "",
     stage: customer.stage ?? "",
     address: customer.address ?? "",

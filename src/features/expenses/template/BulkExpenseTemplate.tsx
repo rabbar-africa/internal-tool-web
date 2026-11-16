@@ -29,6 +29,15 @@ import { AccountSelect } from "@/features/settings/components/account-details/Ac
 import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
 import { getErrorMessage } from "@/utils/handle-error";
 import { useCreateExpensesBulkMutation } from "../api/query";
+import {
+  EMPTY_VAT,
+  ExpenseVatField,
+  paidAmount,
+  useExpenseVat,
+  vatError,
+  vatPayload,
+  type VatValue,
+} from "../components/ExpenseVatField";
 
 /** The API takes up to 100 expenses per save. */
 const MAX_ROWS = 100;
@@ -39,6 +48,8 @@ interface BulkRow {
   category: ExpenseCategory;
   quantity: string;
   unitCost: string;
+  /** Only used when the business is VAT-registered. */
+  vat: VatValue;
 }
 
 const toNum = (v: string) => Number(v) || 0;
@@ -55,6 +66,7 @@ export function BulkExpenseTemplate() {
   const { formatMoney } = useFormatMoney();
   const { mutateAsync: createMany, isPending } =
     useCreateExpensesBulkMutation();
+  const { registered: vatRegistered, taxes: vatTaxes } = useExpenseVat();
 
   const nextKey = useRef(1);
   const newRow = (): BulkRow => ({
@@ -63,6 +75,7 @@ export function BulkExpenseTemplate() {
     category: "PARTS",
     quantity: "1",
     unitCost: "",
+    vat: EMPTY_VAT,
   });
   const [rows, setRows] = useState<BulkRow[]>(() => [
     newRow(),
@@ -96,7 +109,13 @@ export function BulkExpenseTemplate() {
   );
 
   const filled = rows.filter((row) => !isBlank(row));
-  const total = filled.reduce((sum, row) => sum + rowTotal(row), 0);
+  // What will be saved as paid: plus VAT where a price was typed before VAT.
+  const paidOf = (row: BulkRow) =>
+    paidAmount(row.vat, rowTotal(row), {
+      registered: vatRegistered,
+      taxes: vatTaxes,
+    });
+  const total = filled.reduce((sum, row) => sum + paidOf(row), 0);
 
   const updateRow = (key: number, patch: Partial<BulkRow>) => {
     setRows((prev) =>
@@ -135,6 +154,20 @@ export function BulkExpenseTemplate() {
       setFormError("Enter at least one expense.");
       return;
     }
+    const badVat = vatRegistered
+      ? filled.filter((row) => vatError(row.vat, rowTotal(row)))
+      : [];
+    if (badVat.length) {
+      setRowErrors(
+        Object.fromEntries(
+          badVat.map((row) => [
+            row.key,
+            vatError(row.vat, rowTotal(row)) ?? "Check the VAT",
+          ]),
+        ),
+      );
+      return;
+    }
     setFormError(null);
     setRowErrors({});
 
@@ -144,11 +177,17 @@ export function BulkExpenseTemplate() {
       category: row.category,
       quantity: toNum(row.quantity) || 1,
       unitCost: toNum(row.unitCost),
-      amount: rowTotal(row),
+      // What was paid: plus VAT when the price was typed before VAT.
+      amount: paidOf(row),
       ...(paymentMode ? { paymentMode } : {}),
       ...(accountId ? { paidThroughAccountId: accountId } : {}),
       ...(jobCardId ? { jobCardId } : {}),
       ...(vendorName.trim() ? { vendorName: vendorName.trim() } : {}),
+      ...vatPayload(row.vat, {
+        registered: vatRegistered,
+        price: rowTotal(row),
+        taxes: vatTaxes,
+      }),
     }));
 
     try {
@@ -334,7 +373,7 @@ export function BulkExpenseTemplate() {
                       Total
                     </Text>
                     <Text textStyle="small-semibold" color="gray.500" pb="2">
-                      {formatMoney(rowTotal(row))}
+                      {formatMoney(paidOf(row))}
                     </Text>
                   </Box>
                   <IconButton
@@ -350,6 +389,15 @@ export function BulkExpenseTemplate() {
                     <TrashIcon color="gray.300" />
                   </IconButton>
                 </Grid>
+                {vatRegistered && (
+                  <Box mt="3">
+                    <ExpenseVatField
+                      value={row.vat}
+                      onChange={(vat) => updateRow(row.key, { vat })}
+                      amount={rowTotal(row)}
+                    />
+                  </Box>
+                )}
                 {error && (
                   <Text textStyle="tiny-regular" color="error.300" mt="2">
                     {error}

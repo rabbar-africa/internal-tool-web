@@ -100,6 +100,32 @@ export const useUpdateOrganizationConfig = () => {
   });
 };
 
+/**
+ * Settings → Taxes: VAT registration (config) and the business's TIN (its
+ * details), saved together under one message.
+ */
+export const useSaveVatSettingsMutation = () =>
+  useMutation({
+    mutationFn: async ({
+      config,
+      taxId,
+    }: {
+      config?: Pick<
+        UpdateOrgConfigPayload,
+        "vatRegistered" | "vatRegisteredFrom"
+      >;
+      /** Only when it changed; "" clears it. */
+      taxId?: string;
+    }) => {
+      if (config) await updateOrganizationConfig(config);
+      if (taxId !== undefined) await updateOrganizationDetails({ taxId });
+    },
+    meta: {
+      successMessage: "VAT settings saved",
+      invalidatesQueryKeys: [[orgKeys.details]],
+    },
+  });
+
 // ─── Addresses ───────────────────────────────────────────────────────────────
 
 export const useGetOrganizationAddresses = (

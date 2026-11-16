@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { DateField } from "@/components/input/DateField";
 import { SearchInput } from "@/components/input/SearchInput";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useGetTeamMembersQuery } from "@/features/settings/api/team.query";
 import { RouteConstants } from "@/shared/constants/routes";
 import type {
@@ -27,6 +28,7 @@ const DELETIONS =
 /** Settings → Activity Log: who did what, across the business. */
 export function ActivityLog() {
   const navigate = useNavigate();
+  const { canAccess } = usePermissions();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [actorUserId, setActorUserId] = useState("");
@@ -102,7 +104,7 @@ export function ActivityLog() {
               `Your plan shows the last ${history.limitedToDays} days.`}{" "}
             Everything is still being recorded.
           </Text>
-          {history.upgradeTo && (
+          {history.upgradeTo && canAccess("billing") && (
             <Button
               size="xs"
               variant="outline"

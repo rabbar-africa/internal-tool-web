@@ -18,12 +18,13 @@ import { ActionButton } from "@/components/common/ActionButton";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { SettingsSubPage } from "../SettingsSubPage";
 import { TaxModal } from "./TaxModal";
+import { VatSettings } from "./VatSettings";
 import {
   useDeleteOrganizationTax,
   useGetOrganizationTaxes,
   useUpdateOrganizationTax,
 } from "../../api";
-import type { IOrgTax } from "@/shared/interface/settings";
+import { ORG_TAX_TYPE_LABELS, type IOrgTax } from "@/shared/interface/settings";
 
 export function Taxes() {
   const { data, isLoading } = useGetOrganizationTaxes();
@@ -74,6 +75,7 @@ export function Taxes() {
         ) : undefined
       }
     >
+      <VatSettings />
       <PlanFeatureNotice feature="defaultVat" mb="4" />
       {isLoading ? (
         <Center py="12">
@@ -128,6 +130,13 @@ export function Taxes() {
                   <Text fontSize="13px" color="gray.400" fontWeight="600">
                     {tax.rate}%
                   </Text>
+                  <Badge
+                    size="sm"
+                    variant="subtle"
+                    colorPalette={tax.type === "VAT" ? "green" : "gray"}
+                  >
+                    {ORG_TAX_TYPE_LABELS[tax.type ?? "OTHER"]}
+                  </Badge>
                   {tax.isDefault && (
                     <Badge size="sm" variant="solid" colorPalette="blue">
                       Default

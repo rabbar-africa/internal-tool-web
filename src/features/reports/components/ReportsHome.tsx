@@ -11,6 +11,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { Lock } from "@/assets/custom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
 import type {
   ReportCatalogEntry,
@@ -26,6 +27,7 @@ const LINK_PAGES: Record<ReportCatalogLink["page"], string> = {
 };
 
 function ReportItem({ report }: { report: ReportCatalogEntry }) {
+  const mayUpgrade = usePermissions().canAccess("billing");
   if (report.locked) {
     return (
       <Box py="2.5" data-testid="report-locked">
@@ -38,19 +40,27 @@ function ReportItem({ report }: { report: ReportCatalogEntry }) {
         <Text fontSize="12px" color="gray.300" mt="0.5">
           {report.description}
         </Text>
-        <RouterLink to={RouteConstants.settings.billing.path}>
-          <Text
-            as="span"
-            fontSize="12px"
-            fontWeight="500"
-            color="primary.400"
-            _hover={{ textDecoration: "underline" }}
-          >
+        {mayUpgrade ? (
+          <RouterLink to={RouteConstants.settings.billing.path}>
+            <Text
+              as="span"
+              fontSize="12px"
+              fontWeight="500"
+              color="primary.400"
+              _hover={{ textDecoration: "underline" }}
+            >
+              {report.upgradeTo
+                ? `Upgrade to ${planName(report.upgradeTo)}`
+                : "See plans"}
+            </Text>
+          </RouterLink>
+        ) : (
+          <Text fontSize="12px" color="gray.400">
             {report.upgradeTo
-              ? `Upgrade to ${planName(report.upgradeTo)}`
-              : "See plans"}
+              ? `On the ${planName(report.upgradeTo)} plan. Ask an admin to upgrade.`
+              : "Not on your plan. Ask an admin."}
           </Text>
-        </RouterLink>
+        )}
       </Box>
     );
   }

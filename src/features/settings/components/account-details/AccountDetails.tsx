@@ -97,7 +97,10 @@ function AccountCard({
 
 export function AccountDetails() {
   const navigate = useNavigate();
-  const { canRead, canCreate } = usePermissions();
+  const { canRead, canCreate, canUpdate } = usePermissions();
+  // Adding and changing accounts is a business setting (`update
+  // organization`); the accountant sees them read-only.
+  const mayManage = canUpdate("organization");
 
   // The Cash account (the till) only comes back with includeCash; it's listed
   // after the banks with the same card, minus what a till can't do.
@@ -185,12 +188,13 @@ export function AccountDetails() {
       value: "primary",
       separator: true,
       onClick: (account) => setPrimary(account.id),
-      hidden: (account) => isCash(account) || account.isPrimary,
+      hidden: (account) => !mayManage || isCash(account) || account.isPrimary,
     },
     {
       label: "Edit",
       value: "edit",
       onClick: openEdit,
+      hidden: () => !mayManage,
     },
     {
       label: "Remove",
@@ -198,7 +202,7 @@ export function AccountDetails() {
       variant: "destructive",
       onClick: (account) => setDeleting(account),
       // The till is never deleted; the API refuses it anyway.
-      hidden: isCash,
+      hidden: (account) => !mayManage || isCash(account),
     },
   ];
 
@@ -207,13 +211,15 @@ export function AccountDetails() {
       title="Account Details"
       subtitle="Bank accounts shown on invoices and used to receive payments."
       action={
-        <ActionButton
-          icon={PlusIcon}
-          text="Add Account"
-          size="sm"
-          onClick={openCreate}
-          iconProps={{ boxSize: "1rem" }}
-        />
+        mayManage ? (
+          <ActionButton
+            icon={PlusIcon}
+            text="Add Account"
+            size="sm"
+            onClick={openCreate}
+            iconProps={{ boxSize: "1rem" }}
+          />
+        ) : undefined
       }
     >
       {isLoading ? (
@@ -238,7 +244,9 @@ export function AccountDetails() {
                 No bank accounts yet
               </Text>
               <Text fontSize="12px" color="gray.300">
-                Add an account to display on your invoices.
+                {mayManage
+                  ? "Add an account to display on your invoices."
+                  : "An admin on your team can add one."}
               </Text>
             </Center>
           )}

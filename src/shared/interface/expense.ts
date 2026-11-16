@@ -71,9 +71,36 @@ export interface Expense {
   recurringExpense?: { id: string; name: string } | null;
   /** "RECURRING" when a schedule recorded it. */
   source?: string | null;
+  /**
+   * VAT paid on it (docs/frontend-vat.md): `amount` stays what was paid, VAT
+   * included; this is the VAT inside it. `id` is null when the tax was
+   * deleted since (its name and rate are kept).
+   */
+  tax?: ExpenseTax | null;
+  /** What it cost the business: the amount less VAT it can reclaim. */
+  netAmount?: number;
 }
 
-export interface CreateExpensePayload {
+export interface ExpenseTax {
+  id: string | null;
+  name: string;
+  percent: number;
+  amount: number;
+  /** The supplier's VAT invoice is held, so the VAT can be reclaimed. */
+  claimable: boolean;
+}
+
+/** The VAT fields an expense can be saved with, only when VAT-registered. */
+export interface ExpenseVatFields {
+  /** The org's tax; `null` on update removes it. */
+  taxId?: string | null;
+  /** As the receipt shows it; left out (`null` on update) = from the rate. */
+  taxAmount?: number | null;
+  /** Default on. */
+  vatClaimable?: boolean;
+}
+
+export interface CreateExpensePayload extends ExpenseVatFields {
   date: string;
   name: string;
   description?: string;
@@ -212,6 +239,10 @@ export interface RecordInvoiceCostsPayload {
   paidThroughAccountId?: string;
   vendorName?: string;
   notes?: string;
+  /** VAT on every expense recorded here, worked out from each amount. */
+  taxId?: string;
+  /** Default on. */
+  vatClaimable?: boolean;
   /** Blank / 0 lines are skipped server-side. */
   lines?: Array<{
     invoiceLineItemId: string;

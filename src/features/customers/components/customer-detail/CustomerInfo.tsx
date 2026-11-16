@@ -85,6 +85,7 @@ export function CustomerInfo({ customer }: CustomerInfoProps) {
         />
         <InfoField label="Company" value={customer.company} />
         <InfoField label="Job Title" value={customer.jobTitle} />
+        <InfoField label="TIN" value={customer.taxId} />
         <InfoField label="Date of Birth" value={formatDob(customer.dob)} />
         <InfoField label="Address" value={address} />
       </Grid>
