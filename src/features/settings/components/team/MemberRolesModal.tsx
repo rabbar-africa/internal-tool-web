@@ -35,9 +35,12 @@ export function MemberRolesModal({
   const roles: IRole[] = rolesData?.data ?? rolesData ?? [];
   const [roleIds, setRoleIds] = useState<string[]>([]);
 
+  // Starts from the member's roles each time it opens.
   useEffect(() => {
-    setRoleIds((member.userRoles ?? []).map((entry) => entry.roleId));
-  }, [member]);
+    if (open) {
+      setRoleIds((member.userRoles ?? []).map((entry) => entry.roleId));
+    }
+  }, [member, open]);
 
   const handleSubmit = async () => {
     await assignRoles({ id: member.id, roleIds });
@@ -79,8 +82,9 @@ export function MemberRolesModal({
                   }))}
                   loading={isLoading}
                   value={roleIds}
-                  onChange={(opt: { value: string[] }) =>
-                    setRoleIds(opt?.value ?? [])
+                  // Multiple mode hands over the ids themselves.
+                  onChange={(ids: string[] | undefined) =>
+                    setRoleIds(ids ?? [])
                   }
                 />
 
