@@ -21,10 +21,11 @@ import { formatCurrency } from "@/utils/calculations";
 import { ExportMenu, jobCardExportScope } from "@/features/exports/components";
 import { useServerExport } from "@/features/exports/hooks/useServerExport";
 import {
-  EXPENSE_CATEGORY_LABELS,
   PAYMENT_MODE_LABELS,
+  expenseCategoryLabel,
   type Expense,
 } from "@/shared/interface/expense";
+import { useExpenseCategories } from "@/features/expense-categories/api";
 import type { PaymentModeDto } from "@/shared/interface/payment";
 import {
   formatAccountLabel,
@@ -174,6 +175,16 @@ const inspectionColumns: ColumnDef<JobCardInspection>[] = [
   },
 ];
 
+/** The job card's expenses carry only `categoryId`: named from the list. */
+function ExpenseCategoryName({ expense }: { expense: Expense }) {
+  const { byId } = useExpenseCategories({ includeHidden: true });
+  return (
+    <Text textStyle="small-regular" color="gray.500">
+      {expenseCategoryLabel(expense, byId)}
+    </Text>
+  );
+}
+
 const expenseColumns: ColumnDef<Expense>[] = [
   {
     accessorKey: "name",
@@ -185,14 +196,9 @@ const expenseColumns: ColumnDef<Expense>[] = [
     ),
   },
   {
-    accessorKey: "category",
+    id: "category",
     header: "Category",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {EXPENSE_CATEGORY_LABELS[getValue() as Expense["category"]] ??
-          (getValue() as string)}
-      </Text>
-    ),
+    cell: ({ row }) => <ExpenseCategoryName expense={row.original} />,
   },
 
   {

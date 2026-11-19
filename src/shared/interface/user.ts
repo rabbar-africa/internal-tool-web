@@ -25,6 +25,7 @@ export type KnownPermissionSubject =
   | "technicians"
   | "job_cards"
   | "expenses"
+  | "expense_categories"
   | "reminders"
   | "banking"
   | "paperwork"

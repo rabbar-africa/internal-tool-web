@@ -42,6 +42,10 @@ const { TaxesPage } = lazyImport(
   () => import("../pages/TaxesPage"),
   "TaxesPage",
 );
+const { ExpenseCategoriesPage } = lazyImport(
+  () => import("../pages/ExpenseCategoriesPage"),
+  "ExpenseCategoriesPage",
+);
 const { TransactionSeriesPage } = lazyImport(
   () => import("../pages/TransactionSeriesPage"),
   "TransactionSeriesPage",
@@ -102,6 +106,12 @@ export const SettingsRoutes: RouteObject[] = [
     { path: settings.accountDetails.path, element: <AccountDetailsPage /> },
     { path: settings.taxes.path, element: <TaxesPage /> },
   ),
+  // Whoever reads expenses sees the list; its buttons need
+  // `expense_categories`.
+  guarded("expenseCategories", {
+    path: settings.expenseCategories.path,
+    element: <ExpenseCategoriesPage />,
+  }),
   // Your own sessions: everyone.
   {
     path: settings.security.path,

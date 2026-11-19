@@ -112,6 +112,14 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
         href: settings.taxes.path,
         page: "financeSettings",
       },
+      {
+        title: "Expense Categories",
+        description:
+          "The categories you file expenses under: rename, hide, or add your own.",
+        icon: ListBullets,
+        href: settings.expenseCategories.path,
+        page: "expenseCategories",
+      },
     ],
   },
   {

@@ -13,10 +13,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { useUrlState } from "@/hooks/useUrlState";
 import { RouteConstants } from "@/shared/constants/routes";
-import {
-  EXPENSE_CATEGORY_LABELS,
-  EXPENSE_CATEGORY_OPTIONS,
-} from "@/shared/interface/expense";
+import { expenseCategoryLabel } from "@/shared/interface/expense";
+import { useExpenseCategoryFilterOptions } from "@/features/expense-categories/components";
 import type { IRecurringExpense } from "@/shared/interface/recurring-expense";
 import {
   AccountFilterSelect,
@@ -36,7 +34,7 @@ const FILTER_SCHEMA = {
   limit: { defaultValue: 20 },
   search: { defaultValue: "" },
   status: { defaultValue: "" },
-  category: { defaultValue: "" },
+  categoryId: { defaultValue: "" },
   paidThroughAccountId: { defaultValue: "" },
 };
 
@@ -73,7 +71,7 @@ function FixedCosts() {
         <Flex gap="2" wrap="wrap" mt="3">
           {summary.byCategory.map((row) => (
             <Box
-              key={row.category}
+              key={row.categoryId}
               bg="gray.25"
               borderWidth="1px"
               borderColor="gray.75"
@@ -82,7 +80,7 @@ function FixedCosts() {
               py="1"
             >
               <Text fontSize="12px" color="gray.400">
-                {EXPENSE_CATEGORY_LABELS[row.category] ?? row.category} ·{" "}
+                {row.name} ·{" "}
                 <Text as="span" fontWeight="600" color="gray.500">
                   {formatMoney(row.monthlyEquivalent)}
                 </Text>
@@ -102,6 +100,7 @@ export function RecurringExpenseListTemplate() {
   const { hasFeature } = usePlanAccess();
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
+  const categoryOptions = useExpenseCategoryFilterOptions();
   const [pendingDelete, setPendingDelete] = useState<IRecurringExpense | null>(
     null,
   );
@@ -113,7 +112,7 @@ export function RecurringExpenseListTemplate() {
     limit: filters.limit,
     ...(filters.search ? { search: filters.search } : {}),
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.category ? { category: filters.category } : {}),
+    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
     ...(filters.paidThroughAccountId
       ? { paidThroughAccountId: filters.paidThroughAccountId }
       : {}),
@@ -137,8 +136,7 @@ export function RecurringExpenseListTemplate() {
               {row.original.name}
             </Text>
             <Text fontSize="12px" color="gray.300">
-              {EXPENSE_CATEGORY_LABELS[row.original.category] ??
-                row.original.category}
+              {expenseCategoryLabel(row.original)}
               {row.original.vendorName ? ` · ${row.original.vendorName}` : ""}
             </Text>
           </Stack>
@@ -278,10 +276,10 @@ export function RecurringExpenseListTemplate() {
             />
             <CustomSelect
               placeholder="All Categories"
-              options={EXPENSE_CATEGORY_OPTIONS}
-              value={filters.category ? [filters.category] : undefined}
+              options={categoryOptions}
+              value={filters.categoryId ? [filters.categoryId] : undefined}
               onChange={(opt: { value: string[] }) =>
-                setFilters({ category: opt?.value?.[0] ?? "", page: 1 })
+                setFilters({ categoryId: opt?.value?.[0] ?? "", page: 1 })
               }
               rootProps={{ size: "sm", w: "100%" }}
               controlProps={{ w: "100%" }}

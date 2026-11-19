@@ -5,7 +5,7 @@ import { onePeriodOn, todayIso } from "./recurring";
 type RepeatSource = Pick<
   Expense,
   | "name"
-  | "category"
+  | "categoryId"
   | "amount"
   | "vendorName"
   | "paymentMode"
@@ -24,7 +24,7 @@ export function repeatStateFrom(expense: RepeatSource): RecurringPrefillState {
   return {
     prefill: {
       name: expense.name,
-      category: expense.category,
+      categoryId: expense.categoryId ?? "",
       amount: String(Number(expense.amount) || ""),
       vendorName: expense.vendorName ?? "",
       paymentMode: expense.paymentMode ?? "",

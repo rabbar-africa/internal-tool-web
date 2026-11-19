@@ -1,18 +1,19 @@
 import type { IBaseFilter } from "./filter";
 import { PaymentModeDto } from "./payment";
 import type { IAccountRef } from "./settings";
+import type { ExpenseCategoryRef } from "./expense-category";
 
-export type ExpenseCategory =
-  | "PARTS"
-  | "SUBLET"
-  | "CONSUMABLES"
-  | "LABOR"
-  | "TOWING"
-  | "FEES"
-  | "RENT"
-  | "SALARIES"
-  | "UTILITIES"
-  | "OTHER";
+/**
+ * The category fields a record carries. Each business keeps its own list, so
+ * show `expenseCategory.name`; `category` is the old string (a default's key,
+ * else the name), kept only for older responses.
+ */
+export interface WithExpenseCategory {
+  categoryId?: string;
+  expenseCategory?: ExpenseCategoryRef | null;
+  /** Legacy: a default's key (`PARTS`) or the category's name. */
+  category?: string | null;
+}
 
 /**
  * The vehicle an expense was for. It comes from what the expense is linked to,
@@ -30,13 +31,13 @@ export interface ExpenseVehicle {
   source: "INVOICE" | "JOB_CARD";
 }
 
-export interface Expense {
+export interface Expense extends WithExpenseCategory {
   id: string;
   organizationId: string;
   expenseNumber: string;
   jobCardId: string | null;
   date: string;
-  category: ExpenseCategory;
+  categoryId: string;
   name: string;
   description?: string | null;
   vendorName?: string | null;
@@ -104,7 +105,8 @@ export interface CreateExpensePayload extends ExpenseVatFields {
   date: string;
   name: string;
   description?: string;
-  category?: ExpenseCategory;
+  /** Left out → Parts. A hidden one is accepted (the edit form sends it back). */
+  categoryId?: string;
   jobCardId?: string;
   /**
    * The invoice it was spent for. The expense takes that invoice's job card
@@ -143,18 +145,23 @@ export type UpdateExpensePayload = Partial<CreateExpensePayload>;
 
 export interface IGetExpenseFilter extends IBaseFilter {
   jobCardId?: string;
-  category?: string;
+  categoryId?: string;
   paidThroughAccountId?: string;
   invoiceId?: string;
   /** Only the expenses one schedule recorded. */
   recurringExpenseId?: string;
 }
 
-export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+/**
+ * Legacy: what the old fixed categories were called. Only a fallback for a
+ * record that arrives without `expenseCategory`; the business's own names
+ * come from the API.
+ */
+export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   PARTS: "Parts",
-  SUBLET: "Sublet Work",
+  SUBLET: "Sublet",
   CONSUMABLES: "Consumables",
-  LABOR: "Labor",
+  LABOR: "Labour",
   TOWING: "Towing",
   FEES: "Fees",
   RENT: "Rent",
@@ -163,9 +170,20 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   OTHER: "Other",
 };
 
-export const EXPENSE_CATEGORY_OPTIONS = (
-  Object.keys(EXPENSE_CATEGORY_LABELS) as ExpenseCategory[]
-).map((value) => ({ label: EXPENSE_CATEGORY_LABELS[value], value }));
+/** The category's name to show, from whatever the record carries. */
+export const expenseCategoryLabel = (
+  record: WithExpenseCategory,
+  /** The business's list, to name a record that only has `categoryId`. */
+  byId?: ReadonlyMap<string, { name: string }>,
+): string => {
+  if (record.expenseCategory?.name) return record.expenseCategory.name;
+  const known = record.categoryId ? byId?.get(record.categoryId) : undefined;
+  if (known) return known.name;
+  if (record.category) {
+    return EXPENSE_CATEGORY_LABELS[record.category] ?? record.category;
+  }
+  return "—";
+};
 
 /** A POS terminal takes a card, so POS is Card (QA bug #15), not a mode of its own. */
 export const PAYMENT_MODE_LABELS: Record<PaymentModeDto, string> = {
@@ -185,12 +203,11 @@ export const PAYMENT_MODE_OPTIONS = (
 // ─── Invoice costs ───────────────────────────────────────────────────────────
 
 /** An expense as the invoice-costs view lists it (amount already a number). */
-export interface InvoiceCostExpense {
+export interface InvoiceCostExpense extends WithExpenseCategory {
   id: string;
   expenseNumber: string;
   date: string;
   name: string;
-  category: ExpenseCategory;
   vendorName: string | null;
   amount: number;
   invoiceLineItemId: string | null;
@@ -247,12 +264,18 @@ export interface RecordInvoiceCostsPayload {
   lines?: Array<{
     invoiceLineItemId: string;
     amount: number;
-    category?: ExpenseCategory;
+    /** Left out → Labour for a service item, else Parts. */
+    categoryId?: string;
     vendorName?: string;
   }>;
-  other?: Array<{ name: string; amount: number; category?: ExpenseCategory }>;
+  /** Left out → Other. */
+  other?: Array<{ name: string; amount: number; categoryId?: string }>;
   /** Items bought together: one expense for all of them, never split. */
-  shared?: Array<{ invoiceLineItemIds: string[]; amount: number }>;
+  shared?: Array<{
+    invoiceLineItemIds: string[];
+    amount: number;
+    categoryId?: string;
+  }>;
 }
 
 /**

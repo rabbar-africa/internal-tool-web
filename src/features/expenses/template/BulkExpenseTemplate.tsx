@@ -20,11 +20,11 @@ import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { RouteConstants } from "@/shared/constants/routes";
 import { PaymentModeDto } from "@/shared/interface/payment";
 import {
-  EXPENSE_CATEGORY_OPTIONS,
   PAYMENT_MODE_OPTIONS,
   type CreateExpensePayload,
-  type ExpenseCategory,
 } from "@/shared/interface/expense";
+import { ExpenseCategorySelect } from "@/features/expense-categories/components";
+import { CATEGORY_KEY } from "@/shared/interface/expense-category";
 import { AccountSelect } from "@/features/settings/components/account-details/AccountSelect";
 import { useGetJobCardsQuery } from "@/features/job-cards/api/query";
 import { getErrorMessage } from "@/utils/handle-error";
@@ -45,7 +45,8 @@ const MAX_ROWS = 100;
 interface BulkRow {
   key: number;
   name: string;
-  category: ExpenseCategory;
+  /** "" = not chosen: shown as Parts, which the API files it under. */
+  categoryId: string;
   quantity: string;
   unitCost: string;
   /** Only used when the business is VAT-registered. */
@@ -72,7 +73,7 @@ export function BulkExpenseTemplate() {
   const newRow = (): BulkRow => ({
     key: nextKey.current++,
     name: "",
-    category: "PARTS",
+    categoryId: "",
     quantity: "1",
     unitCost: "",
     vat: EMPTY_VAT,
@@ -174,7 +175,7 @@ export function BulkExpenseTemplate() {
     const payload: CreateExpensePayload[] = filled.map((row) => ({
       date,
       name: row.name.trim(),
-      category: row.category,
+      ...(row.categoryId ? { categoryId: row.categoryId } : {}),
       quantity: toNum(row.quantity) || 1,
       unitCost: toNum(row.unitCost),
       // What was paid: plus VAT when the price was typed before VAT.
@@ -336,16 +337,10 @@ export function BulkExpenseTemplate() {
                       }
                     />
                   </Box>
-                  <CustomSelect
-                    label="Category"
-                    options={EXPENSE_CATEGORY_OPTIONS}
-                    value={[row.category]}
-                    onChange={(opt: { value: string[] }) =>
-                      updateRow(row.key, {
-                        category:
-                          (opt?.value?.[0] as ExpenseCategory) ?? "PARTS",
-                      })
-                    }
+                  <ExpenseCategorySelect
+                    value={row.categoryId}
+                    onChange={(id) => updateRow(row.key, { categoryId: id })}
+                    fallbackKey={CATEGORY_KEY.PARTS}
                   />
                   <CustomNumberInput
                     label="Qty"

@@ -26,8 +26,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { RouteConstants } from "@/shared/constants/routes";
 import {
-  EXPENSE_CATEGORY_LABELS,
   PAYMENT_MODE_LABELS,
+  expenseCategoryLabel,
 } from "@/shared/interface/expense";
 import type { RecurringAction } from "../api/service";
 import {
@@ -281,12 +281,7 @@ export function RecurringExpenseDetailTemplate() {
             gap="5"
           >
             <Field label="Expense" value={schedule.name} />
-            <Field
-              label="Category"
-              value={
-                EXPENSE_CATEGORY_LABELS[schedule.category] ?? schedule.category
-              }
-            />
+            <Field label="Category" value={expenseCategoryLabel(schedule)} />
             <Field
               label="Costs a month"
               value={formatMoney(schedule.monthlyEquivalent)}

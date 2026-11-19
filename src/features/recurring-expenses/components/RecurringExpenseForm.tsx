@@ -24,11 +24,9 @@ import {
 } from "@/features/expenses/components/ExpenseVatField";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
-import {
-  EXPENSE_CATEGORY_OPTIONS,
-  PAYMENT_MODE_OPTIONS,
-  type ExpenseCategory,
-} from "@/shared/interface/expense";
+import { PAYMENT_MODE_OPTIONS } from "@/shared/interface/expense";
+import { ExpenseCategorySelect } from "@/features/expense-categories/components";
+import { CATEGORY_KEY } from "@/shared/interface/expense-category";
 import { PaymentModeDto } from "@/shared/interface/payment";
 import type {
   CreateRecurringExpensePayload,
@@ -48,7 +46,8 @@ export type EndMode = "never" | "date" | "count";
 
 export interface RecurringExpenseFormValues {
   name: string;
-  category: ExpenseCategory;
+  /** "" = not chosen: shown as Other, which the API files it under. */
+  categoryId: string;
   amount: string;
   vendorName: string;
   paymentMode: PaymentModeDto | "";
@@ -68,7 +67,7 @@ export interface RecurringExpenseFormValues {
 
 export const emptyRecurringValues = (): RecurringExpenseFormValues => ({
   name: "",
-  category: "RENT",
+  categoryId: "",
   amount: "",
   vendorName: "",
   paymentMode: "",
@@ -89,7 +88,7 @@ export function scheduleToValues(
 ): RecurringExpenseFormValues {
   return {
     name: schedule.name,
-    category: schedule.category,
+    categoryId: schedule.categoryId,
     amount: String(Number(schedule.amount) || ""),
     vendorName: schedule.vendorName ?? "",
     paymentMode: schedule.paymentMode ?? "",
@@ -120,7 +119,7 @@ export function toCreatePayload(
   const end = ends(values);
   return {
     name: values.name.trim(),
-    category: values.category,
+    ...(values.categoryId ? { categoryId: values.categoryId } : {}),
     amount: Number(values.amount),
     every: Number(values.every),
     unit: values.unit,
@@ -152,7 +151,7 @@ export function toUpdatePayload(
 ): UpdateRecurringExpensePayload {
   return {
     name: values.name.trim(),
-    category: values.category,
+    ...(values.categoryId ? { categoryId: values.categoryId } : {}),
     amount: Number(values.amount),
     every: Number(values.every),
     unit: values.unit,
@@ -372,13 +371,12 @@ export function RecurringExpenseForm({
               onBlur={formik.handleBlur}
               error={showError("amount")}
             />
-            <CustomSelect
-              label="Category"
-              options={EXPENSE_CATEGORY_OPTIONS}
-              value={[values.category]}
-              onChange={(opt: { value: string[] }) =>
-                setFieldValue("category", opt?.value?.[0] ?? "OTHER")
-              }
+            <ExpenseCategorySelect
+              value={values.categoryId}
+              onChange={(id) => setFieldValue("categoryId", id)}
+              keepId={initialValues.categoryId}
+              fallbackKey={CATEGORY_KEY.OTHER}
+              allowCreate
             />
             <CustomInput
               label="Paid to (optional)"

@@ -168,6 +168,16 @@ export const invalidates = {
   paymentCreated: join(INVOICE_RECORDS, RECEIVABLES, ACCOUNTS, NUMBER_SERIES),
 
   expense: join(COSTS, ACCOUNTS),
+  /**
+   * The list itself, and everything that shows a category's name: renaming
+   * one renames it on every expense, and deleting with "move to" moves them.
+   */
+  expenseCategory: join(
+    [[k.expenseCategories.getAll]],
+    COSTS,
+    RECURRING_EXPENSES,
+    [[k.accountStatements.business]],
+  ),
   expenseCreated: join(COSTS, ACCOUNTS, NUMBER_SERIES),
 
   /** A transfer moves both accounts' statements. */

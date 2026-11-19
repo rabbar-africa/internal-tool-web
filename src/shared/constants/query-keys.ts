@@ -110,6 +110,9 @@ export const customQueryKey = {
     getAll: "get-all-technicians",
     getById: "get-technician-by-id",
   },
+  expenseCategories: {
+    getAll: "get-expense-categories",
+  },
   expenses: {
     getAll: "get-all-expenses",
     getById: "get-expense-by-id",
