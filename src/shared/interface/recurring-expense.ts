@@ -1,5 +1,5 @@
 import type { IBaseFilter } from "./filter";
-import type { ExpenseCategory } from "./expense";
+import type { WithExpenseCategory } from "./expense";
 import type { PaymentModeDto } from "./payment";
 import type { IAccountRef } from "./settings";
 
@@ -9,10 +9,10 @@ export type RecurrenceUnit = "DAY" | "WEEK" | "MONTH" | "YEAR";
 export type RecurringStatus = "ACTIVE" | "PAUSED" | "FINISHED" | "STOPPED";
 
 /** A schedule that records the same expense on each of its dates. */
-export interface IRecurringExpense {
+export interface IRecurringExpense extends WithExpenseCategory {
   id: string;
   name: string;
-  category: ExpenseCategory;
+  categoryId: string;
   /** Decimal string. */
   amount: string;
   currencyCode: string;
@@ -63,7 +63,7 @@ export interface IRecurringExpenseDetail extends IRecurringExpense {
 
 export interface IGetRecurringExpenseFilter extends IBaseFilter {
   status?: string;
-  category?: string;
+  categoryId?: string;
   search?: string;
   paidThroughAccountId?: string;
 }
@@ -72,7 +72,11 @@ export interface RecurringExpenseSummary {
   activeCount: number;
   monthlyEquivalent: number;
   byCategory: Array<{
-    category: ExpenseCategory;
+    categoryId: string;
+    /** The business's name for it. */
+    name: string;
+    /** Legacy: a default's key, else the name. */
+    category?: string;
     count: number;
     monthlyEquivalent: number;
   }>;
@@ -80,7 +84,8 @@ export interface RecurringExpenseSummary {
 
 export interface CreateRecurringExpensePayload {
   name: string;
-  category?: ExpenseCategory;
+  /** Left out → Other. */
+  categoryId?: string;
   amount: number;
   currencyCode?: string;
   vendorName?: string | null;

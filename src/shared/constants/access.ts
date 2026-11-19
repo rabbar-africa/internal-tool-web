@@ -93,6 +93,8 @@ export const PAGE_ACCESS = {
   expenses: ["read:expenses"],
   expenseCreate: ["create:expenses"],
   expenseEdit: ["update:expenses"],
+  // Seen by whoever reads expenses; its buttons need `expense_categories`.
+  expenseCategories: ["read:expenses"],
 
   banking: ["read:banking"],
 

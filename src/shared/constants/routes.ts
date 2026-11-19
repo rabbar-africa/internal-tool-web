@@ -188,6 +188,7 @@ const settings = {
   currency: defineRoute("/settings/currency" as const),
   accountDetails: defineRoute("/settings/account-details" as const),
   taxes: defineRoute("/settings/taxes" as const),
+  expenseCategories: defineRoute("/settings/expense-categories" as const),
   invoiceTemplates: defineRoute("/settings/invoice-templates" as const),
   createInvoiceTemplate: defineRoute(
     "/settings/invoice-templates/create" as const,

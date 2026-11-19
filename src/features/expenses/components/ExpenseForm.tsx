@@ -41,12 +41,12 @@ import {
   type VatValue,
 } from "./ExpenseVatField";
 import {
-  EXPENSE_CATEGORY_OPTIONS,
   PAYMENT_MODE_OPTIONS,
   type CreateExpensePayload,
   type Expense,
-  type ExpenseCategory,
 } from "@/shared/interface/expense";
+import { ExpenseCategorySelect } from "@/features/expense-categories/components";
+import { CATEGORY_KEY } from "@/shared/interface/expense-category";
 
 interface ExpenseFormProps {
   /** Existing expense when editing; omit to create. */
@@ -206,7 +206,8 @@ export function ExpenseForm({
       date: expense?.date ? expense.date.slice(0, 10) : today,
       name: expense?.name ?? "",
       description: expense?.description ?? "",
-      category: (expense?.category ?? "PARTS") as ExpenseCategory,
+      // "" = not chosen: the picker shows Parts, which the API files it under.
+      categoryId: expense?.categoryId ?? "",
       jobCardId: expense?.jobCardId ?? defaultJobCardId ?? "",
       invoiceId: expense?.invoiceId ?? "",
       invoiceLineItemIds: originalLineIds,
@@ -242,7 +243,7 @@ export function ExpenseForm({
         date: values.date,
         name: values.name,
         description: values.description || undefined,
-        category: values.category,
+        categoryId: values.categoryId || undefined,
         // A linked expense takes the invoice's job card; sending one could
         // only disagree with it (a 400).
         jobCardId: values.invoiceId ? undefined : values.jobCardId || undefined,
@@ -467,16 +468,12 @@ export function ExpenseForm({
                     : undefined
                 }
               />
-              <CustomSelect
-                label="Category"
-                options={EXPENSE_CATEGORY_OPTIONS}
-                value={[formik.values.category]}
-                onChange={(opt: { value: string[] }) =>
-                  formik.setFieldValue(
-                    "category",
-                    (opt?.value?.[0] as ExpenseCategory) ?? "PARTS",
-                  )
-                }
+              <ExpenseCategorySelect
+                value={formik.values.categoryId}
+                onChange={(id) => formik.setFieldValue("categoryId", id)}
+                keepId={expense?.categoryId}
+                fallbackKey={CATEGORY_KEY.PARTS}
+                allowCreate
               />
               <CustomInput
                 label="Vendor / Supplier"

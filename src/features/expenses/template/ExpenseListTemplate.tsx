@@ -25,10 +25,8 @@ import ConsentDialog from "@/components/common/ConsentDialog";
 import { RouteConstants } from "@/shared/constants/routes";
 import { formatCurrency } from "@/utils/calculations";
 import { useUrlState } from "@/hooks/useUrlState";
-import {
-  EXPENSE_CATEGORY_OPTIONS,
-  type Expense,
-} from "@/shared/interface/expense";
+import type { Expense } from "@/shared/interface/expense";
+import { useExpenseCategoryFilterOptions } from "@/features/expense-categories/components";
 import {
   AccountFilterSelect,
   formatAccountLabel,
@@ -207,7 +205,7 @@ const FILTER_SCHEMA = {
   page: { defaultValue: 1 },
   limit: { defaultValue: 20 },
   search: { defaultValue: "" },
-  category: { defaultValue: "" },
+  categoryId: { defaultValue: "" },
   jobCardId: { defaultValue: "" },
   // Set by an invoice's "View expenses"; cleared from the banner.
   invoiceId: { defaultValue: "" },
@@ -229,10 +227,11 @@ export function ExpenseListTemplate() {
   const [filters, setFilters] = useUrlState(FILTER_SCHEMA, { replace: true });
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
+  const categoryOptions = useExpenseCategoryFilterOptions();
 
   const listFilters = {
     ...(filters.search ? { search: filters.search } : {}),
-    ...(filters.category ? { category: filters.category } : {}),
+    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
     ...(filters.jobCardId ? { jobCardId: filters.jobCardId } : {}),
     ...(filters.invoiceId ? { invoiceId: filters.invoiceId } : {}),
     ...(filters.recurringExpenseId
@@ -423,10 +422,10 @@ export function ExpenseListTemplate() {
           >
             <CustomSelect
               placeholder="All Categories"
-              options={EXPENSE_CATEGORY_OPTIONS}
-              value={filters.category ? [filters.category] : undefined}
+              options={categoryOptions}
+              value={filters.categoryId ? [filters.categoryId] : undefined}
               onChange={(opt: { value: string[] }) =>
-                setFilters({ category: opt?.value?.[0] ?? "", page: 1 })
+                setFilters({ categoryId: opt?.value?.[0] ?? "", page: 1 })
               }
               rootProps={{ size: "sm", w: "100%" }}
               controlProps={{ w: "100%" }}

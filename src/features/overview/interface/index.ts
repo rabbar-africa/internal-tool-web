@@ -62,7 +62,11 @@ export interface JobCardStatusBreakdownItem {
 }
 
 export interface ExpenseCategoryItem {
-  category: string;
+  categoryId: string;
+  /** The business's name for it: show this. */
+  name: string;
+  /** Legacy: a default's key, else the name. */
+  category?: string;
   count: number;
   amount: number;
 }
