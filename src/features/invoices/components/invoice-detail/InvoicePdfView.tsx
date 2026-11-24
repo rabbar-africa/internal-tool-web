@@ -99,6 +99,9 @@ export function InvoicePdfView({
           value: invoice.vehicle.year ? String(invoice.vehicle.year) : "",
         },
         { label: "Plate No.", value: invoice.vehicle.registrationNumber },
+        // Government fleets go by the chassis number, often with no plate.
+        // Same rows as the PDF (InvoicePdfDocument).
+        { label: "Chassis No. (VIN)", value: invoice.vehicle.vin?.trim() },
       ].filter((row) => row.value)
     : [];
   // Left off, not deleted: they come back the day the org upgrades.

@@ -79,9 +79,6 @@ const LAST_MONTH_FIRST = new Set(["vat_summary", "vat_return"]);
 const defaultPresetOf = (key: string | undefined): RangePreset =>
   key && LAST_MONTH_FIRST.has(key) ? "last-month" : "this-month";
 
-/** URL keys that aren't the report's own filters. */
-const PERIOD_KEYS = ["preset", "from", "to", "asOf"] as const;
-
 /**
  * A report's period, basis and filters, kept in the URL (like the Banking
  * page's range) so a reload, a shared link and a drill-down keep them.
@@ -151,9 +148,12 @@ export function useReportParams(entry: ReportCatalogEntry | undefined) {
     [setSearch],
   );
 
+  // Always written, even when it is this report's default: reports differ in
+  // their default (the VAT ones open on last month), and the choice has to
+  // hold in every one of them.
   const setRange = (next: { preset: RangePreset } & Partial<DayRange>) =>
     update({
-      preset: next.preset === defaultPreset ? null : next.preset,
+      preset: next.preset,
       from: next.preset === "custom" ? (next.from ?? range.from) : null,
       to: next.preset === "custom" ? (next.to ?? range.to) : null,
     });
@@ -169,17 +169,10 @@ export function useReportParams(entry: ReportCatalogEntry | undefined) {
     );
 
   /**
-   * The period part of the URL, for a drill-down into another report: it
-   * opens on the same days, as the brief asks.
+   * The whole shared query (reports-query.ts), carried to the next report
+   * and back to the home page: same period, same filters, same sidebar.
    */
-  const periodSearch = useMemo(() => {
-    const out = new URLSearchParams();
-    PERIOD_KEYS.forEach((key) => {
-      const value = search.get(key);
-      if (value) out.set(key, value);
-    });
-    return out;
-  }, [search]);
+  const sharedSearch = search;
 
   return {
     preset,
@@ -188,7 +181,7 @@ export function useReportParams(entry: ReportCatalogEntry | undefined) {
     basis,
     filters,
     apiParams,
-    periodSearch,
+    sharedSearch,
     setRange,
     setAsOf,
     setBasis,

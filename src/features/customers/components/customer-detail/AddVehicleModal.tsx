@@ -221,9 +221,9 @@ export function AddVehicleModal({
                     }
                   />
 
-                  {/* VIN */}
+                  {/* Chassis number (VIN): government fleets go by it */}
                   <CustomInput
-                    label="VIN"
+                    label="Chassis No. (VIN)"
                     name="vin"
                     value={formik.values.vin}
                     onChange={formik.handleChange}

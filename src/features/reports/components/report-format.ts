@@ -1,6 +1,7 @@
 import moment from "moment";
 import { formatMoney } from "@/hooks/useFormatMoney";
 import { RouteConstants } from "@/shared/constants/routes";
+import { withReportsQuery } from "../utils/reports-query";
 import type {
   ReportCell,
   ReportColumnType,
@@ -81,23 +82,24 @@ export function recordHref(type: ReportRecordType, id: string): string | null {
 }
 
 /**
- * Where a row leads: another report narrowed to it, on the same period, or
- * the record itself. Null when there is nowhere to go.
+ * Where a row leads: another report narrowed to it, on the same period (the
+ * shared query, plus the row's filters), or the record itself. Null when
+ * there is nowhere to go.
  */
 export function drillHref(
   drill: ReportDrill | undefined,
-  periodSearch: URLSearchParams,
+  sharedSearch: URLSearchParams,
 ): string | null {
   if (!drill) return null;
   if ("record" in drill) return recordHref(drill.record.type, drill.record.id);
-  const search = new URLSearchParams(periodSearch);
+  const search = new URLSearchParams(sharedSearch);
   Object.entries(drill.filters ?? {}).forEach(([key, value]) =>
     search.set(key, value),
   );
-  const query = search.toString();
-  return `${RouteConstants.reports.view.generate({ key: drill.report })}${
-    query ? `?${query}` : ""
-  }`;
+  return withReportsQuery(
+    RouteConstants.reports.view.generate({ key: drill.report }),
+    search,
+  );
 }
 
 /** "BANK_TRANSFER" → "Bank transfer", for options the API sends as codes. */

@@ -167,6 +167,7 @@ export function QuotationDocument({ quote }: { quote: IQuotation }) {
               {vehicle.registrationNumber
                 ? ` · ${vehicle.registrationNumber}`
                 : ""}
+              {vehicle.vin ? ` · Chassis No. (VIN) ${vehicle.vin}` : ""}
             </Text>
           )}
         </Stack>
