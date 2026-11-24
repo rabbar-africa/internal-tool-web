@@ -85,6 +85,13 @@ export function JobCardInfo({ jobCard }: { jobCard: JobCardDetail }) {
               jobCard.vehicle?.registrationNumber
             }
           />
+          {/* Only when recorded: government fleets go by it. */}
+          {jobCard.vehicle?.vin?.trim() ? (
+            <InfoItem
+              label="Chassis No. (VIN)"
+              value={jobCard.vehicle.vin.trim()}
+            />
+          ) : null}
           <InfoItem
             label="Opened"
             value={moment(jobCard.openedAt).format("DD MMM YYYY")}
