@@ -100,7 +100,7 @@ export const vehicleColumns: ColumnDef<Vehicle>[] = [
   },
   {
     accessorKey: "vin",
-    header: "VIN",
+    header: "Chassis No. (VIN)",
     cell: ({ getValue }) => (
       <Text textStyle="small-regular" color="gray.400" fontFamily="mono">
         {(getValue() as string | null) ?? "—"}
@@ -116,7 +116,7 @@ export const VEHICLE_CSV_HEADERS = {
   model: "Model",
   registrationNumber: "Plate No.",
   color: "Color",
-  vin: "VIN",
+  vin: "Chassis No. (VIN)",
 } as const;
 
 export const vehicleToCsvRow = (vehicle: Vehicle) => ({

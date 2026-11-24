@@ -351,7 +351,7 @@ export function InspectionDetailTemplate() {
                 }
               />
               <InfoField
-                label="VIN"
+                label="Chassis No. (VIN)"
                 value={
                   inspection.vehicleVin ? (
                     <Text fontFamily="mono" fontSize="12px" color="gray.400">
