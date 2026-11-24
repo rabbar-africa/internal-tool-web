@@ -11,7 +11,7 @@ import {
   Text,
   chakra,
 } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import { CaretRight, Lock } from "@/assets/custom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { CustomSelect } from "@/components/input/CustomSelect";
@@ -25,6 +25,7 @@ import type {
 } from "@/shared/interface/report";
 import { useGetReportCatalogQuery } from "../api/query";
 import { planName } from "./report-format";
+import { HOME_KEYS, withReportsQuery } from "../utils/reports-query";
 
 const LINK_PAGES: Record<ReportCatalogLink["page"], string> = {
   banking: RouteConstants.banking.base.path,
@@ -88,12 +89,22 @@ function Row({
   return to ? <RouterLink to={to}>{body}</RouterLink> : body;
 }
 
-function ReportRow({ report }: { report: ReportCatalogEntry }) {
+function ReportRow({
+  report,
+  shared,
+}: {
+  report: ReportCatalogEntry;
+  /** The shared query, carried into the report and back. */
+  shared: URLSearchParams;
+}) {
   const mayUpgrade = usePermissions().canAccess("billing");
   if (!report.locked) {
     return (
       <Row
-        to={RouteConstants.reports.view.generate({ key: report.key })}
+        to={withReportsQuery(
+          RouteConstants.reports.view.generate({ key: report.key }),
+          shared,
+        )}
         name={report.name}
         description={report.description}
       />
@@ -126,9 +137,11 @@ function ReportRow({ report }: { report: ReportCatalogEntry }) {
 function SectionBlock({
   section,
   query,
+  shared,
 }: {
   section: ReportSection;
   query: string;
+  shared: URLSearchParams;
 }) {
   const reports = section.reports.filter((r) =>
     matches(query, r.name, r.description),
@@ -152,7 +165,7 @@ function SectionBlock({
         {section.label}
       </Text>
       {reports.map((report) => (
-        <ReportRow key={report.key} report={report} />
+        <ReportRow key={report.key} report={report} shared={shared} />
       ))}
       {links.map((link) => (
         <Row
@@ -241,9 +254,38 @@ function SectionNav({
 export function ReportsHome() {
   const { data, isLoading, isError, refetch } = useGetReportCatalogQuery();
   const sections = useMemo(() => data?.sections ?? [], [data?.sections]);
-  const [active, setActive] = useState(ALL);
-  const [search, setSearch] = useState("");
+  // The sidebar section and the search live in the URL (reports-query.ts),
+  // so a reload, a shared link or coming back from a report keeps them.
+  const [shared, setShared] = useSearchParams();
+  const sectionParam = shared.get(HOME_KEYS.section);
+  const active =
+    sectionParam && sections.some((s) => s.key === sectionParam)
+      ? sectionParam
+      : ALL;
+  const [search, setSearch] = useState(
+    () => shared.get(HOME_KEYS.search) ?? "",
+  );
   const query = search.trim().toLowerCase();
+
+  const updateHome = (changes: { section?: string; search?: string }) =>
+    setShared(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        const set = (key: string, value: string | undefined) => {
+          if (value === undefined) return;
+          if (value) next.set(key, value);
+          else next.delete(key);
+        };
+        set(HOME_KEYS.section, changes.section === ALL ? "" : changes.section);
+        set(HOME_KEYS.search, changes.search?.trim());
+        return next;
+      },
+      { replace: true },
+    );
+  const changeSearch = (text: string) => {
+    setSearch(text);
+    updateHome({ search: text });
+  };
 
   // A search looks through every section.
   const shown =
@@ -316,8 +358,8 @@ export function ReportsHome() {
             sections={sections}
             active={active}
             onChange={(key) => {
-              setActive(key);
               setSearch("");
+              updateHome({ section: key, search: "" });
             }}
           />
 
@@ -325,8 +367,8 @@ export function ReportsHome() {
             <SearchInput
               placeholder="Search reports"
               value={search}
-              onChange={setSearch}
-              onSearch={setSearch}
+              onChange={changeSearch}
+              onSearch={changeSearch}
               width="100%"
             />
             <Box
@@ -343,6 +385,7 @@ export function ReportsHome() {
                     key={section.key}
                     section={section}
                     query={query}
+                    shared={shared}
                   />
                 ))
               ) : (

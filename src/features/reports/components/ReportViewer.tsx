@@ -27,6 +27,7 @@ import { ReportFilters } from "./ReportFilters";
 import { ReportAsOfPicker, ReportRangePicker } from "./ReportPeriodPicker";
 import { ReportTable } from "./ReportTable";
 import { drillHref, planName } from "./report-format";
+import { withReportsQuery } from "../utils/reports-query";
 
 const day = (value: string) =>
   moment(value, "YYYY-MM-DD").format("DD MMM YYYY");
@@ -120,7 +121,15 @@ export function ReportViewer() {
       color="gray.400"
       px="0"
       _hover={{ color: "gray.500", bg: "transparent" }}
-      onClick={() => navigate(RouteConstants.reports.base.path)}
+      // Back with the shared query: the sidebar and filters as they were.
+      onClick={() =>
+        navigate(
+          withReportsQuery(
+            RouteConstants.reports.base.path,
+            params.sharedSearch,
+          ),
+        )
+      }
     >
       <ArrowLeft />
       All reports
@@ -283,7 +292,7 @@ export function ReportViewer() {
                   rows={result.rows}
                   totals={result.totals}
                   currency={result.currency}
-                  hrefOf={(row) => drillHref(row.drill, params.periodSearch)}
+                  hrefOf={(row) => drillHref(row.drill, params.sharedSearch)}
                   onOpen={(href) => navigate(href)}
                 />
               ) : (
