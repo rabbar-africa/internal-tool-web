@@ -317,7 +317,7 @@ export function InvoicePdfDocument({
           value: invoice.vehicle.registrationNumber?.trim(),
         },
         // Government fleets go by the chassis number, often with no plate.
-        { label: "Chassis No.", value: invoice.vehicle.vin?.trim() },
+        { label: "Chassis No. (VIN)", value: invoice.vehicle.vin?.trim() },
       ].filter((row) => row.value)
     : [];
   const terms = showTerms

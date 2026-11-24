@@ -146,7 +146,7 @@ export function Masthead({
       <View style={styles.metaRow}>
         <Meta label="Owner" value={inspection.customerName} />
         <Meta label="Contact" value={inspection.customerPhone} />
-        <Meta label="Chassis No." value={inspection.vehicleVin} />
+        <Meta label="Chassis No. (VIN)" value={inspection.vehicleVin} />
       </View>
     </View>
   );

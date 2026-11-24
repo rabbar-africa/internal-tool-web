@@ -69,7 +69,7 @@ export function VehicleInfo({ inspection }: { inspection: IInspection }) {
             value={inspection.vehicleRegistrationNumber}
           />
           <InfoLine label="Color" value={inspection.vehicleColor} />
-          <InfoLine label="Chassis No." value={inspection.vehicleVin} />
+          <InfoLine label="Chassis No. (VIN)" value={inspection.vehicleVin} />
         </View>
 
         <View style={styles.card}>
