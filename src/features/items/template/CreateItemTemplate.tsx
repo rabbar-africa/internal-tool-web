@@ -1,4 +1,8 @@
 import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
+import {
   Box,
   Button,
   Card,
@@ -69,9 +73,13 @@ export function CreateItemTemplate() {
         status: "ACTIVE",
       };
       await mutateAsync(payload);
+      leaveGuard.release();
       navigate(RouteConstants.items.base.path);
     },
   });
+
+  // "Leave this item?" once something is entered (LeaveGuard).
+  const leaveGuard = useLeaveGuard({ when: formik.dirty });
 
   const sectionHeader = (num: number, title: string, subtitle?: string) => (
     <HStack gap="2">
@@ -236,6 +244,7 @@ export function CreateItemTemplate() {
           </Flex>
         </Stack>
       </form>
+      <LeaveGuardDialog guard={leaveGuard} record="item" />
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -264,6 +264,8 @@ interface RecurringExpenseFormProps {
   isEdit?: boolean;
   isSubmitting: boolean;
   onSubmit: (values: RecurringExpenseFormValues) => Promise<void> | void;
+  /** Whether the form has unsaved changes, for the leave dialog. */
+  onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
 }
 
@@ -272,6 +274,7 @@ export function RecurringExpenseForm({
   isEdit = false,
   isSubmitting,
   onSubmit,
+  onDirtyChange,
   onCancel,
 }: RecurringExpenseFormProps) {
   const { formatMoney } = useFormatMoney();
@@ -295,6 +298,11 @@ export function RecurringExpenseForm({
             },
       ),
   });
+
+  // Tells the page there are unsaved changes ("Leave this …?").
+  useEffect(() => {
+    onDirtyChange?.(formik.dirty);
+  }, [formik.dirty, onDirtyChange]);
   const { values, errors, touched, setFieldValue } = formik;
   const showError = (field: keyof RecurringExpenseFormValues) =>
     (touched[field] || formik.submitCount > 0) && errors[field]

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLeaveGuard } from "@/components/common/LeaveGuard";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
 import { toaster } from "@/components/ui/toaster";
@@ -76,6 +77,16 @@ interface Options {
 
 export function useCreditNoteForm({ invoiceId, note }: Options) {
   const navigate = useNavigate();
+  // "Leave this credit note?" (LeaveGuard): while the dialog saves a draft,
+  // the save lets the person go where they were heading.
+  const leavingRef = useRef(false);
+  const savedRef = useRef(false);
+  const releaseRef = useRef<() => void>(() => undefined);
+  const afterSave = (path: string) => {
+    savedRef.current = true;
+    releaseRef.current();
+    if (!leavingRef.current) navigate(path);
+  };
   const { formatMoney } = useFormatMoney();
   const isEdit = Boolean(note);
 
@@ -245,7 +256,9 @@ export function useCreditNoteForm({ invoiceId, note }: Options) {
 
     if (note) {
       const res = await update.mutateAsync({ id: note.id, payload: common() });
-      navigate(RouteConstants.creditNotes.detail.generate({ id: res.data.id }));
+      afterSave(
+        RouteConstants.creditNotes.detail.generate({ id: res.data.id }),
+      );
       return;
     }
 
@@ -277,11 +290,39 @@ export function useCreditNoteForm({ invoiceId, note }: Options) {
               .filter(Boolean)
               .join(" "),
     });
-    navigate(RouteConstants.creditNotes.detail.generate({ id: saved.id }));
+    afterSave(RouteConstants.creditNotes.detail.generate({ id: saved.id }));
   };
+
+  /** The leave dialog's "Leave & save as draft". False: stay and fix it. */
+  const saveDraftAndLeave = async () => {
+    if (blocker || !invoiceId) {
+      setSubmitted(true);
+      toaster.create({
+        type: "error",
+        description: `To save a draft: ${blocker ?? "pick an invoice"}`,
+      });
+      return false;
+    }
+    leavingRef.current = true;
+    savedRef.current = false;
+    try {
+      await submit("DRAFT");
+    } finally {
+      leavingRef.current = false;
+    }
+    return savedRef.current;
+  };
+
+  // Only a new one with something ticked is worth asking about.
+  const leaveGuard = useLeaveGuard({
+    when: !isEdit && hasSomething,
+    onSaveDraft: saveDraftAndLeave,
+  });
+  releaseRef.current = leaveGuard.release;
 
   return {
     isEdit,
+    leaveGuard,
     draft,
     isDraftLoading: draftQuery.isLoading,
     draftError: draftQuery.isError ? getErrorMessage(draftQuery.error) : null,

@@ -1,3 +1,8 @@
+import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
+import { useState } from "react";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -14,6 +19,9 @@ import {
 export function CreateCustomerTemplate() {
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateCustomerMutation();
+  // "Leave this …?" once something is entered (LeaveGuard).
+  const [dirty, setDirty] = useState(false);
+  const leaveGuard = useLeaveGuard({ when: dirty });
 
   const handleSubmit = async (values: CustomerFormValues) => {
     await mutateAsync(
@@ -33,6 +41,7 @@ export function CreateCustomerTemplate() {
         country: values.country,
       }) as CreateCustomerPayload,
     );
+    leaveGuard.release();
     navigate(RouteConstants.customers.base.path);
   };
 
@@ -62,12 +71,14 @@ export function CreateCustomerTemplate() {
       </Flex>
 
       <CustomerForm
+        onDirtyChange={setDirty}
         mode="create"
         initialValues={DEFAULT_CUSTOMER_FORM_VALUES}
         submitting={isPending}
         onSubmit={handleSubmit}
         onCancel={() => navigate(RouteConstants.customers.base.path)}
       />
+      <LeaveGuardDialog guard={leaveGuard} record="customer" />
     </Stack>
   );
 }

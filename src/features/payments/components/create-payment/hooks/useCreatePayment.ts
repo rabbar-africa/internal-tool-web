@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLeaveGuard } from "@/components/common/LeaveGuard";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -91,6 +92,12 @@ const toNum = (v: string | number | null | undefined) => Number(v ?? 0) || 0;
 
 export function useCreatePayment() {
   const navigate = useNavigate();
+  // "Leave this payment?" (LeaveGuard): once saved, the guard lets it go.
+  const releaseRef = useRef<() => void>(() => undefined);
+  const afterSave = (path: string) => {
+    releaseRef.current();
+    navigate(path);
+  };
   const [searchParams] = useSearchParams();
   const presetInvoiceId = searchParams.get("invoiceId") ?? "";
   const editPaymentId = searchParams.get("paymentId") ?? "";
@@ -192,7 +199,7 @@ export function useCreatePayment() {
               : {}),
           },
         });
-        navigate(
+        afterSave(
           RouteConstants.payments.detail.generate({ id: response?.data?.id }),
         );
         return;
@@ -236,12 +243,12 @@ export function useCreatePayment() {
 
       if (isEditMode) {
         const response = await updateMutate({ id: editPaymentId, payload });
-        navigate(
+        afterSave(
           RouteConstants.payments.detail.generate({ id: response?.data?.id }),
         );
       } else {
         const response = await mutateAsync(payload);
-        navigate(
+        afterSave(
           RouteConstants.payments.detail.generate({ id: response?.data?.id }),
         );
       }
@@ -547,10 +554,20 @@ export function useCreatePayment() {
   ]);
 
   const handleCancel = () => navigate(RouteConstants.payments.base.path);
+
+  // Asked once a customer or an amount is entered. A payment either came in
+  // or it didn't, so there's no draft: keep editing or discard.
+  const leaveGuard = useLeaveGuard({
+    when:
+      !isEditMode &&
+      (Boolean(formik.values.customerId) || toNum(formik.values.amount) > 0),
+  });
+  releaseRef.current = leaveGuard.release;
   // console.log("values is ", formik.values);
 
   return {
     formik,
+    leaveGuard,
     isPending: isPending || isUpdating || isCollecting,
     orgCurrency,
     // edit flow

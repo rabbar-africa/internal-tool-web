@@ -1,3 +1,7 @@
+import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
 import { todayIso } from "@/utils/date-of-birth";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -118,6 +122,9 @@ export function BulkExpenseTemplate() {
     });
   const total = filled.reduce((sum, row) => sum + paidOf(row), 0);
 
+  // "Leave these expenses?" once a row is filled in (LeaveGuard).
+  const leaveGuard = useLeaveGuard({ when: filled.length > 0 });
+
   const updateRow = (key: number, patch: Partial<BulkRow>) => {
     setRows((prev) =>
       prev.map((row) => (row.key === key ? { ...row, ...patch } : row)),
@@ -193,6 +200,7 @@ export function BulkExpenseTemplate() {
 
     try {
       await createMany(payload);
+      leaveGuard.release();
       navigate(RouteConstants.expenses.base.path);
     } catch (error) {
       // Nothing was saved. "expenses[2]: …" points at the third row sent —
@@ -434,6 +442,11 @@ export function BulkExpenseTemplate() {
           Save Expenses
         </Button>
       </Flex>
+      <LeaveGuardDialog
+        guard={leaveGuard}
+        record="expenses"
+        title="Leave these expenses?"
+      />
     </Stack>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   Box,
@@ -29,6 +30,8 @@ interface JobCardFormProps {
   jobCard?: JobCardDetail;
   isSubmitting: boolean;
   onSubmit: (payload: JobCardFormPayload) => Promise<void>;
+  /** Whether the form has unsaved changes, for the leave dialog. */
+  onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
 }
 
@@ -73,6 +76,7 @@ export function JobCardForm({
   jobCard,
   isSubmitting,
   onSubmit,
+  onDirtyChange,
   onCancel,
 }: JobCardFormProps) {
   // "Add Vehicle" only for roles that may create one (QA bug #10).
@@ -94,6 +98,11 @@ export function JobCardForm({
     technicianOptions,
     techniciansLoading,
   } = useJobCardForm({ jobCard, onSubmit });
+
+  // Tells the page there are unsaved changes ("Leave this …?").
+  useEffect(() => {
+    onDirtyChange?.(formik.dirty);
+  }, [formik.dirty, onDirtyChange]);
 
   return (
     <form onSubmit={formik.handleSubmit}>

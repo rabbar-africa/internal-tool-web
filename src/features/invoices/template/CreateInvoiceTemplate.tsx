@@ -1,3 +1,4 @@
+import { LeaveGuardDialog } from "@/components/common/LeaveGuard";
 import {
   Box,
   Button,
@@ -36,6 +37,7 @@ export function CreateInvoiceTemplate({
     getLineAmount,
     isPending,
     handleCancel,
+    leaveGuard,
     items,
     carry,
     skipCarryFlush,
@@ -216,6 +218,12 @@ export function CreateInvoiceTemplate({
           </Button>
         </Flex>
       </Stack>
+      <LeaveGuardDialog
+        guard={leaveGuard}
+        record="invoice"
+        draftNote="it won't count toward your sales until you issue it"
+        draftsWhere="Invoices → Drafts"
+      />
     </form>
   );
 }
