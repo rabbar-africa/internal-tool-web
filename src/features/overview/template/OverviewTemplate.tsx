@@ -1,6 +1,7 @@
 import { Children, useState, type ReactNode } from "react";
 import { Center, Grid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { PageHeader } from "@/components/common/PageHeader";
+import { CARD_SHADOW, FAINT_EDGE } from "@/theme/surfaces";
 import { StatCardsGrid } from "@/features/overview/components/dashboard/StatCardsGrid";
 import {
   RevenueTrendChart,
@@ -123,7 +124,8 @@ export function OverviewTemplate() {
           bg="white"
           rounded="xl"
           borderWidth="1px"
-          borderColor="gray.75"
+          borderColor={FAINT_EDGE}
+          boxShadow={CARD_SHADOW}
         >
           <Text fontSize="14px" color="gray.400">
             We couldn&apos;t load your dashboard. Please try again.
