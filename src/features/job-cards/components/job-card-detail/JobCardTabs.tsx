@@ -129,23 +129,15 @@ const paymentColumns: ColumnDef<JobCardPayment>[] = [
       </Text>
     ),
   },
-  {
-    accessorKey: "mode",
-    header: "Mode",
-    cell: ({ getValue }) => (
-      <Text textStyle="small-regular" color="gray.500">
-        {((getValue() as string) || "—").replace(/_/g, " ")}
-      </Text>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ getValue }) => (
-      <Status name={(getValue() as string)?.toLowerCase()} />
-    ),
-  },
 ];
+
+const paymentStatusColumn: ColumnDef<JobCardPayment> = {
+  accessorKey: "status",
+  header: "Status",
+  cell: ({ getValue }) => (
+    <Status name={(getValue() as string)?.toLowerCase()} />
+  ),
+};
 
 const inspectionColumns: ColumnDef<JobCardInspection>[] = [
   {
@@ -388,6 +380,23 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
     ],
     [accountName],
   );
+  // Where the money went, not how it came: the account it was paid into.
+  const paymentTableColumns = useMemo<ColumnDef<JobCardPayment>[]>(
+    () => [
+      ...paymentColumns,
+      {
+        id: "paidInto",
+        header: "Paid Into",
+        cell: ({ row }) => (
+          <Text textStyle="small-regular" color="gray.500">
+            {accountName(row.original.depositToAccountId) || "—"}
+          </Text>
+        ),
+      },
+      paymentStatusColumn,
+    ],
+    [accountName],
+  );
   const paymentsCsv = jobCard.payments.map((payment) => ({
     paymentNumber: payment.paymentNumber,
     date: payment.date.slice(0, 10),
@@ -600,7 +609,7 @@ export function JobCardTabs({ jobCard }: { jobCard: JobCardDetail }) {
             </Flex>
             <CustomTable
               data={jobCard.payments}
-              columns={paymentColumns}
+              columns={paymentTableColumns}
               onRowClick={(row) =>
                 navigate(
                   RouteConstants.payments.detail.generate({
