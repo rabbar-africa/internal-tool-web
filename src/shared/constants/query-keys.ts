@@ -1,4 +1,7 @@
 export const customQueryKey = {
+  search: {
+    quick: "quick-search",
+  },
   activity: {
     list: "get-activity",
   },

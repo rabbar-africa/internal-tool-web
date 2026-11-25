@@ -12,8 +12,8 @@ import {
 import { UserDashboardContainer } from "@/components/hoc";
 import { Hamburger } from "@/assets/custom";
 // import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
-// import { SearchInput } from "@/components/input/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { QuickSearch } from "@/features/search/components/QuickSearch";
 
 interface NavBarProps {
   onMenuToggle?: () => void;
@@ -41,7 +41,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
     >
       <UserDashboardContainer>
         <Flex alignItems="center" justifyContent="space-between">
-          <Flex alignItems="center" gap="12px">
+          <Flex alignItems="center" gap="12px" flex="1" minW="0">
             {/* Hamburger – visible only on mobile */}
             <Box display={{ base: "flex", lg: "none" }}>
               <IconButton
@@ -55,23 +55,22 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               </IconButton>
             </Box>
 
-            {/* Company label – visible only on desktop */}
+            <QuickSearch />
+          </Flex>
+
+          {/* Right: Search + Notifications + Profile */}
+          <Flex alignItems="center" gap="3" flexShrink={0} ml="4">
+            {/* Company label – desktop only */}
             <Text
               fontSize="14px"
               fontWeight="600"
               color="gray.500"
-              display={{ base: "none", md: "block" }}
+              display={{ base: "none", xl: "block" }}
+              maxW="14rem"
+              truncate
             >
               {userOrganization?.name}
             </Text>
-          </Flex>
-
-          {/* Right: Search + Notifications + Profile */}
-          <Flex alignItems="center" gap="3">
-            {/* Global search – hidden on mobile */}
-            <Box display={{ base: "none", lg: "block" }} maxW="200px">
-              {/* <SearchInput placeholder="Search..." /> */}
-            </Box>
 
             {/* Notification bell */}
             {/* <Box position="relative">
