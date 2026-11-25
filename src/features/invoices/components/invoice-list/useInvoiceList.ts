@@ -11,6 +11,7 @@ import {
   useGetAllInvoicesQuery,
 } from "../../api/query";
 import { useInvoicePdf } from "../../hooks/useInvoicePdf";
+import { invoiceActions } from "../../utils/invoice-actions";
 import { toCsvRow } from "./columns";
 
 const FILTER_SCHEMA = {
@@ -84,12 +85,15 @@ export function useInvoiceList() {
       {
         label: "Edit",
         value: "edit",
+        hidden: (invoice) => !invoiceActions(invoice).edit,
         onClick: (invoice) =>
-          navigate(RouteConstants.invoices.detail.generate({ id: invoice.id })),
+          navigate(RouteConstants.invoices.edit.generate({ id: invoice.id })),
       },
       {
+        // Not for a draft: it isn't a real invoice until it's issued.
         label: "Download PDF",
         value: "pdf",
+        hidden: (invoice) => !invoiceActions(invoice).pdf,
         onClick: (invoice) => handleDownloadPdf(invoice),
       },
       {
