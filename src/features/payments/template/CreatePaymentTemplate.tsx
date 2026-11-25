@@ -1,3 +1,4 @@
+import { LeaveGuardDialog } from "@/components/common/LeaveGuard";
 import {
   Box,
   Button,
@@ -42,6 +43,7 @@ export function CreatePaymentTemplate() {
     clearAllocations,
     totals,
     handleCancel,
+    leaveGuard,
   } = useCreatePayment();
 
   return (
@@ -189,6 +191,7 @@ export function CreatePaymentTemplate() {
             </Flex>
           )}
       </Stack>
+      <LeaveGuardDialog guard={leaveGuard} record="payment" />
     </form>
   );
 }

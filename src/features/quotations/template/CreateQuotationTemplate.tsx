@@ -1,3 +1,4 @@
+import { LeaveGuardDialog } from "@/components/common/LeaveGuard";
 import {
   Box,
   Button,
@@ -40,6 +41,7 @@ export function CreateQuotationTemplate({
     getLineAmount,
     isPending,
     handleCancel,
+    leaveGuard,
     items,
     addNewItem,
     addNewCustomer,
@@ -188,6 +190,12 @@ export function CreateQuotationTemplate({
           {actions}
         </Flex>
       </Stack>
+      <LeaveGuardDialog
+        guard={leaveGuard}
+        record="quote"
+        draftNote="nothing is sent to the customer"
+        draftsWhere="Quotes"
+      />
     </form>
   );
 }

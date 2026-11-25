@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import {
@@ -45,6 +45,8 @@ interface ReminderFormProps {
   submitLabel?: string;
   isSubmitting: boolean;
   onSubmit: (payload: CreateReminderPayload) => Promise<void>;
+  /** Whether the form has unsaved changes, for the leave dialog. */
+  onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
 }
 
@@ -108,6 +110,7 @@ export function ReminderForm({
   submitLabel,
   isSubmitting,
   onSubmit,
+  onDirtyChange,
   onCancel,
 }: ReminderFormProps) {
   const isEdit = Boolean(reminder);
@@ -154,6 +157,11 @@ export function ReminderForm({
       await onSubmit(payload);
     },
   });
+
+  // Tells the page there are unsaved changes ("Leave this …?").
+  useEffect(() => {
+    onDirtyChange?.(formik.dirty);
+  }, [formik.dirty, onDirtyChange]);
 
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useGetVehiclesByClientQuery(formik.values.clientId);

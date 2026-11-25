@@ -10,6 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { toaster } from "@/components/ui";
+import { useLeaveGuard } from "@/components/common/LeaveGuard";
 import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
@@ -271,6 +272,19 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
   const jobCardId = searchParams.get("jobCardId") ?? "";
 
   const navigate = useNavigate();
+
+  // "Leave this invoice?" (LeaveGuard). While the dialog saves a draft, the
+  // save lets the person go where they were heading instead of to the record.
+  const leavingRef = useRef(false);
+  const savedRef = useRef(false);
+  const guardRef = useRef<{ release: () => void } | null>(null);
+  /** After a save: on to `path`, or wherever the person was leaving for. */
+  const afterSave = (path: string) => {
+    savedRef.current = true;
+    guardRef.current?.release();
+    if (!leavingRef.current) navigate(path);
+  };
+
   const { hasFeature } = usePlanAccess();
   const canUseDefaultVat = hasFeature("defaultVat");
   const canUseTerms = hasFeature("invoiceTerms");
@@ -381,7 +395,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
           return;
         }
         const created = await createQuoteAsync(quotePayload);
-        navigate(
+        afterSave(
           RouteConstants.quotations.detail.generate({
             id: created?.data?.id ?? "",
           }),
@@ -433,7 +447,8 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         discountType: values.discountType,
         adjustment: values.adjustment,
         adjustmentDescription: values.adjustmentDescription,
-        status: values.status,
+        // Saved from the leave dialog: always a draft.
+        status: leavingRef.current ? InvoiceStatusDto.DRAFT : values.status,
         ...(!isEdit && jobCardId ? { jobCardId } : {}),
       };
 
@@ -454,7 +469,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
           carry.flushFailures.map((f) => f.invoice),
         );
         if (failures?.length) return;
-        navigate(RouteConstants.invoices.detail.generate({ id: retryId }));
+        afterSave(RouteConstants.invoices.detail.generate({ id: retryId }));
         return;
       }
 
@@ -467,10 +482,12 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
       const failures = await carry?.flush(newInvoiceId);
       if (failures?.length) {
         createdInvoiceIdRef.current = newInvoiceId;
+        // Leaving anyway: the draft is saved, only the links weren't.
+        if (leavingRef.current) savedRef.current = true;
         return;
       }
 
-      navigate(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
+      afterSave(RouteConstants.invoices.detail.generate({ id: newInvoiceId }));
     },
   });
 
@@ -488,6 +505,45 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     // Also when invalid: it marks the fields touched, showing the inline errors.
     await formik.submitForm();
   };
+
+  /**
+   * The leave dialog's "Leave & save as draft": the same checks as a save,
+   * then saved as a draft. False keeps them on the form to fix what's
+   * missing (the inline errors show).
+   */
+  const saveDraftAndLeave = async () => {
+    const fieldError = firstInvoiceError(await formik.validateForm());
+    if (fieldError) {
+      toaster.create({
+        description: `To save a draft: ${fieldError}`,
+        type: "error",
+      });
+      void formik.submitForm();
+      return false;
+    }
+    if (totals.total < 0) {
+      toaster.create({ description: NEGATIVE_TOTAL_MESSAGE, type: "error" });
+      return false;
+    }
+    leavingRef.current = true;
+    savedRef.current = false;
+    try {
+      await formik.submitForm();
+    } finally {
+      leavingRef.current = false;
+    }
+    return savedRef.current;
+  };
+
+  // Asked only once something is entered: the form fills some fields itself.
+  const hasContent =
+    Boolean(formik.values.customerId) ||
+    formik.values.lineItems.some((li) => li.name.trim() || Number(li.rate));
+  const leaveGuard = useLeaveGuard({
+    when: !isEdit && hasContent,
+    onSaveDraft: saveDraftAndLeave,
+  });
+  guardRef.current = leaveGuard;
 
   // Vehicle query for the selected customer
   const { data: vehiclesData, isLoading: vehiclesLoading } =
@@ -695,6 +751,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
     const savedId = createdInvoiceIdRef.current;
     if (!savedId) return;
     carry.clearFlushFailures();
+    guardRef.current?.release();
     navigate(RouteConstants.invoices.detail.generate({ id: savedId }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carry.clearFlushFailures]);
@@ -861,6 +918,7 @@ export function useCreateInvoice(options?: UseInvoiceFormOptions) {
         ? isUpdating
         : isCreating || carry.isFlushing,
     handleCancel,
+    leaveGuard,
 
     // Carry-forward ("bring past unpaid balance")
     carry,

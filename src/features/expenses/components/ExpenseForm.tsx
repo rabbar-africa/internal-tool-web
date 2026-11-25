@@ -1,5 +1,5 @@
 import { todayIso } from "@/utils/date-of-birth";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import {
@@ -55,6 +55,8 @@ interface ExpenseFormProps {
   defaultJobCardId?: string;
   isSubmitting: boolean;
   onSubmit: (payload: CreateExpensePayload) => Promise<void>;
+  /** Whether the form has unsaved changes, for the leave dialog. */
+  onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
 }
 
@@ -121,6 +123,7 @@ export function ExpenseForm({
   defaultJobCardId,
   isSubmitting,
   onSubmit,
+  onDirtyChange,
   onCancel,
 }: ExpenseFormProps) {
   const isEdit = Boolean(expense);
@@ -283,6 +286,11 @@ export function ExpenseForm({
       });
     },
   });
+
+  // Tells the page there are unsaved changes ("Leave this …?").
+  useEffect(() => {
+    onDirtyChange?.(formik.dirty);
+  }, [formik.dirty, onDirtyChange]);
 
   // Total amount is always derived from quantity × unit cost — the amount field
   // is read-only, so unit cost (not amount) is the value the user enters.

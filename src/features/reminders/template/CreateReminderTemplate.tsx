@@ -1,3 +1,8 @@
+import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
+import { useState } from "react";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -10,6 +15,9 @@ import { ReminderForm } from "../components/ReminderForm";
 
 export function CreateReminderTemplate() {
   const navigate = useNavigate();
+  // "Leave this …?" once something is entered (LeaveGuard).
+  const [dirty, setDirty] = useState(false);
+  const leaveGuard = useLeaveGuard({ when: dirty });
   const [searchParams] = useSearchParams();
   // Prefill when arriving from a client page (or elsewhere).
   const clientId = searchParams.get("clientId") ?? "";
@@ -25,6 +33,7 @@ export function CreateReminderTemplate() {
 
   const handleSubmit = async (payload: CreateReminderPayload) => {
     await createReminder(payload);
+    leaveGuard.release();
     navigate(backPath);
   };
 
@@ -50,6 +59,7 @@ export function CreateReminderTemplate() {
       </Flex>
 
       <ReminderForm
+        onDirtyChange={setDirty}
         defaults={{
           clientId: clientId || undefined,
           vehicleId: vehicleId || undefined,
@@ -59,6 +69,7 @@ export function CreateReminderTemplate() {
         onSubmit={handleSubmit}
         onCancel={() => navigate(backPath)}
       />
+      <LeaveGuardDialog guard={leaveGuard} record="reminder" />
     </Stack>
   );
 }

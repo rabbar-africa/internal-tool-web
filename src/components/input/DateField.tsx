@@ -28,12 +28,17 @@ export function DateField({
       alignItems="center"
       h="2.5rem"
       px="0.75rem"
-      borderRadius="0.5rem"
+      borderRadius="11px"
       borderWidth="1px"
-      borderColor="gray.50"
+      borderColor="gray.75"
       bg="white"
       gap="0.5rem"
-      _focusWithin={{ borderColor: "primary.300", shadow: "sm" }}
+      transition="border-color .15s ease, box-shadow .15s ease"
+      _hover={{ borderColor: "gray.100" }}
+      _focusWithin={{
+        borderColor: "primary.300",
+        boxShadow: "0 0 0 3px rgba(1, 48, 100, 0.12)",
+      }}
       {...containerProps}
     >
       <Text textStyle="small-regular" color="gray.300" whiteSpace="nowrap">

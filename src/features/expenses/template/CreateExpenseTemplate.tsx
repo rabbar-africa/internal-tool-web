@@ -1,3 +1,8 @@
+import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
+import { useState } from "react";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { RouteConstants } from "@/shared/constants/routes";
@@ -9,6 +14,9 @@ import { repeatStateFrom } from "@/features/recurring-expenses/utils/repeat";
 
 export function CreateExpenseTemplate() {
   const navigate = useNavigate();
+  // "Leave this …?" once something is entered (LeaveGuard).
+  const [dirty, setDirty] = useState(false);
+  const leaveGuard = useLeaveGuard({ when: dirty });
   const [searchParams] = useSearchParams();
   // Set when arriving from a job card's expense tab.
   const jobCardId = searchParams.get("jobCardId") ?? "";
@@ -23,6 +31,7 @@ export function CreateExpenseTemplate() {
 
   const handleSubmit = async (payload: CreateExpensePayload) => {
     const { data: saved } = await createExpense(payload);
+    leaveGuard.release();
     // An overhead (no job card or invoice) may well come round again.
     if (saved && !saved.jobCardId && !saved.invoiceId) {
       toaster.create({
@@ -73,11 +82,13 @@ export function CreateExpenseTemplate() {
       </Flex>
 
       <ExpenseForm
+        onDirtyChange={setDirty}
         defaultJobCardId={jobCardId}
         isSubmitting={isPending}
         onSubmit={handleSubmit}
         onCancel={() => navigate(backPath)}
       />
+      <LeaveGuardDialog guard={leaveGuard} record="expense" />
     </Stack>
   );
 }

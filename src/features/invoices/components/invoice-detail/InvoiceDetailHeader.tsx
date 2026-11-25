@@ -178,18 +178,20 @@ export function InvoiceDetailHeader({
                   </Menu.Item>
                 )}
 
-                <Menu.Item
-                  value="recalculate"
-                  closeOnSelect={false}
-                  disabled={isRecalculating}
-                  onSelect={() => {
-                    void handleAsync(onRecalculate)();
-                  }}
-                >
-                  {isRecalculating ? "Recalculating…" : "Recalculate balance"}
-                </Menu.Item>
+                {actions.recalculate && (
+                  <Menu.Item
+                    value="recalculate"
+                    closeOnSelect={false}
+                    disabled={isRecalculating}
+                    onSelect={() => {
+                      void handleAsync(onRecalculate)();
+                    }}
+                  >
+                    {isRecalculating ? "Recalculating…" : "Recalculate balance"}
+                  </Menu.Item>
+                )}
 
-                {canShare && (
+                {actions.pdf && canShare && (
                   <Menu.Item
                     value="share-pdf"
                     closeOnSelect={false}
@@ -204,18 +206,20 @@ export function InvoiceDetailHeader({
                   </Menu.Item>
                 )}
 
-                <Menu.Item
-                  value="download-pdf"
-                  closeOnSelect={false}
-                  disabled={isDownloading || isSharing}
-                  onSelect={() => {
-                    // closeOnSelect={false} keeps the menu open;
-                    // handleAsync closes it after the work resolves.
-                    void handleAsync(onDownloadPdf)();
-                  }}
-                >
-                  {isDownloading ? "Downloading…" : "Download PDF"}
-                </Menu.Item>
+                {actions.pdf && (
+                  <Menu.Item
+                    value="download-pdf"
+                    closeOnSelect={false}
+                    disabled={isDownloading || isSharing}
+                    onSelect={() => {
+                      // closeOnSelect={false} keeps the menu open;
+                      // handleAsync closes it after the work resolves.
+                      void handleAsync(onDownloadPdf)();
+                    }}
+                  >
+                    {isDownloading ? "Downloading…" : "Download PDF"}
+                  </Menu.Item>
+                )}
 
                 <Box>
                   <Menu.Separator borderColor="gray.50" />

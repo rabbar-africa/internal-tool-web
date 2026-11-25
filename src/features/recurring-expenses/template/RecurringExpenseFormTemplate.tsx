@@ -1,4 +1,8 @@
-import { useMemo } from "react";
+import {
+  LeaveGuardDialog,
+  useLeaveGuard,
+} from "@/components/common/LeaveGuard";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -54,6 +58,9 @@ export function CreateRecurringExpenseTemplate() {
     [],
   );
   const { mutateAsync, isPending } = useCreateRecurringExpenseMutation();
+  // "Leave this …?" once something is entered (LeaveGuard).
+  const [dirty, setDirty] = useState(false);
+  const leaveGuard = useLeaveGuard({ when: dirty });
   const back = () => navigate(RouteConstants.expenses.recurring.path);
 
   return (
@@ -72,13 +79,16 @@ export function CreateRecurringExpenseTemplate() {
           initialValues={initialValues}
           isSubmitting={isPending}
           onCancel={back}
+          onDirtyChange={setDirty}
           onSubmit={async (values) => {
             const { data } = await mutateAsync(toCreatePayload(values));
+            leaveGuard.release();
             navigate(
               RouteConstants.expenses.recurringDetail.generate({ id: data.id }),
             );
           }}
         />
+        <LeaveGuardDialog guard={leaveGuard} record="recurring expense" />
       </Stack>
     </PlanFeatureGate>
   );

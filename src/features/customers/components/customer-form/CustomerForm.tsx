@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Box,
   Button,
@@ -85,6 +86,8 @@ interface CustomerFormProps {
   initialValues: CustomerFormValues;
   submitting: boolean;
   onSubmit: (values: CustomerFormValues) => void | Promise<void>;
+  /** Whether the form has unsaved changes, for the leave dialog. */
+  onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
 }
 
@@ -122,6 +125,7 @@ export function CustomerForm({
   initialValues,
   submitting,
   onSubmit,
+  onDirtyChange,
   onCancel,
 }: CustomerFormProps) {
   const isEdit = mode === "edit";
@@ -136,6 +140,11 @@ export function CustomerForm({
     }),
     onSubmit,
   });
+
+  // Tells the page there are unsaved changes ("Leave this …?").
+  useEffect(() => {
+    onDirtyChange?.(formik.dirty);
+  }, [formik.dirty, onDirtyChange]);
 
   const { values, errors, touched, handleChange, handleBlur, setFieldValue } =
     formik;

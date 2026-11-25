@@ -408,3 +408,26 @@ export enum InvoiceStatusDto {
   WRITTEN_OFF = "WRITTEN_OFF",
   DELETED = "DELETED",
 }
+
+/** `GET /invoices/stats` (docs/frontend-invoice-stats.md). Amounts are balances still owed. */
+export interface InvoiceStats {
+  currency: string;
+  /** Today in Lagos, YYYY-MM-DD. */
+  asOf: string;
+  outstanding: { amount: number; count: number };
+  overdue: { amount: number; count: number };
+  dueToday: { amount: number; count: number };
+  dueWithin30Days: { amount: number; count: number; through: string };
+  receivedThisMonth: {
+    amount: number;
+    payments: number;
+    from: string;
+    to: string;
+  };
+  /** `days` is null until an invoice has been paid off. */
+  averageDaysToGetPaid: {
+    days: number | null;
+    invoices: number;
+    since: string;
+  };
+}

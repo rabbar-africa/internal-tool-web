@@ -1,5 +1,6 @@
 import type {
   Invoice,
+  InvoiceStats,
   CreateInvoicePayload,
   UpdateInvoicePayload,
   IGetInvoiceFilter,
@@ -21,6 +22,13 @@ export const getAllInvoices = async (filter?: IGetInvoiceFilter) => {
   const apiUrl = buildUrlWithQueryParams(baseUrl, filter);
   const response = await axios.get<ApiResponse<Array<Invoice>>>(apiUrl);
   return response.data;
+};
+
+/** The strip above the invoice list. */
+export const getInvoiceStats = async () => {
+  const response =
+    await axios.get<ApiResponse<InvoiceStats>>("/invoices/stats");
+  return response.data.data;
 };
 
 export const getInvoiceById = async (id: string) => {

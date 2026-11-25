@@ -1,3 +1,4 @@
+import { LeaveGuardDialog } from "@/components/common/LeaveGuard";
 import { useMemo } from "react";
 import {
   Box,
@@ -525,6 +526,12 @@ export function CreditNoteForm({ invoiceId, note }: CreditNoteFormProps) {
           {form.isEdit ? "Save changes" : "Save and issue"}
         </Button>
       </Flex>
+      <LeaveGuardDialog
+        guard={form.leaveGuard}
+        record="credit note"
+        draftNote="it won't credit the invoice until you issue it"
+        draftsWhere="Credit Notes"
+      />
     </Stack>
   );
 }

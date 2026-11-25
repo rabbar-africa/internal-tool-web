@@ -1,5 +1,6 @@
 import { Box, Flex, type BoxProps } from "@chakra-ui/react";
 import type { ReactNode } from "react";
+import { CARD_SHADOW, FAINT_EDGE } from "@/theme/surfaces";
 
 interface DashboardCardProps extends BoxProps {
   title?: string;
@@ -9,8 +10,8 @@ interface DashboardCardProps extends BoxProps {
 }
 
 /**
- * Subtle, consistent surface for every dashboard panel — soft border, barely
- * there shadow, generous padding. Keeps all cards visually in one family.
+ * Subtle, consistent surface for every dashboard panel — the faintest edge,
+ * a soft shadow, generous padding. Keeps all cards visually in one family.
  */
 export function DashboardCard({
   title,
@@ -24,8 +25,8 @@ export function DashboardCard({
       bg="white"
       rounded="xl"
       borderWidth="1px"
-      borderColor="gray.75"
-      boxShadow="0 1px 2px rgba(16, 24, 40, 0.04)"
+      borderColor={FAINT_EDGE}
+      boxShadow={CARD_SHADOW}
       p={{ base: "4", md: "5" }}
       overflow="hidden"
       minW="0"

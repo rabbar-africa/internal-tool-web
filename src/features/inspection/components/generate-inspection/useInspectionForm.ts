@@ -1,3 +1,4 @@
+import { useLeaveGuard } from "@/components/common/LeaveGuard";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -129,6 +130,8 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
     [isEdit],
   );
 
+  // "Leave this inspection?" (LeaveGuard), released once it's saved.
+  const releaseRef = useRef<() => void>(() => undefined);
   const formik = useFormik<InspectionFormValues>({
     initialValues,
     validationSchema,
@@ -153,12 +156,14 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
 
       if (isEdit) {
         await updateInspection({ id, data: payload });
+        releaseRef.current();
         navigate(RouteConstants.inspection.inspectionDetails.generate({ id }));
         return;
       }
 
       const response = await createInspection(payload);
       const created = (response?.data ?? response) as { id?: string };
+      releaseRef.current();
       if (created?.id) {
         navigate(
           RouteConstants.inspection.inspectionDetails.generate({
@@ -409,7 +414,14 @@ export function useInspectionForm(options?: UseInspectionFormOptions) {
     [formik.setFieldValue],
   );
 
+  // Asked once a customer or vehicle is picked: the rest fills from them.
+  const leaveGuard = useLeaveGuard({
+    when: !isEdit && Boolean(formik.values.clientId || formik.values.vehicleId),
+  });
+  releaseRef.current = leaveGuard.release;
+
   return {
+    leaveGuard,
     formik,
     isSubmitting,
     mode,

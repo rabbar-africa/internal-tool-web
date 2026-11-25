@@ -8,6 +8,7 @@ import {
   Box,
   type InputProps,
   type TableColumnHeaderProps,
+  type TableRootProps,
   type TableScrollAreaProps,
 } from "@chakra-ui/react";
 import {
@@ -88,6 +89,8 @@ export interface CustomTableProps<T = any> {
   total?: number;
   tableHeaderProps?: TableColumnHeaderProps;
   tableScrollAreaProps?: TableScrollAreaProps;
+  /** E.g. `{ border: "none" }` for a table that sits flush in a card. */
+  tableRootProps?: TableRootProps;
 }
 
 // Row Selection Checkbox Component
@@ -184,6 +187,7 @@ export function CustomTable<T = any>({
   tableOptions = {},
   tableHeaderProps,
   tableScrollAreaProps,
+  tableRootProps,
 }: CustomTableProps<T>) {
   // Memoized columns with selection and actions
   const columns = useMemo(() => {
@@ -206,7 +210,7 @@ export function CustomTable<T = any>({
     if (enableActions && actions.length > 0) {
       finalColumns.push({
         id: "actions",
-        header: "ACTIONS",
+        header: () => <Text srOnly>Actions</Text>,
         cell: ({ row }) => <ActionMenu row={row} actions={actions} />,
         enableSorting: false,
         enableResizing: false,
@@ -330,6 +334,7 @@ export function CustomTable<T = any>({
           variant="outline"
           bg="white"
           stickyHeader={stickyHeader}
+          {...tableRootProps}
         >
           <Table.Header bg="gray.50">
             {table.getHeaderGroups().map((headerGroup) => (

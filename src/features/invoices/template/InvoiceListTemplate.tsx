@@ -1,9 +1,10 @@
 import { PlanLimitNotice } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
-import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Stack } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { CustomTable, SelectionActionBar } from "@/components/table";
 import { DownloadSimple } from "@/assets/custom";
+import { PlusLine } from "@/assets/custom/LineIcons";
 import { exportToCSV } from "@/utils/exportToCSV";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ExportMenu } from "@/features/exports/components";
@@ -16,6 +17,8 @@ import {
 } from "@/features/invoices/components/invoice-list/columns";
 import { InvoiceFilters } from "@/features/invoices/components/invoice-list/InvoiceFilters";
 import { DeleteInvoiceConfirm } from "@/features/invoices/components/invoice-list/DeleteInvoiceConfirm";
+import { CARD_SHADOW, FAINT_DIVIDER, FAINT_EDGE } from "@/theme/surfaces";
+import { InvoiceStatsStrip } from "@/features/invoices/components/invoice-list/InvoiceStatsStrip";
 
 export function InvoiceListTemplate() {
   const navigate = useNavigate();
@@ -55,7 +58,7 @@ export function InvoiceListTemplate() {
       <Stack gap="6">
         <PageHeader
           title="Invoices"
-          subtitle="Manage and track all your invoices"
+          subtitle="Everything you've billed, and everything you're still owed."
           action={
             <Flex gap="2" wrap="wrap">
               <ExportMenu
@@ -68,7 +71,8 @@ export function InvoiceListTemplate() {
                 disabled={isAtLimit("invoices")}
                 onClick={() => navigate(RouteConstants.invoices.create.path)}
               >
-                New Invoice
+                <PlusLine />
+                New invoice
               </Button>
             </Flex>
           }
@@ -76,32 +80,18 @@ export function InvoiceListTemplate() {
 
         <PlanLimitNotice limit="invoices" />
 
-        <Box
-          pt={{ base: "1.25rem", md: "2rem" }}
-          pb={{ base: "1.25rem", md: "2rem" }}
-          bg="white"
-          px={{ base: "0.75rem", md: "1rem" }}
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex justify="space-between" align="center" mb="1rem">
-            <Box>
-              <Text
-                textStyle={{ base: "default-bold", md: "large-bold" }}
-                color="gray.500"
-              >
-                All Invoices
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                {selectionCount > 0
-                  ? `${selectionCount} selected`
-                  : "Click a row to view invoice details"}
-              </Text>
-            </Box>
-          </Flex>
+        <InvoiceStatsStrip
+          onShowOverdue={() => setFilters({ status: "OVERDUE", page: 1 })}
+        />
 
+        <Box
+          bg="white"
+          rounded="18px"
+          borderWidth="1px"
+          borderColor={FAINT_EDGE}
+          boxShadow={CARD_SHADOW}
+          overflow="hidden"
+        >
           <InvoiceFilters
             searchInput={searchInput}
             onSearchInputChange={setSearchInput}
@@ -120,6 +110,15 @@ export function InvoiceListTemplate() {
           <Box overflowX="auto" minW={0}>
             <CustomTable
               stickyHeader
+              tableRootProps={{ border: "none" }}
+              tableHeaderProps={{
+                bg: "white",
+                color: "gray.300",
+                fontSize: "12px",
+                fontWeight: "500",
+                py: "3",
+                borderBottom: `1px solid ${FAINT_DIVIDER}`,
+              }}
               data={invoices}
               columns={columns}
               loading={isLoading}

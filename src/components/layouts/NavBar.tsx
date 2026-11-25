@@ -12,8 +12,14 @@ import {
 import { UserDashboardContainer } from "@/components/hoc";
 import { Hamburger } from "@/assets/custom";
 // import { BellSimpleRingingIcon } from "@/assets/custom/BellSimpleRingingIcon";
-// import { SearchInput } from "@/components/input/SearchInput";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useNavigate } from "react-router-dom";
+import { GearIcon } from "@/assets/custom/GearIcon";
+import { Money } from "@/assets/custom/Money";
+import { SignOutIcon } from "@/assets/custom/SignOutIcon";
+import { RouteConstants } from "@/shared/constants/routes";
+import { QuickSearch } from "@/features/search/components/QuickSearch";
 
 interface NavBarProps {
   onMenuToggle?: () => void;
@@ -26,6 +32,8 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
     userRoles,
   } = useCurrentUser();
   const handleLogout = useLogout();
+  const navigate = useNavigate();
+  const { canAccess } = usePermissions();
   const formattedRoles = userRoles?.map((role) =>
     role.toLowerCase().replace(/_/g, " "),
   );
@@ -41,7 +49,7 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
     >
       <UserDashboardContainer>
         <Flex alignItems="center" justifyContent="space-between">
-          <Flex alignItems="center" gap="12px">
+          <Flex alignItems="center" gap="12px" flex="1" minW="0">
             {/* Hamburger – visible only on mobile */}
             <Box display={{ base: "flex", lg: "none" }}>
               <IconButton
@@ -55,23 +63,22 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               </IconButton>
             </Box>
 
-            {/* Company label – visible only on desktop */}
+            <QuickSearch />
+          </Flex>
+
+          {/* Right: Search + Notifications + Profile */}
+          <Flex alignItems="center" gap="3" flexShrink={0} ml="4">
+            {/* Company label – desktop only */}
             <Text
               fontSize="14px"
               fontWeight="600"
               color="gray.500"
-              display={{ base: "none", md: "block" }}
+              display={{ base: "none", xl: "block" }}
+              maxW="14rem"
+              truncate
             >
               {userOrganization?.name}
             </Text>
-          </Flex>
-
-          {/* Right: Search + Notifications + Profile */}
-          <Flex alignItems="center" gap="3">
-            {/* Global search – hidden on mobile */}
-            <Box display={{ base: "none", lg: "block" }} maxW="200px">
-              {/* <SearchInput placeholder="Search..." /> */}
-            </Box>
 
             {/* Notification bell */}
             {/* <Box position="relative">
@@ -139,15 +146,63 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
               </Menu.Trigger>
               <Portal>
                 <Menu.Positioner>
-                  <Menu.Content width="100%" p="6px">
-                    <Menu.Item
-                      cursor={"pointer"}
-                      p={".25rem"}
-                      onClick={handleLogout}
-                      value="log-out"
+                  <Menu.Content
+                    minW="16rem"
+                    p="0"
+                    rounded="xl"
+                    borderWidth="1px"
+                    borderColor="gray.75"
+                    boxShadow="0 12px 32px rgba(0, 31, 62, 0.12)"
+                    overflow="hidden"
+                  >
+                    <Box
+                      px="4"
+                      py="3.5"
+                      borderBottomWidth="1px"
+                      borderColor="gray.75"
                     >
-                      Log Out
-                    </Menu.Item>
+                      <Text
+                        fontSize="15px"
+                        fontWeight="700"
+                        color="gray.500"
+                        truncate
+                      >
+                        {currentUser?.firstName} {currentUser?.lastName}
+                      </Text>
+                      {currentUser?.email && (
+                        <Text fontSize="13px" color="gray.300" truncate>
+                          {currentUser.email}
+                        </Text>
+                      )}
+                    </Box>
+                    <Box p="1.5">
+                      {canAccess("billing") && (
+                        <UserMenuItem
+                          value="billing"
+                          icon={<Money boxSize="1.1rem" />}
+                          label="Plan & Billing"
+                          onSelect={() =>
+                            navigate(RouteConstants.settings.billing.path)
+                          }
+                        />
+                      )}
+                      <UserMenuItem
+                        value="settings"
+                        icon={<GearIcon boxSize="1.1rem" />}
+                        label="Settings"
+                        onSelect={() =>
+                          navigate(RouteConstants.settings.base.path)
+                        }
+                      />
+                    </Box>
+                    <Box p="1.5" borderTopWidth="1px" borderColor="gray.75">
+                      <UserMenuItem
+                        value="sign-out"
+                        icon={<SignOutIcon boxSize="1.1rem" />}
+                        label="Sign out"
+                        onSelect={handleLogout}
+                      />
+                    </Box>
                   </Menu.Content>
                 </Menu.Positioner>
               </Portal>
@@ -158,3 +213,36 @@ export const NavBar: React.FC<NavBarProps> = ({ onMenuToggle }) => {
     </Flex>
   );
 };
+
+/** A row of the account menu: icon, then label. */
+function UserMenuItem({
+  value,
+  icon,
+  label,
+  onSelect,
+}: {
+  value: string;
+  icon: React.ReactNode;
+  label: string;
+  onSelect: () => void;
+}) {
+  return (
+    <Menu.Item
+      value={value}
+      onClick={onSelect}
+      cursor="pointer"
+      gap="3"
+      px="3"
+      py="2.5"
+      rounded="lg"
+      fontSize="14px"
+      color="gray.500"
+      _highlighted={{ bg: "gray.50" }}
+    >
+      <Box as="span" display="inline-flex" color="gray.400">
+        {icon}
+      </Box>
+      {label}
+    </Menu.Item>
+  );
+}

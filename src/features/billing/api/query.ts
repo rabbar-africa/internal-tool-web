@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@/lib/react-query";
 import type { AxiosError } from "axios";
 import { toaster } from "@/components/ui";
 import { customQueryKey } from "@/shared/constants/query-keys";
+import { isOfferedOnWeb } from "../utils/tiers";
 import { billingService } from "./service";
 import type {
   BillingInterval,
@@ -31,10 +32,12 @@ export const useBillingOverviewQuery = (options?: { enabled?: boolean }) =>
     enabled: options?.enabled ?? true,
   });
 
+/** The plans on sale on the web: never Chat Lite, the WhatsApp bot's plan. */
 export const useBillingPlansQuery = (options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: [customQueryKey.billing.plans],
     queryFn: () => billingService.getPlans(),
+    select: (plans) => plans.filter(isOfferedOnWeb),
     enabled: options?.enabled ?? true,
   });
 

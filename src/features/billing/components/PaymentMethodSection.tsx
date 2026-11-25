@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Box, Button, Flex, Stack, Text } from "@chakra-ui/react";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSwitch } from "@/components/input/CustomSwitch";
-import { SectionTitle } from "@/features/settings/components/SectionTitle";
 import {
   useAddCardMutation,
   useAutoRenewMutation,
@@ -10,6 +9,7 @@ import {
 } from "../api/query";
 import type { BillingOverview } from "../api/types";
 import { formatCardBrand, formatLongDate } from "../utils/format";
+import { BillingCard, CardBody } from "./BillingCard";
 
 interface PaymentMethodSectionProps {
   overview: BillingOverview;
@@ -35,81 +35,99 @@ export function PaymentMethodSection({
     : "Off — we'll email you a payment link when your plan is due.";
 
   return (
-    <Box>
-      <SectionTitle
-        title="How you pay"
-        subtitle="You don't need a card. Each time your plan is due, you can pay by bank transfer, USSD or card."
-      />
+    <BillingCard
+      title="How you pay"
+      subtitle="You don't need a card. Each time your plan is due, you can pay by bank transfer, USSD or card."
+    >
+      <CardBody>
+        {card ? (
+          <Stack gap="4">
+            <Flex
+              p="4"
+              rounded="lg"
+              borderWidth="1px"
+              borderColor="gray.75"
+              justify="space-between"
+              align={{ base: "flex-start", sm: "center" }}
+              direction={{ base: "column", sm: "row" }}
+              gap="3"
+            >
+              <Flex align="center" gap="3">
+                <Flex
+                  align="center"
+                  justify="center"
+                  w="3.25rem"
+                  h="2.25rem"
+                  rounded="md"
+                  bg="primary.300"
+                  color="white"
+                  fontSize="11px"
+                  fontWeight="700"
+                  letterSpacing="0.04em"
+                  flexShrink={0}
+                >
+                  {formatCardBrand(card.brand).toUpperCase().slice(0, 10)}
+                </Flex>
+                <Box>
+                  <Text fontSize="15px" fontWeight="600" color="gray.500">
+                    {formatCardBrand(card.brand)} card ending in {card.last4}
+                  </Text>
+                  <Text fontSize="13px" color="gray.300" mt="0.5">
+                    Expires {String(card.expMonth).padStart(2, "0")}/
+                    {card.expYear}
+                    {card.bank ? ` · ${card.bank}` : ""}
+                  </Text>
+                </Box>
+              </Flex>
+              {canManage && (
+                <Button
+                  variant="outlineSecondary"
+                  size="sm"
+                  onClick={() => setConfirmRemove(true)}
+                >
+                  Remove card
+                </Button>
+              )}
+            </Flex>
 
-      {card ? (
-        <Stack gap="4">
-          <Flex
-            p="4"
-            rounded="lg"
-            borderWidth="1px"
-            borderColor="gray.75"
-            justify="space-between"
-            align={{ base: "flex-start", sm: "center" }}
-            direction={{ base: "column", sm: "row" }}
-            gap="3"
-          >
-            <Box>
-              <Text fontSize="15px" fontWeight="600" color="gray.500">
-                {formatCardBrand(card.brand)} card ending in {card.last4}
+            {canManage ? (
+              <CustomSwitch
+                checked={autoRenew}
+                disabled={setAutoRenew.isPending}
+                onCheckedChange={(details: { checked: boolean }) =>
+                  setAutoRenew.mutate(details.checked)
+                }
+                label="Renew automatically with this card"
+                helperText={renewNote}
+              />
+            ) : (
+              <Text fontSize="14px" color="gray.400">
+                Automatic renewal is {autoRenew ? "on" : "off"}.
               </Text>
-              <Text fontSize="13px" color="gray.300" mt="0.5">
-                Expires {String(card.expMonth).padStart(2, "0")}/{card.expYear}
-                {card.bank ? ` · ${card.bank}` : ""}
-              </Text>
-            </Box>
-            {canManage && (
-              <Button
-                variant="outlineSecondary"
-                size="sm"
-                onClick={() => setConfirmRemove(true)}
-              >
-                Remove card
-              </Button>
             )}
-          </Flex>
-
-          {canManage ? (
-            <CustomSwitch
-              checked={autoRenew}
-              disabled={setAutoRenew.isPending}
-              onCheckedChange={(details: { checked: boolean }) =>
-                setAutoRenew.mutate(details.checked)
-              }
-              label="Renew automatically with this card"
-              helperText={renewNote}
-            />
-          ) : (
-            <Text fontSize="14px" color="gray.400">
-              Automatic renewal is {autoRenew ? "on" : "off"}.
+          </Stack>
+        ) : canManage ? (
+          <Box>
+            <Button
+              variant="outline"
+              onClick={() => addCard.mutate()}
+              loading={addCard.isPending || addCard.isSuccess}
+              loadingText="Opening Paystack…"
+              w={{ base: "full", sm: "auto" }}
+            >
+              Add a card for automatic renewal
+            </Button>
+            <Text fontSize="12px" color="gray.300" mt="2">
+              Optional. We charge ₦50 to check the card, then refund it.
             </Text>
-          )}
-        </Stack>
-      ) : canManage ? (
-        <Box>
-          <Button
-            variant="outline"
-            onClick={() => addCard.mutate()}
-            loading={addCard.isPending || addCard.isSuccess}
-            loadingText="Opening Paystack…"
-            w={{ base: "full", sm: "auto" }}
-          >
-            Add a card for automatic renewal
-          </Button>
-          <Text fontSize="12px" color="gray.300" mt="2">
-            Optional. We charge ₦50 to check the card, then refund it.
+          </Box>
+        ) : (
+          <Text fontSize="14px" color="gray.400">
+            No card saved. The plan is paid by transfer, USSD or card each time
+            it's due.
           </Text>
-        </Box>
-      ) : (
-        <Text fontSize="14px" color="gray.400">
-          No card saved. The plan is paid by transfer, USSD or card each time
-          it's due.
-        </Text>
-      )}
+        )}
+      </CardBody>
 
       <ConsentDialog
         open={confirmRemove}
@@ -124,6 +142,6 @@ export function PaymentMethodSection({
           })
         }
       />
-    </Box>
+    </BillingCard>
   );
 }

@@ -1,3 +1,4 @@
+import { LeaveGuardDialog } from "@/components/common/LeaveGuard";
 import {
   Box,
   Button,
@@ -81,6 +82,7 @@ export function GenerateInspectionTemplate({
           </Flex>
         </Stack>
       </form>
+      <LeaveGuardDialog guard={form.leaveGuard} record="inspection" />
     </Stack>
   );
 }

@@ -23,6 +23,7 @@ type QueryKeys = readonly (readonly unknown[])[];
  */
 const INVOICE_RECORDS = [
   [k.invoices.getAll],
+  [k.invoices.stats],
   [k.invoices.getById],
   [k.invoices.outstanding],
   [k.expenses.getAll],

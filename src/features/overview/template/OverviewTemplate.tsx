@@ -1,6 +1,7 @@
 import { Children, useState, type ReactNode } from "react";
 import { Center, Grid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { PageHeader } from "@/components/common/PageHeader";
+import { CARD_SHADOW, FAINT_EDGE } from "@/theme/surfaces";
 import { StatCardsGrid } from "@/features/overview/components/dashboard/StatCardsGrid";
 import {
   RevenueTrendChart,
@@ -15,7 +16,6 @@ import {
   DEFAULT_PRESET,
   getPresetFilter,
 } from "@/features/overview/components/dashboard/DashboardFilters";
-import { WhatsAppAssistantBanner } from "@/features/overview/components/dashboard/WhatsAppAssistantBanner";
 import { UpcomingRemindersPanel } from "@/features/reminders/components/UpcomingRemindersPanel";
 import { REMINDER_TYPES } from "@/shared/interface/reminder";
 import { useGetCurrentUserQuery } from "@/features/auth/api";
@@ -118,15 +118,14 @@ export function OverviewTemplate() {
         action={<DashboardFilters onChange={setFilter} />}
       />
 
-      <WhatsAppAssistantBanner />
-
       {isError ? (
         <Center
           py="16"
           bg="white"
           rounded="xl"
           borderWidth="1px"
-          borderColor="gray.75"
+          borderColor={FAINT_EDGE}
+          boxShadow={CARD_SHADOW}
         >
           <Text fontSize="14px" color="gray.400">
             We couldn&apos;t load your dashboard. Please try again.
