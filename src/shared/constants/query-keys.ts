@@ -72,6 +72,8 @@ export const customQueryKey = {
     getAll: "get-all-invoices",
     getById: "get-invoice-by-id",
     outstanding: "get-invoice-outstanding",
+    /** The strip above the list: outstanding, overdue, received… */
+    stats: "get-invoice-stats",
     deleteImpact: "get-invoice-delete-impact",
   },
   recurringExpenses: {

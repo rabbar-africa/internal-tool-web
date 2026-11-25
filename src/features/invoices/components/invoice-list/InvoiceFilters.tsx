@@ -1,5 +1,6 @@
 import { Flex } from "@chakra-ui/react";
-import { CustomSelect } from "@/components/input/CustomSelect";
+import { MenuFilter } from "@/components/input/MenuFilter";
+import { FAINT_DIVIDER } from "@/theme/surfaces";
 import { DateField } from "@/components/input/DateField";
 import { SearchInput } from "@/components/input/SearchInput";
 import { STATUS_OPTIONS } from "./columns";
@@ -17,6 +18,26 @@ interface InvoiceFiltersProps {
   isLoading?: boolean;
 }
 
+/** The order the statuses are listed in: the everyday ones first. */
+const PILL_ORDER = [
+  "",
+  "DRAFT",
+  "SENT",
+  "OVERDUE",
+  "PARTIALLY_PAID",
+  "PAID",
+  "VOID",
+  "WRITTEN_OFF",
+  "CLOSED",
+];
+const STATUS_CHOICES = [...STATUS_OPTIONS].sort(
+  (a, b) => PILL_ORDER.indexOf(a.value) - PILL_ORDER.indexOf(b.value),
+);
+
+/**
+ * The top of the invoice list card: status, the date range and the search,
+ * in one row over a hairline.
+ */
 export function InvoiceFilters({
   searchInput,
   onSearchInputChange,
@@ -31,54 +52,47 @@ export function InvoiceFilters({
 }: InvoiceFiltersProps) {
   return (
     <Flex
-      justifyContent="flex-start"
-      alignItems={{ base: "stretch", md: "center" }}
-      mb="1.5rem"
+      align={{ base: "stretch", lg: "center" }}
+      justify="space-between"
+      direction={{ base: "column", lg: "row" }}
       gap="3"
-      direction={{ base: "column", md: "row" }}
-      wrap="wrap"
+      px={{ base: "3", md: "4" }}
+      py="3"
+      borderBottomWidth="1px"
+      borderColor={FAINT_DIVIDER}
     >
-      <CustomSelect
-        placeholder="All Status"
-        options={STATUS_OPTIONS}
-        value={status ? [status] : undefined}
-        onChange={(opt: { value: string[] }) =>
-          onStatusChange(opt?.value?.[0] ?? "")
-        }
-        rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
-        controlProps={{ w: { base: "100%", md: "140px" } }}
-      />
-
-      <Flex
-        flexWrap={{ base: "wrap", lg: "unset" }}
-        gap="2"
-        align="center"
-        w={{ base: "100%", md: "auto" }}
-      >
+      <Flex gap="2" align="center" wrap="wrap">
+        <MenuFilter
+          label="Status"
+          value={status}
+          options={STATUS_CHOICES}
+          onChange={onStatusChange}
+          triggerProps={{ flex: { base: "1 1 100%", sm: "0 0 auto" } }}
+        />
         <DateField
           label="From"
           value={dueDateFrom}
           max={dueDateTo || undefined}
           onChange={onDueDateFromChange}
-          containerProps={{ flex: { base: "1", lg: "unset" } }}
+          containerProps={{ flex: { base: "1", sm: "unset" } }}
         />
         <DateField
           label="To"
           value={dueDateTo}
           min={dueDateFrom || undefined}
           onChange={onDueDateToChange}
-          containerProps={{ flex: { base: "1", lg: "unset" } }}
+          containerProps={{ flex: { base: "1", sm: "unset" } }}
         />
       </Flex>
 
       <SearchInput
-        placeholder="Search by invoice # or customer"
+        placeholder="Search number or customer"
         value={searchInput}
         onChange={onSearchInputChange}
         onSearch={onSearchCommit}
         debounceMs={400}
         loading={isLoading}
-        width={{ base: "100%", md: "21rem" }}
+        width={{ base: "100%", lg: "18rem" }}
       />
     </Flex>
   );

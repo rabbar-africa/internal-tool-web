@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import moment from "moment";
-import Status from "@/components/ui/Status";
+import { StatusDot } from "@/components/ui/StatusDot";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import type { Invoice } from "@/shared/interface/invoice";
 import { InvoiceStatusDto } from "@/shared/interface/invoice";
@@ -126,9 +126,7 @@ export function useInvoiceListColumns(): ColumnDef<Invoice>[] {
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
-          <Status name={shownStatus(row.original)} px={".25rem"} />
-        ),
+        cell: ({ row }) => <StatusDot status={shownStatus(row.original)} />,
       },
     ],
     [formatMoney],

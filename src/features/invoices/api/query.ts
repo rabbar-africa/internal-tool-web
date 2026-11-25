@@ -8,6 +8,7 @@ import {
   markInvoiceAsSent,
   recalculateInvoice,
   getAllInvoices,
+  getInvoiceStats,
   deleteInvoice,
   getInvoiceDeleteImpact,
   getOutstandingInvoices,
@@ -35,6 +36,14 @@ export const useGetAllInvoicesQuery = (
     ...config,
   });
 };
+
+/** Refetched on each visit: the figures move with every payment. */
+export const useInvoiceStatsQuery = () =>
+  useQuery({
+    queryKey: [customQueryKey.invoices.stats],
+    queryFn: getInvoiceStats,
+    staleTime: 0,
+  });
 
 export const useGetInvoiceByIdQuery = (id: string) =>
   useQuery({

@@ -15,10 +15,10 @@ import { PoliceCarIcon } from "@/assets/custom/PoliceCarIcon";
 import { TagIcon } from "@/assets/custom/TagIcon";
 import { User } from "@/assets/custom/User";
 import { XIcon } from "@/assets/custom/XIcon";
+import { StatusDot } from "@/components/ui/StatusDot";
 import { JobCardStatusBadge } from "@/features/job-cards/components/job-card-list/columns";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
 import { RouteConstants } from "@/shared/constants/routes";
-import { getStatusColor } from "@/utils/get-color";
 import type { JobCardStatus } from "@/shared/interface/job-card";
 import { MIN_QUERY_LENGTH, useQuickSearchQuery } from "../api/query";
 import type { SearchResult, SearchType } from "../api/types";
@@ -83,10 +83,6 @@ function pathFor(result: SearchResult): string {
       return withSearch(RouteConstants.items.base.path, result.title);
   }
 }
-
-/** "PARTIALLY_PAID" → "Partially paid". */
-const humanize = (value: string) =>
-  value.charAt(0) + value.slice(1).toLowerCase().replace(/_/g, " ");
 
 /** One thing the arrow keys can land on: a result, or a "See all" link. */
 type Entry =
@@ -460,7 +456,7 @@ function trailingFor(
       const status = result.displayStatus ?? result.status;
       return (
         <>
-          {status && <StatusPill status={status} />}
+          {status && <StatusDot status={status} />}
           {result.total != null && (
             <Text
               fontSize="14px"
@@ -507,28 +503,6 @@ function trailingFor(
     default:
       return null;
   }
-}
-
-/** "● Paid": the list's colours for the status, as a soft pill. */
-function StatusPill({ status }: { status: string }) {
-  const colors = getStatusColor(status) ?? { bg: "gray.50", text: "gray.400" };
-  return (
-    <Flex
-      align="center"
-      gap="1.5"
-      px="2.5"
-      py="1"
-      rounded="full"
-      bg={colors.bg}
-      color={colors.text}
-      flexShrink={0}
-    >
-      <Box boxSize="6px" rounded="full" bg="currentColor" />
-      <Text fontSize="12px" fontWeight="500" whiteSpace="nowrap">
-        {humanize(status)}
-      </Text>
-    </Flex>
-  );
 }
 
 function Row({

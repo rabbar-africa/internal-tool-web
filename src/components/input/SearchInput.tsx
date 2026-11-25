@@ -141,14 +141,19 @@ export function SearchInput({
           onChange={handleInputChange}
           onKeyDown={handleKeyPress}
           placeholder={placeholder}
-          borderColor={"gray.100 !important"}
-          outline={"none !important"}
-          boxShadow={"none !important"}
+          // Soft at rest, clear while typing in it.
+          borderColor="gray.75"
+          rounded="11px"
+          outline="none"
+          boxShadow="none"
           width={width}
-          color={"gray.300"}
-          _hover={{ borderColor: "gray.50" }}
+          color="gray.500"
+          transition="border-color .15s ease, box-shadow .15s ease"
+          _hover={{ borderColor: "gray.100" }}
           _focus={{
-            borderColor: "primary.50",
+            borderColor: "primary.300",
+            boxShadow: "0 0 0 3px rgba(1, 48, 100, 0.12)",
+            outline: "none",
           }}
           pr={".875rem"}
           pl={"475rem"}
@@ -158,7 +163,7 @@ export function SearchInput({
           disabled={disabled}
           _placeholder={{
             color: "gray.200",
-            fontSize: "0.75rem",
+            fontSize: "0.8125rem",
           }}
           height={"2.5rem"}
           {...inputProps}

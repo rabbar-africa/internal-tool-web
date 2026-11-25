@@ -7,7 +7,7 @@ import {
   Text,
   type ButtonProps,
 } from "@chakra-ui/react";
-import { CaretRight, DownloadSimple } from "@/assets/custom";
+import { ChevronDownLine, DownloadLine } from "@/assets/custom/LineIcons";
 import { exportToCSV } from "@/utils/exportToCSV";
 import type {
   ExportModuleKey,
@@ -95,17 +95,10 @@ export function ExportMenu<T extends Record<string, unknown>>({
     <>
       <Menu.Root positioning={{ placement: "bottom-end" }}>
         <Menu.Trigger asChild>
-          <Button
-            variant="outline"
-            size={size}
-            loading={isPending}
-            borderColor="gray.100"
-            color="gray.500"
-            _hover={{ bg: "gray.50" }}
-          >
-            <DownloadSimple boxSize="4" />
+          <Button variant="outline" size={size} loading={isPending}>
+            <DownloadLine boxSize="4" />
             Export
-            <CaretRight boxSize="3" transform="rotate(90deg)" />
+            <ChevronDownLine boxSize="3.5" color="gray.300" />
           </Button>
         </Menu.Trigger>
         <Portal>
