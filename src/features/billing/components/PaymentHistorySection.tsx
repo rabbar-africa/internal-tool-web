@@ -1,7 +1,6 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Badge, Box, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { CustomTable } from "@/components/table";
-import { SectionTitle } from "@/features/settings/components/SectionTitle";
 import type { BillingPayment } from "../api/types";
 import {
   describePaymentMethod,
@@ -9,6 +8,7 @@ import {
   formatPrice,
   formatShortDate,
 } from "../utils/format";
+import { BillingCard, CardBody } from "./BillingCard";
 
 const columns: ColumnDef<BillingPayment>[] = [
   {
@@ -76,6 +76,23 @@ const columns: ColumnDef<BillingPayment>[] = [
     },
   },
   {
+    id: "status",
+    header: "Status",
+    cell: () => (
+      <Badge
+        size="sm"
+        bg="success.50"
+        color="success.400"
+        borderWidth="1px"
+        borderColor="success.75"
+        rounded="full"
+        px="2"
+      >
+        Paid
+      </Badge>
+    ),
+  },
+  {
     id: "reference",
     header: "Reference",
     cell: ({ row }) => (
@@ -92,15 +109,21 @@ export function PaymentHistorySection({
   payments: BillingPayment[];
 }) {
   return (
-    <Box>
-      <SectionTitle title="Recent payments" subtitle="Your last 12 payments." />
-      <Box overflowX="auto" minW={0}>
-        <CustomTable
-          data={payments}
-          columns={columns}
-          NoDataText="No payments yet."
-        />
-      </Box>
-    </Box>
+    <BillingCard
+      title="Billing history"
+      subtitle="Every payment for your plan, as Paystack recorded it."
+    >
+      {payments.length ? (
+        <Box overflowX="auto" minW={0}>
+          <CustomTable data={payments} columns={columns} />
+        </Box>
+      ) : (
+        <CardBody>
+          <Text fontSize="14px" color="gray.300">
+            No payments yet.
+          </Text>
+        </CardBody>
+      )}
+    </BillingCard>
   );
 }

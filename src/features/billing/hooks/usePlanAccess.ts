@@ -35,7 +35,9 @@ export function usePlanAccess() {
        * unknown, so nobody is shown an upgrade prompt while it loads.
        */
       canUpgrade:
-        overview !== undefined && overview.effectiveTier !== HIGHEST_PLAN_TIER,
+        overview !== undefined &&
+        overview.effectiveTier !== HIGHEST_PLAN_TIER &&
+        overview.effectiveTier !== "ENTERPRISE",
     };
   }, [overview]);
 }

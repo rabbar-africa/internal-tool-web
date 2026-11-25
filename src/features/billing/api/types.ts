@@ -1,4 +1,13 @@
-export type PlanTier = "STARTER" | "STANDARD" | "PREMIUM";
+/**
+ * WHATSAPP is Chat Lite, sold only in the WhatsApp bot (the web app never
+ * offers it); ENTERPRISE is put on from the back office, never sold.
+ */
+export type PlanTier =
+  | "STARTER"
+  | "WHATSAPP"
+  | "STANDARD"
+  | "PREMIUM"
+  | "ENTERPRISE";
 
 export type SubscriptionStatus =
   | "ACTIVE"

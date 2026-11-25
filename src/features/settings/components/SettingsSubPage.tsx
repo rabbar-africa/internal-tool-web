@@ -10,6 +10,8 @@ interface SettingsSubPageProps {
   subtitle?: string;
   /** Optional element rendered on the right of the header (e.g. an action button). */
   action?: ReactNode;
+  /** Children lay out their own cards instead of sitting in one white card. */
+  bare?: boolean;
   children: ReactNode;
 }
 
@@ -17,6 +19,7 @@ export function SettingsSubPage({
   title,
   subtitle,
   action,
+  bare = false,
   children,
 }: SettingsSubPageProps) {
   const navigate = useNavigate();
@@ -64,16 +67,20 @@ export function SettingsSubPage({
           {action}
         </Flex>
 
-        <Box
-          bg="white"
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-          p={{ base: "4", md: "6" }}
-        >
-          {children}
-        </Box>
+        {bare ? (
+          children
+        ) : (
+          <Box
+            bg="white"
+            rounded=".625rem"
+            shadow="sm"
+            borderWidth="1px"
+            borderColor="gray.75"
+            p={{ base: "4", md: "6" }}
+          >
+            {children}
+          </Box>
+        )}
       </Stack>
     </>
   );

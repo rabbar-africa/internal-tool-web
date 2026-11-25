@@ -11,6 +11,7 @@ import {
   type FlexProps,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { Lock } from "@/assets/custom/Lock";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RouteConstants } from "@/shared/constants/routes";
 import type { PlanFeature, PlanLimit } from "../api/types";
@@ -300,6 +301,82 @@ export function PlanFeatureNotice({
   );
 }
 
+/** A whole page that isn't on the plan: what it's called, and what it does. */
+const LOCKED_PAGE: Record<string, { name: string; body: string }> = {
+  reminders: {
+    name: "Service reminders are",
+    body: "Schedule services, follow-ups and paperwork renewals, and bring customers back on time.",
+  },
+  recurringExpenses: {
+    name: "Recurring expenses are",
+    body: "Set rent, salaries and other regular costs up once, and they're recorded on every date they're due.",
+  },
+};
+
+/**
+ * In place of a page the plan doesn't include: a lock, which plan has it, what
+ * it does, and "See plans" (or who to ask). Renders nothing while the plan is
+ * unknown or once the feature is included.
+ */
+export function PlanLockedCard({ feature }: { feature: PlanFeature }) {
+  const navigate = useNavigate();
+  const { canAccess, isLoading } = usePermissions();
+  const { plan, isAvailable } = useFeatureUpgrade(feature);
+  const copy = LOCKED_PAGE[feature];
+  const pitch = FEATURE_PITCH[feature];
+
+  const where = isAvailable
+    ? plan
+      ? `on the ${plan.name} plan`
+      : "on a higher plan"
+    : "not on your plan";
+  const title = copy ? `${copy.name} ${where}` : `This is ${where}`;
+  const body = copy?.body ?? pitch?.title ?? "";
+
+  return (
+    <Center
+      bg="white"
+      rounded="2xl"
+      borderWidth="1px"
+      borderColor="gray.75"
+      px="6"
+      py={{ base: "12", md: "16" }}
+    >
+      <Stack align="center" textAlign="center" gap="3" maxW="28rem">
+        <Center boxSize="3rem" rounded="xl" bg="primary.50" color="primary.300">
+          <Lock boxSize="1.4rem" />
+        </Center>
+        <Text fontSize="18px" fontWeight="700" color="gray.500" mt="2">
+          {title}
+        </Text>
+        {body && (
+          <Text fontSize="14px" color="gray.300" lineHeight="1.6">
+            {body}
+          </Text>
+        )}
+        {isAvailable && !isLoading && (
+          <Box mt="2">
+            {canAccess("billing") ? (
+              <Button
+                variant="primary"
+                onClick={() =>
+                  navigate(`${RouteConstants.settings.billing.path}#plans`)
+                }
+              >
+                See plans
+              </Button>
+            ) : (
+              <Text fontSize="13px" color="gray.400">
+                Ask an admin to upgrade.
+              </Text>
+            )}
+          </Box>
+        )}
+      </Stack>
+    </Center>
+  );
+}
+
 /** Replaces a page or form the plan won't let them use, with a way back. */
 function BlockedPage({ notice }: { notice: ReactNode }) {
   const navigate = useNavigate();
@@ -342,7 +419,7 @@ export function PlanFeatureGate({
 }) {
   const { hasFeature } = usePlanAccess();
   if (!hasFeature(feature)) {
-    return <BlockedPage notice={<PlanFeatureNotice feature={feature} />} />;
+    return <PlanLockedCard feature={feature} />;
   }
   return <>{children}</>;
 }

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import ConsentDialog from "@/components/common/ConsentDialog";
 import { CustomSelect } from "@/components/input/CustomSelect";
 import { SearchInput } from "@/components/input/SearchInput";
-import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { PlanLockedCard } from "@/features/billing/components/PlanLock";
 import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormatMoney } from "@/hooks/useFormatMoney";
@@ -225,9 +225,8 @@ export function RecurringExpenseListTemplate() {
           title="Expense Tracking"
           subtitle="Costs that come round again, recorded for you on each date"
           action={
-            has("create:expenses") ? (
+            has("create:expenses") && hasFeature("recurringExpenses") ? (
               <Button
-                disabled={!hasFeature("recurringExpenses")}
                 onClick={() =>
                   navigate(RouteConstants.expenses.recurringCreate.path)
                 }
@@ -240,91 +239,97 @@ export function RecurringExpenseListTemplate() {
 
         <ExpenseTabs active="recurring" />
 
-        <PlanFeatureNotice feature="recurringExpenses" />
+        {!hasFeature("recurringExpenses") ? (
+          <PlanLockedCard feature="recurringExpenses" />
+        ) : (
+          <>
+            <FixedCosts />
 
-        <FixedCosts />
+            <Box
+              pt={{ base: "1.25rem", md: "2rem" }}
+              pb={{ base: "1.25rem", md: "2rem" }}
+              bg="white"
+              px={{ base: "0.75rem", md: "1rem" }}
+              rounded=".625rem"
+              shadow="sm"
+              borderWidth="1px"
+              borderColor="gray.75"
+            >
+              <Grid
+                templateColumns={{
+                  base: "1fr",
+                  sm: "1fr 1fr",
+                  xl: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.4fr)",
+                }}
+                alignItems="center"
+                mb="1.5rem"
+                gap="3"
+              >
+                <CustomSelect
+                  placeholder="All Statuses"
+                  options={RECURRING_STATUS_OPTIONS}
+                  value={filters.status ? [filters.status] : undefined}
+                  onChange={(opt: { value: string[] }) =>
+                    setFilters({ status: opt?.value?.[0] ?? "", page: 1 })
+                  }
+                  rootProps={{ size: "sm", w: "100%" }}
+                  controlProps={{ w: "100%" }}
+                />
+                <CustomSelect
+                  placeholder="All Categories"
+                  options={categoryOptions}
+                  value={filters.categoryId ? [filters.categoryId] : undefined}
+                  onChange={(opt: { value: string[] }) =>
+                    setFilters({ categoryId: opt?.value?.[0] ?? "", page: 1 })
+                  }
+                  rootProps={{ size: "sm", w: "100%" }}
+                  controlProps={{ w: "100%" }}
+                />
+                <AccountFilterSelect
+                  fullWidth
+                  value={filters.paidThroughAccountId}
+                  onChange={(id) =>
+                    setFilters({ paidThroughAccountId: id, page: 1 })
+                  }
+                />
+                <SearchInput
+                  placeholder="Search by name or who it's paid to"
+                  value={searchInput}
+                  onChange={setSearchInput}
+                  onSearch={(val: string) =>
+                    setFilters({ search: val, page: 1 })
+                  }
+                  debounceMs={400}
+                  loading={isFetching}
+                  width="100%"
+                />
+              </Grid>
 
-        <Box
-          pt={{ base: "1.25rem", md: "2rem" }}
-          pb={{ base: "1.25rem", md: "2rem" }}
-          bg="white"
-          px={{ base: "0.75rem", md: "1rem" }}
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Grid
-            templateColumns={{
-              base: "1fr",
-              sm: "1fr 1fr",
-              xl: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.4fr)",
-            }}
-            alignItems="center"
-            mb="1.5rem"
-            gap="3"
-          >
-            <CustomSelect
-              placeholder="All Statuses"
-              options={RECURRING_STATUS_OPTIONS}
-              value={filters.status ? [filters.status] : undefined}
-              onChange={(opt: { value: string[] }) =>
-                setFilters({ status: opt?.value?.[0] ?? "", page: 1 })
-              }
-              rootProps={{ size: "sm", w: "100%" }}
-              controlProps={{ w: "100%" }}
-            />
-            <CustomSelect
-              placeholder="All Categories"
-              options={categoryOptions}
-              value={filters.categoryId ? [filters.categoryId] : undefined}
-              onChange={(opt: { value: string[] }) =>
-                setFilters({ categoryId: opt?.value?.[0] ?? "", page: 1 })
-              }
-              rootProps={{ size: "sm", w: "100%" }}
-              controlProps={{ w: "100%" }}
-            />
-            <AccountFilterSelect
-              fullWidth
-              value={filters.paidThroughAccountId}
-              onChange={(id) =>
-                setFilters({ paidThroughAccountId: id, page: 1 })
-              }
-            />
-            <SearchInput
-              placeholder="Search by name or who it's paid to"
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={(val: string) => setFilters({ search: val, page: 1 })}
-              debounceMs={400}
-              loading={isFetching}
-              width="100%"
-            />
-          </Grid>
-
-          <Box overflowX="auto" minW={0}>
-            <CustomTable
-              stickyHeader
-              data={schedules}
-              columns={columns}
-              loading={isLoading}
-              enableActions
-              actions={actions}
-              onRowClick={(row) => toDetail(row.original)}
-              pagination={{
-                pageIndex: filters.page - 1,
-                pageSize: filters.limit,
-              }}
-              setPagination={({ pageIndex }) =>
-                setFilters({ page: pageIndex + 1 })
-              }
-              pageCount={meta?.totalPages ?? 1}
-              totalItems={meta?.total}
-              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
-              hasPrevPage={filters.page > 1}
-            />
-          </Box>
-        </Box>
+              <Box overflowX="auto" minW={0}>
+                <CustomTable
+                  stickyHeader
+                  data={schedules}
+                  columns={columns}
+                  loading={isLoading}
+                  enableActions
+                  actions={actions}
+                  onRowClick={(row) => toDetail(row.original)}
+                  pagination={{
+                    pageIndex: filters.page - 1,
+                    pageSize: filters.limit,
+                  }}
+                  setPagination={({ pageIndex }) =>
+                    setFilters({ page: pageIndex + 1 })
+                  }
+                  pageCount={meta?.totalPages ?? 1}
+                  totalItems={meta?.total}
+                  hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+                  hasPrevPage={filters.page > 1}
+                />
+              </Box>
+            </Box>
+          </>
+        )}
       </Stack>
 
       <ConsentDialog

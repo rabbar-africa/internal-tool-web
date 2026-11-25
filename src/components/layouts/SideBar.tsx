@@ -13,8 +13,7 @@ import {
   type SideBarItem,
 } from "@/shared/data";
 import { usePermissions } from "@/hooks/usePermissions";
-import { PlanBadge } from "@/features/billing/components/PlanLock";
-import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
+import { SidebarPlanCard } from "@/features/billing/components/SidebarPlanCard";
 import { CaretLeft } from "@/assets/custom/CaretLeft";
 import { CaretRight } from "@/assets/custom/CaretRight";
 
@@ -166,7 +165,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { canAccess } = usePermissions();
-  const { hasFeature } = usePlanAccess();
 
   const collapsed = !mobile && isCollapsed;
 
@@ -349,15 +347,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       ariaCurrent={isActive(item)}
                       indented
                       onClick={() => go(item)}
-                    >
-                      {item.planFeature && !hasFeature(item.planFeature) && (
-                        <PlanBadge
-                          feature={item.planFeature}
-                          ml="2"
-                          flexShrink={0}
-                        />
-                      )}
-                    </NavRow>
+                    />
                   ))}
                 </Box>
               )}
@@ -365,6 +355,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </Flex>
+
+      {!collapsed && <SidebarPlanCard onNavigate={onNavigate} />}
 
       <Box flexShrink={0} pt="1" pb="2" borderTop={`1px solid ${DIVIDER}`}>
         {topLevelRow(sideBarFooter)}

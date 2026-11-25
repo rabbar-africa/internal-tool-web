@@ -1,4 +1,5 @@
-import { PlanFeatureNotice } from "@/features/billing/components/PlanLock";
+import { PlanLockedCard } from "@/features/billing/components/PlanLock";
+import { usePlanAccess } from "@/features/billing/hooks/usePlanAccess";
 import { useMemo, useState } from "react";
 import { Box, Button, Flex, Grid, Stack, Tabs, Text } from "@chakra-ui/react";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -158,6 +159,9 @@ export function ReminderListTemplate() {
   const reminders = useMemo(() => data?.data ?? [], [data?.data]);
   const meta = data?.meta;
   const columns = useMemo(() => buildColumns(showType), [showType]);
+  // Not on the plan: the page is a lock and the way to upgrade, nothing else.
+  const { hasFeature } = usePlanAccess();
+  const locked = !hasFeature("reminders");
 
   return (
     <>
@@ -166,150 +170,158 @@ export function ReminderListTemplate() {
           title="Reminders"
           subtitle="Everything coming due — service, follow-ups and paperwork"
           action={
-            <Flex gap="2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(RouteConstants.reminders.scheduleService.path)
-                }
-              >
-                Schedule Service
-              </Button>
-              <Button
-                onClick={() => navigate(RouteConstants.reminders.create.path)}
-              >
-                New Reminder
-              </Button>
-            </Flex>
+            locked ? undefined : (
+              <Flex gap="2">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    navigate(RouteConstants.reminders.scheduleService.path)
+                  }
+                >
+                  Schedule Service
+                </Button>
+                <Button
+                  onClick={() => navigate(RouteConstants.reminders.create.path)}
+                >
+                  New Reminder
+                </Button>
+              </Flex>
+            )
           }
         />
 
-        <PlanFeatureNotice feature="reminders" />
-
-        <Tabs.Root
-          value={filters.type || "all"}
-          onValueChange={({ value }) => {
-            const tab = TABS.find((t) => t.value === value);
-            setFilters({ type: tab?.type ?? "", page: 1 });
-          }}
-          variant="line"
-        >
-          <Tabs.List>
-            {TABS.map((tab) => (
-              <Tabs.Trigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </Tabs.Trigger>
-            ))}
-          </Tabs.List>
-        </Tabs.Root>
-
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
-          <UpcomingRemindersPanel
-            title="Upcoming"
-            subtitle="Due within the next 30 days"
-            type={activeType}
-            withinDays={30}
-            limit={8}
-            includeOverdue={false}
-            handlers={handlers}
-            showType={showType}
-            emptyText="Nothing due in the next 30 days"
-          />
-          <OverdueRemindersPanel
-            type={activeType}
-            handlers={handlers}
-            showType={showType}
-          />
-        </Grid>
-
-        <Box
-          pt={{ base: "1.25rem", md: "2rem" }}
-          pb={{ base: "1.25rem", md: "2rem" }}
-          bg="white"
-          px={{ base: "0.75rem", md: "1rem" }}
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex
-            justifyContent="space-between"
-            alignItems={{ base: "flex-start", md: "center" }}
-            mb="1rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
-          >
-            <Box>
-              <Text textStyle="large-bold" color="gray.500">
-                All Reminders
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                {activeType
-                  ? `${reminderTypeLabel(activeType)} reminders`
-                  : "Every reminder across the business"}
-              </Text>
-            </Box>
-          </Flex>
-
-          <Flex
-            justifyContent="flex-start"
-            alignItems={{ base: "stretch", md: "center" }}
-            mb="1.5rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
-            wrap="wrap"
-          >
-            <CustomSelect
-              placeholder="All statuses"
-              options={STATUS_SELECT_OPTIONS}
-              value={filters.status ? [filters.status] : [""]}
-              onChange={(opt: { value: string[] }) =>
-                setFilters({ status: opt?.value?.[0] ?? "", page: 1 })
-              }
-              rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
-              controlProps={{ w: { base: "100%", md: "170px" } }}
-            />
-            <SearchInput
-              placeholder="Search by title or notes"
-              value={searchInput}
-              onChange={setSearchInput}
-              onSearch={(val: string) => setFilters({ search: val, page: 1 })}
-              debounceMs={400}
-              loading={isFetching}
-              width={{ base: "100%", md: "21rem" }}
-            />
-          </Flex>
-
-          <Box overflowX="auto" minW={0}>
-            <CustomTable
-              stickyHeader
-              data={reminders}
-              columns={columns}
-              loading={isLoading}
-              enableActions
-              actions={tableActions}
-              NoDataText="No reminders match this filter."
-              onRowClick={(row) =>
-                navigate(
-                  RouteConstants.reminders.edit.generate({
-                    id: row.original.id,
-                  }),
-                )
-              }
-              pagination={{
-                pageIndex: filters.page - 1,
-                pageSize: filters.limit,
+        {locked ? (
+          <PlanLockedCard feature="reminders" />
+        ) : (
+          <>
+            <Tabs.Root
+              value={filters.type || "all"}
+              onValueChange={({ value }) => {
+                const tab = TABS.find((t) => t.value === value);
+                setFilters({ type: tab?.type ?? "", page: 1 });
               }}
-              setPagination={({ pageIndex }) =>
-                setFilters({ page: pageIndex + 1 })
-              }
-              pageCount={meta?.totalPages ?? 1}
-              totalItems={meta?.total}
-              hasNextPage={filters.page < (meta?.totalPages ?? 1)}
-              hasPrevPage={filters.page > 1}
-            />
-          </Box>
-        </Box>
+              variant="line"
+            >
+              <Tabs.List>
+                {TABS.map((tab) => (
+                  <Tabs.Trigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                  </Tabs.Trigger>
+                ))}
+              </Tabs.List>
+            </Tabs.Root>
+
+            <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap="4">
+              <UpcomingRemindersPanel
+                title="Upcoming"
+                subtitle="Due within the next 30 days"
+                type={activeType}
+                withinDays={30}
+                limit={8}
+                includeOverdue={false}
+                handlers={handlers}
+                showType={showType}
+                emptyText="Nothing due in the next 30 days"
+              />
+              <OverdueRemindersPanel
+                type={activeType}
+                handlers={handlers}
+                showType={showType}
+              />
+            </Grid>
+
+            <Box
+              pt={{ base: "1.25rem", md: "2rem" }}
+              pb={{ base: "1.25rem", md: "2rem" }}
+              bg="white"
+              px={{ base: "0.75rem", md: "1rem" }}
+              rounded=".625rem"
+              shadow="sm"
+              borderWidth="1px"
+              borderColor="gray.75"
+            >
+              <Flex
+                justifyContent="space-between"
+                alignItems={{ base: "flex-start", md: "center" }}
+                mb="1rem"
+                gap="3"
+                direction={{ base: "column", md: "row" }}
+              >
+                <Box>
+                  <Text textStyle="large-bold" color="gray.500">
+                    All Reminders
+                  </Text>
+                  <Text textStyle="small-regular" color="gray.300">
+                    {activeType
+                      ? `${reminderTypeLabel(activeType)} reminders`
+                      : "Every reminder across the business"}
+                  </Text>
+                </Box>
+              </Flex>
+
+              <Flex
+                justifyContent="flex-start"
+                alignItems={{ base: "stretch", md: "center" }}
+                mb="1.5rem"
+                gap="3"
+                direction={{ base: "column", md: "row" }}
+                wrap="wrap"
+              >
+                <CustomSelect
+                  placeholder="All statuses"
+                  options={STATUS_SELECT_OPTIONS}
+                  value={filters.status ? [filters.status] : [""]}
+                  onChange={(opt: { value: string[] }) =>
+                    setFilters({ status: opt?.value?.[0] ?? "", page: 1 })
+                  }
+                  rootProps={{ size: "sm", w: { base: "100%", md: "auto" } }}
+                  controlProps={{ w: { base: "100%", md: "170px" } }}
+                />
+                <SearchInput
+                  placeholder="Search by title or notes"
+                  value={searchInput}
+                  onChange={setSearchInput}
+                  onSearch={(val: string) =>
+                    setFilters({ search: val, page: 1 })
+                  }
+                  debounceMs={400}
+                  loading={isFetching}
+                  width={{ base: "100%", md: "21rem" }}
+                />
+              </Flex>
+
+              <Box overflowX="auto" minW={0}>
+                <CustomTable
+                  stickyHeader
+                  data={reminders}
+                  columns={columns}
+                  loading={isLoading}
+                  enableActions
+                  actions={tableActions}
+                  NoDataText="No reminders match this filter."
+                  onRowClick={(row) =>
+                    navigate(
+                      RouteConstants.reminders.edit.generate({
+                        id: row.original.id,
+                      }),
+                    )
+                  }
+                  pagination={{
+                    pageIndex: filters.page - 1,
+                    pageSize: filters.limit,
+                  }}
+                  setPagination={({ pageIndex }) =>
+                    setFilters({ page: pageIndex + 1 })
+                  }
+                  pageCount={meta?.totalPages ?? 1}
+                  totalItems={meta?.total}
+                  hasNextPage={filters.page < (meta?.totalPages ?? 1)}
+                  hasPrevPage={filters.page > 1}
+                />
+              </Box>
+            </Box>
+          </>
+        )}
       </Stack>
 
       {dialogs}

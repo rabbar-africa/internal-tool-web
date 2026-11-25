@@ -27,8 +27,6 @@ export interface SideBarItem {
    * pages everyone has.
    */
   page?: PageKey;
-  /** Still shown without it, badged, so people see what upgrading gives them. */
-  planFeature?: string;
 }
 
 /** Related pages under one heading, so the sidebar opens short. */
@@ -138,7 +136,6 @@ export const sideBarGroups: SideBarGroup[] = [
         slug: "reminders",
         paths: [RouteConstants.reminders.base.path],
         page: "reminders",
-        planFeature: "reminders",
       },
       {
         name: "Paperwork",
