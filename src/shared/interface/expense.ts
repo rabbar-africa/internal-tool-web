@@ -293,3 +293,46 @@ export interface RecordInvoiceCostsResponse {
   created: Expense[];
   costs: InvoiceCosts;
 }
+
+/** An amount and how many expenses make it up. */
+export interface ExpenseStatsTotal {
+  amount: number;
+  count: number;
+}
+
+/** A total over a date range (inclusive, `YYYY-MM-DD`). */
+export interface ExpenseStatsPeriod extends ExpenseStatsTotal {
+  from: string;
+  to: string;
+}
+
+/**
+ * `GET /expenses/stats` (docs/frontend-expense-stats.md). Amounts are what
+ * was paid, VAT included; deleted expenses are left out.
+ */
+export interface ExpenseStats {
+  currency: string;
+  asOf: string;
+  thisMonth: ExpenseStatsPeriod;
+  /** The whole of last month. */
+  lastMonth: ExpenseStatsPeriod;
+  thisYear: ExpenseStatsPeriod;
+  /** This month, split into cost of sales and everything else. */
+  thisMonthSplit: {
+    onJobs: ExpenseStatsTotal;
+    overheads: ExpenseStatsTotal;
+  };
+  /** This month's biggest category by amount; null with no expenses. */
+  topCategoryThisMonth:
+    | (ExpenseStatsTotal & { id: string; name: string })
+    | null;
+  /** Show only when `vatRegistered`. */
+  claimableVatThisMonth: { amount: number; vatRegistered: boolean };
+  /** Every expense the active schedules will record up to `through`. */
+  recurringNext30Days: {
+    count: number;
+    amount: number;
+    schedules: number;
+    through: string;
+  };
+}

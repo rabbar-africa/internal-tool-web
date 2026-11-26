@@ -9,6 +9,7 @@ import {
   regroupInvoiceCosts,
   getExpenseById,
   getExpenses,
+  getExpenseStats,
   updateExpense,
 } from "./service";
 import type {
@@ -29,6 +30,14 @@ export const useGetExpensesQuery = (
     queryKey: [customQueryKey.expenses.getAll, filter],
     queryFn: () => getExpenses(filter),
     ...config,
+  });
+
+/** Refetched on each visit: the figures move with every expense. */
+export const useExpenseStatsQuery = () =>
+  useQuery({
+    queryKey: [customQueryKey.expenses.stats],
+    queryFn: getExpenseStats,
+    staleTime: 0,
   });
 
 export const useGetExpenseByIdQuery = (id: string) =>

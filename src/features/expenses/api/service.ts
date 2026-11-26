@@ -4,6 +4,7 @@ import { type ApiResponse, type IMeta } from "@/shared/interface/api";
 import type {
   CreateExpensePayload,
   Expense,
+  ExpenseStats,
   IGetExpenseFilter,
   InvoiceCosts,
   RecordInvoiceCostsPayload,
@@ -21,6 +22,13 @@ export const getExpenses = async (filter?: IGetExpenseFilter) => {
   const apiUrl = buildUrlWithQueryParams("/expenses", filter);
   const response = await axios.get<ExpenseListResponse>(apiUrl);
   return response.data;
+};
+
+/** The strip above the expense list. */
+export const getExpenseStats = async () => {
+  const response =
+    await axios.get<ApiResponse<ExpenseStats>>("/expenses/stats");
+  return response.data.data;
 };
 
 export const getExpenseById = async (id: string) => {

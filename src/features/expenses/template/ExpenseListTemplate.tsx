@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Button, Flex, Grid, Link, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Link, Stack, Text } from "@chakra-ui/react";
+import type { ReactNode } from "react";
 import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
 import { toaster } from "@/components/ui";
 import { DownloadSimple } from "@/assets/custom";
@@ -15,7 +16,10 @@ import {
   type TableAction,
 } from "@/components/table";
 import { SearchInput } from "@/components/input/SearchInput";
-import { CustomSelect } from "@/components/input/CustomSelect";
+import { MenuFilter } from "@/components/input/MenuFilter";
+import { PlusLine } from "@/assets/custom/LineIcons";
+import { CARD_SHADOW, FAINT_DIVIDER, FAINT_EDGE } from "@/theme/surfaces";
+import { ExpenseStatsStrip } from "../components/ExpenseStatsStrip";
 import { DateField } from "@/components/input/DateField";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TruncatedText } from "@/components/common/TruncatedText";
@@ -28,8 +32,8 @@ import { useUrlState } from "@/hooks/useUrlState";
 import type { Expense } from "@/shared/interface/expense";
 import { useExpenseCategoryFilterOptions } from "@/features/expense-categories/components";
 import {
-  AccountFilterSelect,
   formatAccountLabel,
+  useAccountOptions,
 } from "@/features/settings/components/account-details/AccountSelect";
 import {
   useDeleteExpenseMutation,
@@ -186,6 +190,44 @@ const columns: ColumnDef<Expense>[] = [
   },
 ];
 
+const plural = (n: number, one: string) =>
+  `${n.toLocaleString("en-NG")} ${one}${n === 1 ? "" : "s"}`;
+
+/** "Showing expenses for INV-001 · Show all": the list is narrowed to one thing. */
+function ScopeNote({
+  children,
+  onClear,
+}: {
+  children: ReactNode;
+  onClear: () => void;
+}) {
+  return (
+    <Flex
+      align="center"
+      gap="2"
+      px="3"
+      py="1.5"
+      bg="primary.50"
+      rounded="lg"
+      flexWrap="wrap"
+    >
+      <Text fontSize="13px" color="gray.500">
+        {children}
+      </Text>
+      <Button
+        size="xs"
+        variant="ghost"
+        color="primary.300"
+        h="auto"
+        px="1"
+        onClick={onClear}
+      >
+        Show all
+      </Button>
+    </Flex>
+  );
+}
+
 // What the export has always held, as column keys from GET /exports/modules.
 const EXPORT_COLUMNS = [
   "name",
@@ -228,6 +270,7 @@ export function ExpenseListTemplate() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
   const categoryOptions = useExpenseCategoryFilterOptions();
+  const { options: accountOptions } = useAccountOptions({ includeCash: true });
 
   const listFilters = {
     ...(filters.search ? { search: filters.search } : {}),
@@ -352,7 +395,7 @@ export function ExpenseListTemplate() {
           title="Expense Tracking"
           subtitle="Record and monitor all business expenses"
           action={
-            <Flex gap="2">
+            <Flex gap="2" wrap="wrap">
               <ExportMenu
                 module="expenses"
                 serverView={{
@@ -371,6 +414,7 @@ export function ExpenseListTemplate() {
               <Button
                 onClick={() => navigate(RouteConstants.expenses.create.path)}
               >
+                <PlusLine />
                 Add Expense
               </Button>
             </Flex>
@@ -379,146 +423,144 @@ export function ExpenseListTemplate() {
 
         <ExpenseTabs active="all" />
 
-        <Box
-          pt={{ base: "1.25rem", md: "2rem" }}
-          pb={{ base: "1.25rem", md: "2rem" }}
-          bg="white"
-          px={{ base: "0.75rem", md: "1rem" }}
-          rounded=".625rem"
-          shadow="sm"
-          borderWidth="1px"
-          borderColor="gray.75"
-        >
-          <Flex
-            justifyContent="space-between"
-            alignItems={{ base: "flex-start", md: "center" }}
-            mb="1rem"
-            gap="3"
-            direction={{ base: "column", md: "row" }}
-          >
-            <Box>
-              <Text textStyle="large-bold" color="gray.500">
-                All Expenses
-              </Text>
-              <Text textStyle="small-regular" color="gray.300">
-                {meta?.totalAmount != null
-                  ? `Total for current filter: ${formatCurrency(meta.totalAmount)}`
-                  : "Track all your business expenses"}
-              </Text>
-            </Box>
-          </Flex>
+        <ExpenseStatsStrip
+          onShowRange={({ from, to, categoryId }) => {
+            setSearchInput("");
+            setFilters({
+              dateFrom: from,
+              dateTo: to,
+              categoryId: categoryId ?? "",
+              search: "",
+              page: 1,
+            });
+          }}
+          onShowRecurring={() =>
+            navigate(RouteConstants.expenses.recurring.path)
+          }
+        />
 
-          {/* A grid, not a wrapping flex: every select fills its parent's width,
-              so in a flex each one took a whole line and they stacked. */}
-          <Grid
-            templateColumns={{
-              base: "1fr",
-              sm: "1fr 1fr",
-              xl: "minmax(0, 1fr) minmax(0, 1.2fr) auto minmax(0, 1.4fr)",
-            }}
-            alignItems="center"
-            mb="1.5rem"
+        <Box
+          bg="white"
+          rounded="18px"
+          borderWidth="1px"
+          borderColor={FAINT_EDGE}
+          boxShadow={CARD_SHADOW}
+          overflow="hidden"
+        >
+          {/* Filters in one row over a hairline, like the invoice list. */}
+          <Flex
+            align={{ base: "stretch", lg: "center" }}
+            justify="space-between"
+            direction={{ base: "column", lg: "row" }}
             gap="3"
+            px={{ base: "3", md: "4" }}
+            py="3"
+            borderBottomWidth="1px"
+            borderColor={FAINT_DIVIDER}
           >
-            <CustomSelect
-              placeholder="All Categories"
-              options={categoryOptions}
-              value={filters.categoryId ? [filters.categoryId] : undefined}
-              onChange={(opt: { value: string[] }) =>
-                setFilters({ categoryId: opt?.value?.[0] ?? "", page: 1 })
-              }
-              rootProps={{ size: "sm", w: "100%" }}
-              controlProps={{ w: "100%" }}
-            />
-            <AccountFilterSelect
-              fullWidth
-              value={filters.paidThroughAccountId}
-              onChange={(id) =>
-                setFilters({ paidThroughAccountId: id, page: 1 })
-              }
-            />
-            <Flex gap="2" align="center" minW={0}>
+            <Flex gap="2" align="center" wrap="wrap">
+              <MenuFilter
+                label="Category"
+                value={filters.categoryId}
+                options={[{ label: "All", value: "" }, ...categoryOptions]}
+                onChange={(val) => setFilters({ categoryId: val, page: 1 })}
+                triggerProps={{
+                  flex: { base: "1 1 100%", sm: "0 0 auto" },
+                  maxW: { sm: "16rem" },
+                }}
+              />
+              <MenuFilter
+                label="Paid from"
+                value={filters.paidThroughAccountId}
+                options={[{ label: "All", value: "" }, ...accountOptions]}
+                onChange={(val) =>
+                  setFilters({ paidThroughAccountId: val, page: 1 })
+                }
+                triggerProps={{
+                  flex: { base: "1 1 100%", sm: "0 0 auto" },
+                  maxW: { sm: "16rem" },
+                }}
+              />
               <DateField
                 label="From"
                 value={filters.dateFrom}
                 max={filters.dateTo || undefined}
                 onChange={(val) => setFilters({ dateFrom: val, page: 1 })}
-                containerProps={{ flex: "1", minW: 0 }}
+                containerProps={{ flex: { base: "1", sm: "unset" } }}
               />
               <DateField
                 label="To"
                 value={filters.dateTo}
                 min={filters.dateFrom || undefined}
                 onChange={(val) => setFilters({ dateTo: val, page: 1 })}
-                containerProps={{ flex: "1", minW: 0 }}
+                containerProps={{ flex: { base: "1", sm: "unset" } }}
               />
             </Flex>
             <SearchInput
-              placeholder="Search by expense #, item or vendor"
+              placeholder="Search expense #, item or vendor"
               value={searchInput}
               onChange={setSearchInput}
               onSearch={(val: string) => setFilters({ search: val, page: 1 })}
               debounceMs={400}
               loading={isFetching}
-              width="100%"
+              width={{ base: "100%", lg: "18rem" }}
             />
-          </Grid>
+          </Flex>
 
-          {filters.invoiceId && (
+          {(filters.invoiceId ||
+            filters.recurringExpenseId ||
+            meta?.totalAmount != null) && (
             <Flex
               align="center"
+              justify="space-between"
               gap="2"
-              mb="3"
-              px="3"
-              py="2"
-              bg="primary.50"
-              rounded="md"
-              flexWrap="wrap"
+              wrap="wrap"
+              px={{ base: "3", md: "4" }}
+              pt="3"
             >
-              <Text textStyle="small-regular" color="gray.500">
-                Showing expenses for{" "}
-                {expenses[0]?.invoice?.invoiceNumber ?? "one invoice"}
-              </Text>
-              <Button
-                size="xs"
-                variant="ghost"
-                color="primary.300"
-                onClick={() => setFilters({ invoiceId: "", page: 1 })}
-              >
-                Show all
-              </Button>
-            </Flex>
-          )}
-
-          {filters.recurringExpenseId && (
-            <Flex
-              align="center"
-              gap="2"
-              mb="3"
-              px="3"
-              py="2"
-              bg="primary.50"
-              rounded="md"
-              flexWrap="wrap"
-            >
-              <Text textStyle="small-regular" color="gray.500">
-                Showing what{" "}
-                {expenses[0]?.recurringExpense?.name ?? "one schedule"} recorded
-              </Text>
-              <Button
-                size="xs"
-                variant="ghost"
-                color="primary.300"
-                onClick={() => setFilters({ recurringExpenseId: "", page: 1 })}
-              >
-                Show all
-              </Button>
+              {filters.invoiceId ? (
+                <ScopeNote
+                  onClear={() => setFilters({ invoiceId: "", page: 1 })}
+                >
+                  Showing expenses for{" "}
+                  {expenses[0]?.invoice?.invoiceNumber ?? "one invoice"}
+                </ScopeNote>
+              ) : filters.recurringExpenseId ? (
+                <ScopeNote
+                  onClear={() =>
+                    setFilters({ recurringExpenseId: "", page: 1 })
+                  }
+                >
+                  Showing what{" "}
+                  {expenses[0]?.recurringExpense?.name ?? "one schedule"}{" "}
+                  recorded
+                </ScopeNote>
+              ) : (
+                <span />
+              )}
+              {meta?.totalAmount != null && (
+                <Text fontSize="13px" color="gray.300">
+                  {plural(meta.total ?? 0, "expense")} ·{" "}
+                  <Text as="span" color="gray.500" fontWeight="600">
+                    {formatCurrency(meta.totalAmount)}
+                  </Text>
+                </Text>
+              )}
             </Flex>
           )}
 
           <Box overflowX="auto" minW={0}>
             <CustomTable
               stickyHeader
+              tableRootProps={{ border: "none" }}
+              tableHeaderProps={{
+                bg: "white",
+                color: "gray.300",
+                fontSize: "12px",
+                fontWeight: "500",
+                py: "3",
+                borderBottom: `1px solid ${FAINT_DIVIDER}`,
+              }}
               data={expenses}
               columns={visibleColumns}
               loading={isLoading}

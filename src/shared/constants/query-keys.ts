@@ -122,6 +122,7 @@ export const customQueryKey = {
     getAll: "get-all-expenses",
     getById: "get-expense-by-id",
     invoiceCosts: "get-invoice-costs",
+    stats: "get-expense-stats",
   },
   accountTransfers: {
     getAll: "get-all-account-transfers",

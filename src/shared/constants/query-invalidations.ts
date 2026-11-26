@@ -27,6 +27,7 @@ const INVOICE_RECORDS = [
   [k.invoices.getById],
   [k.invoices.outstanding],
   [k.expenses.getAll],
+  [k.expenses.stats],
   [k.expenses.getById],
   [k.expenses.invoiceCosts],
   [k.quotations.getAll],
@@ -50,6 +51,8 @@ const RECURRING_EXPENSES = [
   [k.recurringExpenses.getAll],
   [k.recurringExpenses.getById],
   [k.recurringExpenses.summary],
+  // The expense strip counts what the schedules will record next.
+  [k.expenses.stats],
 ] as const;
 
 /** Quotes, and the job cards and customers that list them. They hold no money. */
@@ -83,6 +86,7 @@ const ACCOUNTS = [
 /** Spending, and the job-card and invoice profit it comes out of. */
 const COSTS = [
   [k.expenses.getAll],
+  [k.expenses.stats],
   [k.expenses.getById],
   [k.expenses.invoiceCosts],
   [k.jobCards.getAll],
